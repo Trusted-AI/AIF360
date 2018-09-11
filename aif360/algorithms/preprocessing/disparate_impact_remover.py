@@ -1,0 +1,61 @@
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+
+import numpy as np
+
+from aif360.algorithms import Transformer
+
+
+class DisparateImpactRemover(Transformer):
+    """Disparate impact remover is a preprocessing technique that edits feature
+    values increase group fairness while preserving rank-ordering within groups
+    [1]_.
+
+    References:
+        .. [1] Feldman, et al. "Certifying and removing disparate impact."
+           KDD 2015. https://arxiv.org/pdf/1412.3756.pdf
+    """
+
+    def __init__(self, repair_level=1.0):
+        super(DisparateImpactRemover, self).__init__(repair_level=repair_level)
+        # avoid importing early since this package can throw warnings in some
+        # jupyter notebooks
+        from BlackBoxAuditing.repairers.GeneralRepairer import Repairer
+        self.Repairer = Repairer
+
+        if not 0.0 <= repair_level <= 1.0:
+            raise ValueError("'repair_level' must be between 0.0 and 1.0.")
+        self.repair_level = repair_level
+
+    def fit_transform(self, dataset):
+        """Run a repairer on the non-protected features and return the
+        transformed dataset.
+
+        Args:
+            dataset (BinaryLabelDataset): Dataset that needs repair.
+        Returns:
+            dataset (BinaryLabelDataset): Transformed Dataset.
+
+        Note:
+            In order to transform test data in the same manner as training data,
+            the distributions of attributes conditioned on the protected
+            attribute must be the same.
+        """
+        if len(dataset.protected_attribute_names) > 1:
+            raise ValueError("'dataset' must have only a single protected "
+                             "attribute.")
+        sensitive_attribute = dataset.protected_attribute_names[0]
+
+        features = dataset.features.tolist()
+        index = dataset.feature_names.index(sensitive_attribute)
+        repairer = self.Repairer(features, index, self.repair_level, False)
+
+        repaired = dataset.copy()
+        repaired_features = repairer.repair(features)
+        repaired.features = np.array(repaired_features, dtype=np.float64)
+        # protected attribute shouldn't change
+        repaired.features[:, index] = repaired.protected_attributes[:, 0]
+
+        return repaired
