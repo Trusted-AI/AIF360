@@ -1,0 +1,28 @@
+dist: trusty
+sudo: false
+
+language: python
+python:
+  - "2.7"
+  - "3.6"
+
+install: pip install -r requirements.txt
+
+matrix:
+  # different requirements for different python versions
+  include:
+  - python: "2.7"
+    before_script:
+    - git clone https://github.com/algofairness/BlackBoxAuditing.git /tmp/BlackBoxAuditing/
+    - echo -n /tmp/BlackBoxAuditing/BlackBoxAuditing/weka.jar > /tmp/BlackBoxAuditing/python2_source/BlackBoxAuditing/model_factories/weka.path
+    - echo include python2_source/BlackBoxAuditing/model_factories/weka.path >> /tmp/BlackBoxAuditing/MANIFEST.in
+    - pip install --no-deps /tmp/BlackBoxAuditing/
+  # workaround to exclude extraneous builds
+  exclude:
+  - python: "2.7"
+
+branches:
+  only:
+  - master
+
+script: travis_wait pytest tests

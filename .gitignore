@@ -1,0 +1,9 @@
+.DS_Store
+**/.DS_Store
+*.pyc
+**/*.pyc
+.cache/
+.ipynb_checkpoints/
+.pytest_cache/
+.idea/
+docs/build/
