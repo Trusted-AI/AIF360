@@ -10,17 +10,19 @@ from aif360.algorithms import Transformer
 
 
 class ARTClassifier(Transformer):
-    """Wraps an instance of an `:obj:art.classifiers.Classifier` to extend
-    `:obj:~aif360.algorithms.Transformer`.
+    """Wraps an instance of an :obj:`art.classifiers.Classifier` to extend
+    :obj:`~aif360.algorithms.Transformer`.
     """
 
     def __init__(self, art_classifier):
         """Initialize ARTClassifier.
 
         Args:
-            art_classifier (`:obj:art.classifier.Classifier`): A Classifier
-                object from the `adversarial-robustness-toolbox
-                <https://github.com/IBM/adversarial-robustness-toolbox>`.
+            art_classifier (art.classifier.Classifier): A Classifier
+                object from the `adversarial-robustness-toolbox`_.
+
+        .. _adversarial-robustness-toolbox:
+           https://github.com/IBM/adversarial-robustness-toolbox
         """
         super(ARTClassifier, self).__init__(art_classifier=art_classifier)
         self._art_classifier = art_classifier

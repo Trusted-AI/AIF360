@@ -1,5 +1,5 @@
 :mod:`aif360.algorithms.postprocessing`
-======================================
+=======================================
 
 .. automodule:: aif360.algorithms.postprocessing
 

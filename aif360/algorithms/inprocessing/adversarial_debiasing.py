@@ -4,7 +4,6 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import numpy as np
-from copy import deepcopy
 
 try:
     import tensorflow as tf
@@ -12,19 +11,20 @@ except ImportError as error:
     print("Import error: %s" % (error))
 
 from aif360.algorithms import Transformer
-from aif360.datasets.binary_label_dataset import BinaryLabelDataset
 
 
 class AdversarialDebiasing(Transformer):
-    """
-    Adversarial debiasing is an in-processing technique that learns a classifier to maximizes prediction accuracy 
-    and simultaneously reduce an adversary's ability to determine the protected attribute from the predictions [5]_.
-    This approach leads to a fair classifier as the predictions cannot carry any group discrimination 
-    information that the adversary can exploit.
+    """Adversarial debiasing is an in-processing technique that learns a
+    classifier to maximize prediction accuracy and simultaneously reduce an
+    adversary's ability to determine the protected attribute from the
+    predictions [5]_. This approach leads to a fair classifier as the
+    predictions cannot carry any group discrimination information that the
+    adversary can exploit.
 
     References:
-        .. [5] B. H. Zhang, B. Lemoine, and M. Mitchell, "Mitigating Unwanted Biases with Adversarial Learning,"
-            AAAI/ACM Conference on Artificial Intelligence, Ethics, and Society, 2018.
+        .. [5] B. H. Zhang, B. Lemoine, and M. Mitchell, "Mitigating Unwanted
+           Biases with Adversarial Learning," AAAI/ACM Conference on Artificial
+           Intelligence, Ethics, and Society, 2018.
     """
 
     def __init__(self,
@@ -32,7 +32,7 @@ class AdversarialDebiasing(Transformer):
                  privileged_groups,
                  scope_name,
                  sess,
-                 seed = None,
+                 seed=None,
                  adversary_loss_weight=0.1,
                  num_epochs=50,
                  batch_size=128,
@@ -45,11 +45,14 @@ class AdversarialDebiasing(Transformer):
             scope_name (str): scope name for the tenforflow variables
             sess (tf.Session): tensorflow session
             seed (int, optional): Seed to make `predict` repeatable.
-            adversary_loss_weight (float, optional): Hyperparameter that chooses the strength of the adversarial loss.
+            adversary_loss_weight (float, optional): Hyperparameter that chooses
+                the strength of the adversarial loss.
             num_epochs (int, optional): Number of training epochs.
             batch_size (int, optional): Batch size.
-            classifier_num_hidden_units (int, optional): Number of hidden units in the classifier model.
-            debias (bool, optional): Learn a classifier with or without debiasing.
+            classifier_num_hidden_units (int, optional): Number of hidden units
+                in the classifier model.
+            debias (bool, optional): Learn a classifier with or without
+                debiasing.
         """
         super(AdversarialDebiasing, self).__init__(
             unprivileged_groups=unprivileged_groups,
@@ -114,7 +117,8 @@ class AdversarialDebiasing(Transformer):
         return pred_protected_attribute_label, pred_protected_attribute_logit
 
     def fit(self, dataset):
-        """Compute the model parameters of the fair classifier using gradient descent.
+        """Compute the model parameters of the fair classifier using gradient
+        descent.
 
         Args:
             dataset (BinaryLabelDataset): Dataset containing true labels.
@@ -215,10 +219,12 @@ class AdversarialDebiasing(Transformer):
         return self
 
     def predict(self, dataset):
-        """Obtain the predictions for the provided dataset using the fair classifier learned.
+        """Obtain the predictions for the provided dataset using the fair
+        classifier learned.
 
         Args:
-            dataset (BinaryLabelDataset): Dataset containing labels that needs to be transformed.
+            dataset (BinaryLabelDataset): Dataset containing labels that needs
+                to be transformed.
         Returns:
             dataset (BinaryLabelDataset): Transformed dataset.
         """
@@ -261,8 +267,3 @@ class AdversarialDebiasing(Transformer):
         dataset_new.labels = temp_labels.copy()
 
         return dataset_new
-
-    def fit_predict(self, dataset):
-        """ fit and predict methods sequentially """
-
-        return self.fit(dataset).predict(dataset)

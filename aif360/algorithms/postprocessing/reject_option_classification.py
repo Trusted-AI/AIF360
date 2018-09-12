@@ -13,39 +13,40 @@ from aif360.metrics import BinaryLabelDatasetMetric, ClassificationMetric
 
 class RejectOptionClassification(Transformer):
 
-    """Reject option classification is a postprocessing technique that gives favorable outcomes to unpriviliged
-    groups and unfavorable outcomes to priviliged groups in a confidence band around the decision boundary with
-    the highest uncertainty [10]_.
-     
+    """Reject option classification is a postprocessing technique that gives
+    favorable outcomes to unpriviliged groups and unfavorable outcomes to
+    priviliged groups in a confidence band around the decision boundary with the
+    highest uncertainty [10]_.
+
     References:
-        .. [10] F. Kamiran, A. Karim, and X. Zhang, "Decision Theory for Discrimination-Aware Classification,"
-            IEEE International Conference on Data Mining, 2012.
+        .. [10] F. Kamiran, A. Karim, and X. Zhang, "Decision Theory for
+           Discrimination-Aware Classification," IEEE International Conference
+           on Data Mining, 2012.
     """
 
-    def __init__(self, unprivileged_groups, privileged_groups, 
+    def __init__(self, unprivileged_groups, privileged_groups,
                 low_class_thresh=0.01, high_class_thresh=0.99,
                 num_class_thresh=100, num_ROC_margin=50,
                 metric_name="Statistical parity difference",
-                metric_ub = 0.05, metric_lb = -0.05):
+                metric_ub=0.05, metric_lb=-0.05):
         """
         Args:
             unprivileged_groups (dict or list(dict)): Representation for
                 unprivileged group.
-            privileged_groups (dict or list(dict)): Representation for privileged
-                group.
-            low_class_thresh (float): Smallest classification threshold to use in
-                the optimization. Should be between 0. and 1.
-            high_class_thresh (float): Highest classification threshold to use in
-                the optimization. Should be between 0. and 1.
-            num_class_thresh (int): Number of classification thresholds between 
-                low_class_thresh and high_class_thresh for the optimization search.
-                Should be > 0.
-            num_ROC_margin (int): Number of relevant ROC margins to be used in the 
-                optimization search.
-                Should be > 0.
+            privileged_groups (dict or list(dict)): Representation for
+                privileged group.
+            low_class_thresh (float): Smallest classification threshold to use
+                in the optimization. Should be between 0. and 1.
+            high_class_thresh (float): Highest classification threshold to use
+                in the optimization. Should be between 0. and 1.
+            num_class_thresh (int): Number of classification thresholds between
+                low_class_thresh and high_class_thresh for the optimization
+                search. Should be > 0.
+            num_ROC_margin (int): Number of relevant ROC margins to be used in
+                the optimization search. Should be > 0.
             metric_name (str): Name of the metric to use for the optimization.
-                    Allowed options are "Statistical parity difference",
-                    "Average odds difference", "Equal opportunity difference".
+                Allowed options are "Statistical parity difference",
+                "Average odds difference", "Equal opportunity difference".
             metric_ub (float): Upper bound of constraint on the metric value
             metric_lb (float): Lower bound of constraint on the metric value
         """
@@ -57,11 +58,12 @@ class RejectOptionClassification(Transformer):
             metric_name=metric_name)
 
         allowed_metrics = ["Statistical parity difference",
-                           "Average odds difference", "Equal opportunity difference"]
+                           "Average odds difference",
+                           "Equal opportunity difference"]
 
         self.unprivileged_groups = unprivileged_groups
         self.privileged_groups = privileged_groups
-        
+
         self.low_class_thresh = low_class_thresh
         self.high_class_thresh = high_class_thresh
         self.num_class_thresh = num_class_thresh
@@ -78,20 +80,22 @@ class RejectOptionClassification(Transformer):
             (self.low_class_thresh >= self.high_class_thresh) or\
             (self.num_class_thresh < 1) or (self.num_ROC_margin < 1)):
             raise ValueError("Input parameter values out of bounds")
-        
+
         if metric_name not in allowed_metrics:
             raise ValueError("metric name not in the list of allowed metrics")
-        
+
     def fit(self, dataset_true, dataset_pred):
-        """Estimates the optimal classification threshold and margin for
-        reject option classification that optimizes the metric provided.
+        """Estimates the optimal classification threshold and margin for reject
+        option classification that optimizes the metric provided.
 
         Note:
             The `fit` function is a no-op for this algorithm.
 
         Args:
-            dataset_true (BinaryLabelDataset): Dataset containing the true `labels`.
-            dataset_pred (BinaryLabelDataset): Dataset containing the predicted `scores`.
+            dataset_true (BinaryLabelDataset): Dataset containing the true
+                `labels`.
+            dataset_pred (BinaryLabelDataset): Dataset containing the predicted
+                `scores`.
 
         Returns:
             RejectOptionClassification: Returns self.
@@ -104,10 +108,10 @@ class RejectOptionClassification(Transformer):
 
         cnt = 0
         # Iterate through class thresholds
-        for class_thresh in np.linspace(self.low_class_thresh, 
-                                        self.high_class_thresh, 
+        for class_thresh in np.linspace(self.low_class_thresh,
+                                        self.high_class_thresh,
                                         self.num_class_thresh):
-            
+
             self.classification_threshold = class_thresh
             if class_thresh <= 0.5:
                 low_ROC_margin = 0.0
@@ -118,8 +122,8 @@ class RejectOptionClassification(Transformer):
 
                 # Iterate through ROC margins
                 for ROC_margin in np.linspace(
-                                    low_ROC_margin, 
-                                    high_ROC_margin, 
+                                    low_ROC_margin,
+                                    high_ROC_margin,
                                     self.num_ROC_margin):
                     self.ROC_margin = ROC_margin
 
@@ -131,10 +135,10 @@ class RejectOptionClassification(Transformer):
                                                  unprivileged_groups=self.unprivileged_groups,
                                                  privileged_groups=self.privileged_groups)
                     classified_transf_metric = ClassificationMetric(
-                                                 dataset_true, 
+                                                 dataset_true,
                                                  dataset_transf_pred,
                                                  unprivileged_groups=self.unprivileged_groups,
-                                                 privileged_groups=self.privileged_groups)   
+                                                 privileged_groups=self.privileged_groups)
 
                     ROC_margin_arr[cnt] = self.ROC_margin
                     class_thresh_arr[cnt] = self.classification_threshold
@@ -147,38 +151,37 @@ class RejectOptionClassification(Transformer):
                     elif self.metric_name == "Average odds difference":
                         fair_metric_arr[cnt] = classified_transf_metric.average_odds_difference()
                     elif self.metric_name == "Equal opportunity difference":
-                        fair_metric_arr[cnt] = classified_transf_metric.equal_opportunity_difference()    
-                    
+                        fair_metric_arr[cnt] = classified_transf_metric.equal_opportunity_difference()
+
                     cnt += 1
 
-        rel_inds = np.logical_and(fair_metric_arr >= self.metric_lb, 
+        rel_inds = np.logical_and(fair_metric_arr >= self.metric_lb,
                                   fair_metric_arr <= self.metric_ub)
         if any(rel_inds):
-            best_ind = np.where(balanced_acc_arr[rel_inds] 
+            best_ind = np.where(balanced_acc_arr[rel_inds]
                                 == np.max(balanced_acc_arr[rel_inds]))[0][0]
         else:
             warn("Unable to satisy fairness constraints")
             rel_inds = np.ones(len(fair_metric_arr), dtype=bool)
-            best_ind = np.where(fair_metric_arr[rel_inds] 
+            best_ind = np.where(fair_metric_arr[rel_inds]
                                 == np.min(fair_metric_arr[rel_inds]))[0][0]
-            
+
         self.ROC_margin = ROC_margin_arr[rel_inds][best_ind]
         self.classification_threshold = class_thresh_arr[rel_inds][best_ind]
 
         return self
 
     def predict(self, dataset):
-        """Obtain fair predictions using the ROC method
+        """Obtain fair predictions using the ROC method.
 
         Args:
             dataset (BinaryLabelDataset): Dataset containing scores that will
-            be used to compute predicted labels.
+                be used to compute predicted labels.
 
         Returns:
-            dataset_pred (BinaryLabelDataset): Output dataset with potentially fair 
-            predictions obtain using the ROC method.
+            dataset_pred (BinaryLabelDataset): Output dataset with potentially
+            fair predictions obtain using the ROC method.
         """
-        
         dataset_new = dataset.copy(deepcopy=False)
 
         fav_pred_inds = (dataset.scores > self.classification_threshold)
@@ -190,7 +193,7 @@ class RejectOptionClassification(Transformer):
 
         # Indices of critical region around the classification boundary
         crit_region_inds = np.logical_and(
-                dataset.scores <= self.classification_threshold+self.ROC_margin, 
+                dataset.scores <= self.classification_threshold+self.ROC_margin,
                 dataset.scores > self.classification_threshold-self.ROC_margin)
 
         # Indices of privileged and unprivileged groups
@@ -205,9 +208,9 @@ class RejectOptionClassification(Transformer):
 
         # New, fairer labels
         dataset_new.labels = y_pred
-        dataset_new.labels[np.logical_and(crit_region_inds, 
+        dataset_new.labels[np.logical_and(crit_region_inds,
                             cond_priv.reshape(-1,1))] = dataset.unfavorable_label
-        dataset_new.labels[np.logical_and(crit_region_inds, 
+        dataset_new.labels[np.logical_and(crit_region_inds,
                             cond_unpriv.reshape(-1,1))] = dataset.favorable_label
 
         return dataset_new
@@ -216,7 +219,7 @@ class RejectOptionClassification(Transformer):
         """fit and predict methods sequentially."""
         return self.fit().predict(dataset)
 
-# Function to obtain the pareto frontier 
+# Function to obtain the pareto frontier
 def _get_pareto_frontier(costs, return_mask = True):  # <- Fastest for many points
     """
     :param costs: An (n_points, n_costs) array
@@ -224,7 +227,7 @@ def _get_pareto_frontier(costs, return_mask = True):  # <- Fastest for many poin
     :return: An array of indices of pareto-efficient points.
         If return_mask is True, this will be an (n_points, ) boolean array
         Otherwise it will be a (n_efficient_points, ) integer array of indices.
-        
+
     adapted from: https://stackoverflow.com/questions/32791911/fast-calculation-of-pareto-front-in-python
     """
     is_efficient = np.arange(costs.shape[0])

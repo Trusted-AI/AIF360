@@ -1,5 +1,5 @@
 :mod:`aif360.algorithms`
-=======================
+========================
 
 .. automodule:: aif360.algorithms
 

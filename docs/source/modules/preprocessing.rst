@@ -1,5 +1,5 @@
 :mod:`aif360.algorithms.preprocessing`
-=====================================
+======================================
 
 .. automodule:: aif360.algorithms.preprocessing
 

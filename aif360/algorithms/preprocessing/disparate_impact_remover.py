@@ -14,8 +14,10 @@ class DisparateImpactRemover(Transformer):
     [1]_.
 
     References:
-        .. [1] Feldman, et al. "Certifying and removing disparate impact."
-           KDD 2015. https://arxiv.org/pdf/1412.3756.pdf
+        .. [1] M. Feldman, S. A. Friedler, J. Moeller, C. Scheidegger, and
+           S. Venkatasubramanian, "Certifying and removing disparate impact."
+           ACM SIGKDD International Conference on Knowledge Discovery and Data
+           Mining, 2015.
     """
 
     def __init__(self, repair_level=1.0):
