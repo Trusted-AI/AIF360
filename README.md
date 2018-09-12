@@ -1,7 +1,5 @@
 # AI Fairness 360 (AIF360 v0.1.0)
 
-[![Build Status](https://travis.ibm.com/samya/samya-bias-toolbox.svg?token=SxyZi76xHxfUp3FxEWab&branch=master)](https://travis.ibm.com/samya/samya-bias-toolbox)
-
 Welcome to [AI Fairness 360](http://aif360.mybluemix.net/). We hope you will use it and contribute to it to help engender trust in AI and make the world more equitable for all.
 
 Machine learning models are increasingly used to inform high stakes decisions about people. Although machine learning, by its very nature, is always a form of statistical discrimination, the discrimination becomes objectionable when it places certain privileged groups at systematic advantage and certain unprivileged groups at systematic disadvantage. Biases in training data, due to either prejudice in labels or under-/over-sampling, yields models with unwanted bias ([Barocas and Selbst](http://www.californialawreview.org/2-big-data/)).
