@@ -1,11 +1,17 @@
 from setuptools import setup, find_packages
 
+with open("README.md", "r") as fh:
+    long_description = fh.read()
+
 setup(name='aif360',
-      version='0.1',
+      version='0.1.0',
       description='IBM AI Fairness 360',
-      author='IBM Corporation',
-      author_email='IBM@ibm.com',
-      license='Apache 2.0',
+      author='aif360 developers',
+      author_email='aif360@us.ibm.com',
+      url='https://github.com/IBM/AIF360',
+      long_description=long_description,
+      long_description_content_type='text/markdown',
+      license='Apache License 2.0',
       packages=find_packages(),
       install_requires=[
           'numpy',
