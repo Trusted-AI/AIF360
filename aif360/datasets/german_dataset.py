@@ -49,9 +49,9 @@ class GermanDataset(StandardDataset):
         proposed by Kamiran and Calders [1]_.
 
         References:
-        .. [1] F. Kamiran and T. Calders, "Classifying without discriminating,"
-           2nd International Conference on Computer, Control and Communication,
-           2009.
+            .. [1] F. Kamiran and T. Calders, "Classifying without
+               discriminating," 2nd International Conference on Computer,
+               Control and Communication, 2009.
 
         Examples:
             In some cases, it may be useful to keep track of a mapping from
