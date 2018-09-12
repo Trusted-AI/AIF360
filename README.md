@@ -1,6 +1,6 @@
 # AI Fairness 360 (AIF360 v0.1.0)
 
-[![Build Status](https://travis-ci.org/IBM/aif360.svg?branch=master)](https://travis-ci.org/IBM/AIF360)
+[![Build Status](https://travis-ci.com/IBM/AIF360.svg?branch=master)](https://travis-ci.com/IBM/AIF360)
 
 Welcome to [AI Fairness 360](http://aif360.mybluemix.net/). We hope you will use it and contribute to it to help engender trust in AI and make the world more equitable for all.
 
