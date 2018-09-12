@@ -17,12 +17,6 @@ from aif360.datasets import GermanDataset
 from aif360.metrics import BinaryLabelDatasetMetric
 
 
-def test_bank():
-    bd = BankDataset()
-    # print(bd)
-    bldm = BinaryLabelDatasetMetric(bd)
-    assert bldm.num_instances() == 41188-10700
-
 def test_compas():
     # just test that there are no errors for default loading...
     cd = CompasDataset()
