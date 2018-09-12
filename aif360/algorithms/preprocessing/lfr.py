@@ -12,15 +12,16 @@ from aif360.algorithms.preprocessing.lfr_helpers import helpers as lfr_helpers
 
 
 class LFR(Transformer):
-    """Learning fair representations is a
-     pre-processing technique that finds a latent representation which encodes 
-     the data well but obfuscates information about protected attributes [2]_.
-     
-     References:
-        .. [2] R. Zemel, Y. Wu, K. Swersky, T. Pitassi, and C. Dwork,  "Learning Fair Representations."
-         International Conference on Machine Learning, 2013.
+    """Learning fair representations is a pre-processing technique that finds a
+    latent representation which encodes the data well but obfuscates information
+    about protected attributes [2]_.
 
-     Based on code from https://github.com/zjelveh/learning-fair-representations
+    References:
+        .. [2] R. Zemel, Y. Wu, K. Swersky, T. Pitassi, and C. Dwork,  "Learning
+           Fair Representations." International Conference on Machine Learning,
+           2013.
+
+    Based on code from https://github.com/zjelveh/learning-fair-representations
     """
 
     def __init__(self,

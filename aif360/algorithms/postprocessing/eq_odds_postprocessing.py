@@ -1,36 +1,33 @@
-"""
-Original work Copyright (c) 2017 Geoff Pleiss
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-
-Modified work Copyright 2018 IBM Corporation
-
-Licensed under the Apache License, Version 2.0 (the "License"); you may not
-use this file except in compliance with the License. You may obtain a copy of 
-the License at http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software distributed
-under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR 
-CONDITIONS OF ANY KIND, either express or implied. See the License for the 
-specific language governing permissions and limitations under the License. 
-"""
-
+# Original work Copyright (c) 2017 Geoff Pleiss
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+#
+# Modified work Copyright 2018 IBM Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy of
+# the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
@@ -44,15 +41,17 @@ from aif360.metrics import ClassificationMetric, utils
 
 
 class EqOddsPostprocessing(Transformer):
+    """Equalized odds postprocessing is a post-processing technique that solves
+    a linear program to find probabilities with which to change output labels to
+    optimize equalized odds [8]_ [9]_.
 
-    """Equalized odds postprocessing is a post-processing technique that solves a linear program to find probabilities
-    with which to change output labels to optimize equalized odds [8]_ [9]_.
-     
     References:
-        .. [8] M. Hardt, E. Price, and N. Srebro,"Equality of Opportunity in Supervised Learning,"
-            Conference on Neural Information Processing Systems, 2016.
-        .. [9] G. Pleiss, M. Raghavan, F. Wu, J. Kleinberg, and K. Q. Weinberger, "On Fairness and Calibration,"
-         Conference on Neural Information Processing Systems, 2017. 
+        .. [8] M. Hardt, E. Price, and N. Srebro, "Equality of Opportunity in
+           Supervised Learning," Conference on Neural Information Processing
+           Systems, 2016.
+        .. [9] G. Pleiss, M. Raghavan, F. Wu, J. Kleinberg, and
+           K. Q. Weinberger, "On Fairness and Calibration," Conference on Neural
+           Information Processing Systems, 2017.
     """
 
     def __init__(self, unprivileged_groups, privileged_groups, seed=None):
@@ -75,7 +74,8 @@ class EqOddsPostprocessing(Transformer):
         self.privileged_groups = privileged_groups
 
     def fit(self, dataset_true, dataset_pred):
-        """Compute parameters for equalizing odds using true and predicted labels.
+        """Compute parameters for equalizing odds using true and predicted
+        labels.
 
         Args:
             true_dataset (BinaryLabelDataset): Dataset containing true labels.
@@ -197,7 +197,8 @@ class EqOddsPostprocessing(Transformer):
         return self
 
     def predict(self, dataset):
-        """Perturb the predicted labels to obtain new labels that satisfy equalized odds constraints.
+        """Perturb the predicted labels to obtain new labels that satisfy
+        equalized odds constraints.
 
         Args:
             dataset (BinaryLabelDataset): Dataset containing labels that needs
@@ -228,9 +229,9 @@ class EqOddsPostprocessing(Transformer):
         np.random.shuffle(self_pn_indices)
 
         n2p_indices = self_pn_indices[:int(len(self_pn_indices) * sn2p)]
-        self_fair_pred[n2p_indices] = dataset.favorable_label 
+        self_fair_pred[n2p_indices] = dataset.favorable_label
         p2n_indices = self_pp_indices[:int(len(self_pp_indices) * (1 - sp2p))]
-        self_fair_pred[p2n_indices] = dataset.unfavorable_label 
+        self_fair_pred[p2n_indices] = dataset.unfavorable_label
 
         othr_fair_pred = dataset.labels[cond_vec_unpriv].copy()
         othr_pp_indices, _ = np.nonzero(

@@ -1,27 +1,22 @@
+# Original work Copyright 2017 Carlos Scheidegger, Sorelle Friedler, Suresh Venkatasubramanian
+# Modified work Copyright 2018 IBM Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy of
+# the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
 """
-Original work Copyright 2017 Carlos Scheidegger, Sorelle Friedler, Suresh Venkatasubramanian
-Modified work Copyright 2018 IBM Corporation
-
-Licensed under the Apache License, Version 2.0 (the "License"); you may not
-use this file except in compliance with the License. You may obtain a copy of 
-the License at http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software distributed
-under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR 
-CONDITIONS OF ANY KIND, either express or implied. See the License for the 
-specific language governing permissions and limitations under the License. 
-"""
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-
-"""The code for PrejudiceRemover is a modification of, and based on, the
+The code for PrejudiceRemover is a modification of, and based on, the
 implementation of Kamishima Algorithm by fairness-comparison.
 
 See: https://github.com/algofairness/fairness-comparison/tree/master/fairness/algorithms/kamishima
 
-Notes from fairness-comparison's KamishimaAlgorithm.py on changes made to original Kamishima code.
+Notes from fairness-comparison's KamishimaAlgorithm.py on changes made to
+original Kamishima code.
 
     - The original code depends on python2's commands library. We hacked
     it to hve python3 support by adding a minimal commands.py module with
@@ -52,11 +47,16 @@ Notes from fairness-comparison's KamishimaAlgorithm.py on changes made to origin
     (the target classes to predict), then pr.py:264 will take the
     second-to-last column as the sensitive attribute, and pr.py:265-268
     will take the remaining columns as non-sensitive.
-    
-    The code in kamfadm-2012ecmlpkdd/ is the (fairness-comparison) modified version of the original ECML paper code
-    
-    See: changes-to-downloaded-code.diff and KamishimaAlgorithm.py for more details
+
+The code in kamfadm-2012ecmlpkdd/ is the (fairness-comparison) modified version
+of the original ECML paper code.
+
+See: changes-to-downloaded-code.diff and KamishimaAlgorithm.py for more details.
 """
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
 
 import numpy as np
 import pandas as pd
@@ -68,14 +68,15 @@ from aif360.algorithms import Transformer
 
 
 class PrejudiceRemover(Transformer):
-    """
-     Prejudice remover is an in-processing technique that adds a discrimination-aware
-     regularization term to the learning objective [6]_.
-     
-     References:
-         .. [6] T. Kamishima, S. Akaho, H. Asoh, and J. Sakuma, "Fairness-Aware Classifier with Prejudice Remover
-            Regularizer," Joint European Conference on Machine Learning and Knowledge Discovery in Databases, 2012.
-    
+    """Prejudice remover is an in-processing technique that adds a
+    discrimination-aware regularization term to the learning objective [6]_.
+
+    References:
+        .. [6] T. Kamishima, S. Akaho, H. Asoh, and J. Sakuma, "Fairness-Aware
+           Classifier with Prejudice Remover Regularizer," Joint European
+           Conference on Machine Learning and Knowledge Discovery in Databases,
+           2012.
+
     """
 
     def __init__(self, eta=1.0, sensitive_attr="", class_attr=""):
@@ -223,15 +224,13 @@ class PrejudiceRemover(Transformer):
         m = np.loadtxt(output_name)
         os.unlink(output_name)
 
-        """
-        Columns of Outputs: (as per Kamishima implementation...predict_lr.py)
-
-        1. true sample class number
-        2. predicted class number
-        3. sensitive feature
-        4. class 0 probability
-        5. class 1 probability
-        """
+        # Columns of Outputs: (as per Kamishima implementation...predict_lr.py)
+        #
+        # 1. true sample class number
+        # 2. predicted class number
+        # 3. sensitive feature
+        # 4. class 0 probability
+        # 5. class 1 probability
         predictions = m[:, 1]
         prediction_probs = m[:, 3:5]
 

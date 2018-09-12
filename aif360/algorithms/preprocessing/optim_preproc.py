@@ -1,17 +1,14 @@
-"""
-Original work Copyright 2017 Flavio Calmon
-Modified work Copyright 2018 IBM Corporation
-
-Licensed under the Apache License, Version 2.0 (the "License"); you may not
-use this file except in compliance with the License. You may obtain a copy of 
-the License at http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software distributed
-under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR 
-CONDITIONS OF ANY KIND, either express or implied. See the License for the 
-specific language governing permissions and limitations under the License. 
-"""
-
+# Original work Copyright 2017 Flavio Calmon
+# Modified work Copyright 2018 IBM Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy of
+# the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
@@ -23,19 +20,21 @@ import pandas as pd
 from logging import warn
 
 from aif360.algorithms import Transformer
-from aif360.datasets import StructuredDataset
+# from aif360.datasets import StructuredDataset
 from aif360.datasets import BinaryLabelDataset
 
 
 class OptimPreproc(Transformer):
-    """Optimized preprocessing is a preprocessing technique that
-    learns a probabilistic transformation that edits the features and
-    labels in the data with group fairness, individual distortion, and data
-    fidelity constraints and objectives [3]_.
+    """Optimized preprocessing is a preprocessing technique that learns a
+    probabilistic transformation that edits the features and labels in the data
+    with group fairness, individual distortion, and data fidelity constraints
+    and objectives [3]_.
 
     References:
-        .. [3] F. P. Calmon, D. Wei, B. Vinzamuri, K. Natesan Ramamurthy, and K. R. Varshney. "Optimized
-           Pre-Processing for Discrimination Prevention." Conference on Neural Information Processing Systems, 2017.
+        .. [3] F. P. Calmon, D. Wei, B. Vinzamuri, K. Natesan Ramamurthy, and
+           K. R. Varshney. "Optimized Pre-Processing for Discrimination
+           Prevention." Conference on Neural Information Processing Systems,
+           2017.
 
     Based on code available at: https://github.com/fair-preprocessing/nips2017
     """
@@ -51,12 +50,12 @@ class OptimPreproc(Transformer):
             privileged_groups (dict): Representation for privileged group.
             verbose (bool, optional): Verbosity flag for optimization.
             seed (int, optional): Seed to make `fit` and `predict` repeatable.
-        
+
         Note:
-            This algorithm does not use the privileged and unprivileged groups 
-            that are specified during initialization yet. Instead, it automatically
-            attempts to reduce statistical parity difference between all possible
-            combinations of groups in the dataset.
+            This algorithm does not use the privileged and unprivileged groups
+            that are specified during initialization yet. Instead, it
+            automatically attempts to reduce statistical parity difference
+            between all possible combinations of groups in the dataset.
         """
 
         super(OptimPreproc, self).__init__(optimizer=optimizer,
@@ -132,14 +131,13 @@ class OptimPreproc(Transformer):
         return self
 
     def transform(self, dataset, sep='=', transform_Y=True):
-        """Transform the dataset to a new dataset based on the
-        estimated transformation.
+        """Transform the dataset to a new dataset based on the estimated
+        transformation.
 
         Args:
-            dataset (BinaryLabelDataset): Dataset containing labels
-                that needs to be transformed.
-            transform_Y (bool): Flag that mandates transformation
-                of Y (labels)
+            dataset (BinaryLabelDataset): Dataset containing labels that needs
+                to be transformed.
+            transform_Y (bool): Flag that mandates transformation of Y (labels).
         """
 
         if len(np.unique(dataset.instance_weights)) > 1:
@@ -234,18 +232,16 @@ class OptimPreproc(Transformer):
 ##############################
 def _apply_randomized_mapping(df, dfMap,
                               features=[], random_seed=None):
-    """ Apply Randomized mapping to create a new dataframe
+    """Apply Randomized mapping to create a new dataframe
 
-        Args:
-            df (DataFrame): Input dataframe
-            dfMap (DataFrame): Mapping parameters
-            features (list): Feature names for which the mapping
-                needs to be applied
-            random_seed (int): Random seed
+    Args:
+        df (DataFrame): Input dataframe
+        dfMap (DataFrame): Mapping parameters
+        features (list): Feature names for which the mapping needs to be applied
+        random_seed (int): Random seed
 
-        Returns:
-            Perturbed version of df according to the randomized
-                mapping
+    Returns:
+        Perturbed version of df according to the randomizedmapping
     """
 
     if random_seed is not None:

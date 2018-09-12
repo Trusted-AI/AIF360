@@ -10,12 +10,14 @@ from aif360.metrics import utils
 
 
 class Reweighing(Transformer):
-    """Reweighing is a preprocessing technique that Weights the examples in each (group, label)
-     combination differently to ensure fairness before classification [4]_.
-     
-     References:
-        .. [4] F. Kamiran and T. Calders,  "Data Preprocessing Techniques for Classification without Discrimination,"
-            Knowledge and Information Systems, 2012.
+    """Reweighing is a preprocessing technique that Weights the examples in each
+    (group, label) combination differently to ensure fairness before
+    classification [4]_.
+
+    References:
+        .. [4] F. Kamiran and T. Calders,  "Data Preprocessing Techniques for
+           Classification without Discrimination," Knowledge and Information
+           Systems, 2012.
     """
 
     def __init__(self, unprivileged_groups, privileged_groups):
@@ -74,8 +76,8 @@ class Reweighing(Transformer):
         return self
 
     def transform(self, dataset):
-        """Transform the dataset to a new dataset based on the
-        estimated transformation.
+        """Transform the dataset to a new dataset based on the estimated
+        transformation.
 
         Args:
             dataset (BinaryLabelDataset): Dataset that needs to be transformed.
