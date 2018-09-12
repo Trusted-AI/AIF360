@@ -18,31 +18,32 @@ We have developed the package with extensibility in mind.  We encourage the cont
 
 ## Supported bias mitigation algorithms
 
-* Flavio P. Calmon, Dennis Wei, Bhanukiran Vinzamuri, Karthikeyan Natesan Ramamurthy, and Kush R. Varshney, “[Optimized Pre-Processing for Discrimination Prevention](http://papers.nips.cc/paper/6988-optimized-pre-processing-for-discrimination-prevention),” Conference on Neural Information Processing Systems, 2017.
+* Optimized Preprocessing ([Calmon et al., 2017](http://papers.nips.cc/paper/6988-optimized-pre-processing-for-discrimination-prevention))
 
 
-* Michael Feldman, Sorelle A. Friedler, John Moeller, Carlos Scheidegger, and Suresh Venkatasubramanian, “[Certifying and Removing Disparate Impact](https://doi.org/10.1145/2783258.2783311),” ACM SIGKDD International Conference on Knowledge Discovery and Data Mining, 2015.
+* Disparate Impact Remover ([Feldman et al., 2015](https://doi.org/10.1145/2783258.2783311)) 
 
 
-* Moritz Hardt, Eric Price, and Nathan Srebro, “[Equality of Opportunity in Supervised Learning](https://papers.nips.cc/paper/6374-equality-of-opportunity-in-supervised-learning),” Conference on Neural Information Processing Systems, 2016.
+* Equalized Odds Postprocessing ([Hardt et al., 2016](https://papers.nips.cc/paper/6374-equality-of-opportunity-in-supervised-learning)) 
 
 
-* Faisal Kamiran and Toon Calders, “[Data Preprocessing Techniques for Classification without Discrimination](http://doi.org/10.1007/s10115-011-0463-8),” Knowledge and Information Systems, 2012.
+* Reweighing ([Kamiran and Calders, 2012](http://doi.org/10.1007/s10115-011-0463-8))
 
 
-* Faisal Kamiran, Asim Karim, and Xiangliang Zhang, “[Decision Theory for Discrimination-Aware Classification](https://doi.org/10.1109/ICDM.2012.45),” IEEE International Conference on Data Mining, 2012.
+* Reject Option Classification ([Kamiran et al., 2012](https://doi.org/10.1109/ICDM.2012.45))
 
 
-* Toshihiro Kamishima, Shotaro Akaho, Hideki Asoh, and Jun Sakuma, “[Fairness-Aware Classifier with Prejudice Remover Regularizer](https://rd.springer.com/chapter/10.1007/978-3-642-33486-3_3),” Joint European Conference on Machine Learning and Knowledge Discovery in Databases, 2012.
+* Prejudice Remover Regularizer ([Kamishima et al., 2012](https://rd.springer.com/chapter/10.1007/978-3-642-33486-3_3))
 
 
-* Geoff Pleiss, Manish Raghavan, Felix Wu, Jon Kleinberg, and Kilian Q. Weinberger, “[On Fairness and Calibration](https://papers.nips.cc/paper/7151-on-fairness-and-calibration),” Conference on Neural Information Processing Systems, 2017.
+* Calibrated Equalized Odds Postprocessing ([Pleiss et al., 2017](https://papers.nips.cc/paper/7151-on-fairness-and-calibration))
 
 
-* Richard Zemel, Yu (Ledell) Wu, Kevin Swersky, Toniann Pitassi, and Cynthia Dwork, “[Learning Fair Representations](http://proceedings.mlr.press/v28/zemel13.html),” International Conference on Machine Learning, 2013.
+* Learning Fair Representations ([Zemel et al., 2013](http://proceedings.mlr.press/v28/zemel13.html))
 
 
-* Brian Hu Zhang, Blake Lemoine, and Margaret Mitchell, “[Mitigating Unwanted Biases with Adversarial Learning](http://www.aies-conference.com/wp-content/papers/main/AIES_2018_paper_162.pdf),” AAAI/ACM Conference on Artificial Intelligence, Ethics, and Society, 2018.
+* Adversarial Debiasing ([Zhang et al., 2018](http://www.aies-conference.com/wp-content/papers/main/AIES_2018_paper_162.pdf))
+
 
 ## Supported fairness metrics
 
@@ -52,7 +53,7 @@ We have developed the package with extensibility in mind.  We encourage the cont
 * Comprehensive set of sample distortion metrics
 
 
-* Till Speicher, Hoda Heidari, Nina Grgic-Hlaca, Krishna P. Gummadi, Adish Singla, Adrian Weller, and Muhammad Bilal Zafar, “[A Unified Approach to Quantifying Algorithmic Unfairness: Measuring Individual & Group Unfairness via Inequality Indices](https://doi.org/10.1145/3219819.3220046),” ACM SIGKDD International Conference on Knowledge Discovery and Data Mining, 2018.
+* Generalized Entropy Index ([Speicher et al., 2018](https://doi.org/10.1145/3219819.3220046)) 
 
 
 ## Setup
