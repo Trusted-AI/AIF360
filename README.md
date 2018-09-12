@@ -2,18 +2,13 @@
 
 [![Build Status](https://travis-ci.com/IBM/AIF360.svg?branch=master)](https://travis-ci.com/IBM/AIF360)
 
-Welcome to [AI Fairness 360](http://aif360.mybluemix.net/). We hope you will use it and contribute to it to help engender trust in AI and make the world more equitable for all.
-
-Machine learning models are increasingly used to inform high stakes decisions about people. Although machine learning, by its very nature, is always a form of statistical discrimination, the discrimination becomes objectionable when it places certain privileged groups at systematic advantage and certain unprivileged groups at systematic disadvantage. Biases in training data, due to either prejudice in labels or under-/over-sampling, yields models with unwanted bias ([Barocas and Selbst](http://www.californialawreview.org/2-big-data/)).
-
-
-The AI Fairness 360 Python package includes a comprehensive set of metrics for datasets and models to test for biases, explanations for these metrics, and algorithms to mitigate bias in datasets and models. The [AI Fairness 360 interactive experience](http://aif360.mybluemix.net/data) provides a gentle introduction to the concepts and capabilities. The [tutorials and other notebooks](./examples) offer a deeper, data scientist-oriented introduction. The complete API is also available.
-
+The AI Fairness 360 toolkit (AIF-360) is an open-source library to help detect and remove bias in machine learning models. The AI Fairness 360 Python package includes a comprehensive set of metrics for datasets and models to test for biases, explanations for these metrics, and algorithms to mitigate bias in datasets and models. The [AI Fairness 360 interactive experience](http://aif360.mybluemix.net/data) provides a gentle introduction to the concepts and capabilities. The [tutorials and other notebooks](./examples) offer a deeper, data scientist-oriented introduction. The complete API is also available.
 
 Being a comprehensive set of capabilities, it may be confusing to figure out which metrics and algorithms are most appropriate for a given use case. To help, we have created some [guidance material](http://aif360.mybluemix.net/resources#guidance) that can be consulted.
 
+We have developed the package with extensibility in mind. This library is still in development. We encourage the contribution of your metrics, explainers, and debiasing algorithms. 
 
-We have developed the package with extensibility in mind.  We encourage the contribution of your metrics, explainers, and debiasing algorithms. Please join the community to get started as a contributor. Get in touch with us on [Slack](https://aif360.slack.com) (invitation [here](https://join.slack.com/t/aif360/shared_invite/enQtNDI5Nzg2NTk0MTMyLTU4N2UwODVmMTYxZWMwZmEzZmZkODdjMTk5NWUwZDNhNDhlMzNkZDNhOTYwZDNlODc1MTdjYzY5OTU2OWQ1ZmY))!
+Get in touch with us on [Slack](https://aif360.slack.com) (invitation [here](https://join.slack.com/t/aif360/shared_invite/enQtNDI5Nzg2NTk0MTMyLTU4N2UwODVmMTYxZWMwZmEzZmZkODdjMTk5NWUwZDNhNDhlMzNkZDNhOTYwZDNlODc1MTdjYzY5OTU2OWQ1ZmY))!
 
 
 ## Supported bias mitigation algorithms
