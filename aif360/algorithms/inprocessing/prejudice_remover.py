@@ -93,6 +93,14 @@ class PrejudiceRemover(Transformer):
         self.class_attr = class_attr
 
     def fit(self, dataset):
+        """Learns the regularized logistic regression model.
+
+        Args:
+            dataset (BinaryLabelDataset): Dataset containing true labels.
+
+        Returns:
+            PrejudiceRemover: Returns self.
+        """        
         data = np.column_stack([dataset.features, dataset.labels])
         columns = dataset.feature_names + dataset.label_names
         train_df = pd.DataFrame(data=data, columns=columns)
@@ -102,18 +110,9 @@ class PrejudiceRemover(Transformer):
 
         if not self.sensitive_attr:
             self.sensitive_attr = all_sensitive_attributes[0]
-        # else:
-        #     single_sensitive_value = self.sensitive_attr
 
         if not self.class_attr:
             self.class_attr = dataset.label_names[0]
-        # else:
-        #     class_attr = self.class_attr
-
-        # positive_val = dataset.privileged_protected_attributes[0][0] #TODO same as above..specify class to use
-
-        # model_name = self._runTrain(train_df, class_attr, positive_val, all_sensitive_attributes,
-        #     single_sensitive_value, privileged_vals)
         model_name = self._runTrain(train_df, self.class_attr, None,
             all_sensitive_attributes, self.sensitive_attr, None)
 
@@ -121,16 +120,22 @@ class PrejudiceRemover(Transformer):
         return self
 
     def predict(self, dataset):
+        """Obtain the predictions for the provided dataset using the learned prejudice remover
+        model
+
+        Args:
+            dataset (BinaryLabelDataset): Dataset containing labels that needs
+                to be transformed.
+        Returns:
+            dataset (BinaryLabelDataset): Transformed dataset.
+        """
+
         data = np.column_stack([dataset.features, dataset.labels])
         columns = dataset.feature_names + dataset.label_names
         test_df = pd.DataFrame(data=data, columns=columns)
 
-        # privileged_vals = [1 for x in dataset.protected_attribute_names]
         all_sensitive_attributes = dataset.protected_attribute_names
-        # single_sensitive_value = all_sensitive_attributes[0] #TODO specify WHICH sensitive value to use
-        # class_attr = dataset.label_names[0] ##TO DO one should specify WHICH label to use
-        # positive_val = dataset.privileged_protected_attributes[0][0] #TODO same as above..specify class to use
-
+ 
         predictions, scores = self._runTest(test_df, self.class_attr, None,
             all_sensitive_attributes, self.sensitive_attr, None)
 
@@ -177,7 +182,6 @@ class PrejudiceRemover(Transformer):
         os.unlink(train_name)
         #os.unlink(model_name)
 
-        ## TODO Right now, it just returns the file created. Need to change to read the file and return the model
         return model_name
 
     def _runTest(self, test_df, class_attr, positive_class_val, sensitive_attrs,
