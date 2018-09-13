@@ -67,6 +67,15 @@ virtualenv -p python3 aif360             # or substitute your preferred version 
 source aif360/bin/activate
 ```
 
+For Windows, this is a little different:
+
+```pwsh
+md C:\virtualenvs             # this can be wherever you like storing virtualenvs
+cd C:\virtualenvs
+virtualenv -p python3 aif360  # or substitute your preferred version of Python
+aif360/Scripts/activate
+```
+
 The shell should now look like `(aif360) $`.
 
 Also, upgrade `pip` to be safe:
@@ -82,6 +91,8 @@ deactivate
 ```
 
 The prompt will return to `$ `.
+
+See the [Virtualenv User Guide](https://virtualenv.pypa.io/en/stable/userguide/) for more details.
 
 ### Linux and MacOS
 
