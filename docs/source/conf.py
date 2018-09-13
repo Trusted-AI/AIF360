@@ -46,7 +46,7 @@ intersphinx_mapping = {'numpy': ('http://docs.scipy.org/doc/numpy/', None),
 autoclass_content = 'both'
 
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ['_templates']
+templates_path = []
 
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a list of string:
@@ -59,8 +59,8 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'aif360'
-copyright = u'2018, IBM Research'
-author = u'IBM Research'
+copyright = u'2018, IBM Corporation'
+author = u'aif360 developers'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -114,7 +114,7 @@ if os.environ.get('READTHEDOCS') != 'True':
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['_static']
+html_static_path = []
 
 # Custom sidebar templates, must be a dictionary that maps document names
 # to template names.

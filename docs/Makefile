@@ -4,7 +4,7 @@
 # You can set these variables from the command line.
 SPHINXOPTS    =
 SPHINXBUILD   = python -msphinx
-SPHINXPROJ    = aif360-bias-toolbox
+SPHINXPROJ    = aif360
 SOURCEDIR     = source
 BUILDDIR      = build
 
