@@ -29,8 +29,6 @@ Below is a list of additional notebooks that demonstrate the use of AIF360.
 
 [demo_lime.ipynb](demo_lime.ipynb):  demonstrates how LIME - Local Interpretable Model-Agnostic Explanations - can be used with models learned with the AIF 360 toolkit to generate explanations for model predictions
 
-[demo_metrics_equalized_odds_postproc.ipynb](demo_metrics_equalized_odds_postproc.ipynb): demonstrates the use of fairness metrics and an odds-equalizing post-processing algorithm for bias mitigiation
-
 [demo_reject_option_classification.ipynb](demo_reject_option_classification.ipynb): demonstrates the use of the Reject Option Classification (ROC) post-processing algorithm for bias mitigation
 
 [demo_reweighing_preproc.ipynb](demo_reweighing_preproc.ipynb):  demonstrates the use of a reweighing pre-processing algorithm for bias mitigation
