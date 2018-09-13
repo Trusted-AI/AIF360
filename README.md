@@ -57,6 +57,43 @@ Get in touch with us on [Slack](https://aif360.slack.com) (invitation [here](htt
 
 Installation is easiest on a Unix system running Python 3. See the additional instructions for [Windows](#windows) and [Python 2](#python-2) as appropriate.
 
+### (Optional) Create a Virtualenv environment
+
+`aif360` requires specific versions of many Python packages which may conflict with other projects on your system. Virtualenv creates an isolated virtual Python environment where these dependencies may be installed safely. If you have trouble installing `aif360`, try this first.
+
+```bash
+mkdir ~/virtualenvs && cd ~/virtualenvs  # this can be wherever you like storing virtualenvs
+virtualenv -p python3 aif360             # or substitute your preferred version of Python
+source aif360/bin/activate
+```
+
+For Windows, this is a little different:
+
+```pwsh
+md C:\virtualenvs             # this can be wherever you like storing virtualenvs
+cd C:\virtualenvs
+virtualenv -p python3 aif360  # or substitute your preferred version of Python
+aif360/Scripts/activate
+```
+
+The shell should now look like `(aif360) $`.
+
+Also, upgrade `pip` to be safe:
+
+```bash
+(aif360)$ pip install --upgrade pip
+```
+
+To deactivate the environment, run
+
+```bash
+deactivate
+```
+
+The prompt will return to `$ `.
+
+See the [Virtualenv User Guide](https://virtualenv.pypa.io/en/stable/userguide/) for more details.
+
 ### Linux and MacOS
 
 #### Installation with `pip`
