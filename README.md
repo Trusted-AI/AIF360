@@ -112,6 +112,8 @@ Clone the latest version of this repository:
 git clone https://github.com/IBM/AIF360
 ```
 
+If you'd like to run the examples, download the datasets now and place them in their respective folders as described in [aif360/data/README.md](aif360/data/README.md).
+
 Then, navigate to the root directory of the project and run:
 
 ```bash
@@ -126,7 +128,9 @@ To run the example notebooks, install the additional requirements as follows:
 pip install -r requirements.txt
 ```
 
-Finally, follow the [Getting Started](https://pytorch.org) instructions from PyTorch to download and install the latest version for your machine.
+Then, follow the [Getting Started](https://pytorch.org) instructions from PyTorch to download and install the latest version for your machine.
+
+Finally, if you did not already, download the datasets as described in [aif360/data/README.md](aif360/data/README.md) but place them **in the appropriate sub-folder** in `~/virtualenvs/aif360/lib/pythonX.X/site-packages/aif360/data/raw` where *pythonX.X* is the version of python you are using.
 
 ### Troubleshooting
 
