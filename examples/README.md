@@ -25,7 +25,7 @@ Below is a list of additional notebooks that demonstrate the use of AIF360.
 
 [demo_json_explainers.ipynb](demo_json_explainers.ipynb): 
 
-[demo_lfr.ipynb](demo_lfr.ipynb):  demonstrates the use of an optimized data pre-processing algorithm for bias mitigation
+[demo_lfr.ipynb](demo_lfr.ipynb):  demonstrates the use of the learning fair representations algorithm for bias mitigation
 
 [demo_lime.ipynb](demo_lime.ipynb):  demonstrates how LIME - Local Interpretable Model-Agnostic Explanations - can be used with models learned with the AIF 360 toolkit to generate explanations for model predictions
 
