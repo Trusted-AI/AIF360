@@ -32,9 +32,6 @@ matrix:
     - wget https://archive.ics.uci.edu/ml/machine-learning-databases/statlog/german/german.data -P aif360/data/raw/german/
     - wget https://archive.ics.uci.edu/ml/machine-learning-databases/statlog/german/german.doc -P aif360/data/raw/german/
     - wget https://raw.githubusercontent.com/propublica/compas-analysis/master/compas-scores-two-years.csv -P aif360/data/raw/compas/
-  exclude:
-  - python: "2.7"
-  - python: "3.6"
 
 branches:
   only:
