@@ -165,4 +165,4 @@ user through the various steps of the notebook. See the details about [tutorials
 
 ## Citing AIF360
 
-   Please ask in Slack channel.
+   Please ask in [Slack channel](https://join.slack.com/t/aif360/shared_invite/enQtNDI5Nzg2NTk0MTMyLTU4N2UwODVmMTYxZWMwZmEzZmZkODdjMTk5NWUwZDNhNDhlMzNkZDNhOTYwZDNlODc1MTdjYzY5OTU2OWQ1ZmY).
