@@ -1,4 +1,4 @@
-# AI Fairness 360 (AIF360 v0.1.0)
+# AI Fairness 360 (AIF360 v0.1.1)
 
 [![Build Status](https://travis-ci.com/IBM/AIF360.svg?branch=master)](https://travis-ci.com/IBM/AIF360)
 
