@@ -20,6 +20,11 @@ from __future__ import unicode_literals
 
 import numpy as np
 
+try:
+    xrange          # Python 2
+except NameError:
+    xrange = range  # Python 3
+
 # set random seed
 np.random.seed(1234)
 
@@ -37,12 +42,9 @@ nYgPG[0, 1] = 40  # medicine, male
 nYgPG[1, 0] = 80  # computer science, female
 nYgPG[1, 1] = 320 # computer science, male
 
-for p in xrange(2):
-    for g in xrange(2):
+for p in range(2):
+    for g in range(2):
         t = np.sort(np.random.random_integers(1, 100, nPG[p, g]))
         for i in xrange(nPG[p, g]):
-            if i < (nPG[p, g] - nYgPG[p, g]):
-                y = 0
-            else:
-                y = 1
+            y = 0 if i < (nPG[p, g] - nYgPG[p, g]) else 1
             print(t[i], p, g, y)

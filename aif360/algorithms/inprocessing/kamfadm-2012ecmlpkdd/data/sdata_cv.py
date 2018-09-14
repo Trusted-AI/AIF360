@@ -100,6 +100,11 @@ __all__ = []
 #{ Constants
 #==============================================================================
 
+try:
+    xrange          # Python 2
+except NameError:
+    xrange = range  # Python 3
+
 PC_BASE = np.array([[0.1, 0.2], [0.8, 0.9]])
 PL_BASE = 0.5
 PS_BASE = 0.5
