@@ -182,7 +182,7 @@ This will produce a minimal installation which satisfies our requirements.
 
 The `examples` directory contains a diverse collection of jupyter notebooks that use AI Fairness 360 in various ways.
 Both tutorials and demos illustrate working code using AIF360. Tutorials provide additional discussion that walks the
-user through the various steps of the notebook. See the details about [tutorials and demos here](examples/turorials-demos.md)
+user through the various steps of the notebook. See the details about [tutorials and demos here](examples/tutorials-demos.md)
 
 ## Citing AIF360
 
