@@ -1,10 +1,14 @@
 from setuptools import setup, find_packages
 
-with open("README.md", "r") as fh:
-    long_description = fh.read()
+long_description = """The AI Fairness 360 toolkit is an open-source library to help detect and remove bias in machine 
+learning models. The AI Fairness 360 Python package includes a comprehensive set of metrics for datasets and models to 
+test for biases, explanations for these metrics, and algorithms to mitigate bias in datasets and models.
+
+We have developed the package with extensibility in mind. This library is still in development. We encourage the 
+contribution of your datasets, metrics, explainers, and debiasing algorithms."""
 
 setup(name='aif360',
-      version='0.1.0',
+      version='0.1.1',
       description='IBM AI Fairness 360',
       author='aif360 developers',
       author_email='aif360@us.ibm.com',
