@@ -70,7 +70,7 @@ class GermanDataset(StandardDataset):
         """
 
         filepath = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                                '../data/raw/german/german.data')
+                                '..', 'data', 'raw', 'german', 'german.data')
         # as given by german.doc
         column_names = ['status', 'month', 'credit_history',
             'purpose', 'credit_amount', 'savings', 'employment',
@@ -79,8 +79,19 @@ class GermanDataset(StandardDataset):
             'installment_plans', 'housing', 'number_of_credits',
             'skill_level', 'people_liable_for', 'telephone',
             'foreign_worker', 'credit']
-        df = pd.read_csv(filepath, sep=' ', header=None, names=column_names,
-            na_values=na_values)
+        try:
+            df = pd.read_csv(filepath, sep=' ', header=None, names=column_names,
+                             na_values=na_values)
+        except IOError as err:
+            print("IOError: {}".format(err))
+            print("To use this class, please download the following files:")
+            print("\n\thttps://archive.ics.uci.edu/ml/machine-learning-databases/statlog/german/german.data")
+            print("\thttps://archive.ics.uci.edu/ml/machine-learning-databases/statlog/german/german.doc")
+            print("\nand place them, as-is, in the folder:")
+            print("\n\t{}\n".format(os.path.abspath(os.path.join(
+                os.path.abspath(__file__), '..', '..', 'data', 'raw', 'german'))))
+            import sys
+            sys.exit(1)
 
         super(GermanDataset, self).__init__(df=df, label_name=label_name,
             favorable_classes=favorable_classes,

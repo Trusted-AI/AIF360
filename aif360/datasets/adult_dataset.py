@@ -79,18 +79,30 @@ class AdultDataset(StandardDataset):
         """
 
         train_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                                  '../data/raw/adult/adult.data')
+                                  '..', 'data', 'raw', 'adult', 'adult.data')
         test_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                                  '../data/raw/adult/adult.test')
+                                  '..', 'data', 'raw', 'adult', 'adult.test')
         # as given by adult.names
         column_names = ['age', 'workclass', 'fnlwgt', 'education',
             'education-num', 'marital-status', 'occupation', 'relationship',
             'race', 'sex', 'capital-gain', 'capital-loss', 'hours-per-week',
             'native-country', 'income-per-year']
-        train = pd.read_csv(train_path, header=None, names=column_names,
-            skipinitialspace=True, na_values=na_values)
-        test = pd.read_csv(test_path, header=0, names=column_names,
-            skipinitialspace=True, na_values=na_values)
+        try:
+            train = pd.read_csv(train_path, header=None, names=column_names,
+                skipinitialspace=True, na_values=na_values)
+            test = pd.read_csv(test_path, header=0, names=column_names,
+                skipinitialspace=True, na_values=na_values)
+        except IOError as err:
+            print("IOError: {}".format(err))
+            print("To use this class, please download the following files:")
+            print("\n\thttps://archive.ics.uci.edu/ml/machine-learning-databases/adult/adult.data")
+            print("\thttps://archive.ics.uci.edu/ml/machine-learning-databases/adult/adult.test")
+            print("\thttps://archive.ics.uci.edu/ml/machine-learning-databases/adult/adult.names")
+            print("\nand place them, as-is, in the folder:")
+            print("\n\t{}\n".format(os.path.abspath(os.path.join(
+               os.path.abspath(__file__), '..', '..', 'data', 'raw', 'adult'))))
+            import sys
+            sys.exit(1)
 
         df = pd.concat([train, test], ignore_index=True)
 

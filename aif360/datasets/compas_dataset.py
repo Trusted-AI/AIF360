@@ -67,8 +67,19 @@ class CompasDataset(StandardDataset):
         """
 
         filepath = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-            '../data/raw/compas/compas-scores-two-years.csv')
-        df = pd.read_csv(filepath, index_col='id', na_values=na_values)
+            '..', 'data', 'raw', 'compas', 'compas-scores-two-years.csv')
+
+        try:
+            df = pd.read_csv(filepath, index_col='id', na_values=na_values)
+        except IOError as err:
+            print("IOError: {}".format(err))
+            print("To use this class, please download the following file:")
+            print("\n\thttps://raw.githubusercontent.com/propublica/compas-analysis/master/compas-scores-two-years.csv")
+            print("\nand place it, as-is, in the folder:")
+            print("\n\t{}\n".format(os.path.abspath(os.path.join(
+               os.path.abspath(__file__), '..', '..', 'data', 'raw', 'compas'))))
+            import sys
+            sys.exit(1)
 
         super(CompasDataset, self).__init__(df=df, label_name=label_name,
             favorable_classes=favorable_classes,
