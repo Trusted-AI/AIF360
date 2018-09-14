@@ -16,40 +16,19 @@ Get in touch with us on [Slack](https://aif360.slack.com) (invitation [here](htt
 ## Supported bias mitigation algorithms
 
 * Optimized Preprocessing ([Calmon et al., 2017](http://papers.nips.cc/paper/6988-optimized-pre-processing-for-discrimination-prevention))
-
-
 * Disparate Impact Remover ([Feldman et al., 2015](https://doi.org/10.1145/2783258.2783311))
-
-
 * Equalized Odds Postprocessing ([Hardt et al., 2016](https://papers.nips.cc/paper/6374-equality-of-opportunity-in-supervised-learning))
-
-
 * Reweighing ([Kamiran and Calders, 2012](http://doi.org/10.1007/s10115-011-0463-8))
-
-
 * Reject Option Classification ([Kamiran et al., 2012](https://doi.org/10.1109/ICDM.2012.45))
-
-
 * Prejudice Remover Regularizer ([Kamishima et al., 2012](https://rd.springer.com/chapter/10.1007/978-3-642-33486-3_3))
-
-
 * Calibrated Equalized Odds Postprocessing ([Pleiss et al., 2017](https://papers.nips.cc/paper/7151-on-fairness-and-calibration))
-
-
 * Learning Fair Representations ([Zemel et al., 2013](http://proceedings.mlr.press/v28/zemel13.html))
-
-
 * Adversarial Debiasing ([Zhang et al., 2018](http://www.aies-conference.com/wp-content/papers/main/AIES_2018_paper_162.pdf))
-
 
 ## Supported fairness metrics
 
 * Comprehensive set of group fairness metrics derived from selection rates and error rates
-
-
 * Comprehensive set of sample distortion metrics
-
-
 * Generalized Entropy Index ([Speicher et al., 2018](https://doi.org/10.1145/3219819.3220046))
 
 
