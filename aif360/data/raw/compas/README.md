@@ -3,11 +3,11 @@
 ## Source:
 <https://github.com/propublica/compas-analysis>
 
-This dataset is used to assess the likelihood that a criminal defendant will re-offend. The dataset used consisted of 
+This dataset is used to assess the likelihood that a criminal defendant will re-offend. The dataset used consisted of
 
 ## Download instructions
 
-Download the following file and place them as-is in the current folder
+Download the following file and place it as-is in the current folder
 
 1. [compas-scores-two-years.csv](https://github.com/propublica/compas-analysis/blob/master/compas-scores-two-years.csv)
 
