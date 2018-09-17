@@ -3,12 +3,13 @@
 Following is the current list of maintainers on this project
 
 The maintainers are listed in alphabetical order.
-
-- Scott Boag ([sboagibm](https://github.com/sboagibm))
-- Waldemar Hummer ([whummer](https://github.com/whummer))
-- Tommy Li ([Tomcli](https://github.com/Tomcli))
-- Falk Pollok ([fplk](https://github.com/fplk))
+- Michael Hind ([michaelhind](https://github.com/michaelhind))
+- Sam Hoffman ([hoffmansc](https://github.com/hoffmansc))
+- Karthi Natesan Ramamurthy ([nrkarthikeyan](https://github.com/nrkarthikeyan))
+- Prasanna Sattigeri ([pronics2004](https://github.com/pronics2004))
+- Moninder Singh ([monindersingh](https://github.com/monindersingh))
 - Animesh Singh ([animeshsingh](https://github.com/animeshsingh))
+- Kush Varshney ([krvarshney](https://github.com/krvarshney))
 
 ## Methodology
 
