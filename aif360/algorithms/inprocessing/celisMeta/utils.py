@@ -73,7 +73,7 @@ def getStats(y_test, y_res, x_control_test):
 		total_0 = float(total_0)
 		total_1 = float(total_1)
 
-		print("Accuracy DIFF: ", abs(pos_0/total_0 - pos_1/total_1)) 
+		#print("Accuracy DIFF: ", abs(pos_0/total_0 - pos_1/total_1)) 
 
 		pos_0 = 0
 		pos_1 = 0
@@ -97,40 +97,13 @@ def getStats(y_test, y_res, x_control_test):
 
 		pos_0 = float(pos_0)/z1_0
 		pos_1 = float(pos_1)/z1_1
-		if pos_0 == 0 or pos_1 == 0:
-				print("Observed tau : 0")
-		else:			
-			print("TPR DIFF : ", abs(pos_0 - pos_1))
+		# if pos_0 == 0 or pos_1 == 0:
+		# 		print("Observed tau : 0")
+		# else:			
+		# 	print("TPR DIFF : ", abs(pos_0 - pos_1))
 
 
 
-		pos_0 = 0
-		pos_1 = 0
-
-		z1_0 = 0
-		z1_1 = 0
-		for j in range(0,len(y_test)):
-			result = y_res[j]
-
-			if result == 1 and x_control_test[j] == 0:
-				z1_0 += 1
-			if result == 1 and x_control_test[j] == 1:
-				z1_1 += 1
-
-			actual = y_test[j]
-			if result == 1 and actual == -1 and x_control_test[j] == 0:
-				pos_0 += 1
-			if result == 1 and actual == -1 and x_control_test[j] == 1:
-				pos_1 += 1
-
-
-		pos_0 = float(pos_0)/z1_0
-		pos_1 = float(pos_1)/z1_1
-		if pos_0 == 0 or pos_1 == 0:
-				print("Observed tau : 0")
-		else:			
-			print("FDR tau : ", min(pos_0/pos_1 , pos_1/pos_0))
-		fdr = min(pos_0/pos_1 , pos_1/pos_0)
 
 		total = 0
 		fail = 0
@@ -315,6 +288,33 @@ def getStats(y_test, y_res, x_control_test):
 		else:			
 			print("AR tau : ", min(pos_0/pos_1 , pos_1/pos_0))
 
+		pos_0 = 0
+		pos_1 = 0
+
+		z1_0 = 0
+		z1_1 = 0
+		for j in range(0,len(y_test)):
+			result = y_res[j]
+
+			if result == 1 and x_control_test[j] == 0:
+				z1_0 += 1
+			if result == 1 and x_control_test[j] == 1:
+				z1_1 += 1
+
+			actual = y_test[j]
+			if result == 1 and actual == -1 and x_control_test[j] == 0:
+				pos_0 += 1
+			if result == 1 and actual == -1 and x_control_test[j] == 1:
+				pos_1 += 1
+
+
+		pos_0 = float(pos_0)/z1_0
+		pos_1 = float(pos_1)/z1_1
+		if pos_0 == 0 or pos_1 == 0:
+				print("Observed tau : 0")
+		else:			
+			print("FDR tau : ", min(pos_0/pos_1 , pos_1/pos_0))
+		fdr = min(pos_0/pos_1 , pos_1/pos_0)
 
 		pos_0 = 0
 		pos_1 = 0

@@ -88,7 +88,7 @@ class General:
 		span = self.getRange(eps, tau)
 		for (a,b) in span:
 			acc, gamma = 0, 0
-			print("-----",a,b)
+			#print("-----",a,b)
 			samples = ut.getRandomSamples(dist_params_train)
 
 			#try : 
@@ -105,15 +105,16 @@ class General:
 
 			acc = ut.getAccuracy(y_train, y_res)
 			gamma = self.getGamma(y_train, y_res, x_control_train)
-			print(acc, gamma)
+			#print(acc, gamma)
 
-			if maxAcc < acc and gamma >= tau - 0.1:
+			if maxAcc < acc and gamma >= tau - 0.2:
 				maxGamma = gamma
 				maxAcc = acc
 				p = a
 				q = b
 				paramsOpt = params
 
+		print("Training Accuracy: ", maxAcc, ", Training gamma: ", maxGamma)
 		def model(x):
 			return self.getValueForX(dist_params, p, q, paramsOpt, samples,  z_0, z_1, x, 0)
 
