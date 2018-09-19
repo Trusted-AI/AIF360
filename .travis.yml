@@ -13,11 +13,11 @@ matrix:
   include:
   - python: "2.7"
     before_script:
-    - wget https://archive.ics.uci.edu/ml/machine-learning-databases/adult/adult.data -P aif360/data/raw/adult/
-    - wget https://archive.ics.uci.edu/ml/machine-learning-databases/adult/adult.test -P aif360/data/raw/adult/
-    - wget https://archive.ics.uci.edu/ml/machine-learning-databases/adult/adult.names -P aif360/data/raw/adult/
-    - wget https://archive.ics.uci.edu/ml/machine-learning-databases/statlog/german/german.data -P aif360/data/raw/german/
-    - wget https://archive.ics.uci.edu/ml/machine-learning-databases/statlog/german/german.doc -P aif360/data/raw/german/
+    - wget ftp://ftp.ics.uci.edu/pub/machine-learning-databases/adult/adult.data -P aif360/data/raw/adult/
+    - wget ftp://ftp.ics.uci.edu/pub/machine-learning-databases/adult/adult.test -P aif360/data/raw/adult/
+    - wget ftp://ftp.ics.uci.edu/pub/machine-learning-databases/adult/adult.names -P aif360/data/raw/adult/
+    - wget ftp://ftp.ics.uci.edu/pub/machine-learning-databases/statlog/german/german.data -P aif360/data/raw/german/
+    - wget ftp://ftp.ics.uci.edu/pub/machine-learning-databases/statlog/german/german.doc -P aif360/data/raw/german/
     - wget https://raw.githubusercontent.com/propublica/compas-analysis/master/compas-scores-two-years.csv -P aif360/data/raw/compas/
     - git clone https://github.com/algofairness/BlackBoxAuditing.git /tmp/BlackBoxAuditing/
     - echo -n /tmp/BlackBoxAuditing/BlackBoxAuditing/weka.jar > /tmp/BlackBoxAuditing/python2_source/BlackBoxAuditing/model_factories/weka.path
@@ -26,11 +26,11 @@ matrix:
   # workaround to exclude extraneous builds
   - python: "3.6"
     before_script:
-    - wget https://archive.ics.uci.edu/ml/machine-learning-databases/adult/adult.data -P aif360/data/raw/adult/
-    - wget https://archive.ics.uci.edu/ml/machine-learning-databases/adult/adult.test -P aif360/data/raw/adult/
-    - wget https://archive.ics.uci.edu/ml/machine-learning-databases/adult/adult.names -P aif360/data/raw/adult/
-    - wget https://archive.ics.uci.edu/ml/machine-learning-databases/statlog/german/german.data -P aif360/data/raw/german/
-    - wget https://archive.ics.uci.edu/ml/machine-learning-databases/statlog/german/german.doc -P aif360/data/raw/german/
+    - wget ftp://ftp.ics.uci.edu/pub/machine-learning-databases/adult/adult.data -P aif360/data/raw/adult/
+    - wget ftp://ftp.ics.uci.edu/pub/machine-learning-databases/adult/adult.test -P aif360/data/raw/adult/
+    - wget ftp://ftp.ics.uci.edu/pub/machine-learning-databases/adult/adult.names -P aif360/data/raw/adult/
+    - wget ftp://ftp.ics.uci.edu/pub/machine-learning-databases/statlog/german/german.data -P aif360/data/raw/german/
+    - wget ftp://ftp.ics.uci.edu/pub/machine-learning-databases/statlog/german/german.doc -P aif360/data/raw/german/
     - wget https://raw.githubusercontent.com/propublica/compas-analysis/master/compas-scores-two-years.csv -P aif360/data/raw/compas/
   exclude:
   - python: "2.7"
