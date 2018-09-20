@@ -13,6 +13,11 @@ from __future__ import unicode_literals
 
 import numpy as np
 
+try:
+    xrange          # Python 2
+except NameError:
+    xrange = range  # Python 3
+
 rho = 1.0 # correlation between e1 and e2
 pS = 0.5 # Pr[S=1]
 n = 20000 # the number of samples

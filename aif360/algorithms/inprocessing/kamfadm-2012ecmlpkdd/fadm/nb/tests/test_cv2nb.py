@@ -12,7 +12,7 @@ import unittest
 
 class TestCaldersVerwerTwoNaiveBayes(unittest.TestCase):
     def runTest(self):
-        from fadm.nb.cv2nb import *
+        from fadm.nb.cv2nb import CaldersVerwerTwoNaiveBayes
 
         # __init__
         self.assertEqual(CaldersVerwerTwoNaiveBayes.N_CLASSES, 2)
