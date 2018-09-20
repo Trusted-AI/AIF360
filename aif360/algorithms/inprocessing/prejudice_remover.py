@@ -15,6 +15,18 @@ implementation of Kamishima Algorithm by fairness-comparison.
 
 See: https://github.com/algofairness/fairness-comparison/tree/master/fairness/algorithms/kamishima
 
+Changes made to fairness-comparison code:
+    * removed all files not used by PrejudiceRemover algorithm:
+        - kamfadm-2012ecmlpkdd/data/*
+        - kamfadm-2012ecmlpkdd/fadm/eval/*
+        - kamfadm-2012ecmlpkdd/fadm/nb/*
+        - kamfadm-2012ecmlpkdd/fai_bin_bin.py
+        - kamfadm-2012ecmlpkdd/predict_nb.py
+        - kamfadm-2012ecmlpkdd/train_cv2nb.py
+        - kamfadm-2012ecmlpkdd/train_lr.py
+        - kamfadm-2012ecmlpkdd/train_nb.py
+    * fixed typo in kamfadm-2012ecmlpkdd/fadm/lr/pr.py:244 (typeError -> TypeError)
+
 Notes from fairness-comparison's KamishimaAlgorithm.py on changes made to
 original Kamishima code.
 
@@ -100,7 +112,7 @@ class PrejudiceRemover(Transformer):
 
         Returns:
             PrejudiceRemover: Returns self.
-        """        
+        """
         data = np.column_stack([dataset.features, dataset.labels])
         columns = dataset.feature_names + dataset.label_names
         train_df = pd.DataFrame(data=data, columns=columns)
@@ -135,7 +147,7 @@ class PrejudiceRemover(Transformer):
         test_df = pd.DataFrame(data=data, columns=columns)
 
         all_sensitive_attributes = dataset.protected_attribute_names
- 
+
         predictions, scores = self._runTest(test_df, self.class_attr, None,
             all_sensitive_attributes, self.sensitive_attr, None)
 
