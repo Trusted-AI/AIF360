@@ -1,5 +1,25 @@
 #!/usr/bin/env Rscript
 
+# This R script can be used to download the Medical Expenditure Panel Survey (MEPS)
+# data files for 2015 and 2016 and convert the files from SAS transport format into
+# standard CSV files.
+
+usage_note <- paste("",
+    "By using this script you acknowledge the responsibility for reading and",
+    "abiding by any copyright/usage rules and restrictions as stated on the",
+    "MEPS web site (https://meps.ahrq.gov/data_stats/data_use.jsp).",
+    "",
+    "Continue [y/n]? > ", sep = "\n")
+
+cat(usage_note)
+answer <- scan("stdin", character(), n=1, quiet=TRUE)
+
+if (tolower(answer) != 'y') {
+    opt <- options(show.error.messages=FALSE)
+    on.exit(options(opt))
+    stop()
+}
+
 if (!require("foreign")) {
     install.packages("foreign")
     library(foreign)
@@ -20,7 +40,7 @@ for (dataset in c("h181", "h192")) {
 
     # skip to next dataset if we already have the CSV file
     if (file.exists(csv_file)) {
-    	message(csv_file, " already exists")
+        message(csv_file, " already exists")
         next
     }
 

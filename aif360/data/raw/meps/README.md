@@ -12,6 +12,15 @@ The Medical Expenditure Panel Survey (MEPS) data consists of large scale surveys
 * [2016 full Year Consolidated Data File](https://meps.ahrq.gov/mepsweb/data_stats/download_data_files_detail.jsp?cboPufNumber=HC-192): : This file contains MEPS survey data for calendar year 2016 obtained in rounds 3, 4, and 5 of Panel 20, and rounds 1, 2, and 3 of Panel 21. 
 
 
+## Data Use Agreement
+
+As the user of the data it is your responsibility to read and abide by any copyright/usage rules and restrictions as
+stated on the MEPS web site before downloading the data.
+
+- [Data Use Agreement (2015 Data File)](https://meps.ahrq.gov/data_stats/download_data/pufs/h181/h181doc.shtml#Data)
+- [Data Use Agreement (2016 Data File)](https://meps.ahrq.gov/data_stats/download_data/pufs/h192/h192doc.shtml#DataA)
+
+
 ## Download instructions
 
 In order to use the MEPS datasets with AIF360, please follow the following directions to download the datafiles and 
@@ -21,13 +30,14 @@ Follow either set of instructions below for using R or SPSS. Further instruction
 the [AHRQ MEPS Github repository](https://github.com/HHS-AHRQ/MEPS).
 
  - **Generating CSV files with R**
-
-    In the current folder run the R script `generate_data.R`. If you don't have R installed the easiest way to get the R
-    command line support on Mac OS X is by installing it with [Homebrew](https://brew.sh/) `brew install R`.  
+    
+    In the current folder run the R script `generate_data.R`. R can be downloaded from [CRAN](https://cran.r-project.org).
+    If you are working on Mac OS X the easiest way to get the R command line support is by installing it with 
+    [Homebrew](https://brew.sh/) `brew install R`.
     
     ```Bash
     cd aif360/data/raw/meps
-    Rscript create_data.R
+    Rscript generate_data.R
     ```
     
     Example output:
