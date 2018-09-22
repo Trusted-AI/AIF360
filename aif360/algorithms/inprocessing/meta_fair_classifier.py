@@ -26,7 +26,7 @@ class MetaFairClassifer(Transformer):
 
     """
 
-    def __init__(self, tau=0.8, sensitive_attr="", class_attr=""):
+    def __init__(self, tau=0.8, sensitive_attr="", class_attr="", type="fdr"):
         """
         Args:
             tau (double, optional): fairness penalty parameter
@@ -38,6 +38,10 @@ class MetaFairClassifer(Transformer):
         self.tau = tau
         self.sensitive_attr = sensitive_attr
         self.class_attr = class_attr
+        if type == "fdr":
+            self.obj = FalseDiscovery()
+        if type == "sr":
+            self.obj = StatisticalRate()
 
     def fit(self, dataset):
         """Learns the fair classifier.
@@ -55,11 +59,11 @@ class MetaFairClassifer(Transformer):
 
 
         x_train = dataset.features
-        y_train = np.array([1 if y == [1] else -1 for y in dataset.labels])
+        #print([dataset.favorable_label])
+        y_train = np.array([1 if y == [dataset.favorable_label] else -1 for y in dataset.labels])
         x_control_train = np.array(train_df[self.sensitive_attr])
         #print(x_train, y_train, x_control_train)
 
-        # privileged_vals = [1 for x in dataset.protected_attribute_names]
         all_sensitive_attributes = dataset.protected_attribute_names
 
         if not self.sensitive_attr:
@@ -67,9 +71,9 @@ class MetaFairClassifer(Transformer):
 
         if not self.class_attr:
             self.class_attr = dataset.label_names[0]
-        model_name = self._runTrain(x_train, y_train, x_control_train)
+        model_name = self.obj.getModel(self.tau, x_train, y_train, x_control_train)
 
-        #print(model_name)
+
         self.model_name = model_name
         return self
 
@@ -88,35 +92,25 @@ class MetaFairClassifer(Transformer):
         columns = dataset.feature_names + dataset.label_names
         test_df = pd.DataFrame(data=data, columns=columns)
         x_test = dataset.features
-        y_test = np.array([1 if y == [1] else -1 for y in dataset.labels])
+        y_test = np.array([1 if y == [dataset.favorable_label] else -1 for y in dataset.labels])
         x_control_test = np.array(test_df[self.sensitive_attr])
 
         all_sensitive_attributes = dataset.protected_attribute_names
  
-        predictions, scores = self._runTest(x_test, y_test, x_control_test)
-
-        pred_dataset = dataset.copy()
-        pred_dataset.labels = predictions
-        pred_dataset.scores = scores
-
-        return pred_dataset
-
-    def _runTrain(self, x_train, y_train, x_control_train):
-        obj = FalseDiscovery()
-        return obj.getModel(self.tau, x_train, y_train, x_control_train)
-
-    def _runTest(self, x_test, y_test, x_control_test):
         model = self.model_name
-        obj = FalseDiscovery()
-        y_test_res = []
-        y_scores = []
+        predictions, scores = [], []
         for x in x_test:
             t = model(x)
             if t > 0 :
-                y_test_res.append(1)
+                predictions.append(1)
             else:
-                y_test_res.append(0)
-            y_scores.append((t+1)/2)
+                predictions.append(0)
+            scores.append((t+1)/2)
 
-        return np.array(y_test_res),np.array(y_scores)
+        pred_dataset = dataset.copy()
+        pred_dataset.labels = np.array(predictions)
+        pred_dataset.scores = np.array(scores)
+
+        return pred_dataset
+
 
