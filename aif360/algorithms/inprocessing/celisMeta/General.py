@@ -66,7 +66,7 @@ class General:
 			for k in range(1,50):
 				grad = self.getExpectedGrad(dist_params, params, samples, mu, z_0, z_1, a, b)
 				for j in range(0, len(params)):
-					params[j] = params[j] - 0.05/k * grad[j]
+					params[j] = params[j] - 1/k * grad[j]
 				funcVal = self.getFuncValue(dist_params, a,b, params, samples, z_0, z_1)
 				if funcVal < minVal:
 					minVal, minParam = funcVal, params
@@ -75,6 +75,9 @@ class General:
 
 	# Returns the model given the training data and input tau.
 	def getModel(self, tau, x_train, y_train, x_control_train):
+		if tau == 0:
+			return self.getUnbiasedModel(x_train, y_train, x_control_train)
+
 		dist_params, dist_params_train =  ut.getDistribution(x_train, y_train, x_control_train)
 		eps = 0.01
 		L = math.ceil(tau/eps)
@@ -117,6 +120,20 @@ class General:
 		print("Training Accuracy: ", maxAcc, ", Training gamma: ", maxGamma)
 		def model(x):
 			return self.getValueForX(dist_params, p, q, paramsOpt, samples,  z_0, z_1, x, 0)
+
+		return model
+
+	def getUnbiasedModel(self, x_train, y_train, x_control_train):
+		dist_params, dist_params_train =  ut.getDistribution(x_train, y_train, x_control_train)
+		eps = 0.01
+		z_1 = sum(x_control_train)/(float(len(x_control_train)))
+		z_0 = 1 - z_1
+		p, q  = [0,0],[0,0]
+		params = [0]*self.getNumOfParams()
+		samples = ut.getRandomSamples(dist_params_train)
+
+		def model(x):
+			return self.getValueForX(dist_params, p, q, params, samples,  z_0, z_1, x, 0)
 
 		return model
 

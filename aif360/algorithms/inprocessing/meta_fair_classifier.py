@@ -98,15 +98,19 @@ class MetaFairClassifer(Transformer):
         all_sensitive_attributes = dataset.protected_attribute_names
  
         model = self.model_name
-        predictions, scores = [], []
+        predictions, y_res, scores = [], [], []
         for x in x_test:
             t = model(x)
             if t > 0 :
                 predictions.append(1)
+                y_res.append(1)
             else:
                 predictions.append(0)
+                y_res.append(-1)
             scores.append((t+1)/2)
 
+
+        #print("Gamma: ", self.obj.getGamma(y_test, y_res, x_control_test))
         pred_dataset = dataset.copy()
         pred_dataset.labels = np.array(predictions)
         pred_dataset.scores = np.array(scores)
