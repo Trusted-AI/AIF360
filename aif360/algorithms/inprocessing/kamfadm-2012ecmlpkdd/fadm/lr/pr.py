@@ -241,7 +241,7 @@ class LRwPRFittingType1Mixin(LRwPR):
                 clr.fit(X[s == i, :], y[s == i])
                 coef[i, :] = clr.coef_
         else:
-            raise typeError
+            raise TypeError
 
     def fit(self, X, y, ns=N_S, itype=0, **kwargs):
         """ train this model
