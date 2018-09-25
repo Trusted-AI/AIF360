@@ -20,10 +20,12 @@ matrix:
     - echo include python2_source/BlackBoxAuditing/model_factories/weka.path >> /tmp/BlackBoxAuditing/MANIFEST.in
     - pip install --no-deps /tmp/BlackBoxAuditing/
   - python: "3.6"
+    before_script:
+    # exit-zero treats all errors as warnings.  The GitHub editor is 127 chars wide
+    - flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+
 
 script:
   # stop the build if there are Python syntax errors or undefined names
   - flake8 . --count --select=E901,E999,F821,F822,F823 --show-source --statistics
-  # exit-zero treats all errors as warnings.  The GitHub editor is 127 chars wide
-  - flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
   - travis_wait pytest tests
