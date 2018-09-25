@@ -1,13 +1,15 @@
 language: python
 
+env: MLDB_URL="ftp://ftp.ics.uci.edu/pub/machine-learning-databases"
+
 install:
   - pip install -r requirements.txt
   - pip install flake8
-  - wget ftp://ftp.ics.uci.edu/pub/machine-learning-databases/adult/adult.data -P aif360/data/raw/adult/
-  - wget ftp://ftp.ics.uci.edu/pub/machine-learning-databases/adult/adult.test -P aif360/data/raw/adult/
-  - wget ftp://ftp.ics.uci.edu/pub/machine-learning-databases/adult/adult.names -P aif360/data/raw/adult/
-  - wget ftp://ftp.ics.uci.edu/pub/machine-learning-databases/statlog/german/german.data -P aif360/data/raw/german/
-  - wget ftp://ftp.ics.uci.edu/pub/machine-learning-databases/statlog/german/german.doc -P aif360/data/raw/german/
+  - wget ${MLDB_URL}/adult/adult.data -P aif360/data/raw/adult/
+  - wget ${MLDB_URL}/adult/adult.test -P aif360/data/raw/adult/
+  - wget ${MLDB_URL}/adult/adult.names -P aif360/data/raw/adult/
+  - wget ${MLDB_URL}/statlog/german/german.data -P aif360/data/raw/german/
+  - wget ${MLDB_URL}/statlog/german/german.doc -P aif360/data/raw/german/
   - wget https://raw.githubusercontent.com/propublica/compas-analysis/master/compas-scores-two-years.csv -P aif360/data/raw/compas/
 
 matrix:
@@ -23,7 +25,6 @@ matrix:
     before_script:
     # exit-zero treats all errors as warnings.  The GitHub editor is 127 chars wide
     - flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-
 
 script:
   # stop the build if there are Python syntax errors or undefined names
