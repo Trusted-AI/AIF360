@@ -2,6 +2,10 @@ language: python
 
 env: MLDB_URL="ftp://ftp.ics.uci.edu/pub/machine-learning-databases"
 
+branches:
+  only:
+    - master
+
 install:
   - pip install -r requirements.txt
   - pip install flake8
