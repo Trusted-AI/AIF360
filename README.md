@@ -165,4 +165,22 @@ user through the various steps of the notebook. See the details about [tutorials
 
 ## Citing AIF360
 
-   Please ask in [Slack channel](https://join.slack.com/t/aif360/shared_invite/enQtNDI5Nzg2NTk0MTMyLTU4N2UwODVmMTYxZWMwZmEzZmZkODdjMTk5NWUwZDNhNDhlMzNkZDNhOTYwZDNlODc1MTdjYzY5OTU2OWQ1ZmY).
+A technical description of AI Fairness 360 is available in this [paper](https://arxiv.org/pdf/1810.01943.pdf).   Below is the bibtex entry for this paper.
+
+```
+@misc{aif360-oct-2018,
+    title = "{AI Fairness} 360:  An Extensible Toolkit for Detecting, Understanding, and Mitigating Unwanted Algorithmic Bias",
+    author = {Rachel K. E. Bellamy and Kuntal Dey and Michael Hind and
+	Samuel C. Hoffman and Stephanie Houde and Kalapriya Kannan and
+	Pranay Lohia and Jacquelyn Martino and Sameep Mehta and
+	Aleksandra Mojsilovic and Seema Nagar and Karthikeyan Natesan Ramamurthy and
+	John Richards and Diptikalyan Saha and Prasanna Sattigeri and
+	Moninder Singh and Kush R. Varshney and Yunfeng Zhang},
+    month = oct,	
+    year = {2017},
+    url = {https://arxiv.org/pdf/1807.01069}
+}
+```
+
+
+   
