@@ -5,7 +5,7 @@ import numpy as np
 import math
 from sklearn.mixture import GaussianMixture
 import logging
-import utils as ut
+from . import utils as ut
 
 # This is the class with the general functions of the algorithm. 
 # For different fairness metrics, the objective function of the optimization problem is different and hence needs different implementations.

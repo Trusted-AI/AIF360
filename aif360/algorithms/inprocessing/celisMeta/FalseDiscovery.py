@@ -3,8 +3,12 @@ from scipy.stats import multivariate_normal
 import scipy.stats as st
 import numpy as np
 import math
-from General import *
-import utils as ut
+
+import site
+site.addsitedir('.')
+
+from .General import *
+from . import utils as ut
 
 
 class FalseDiscovery(General):

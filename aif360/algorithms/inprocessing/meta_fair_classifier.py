@@ -16,7 +16,7 @@ from aif360.algorithms import Transformer
 from aif360.algorithms.inprocessing.celisMeta.FalseDiscovery import FalseDiscovery
 from aif360.algorithms.inprocessing.celisMeta.StatisticalRate import StatisticalRate
 
-class MetaFairClassifer(Transformer):
+class MetaFairClassifier(Transformer):
     """The meta algorithm here takes the fairness metric as part of the input
         and returns a classifier optimized w.r.t. that fairness metric.
 
@@ -26,18 +26,18 @@ class MetaFairClassifer(Transformer):
 
     """
 
-    def __init__(self, tau=0.8, sensitive_attr="", class_attr="", type="fdr"):
+    def __init__(self, tau=0.8, sensitive_attr="", type="fdr"):
         """
         Args:
             tau (double, optional): fairness penalty parameter
             sensitive_attr (str, optional): name of protected attribute
-            class_attr (str, optional): label name
+            type (str, optional): the type of fairness metric to be used. Currently "fdr" and "sr" are supported.
+                                To use another type, the corresponding optimization class has to be implemented.
         """
-        super(MetaFairClassifer, self).__init__(tau=tau,
-            sensitive_attr=sensitive_attr, class_attr=class_attr)
+        super(MetaFairClassifier, self).__init__(tau=tau,
+            sensitive_attr=sensitive_attr)
         self.tau = tau
         self.sensitive_attr = sensitive_attr
-        self.class_attr = class_attr
         if type == "fdr":
             self.obj = FalseDiscovery()
         if type == "sr":
@@ -69,8 +69,6 @@ class MetaFairClassifer(Transformer):
         if not self.sensitive_attr:
             self.sensitive_attr = all_sensitive_attributes[0]
 
-        if not self.class_attr:
-            self.class_attr = dataset.label_names[0]
         model_name = self.obj.getModel(self.tau, x_train, y_train, x_control_train)
 
 
@@ -92,8 +90,8 @@ class MetaFairClassifer(Transformer):
         columns = dataset.feature_names + dataset.label_names
         test_df = pd.DataFrame(data=data, columns=columns)
         x_test = dataset.features
-        y_test = np.array([1 if y == [dataset.favorable_label] else -1 for y in dataset.labels])
-        x_control_test = np.array(test_df[self.sensitive_attr])
+        #y_test = np.array([1 if y == [dataset.favorable_label] else -1 for y in dataset.labels])
+        #x_control_test = np.array(test_df[self.sensitive_attr])
 
         all_sensitive_attributes = dataset.protected_attribute_names
  
