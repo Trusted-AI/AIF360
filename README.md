@@ -165,7 +165,7 @@ user through the various steps of the notebook. See the details about [tutorials
 
 ## Citing AIF360
 
-A technical description of AI Fairness 360 is available in this [paper](https://arxiv.org/pdf/1810.01943.pdf).   Below is the bibtex entry for this paper.
+A technical description of AI Fairness 360 is available in this [paper](https://arxiv.org/abs/1810.01943).  Below is the bibtex entry for this paper.
 
 ```
 @misc{aif360-oct-2018,
@@ -177,8 +177,8 @@ A technical description of AI Fairness 360 is available in this [paper](https://
 	John Richards and Diptikalyan Saha and Prasanna Sattigeri and
 	Moninder Singh and Kush R. Varshney and Yunfeng Zhang},
     month = oct,	
-    year = {2017},
-    url = {https://arxiv.org/pdf/1807.01069}
+    year = {2018},
+    url = {https://arxiv.org/abs/1810.01943}
 }
 ```
 
