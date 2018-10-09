@@ -1,6 +1,9 @@
 language: python
 
-env: MLDB_URL="ftp://ftp.ics.uci.edu/pub/machine-learning-databases"
+env:
+  global:
+    - UCI_HTTPS_URL="https://archive.ics.uci.edu/ml/machine-learning-databases"
+    - UCI_FTP_URL="ftp://ftp.ics.uci.edu/pub/machine-learning-databases"
 
 branches:
   only:
@@ -9,11 +12,11 @@ branches:
 install:
   - pip install -r requirements.txt
   - pip install flake8
-  - wget ${MLDB_URL}/adult/adult.data -P aif360/data/raw/adult/
-  - wget ${MLDB_URL}/adult/adult.test -P aif360/data/raw/adult/
-  - wget ${MLDB_URL}/adult/adult.names -P aif360/data/raw/adult/
-  - wget ${MLDB_URL}/statlog/german/german.data -P aif360/data/raw/german/
-  - wget ${MLDB_URL}/statlog/german/german.doc -P aif360/data/raw/german/
+  - if ! wget ${UCI_HTTPS_URL}/adult/adult.data -P aif360/data/raw/adult/ ; then wget ${UCI_FTP_URL}/adult/adult.data -P aif360/data/raw/adult/ ; fi
+  - if ! wget ${UCI_HTTPS_URL}/adult/adult.test -P aif360/data/raw/adult/ ; then wget ${UCI_FTP_URL}/adult/adult.test -P aif360/data/raw/adult/; fi
+  - if ! wget ${UCI_HTTPS_URL}/adult/adult.names -P aif360/data/raw/adult/ ; then wget ${UCI_FTP_URL}/adult/adult.names -P aif360/data/raw/adult/; fi
+  - if ! wget ${UCI_HTTPS_URL}/statlog/german/german.data -P aif360/data/raw/german/ ; then wget ${UCI_FTP_URL}/statlog/german/german.data -P aif360/data/raw/german/; fi
+  - if ! wget ${UCI_HTTPS_URL}/statlog/german/german.doc -P aif360/data/raw/german/ ; then wget ${UCI_FTP_URL}/statlog/german/german.doc -P aif360/data/raw/german/; fi
   - wget https://raw.githubusercontent.com/propublica/compas-analysis/master/compas-scores-two-years.csv -P aif360/data/raw/compas/
 
 matrix:
