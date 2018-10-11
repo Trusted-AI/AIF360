@@ -183,5 +183,7 @@ A technical description of AI Fairness 360 is available in this [paper](https://
 }
 ```
 
+## AIF360 Videos
 
+* Introductory [video](https://www.youtube.com/watch?v=X1NsrcaRQTE) to AI Fairness 360 by Kush Varshney, September 20, 2018 (32 mins)
    
