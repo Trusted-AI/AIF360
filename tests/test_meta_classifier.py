@@ -32,7 +32,7 @@ def test_adult():
 	#scaler = MinMaxScaler(copy=False)
 	# ad.features = scaler.fit_transform(ad.features)
 
-	train, test = ad.split([32561])
+	train, test = ad.split([32562])
 	assert np.any(test.labels)
 
 	#print(test.labels)
