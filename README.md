@@ -35,9 +35,11 @@ Get in touch with us on [Slack](https://aif360.slack.com) (invitation [here](htt
 
 ## Setup
 
-Installation is easiest on a Unix system running Python 3.6. See the [Troubleshooting](#troubleshooting) section if you have issues with other configurations.
+Installation is easiest on a Unix-like system running Python 3.6 or Windows running Python 3.5. See the [Troubleshooting](#troubleshooting) section if you have issues with other configurations.
 
-### (Optional) Create a Virtualenv environment
+### (Optional) Create a virtual environment
+
+#### Virtualenv
 
 AIF360 requires specific versions of many Python packages which may conflict with other projects on your system. Virtualenv creates an isolated virtual Python environment where these dependencies may be installed safely. If you have trouble installing AIF360, try this first.
 
@@ -67,12 +69,29 @@ Also, upgrade `pip` to be safe:
 To deactivate the environment, run
 
 ```bash
-deactivate
+(aif360)$ deactivate
 ```
 
 The prompt will return to `$ `.
 
 See the [Virtualenv User Guide](https://virtualenv.pypa.io/en/stable/userguide/) for more details.
+
+#### Conda
+
+Some users may prefer to use `conda` to manage environments. It can be installed with the Anaconda distribution by following [these instructions](https://docs.anaconda.com/anaconda/install/). Then, to create a new Python 3.6 environment, run:
+
+```bash
+conda create --name aif360 python=3.6
+conda activate aif360
+```
+
+and to deactivate, run
+
+```bash
+(aif360)$ conda deactivate
+```
+
+For simplicity, the following instructions will assume `virtualenv` but the same steps should work regardless of which you choose.
 
 ### Install with minimal dependencies
 
@@ -132,7 +151,7 @@ TensorFlow is only required for use with the `aif360.algorithms.inprocessing.Adv
 
 ##### CVXPY
 
-You may need to download the [Visual Studio C++ compiler for Python](https://www.microsoft.com/en-us/download/details.aspx?id=44266) and rerun
+You may need to download the appropriate [Visual Studio C++ compiler for Python](https://wiki.python.org/moin/WindowsCompilers) and rerun
 
 ```bat
 pip install cvxpy==0.4.11

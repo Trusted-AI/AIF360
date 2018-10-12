@@ -55,15 +55,18 @@ class StandardDataset(BinaryLabelDataset):
                 processing.
             label_name: Name of the label column in `df`.
             favorable_classes (list or function): Label values which are
-                considered favorable (1) or a boolean function which returns
-                `True` if favorable (1). All others are unfavorable (0).
+                considered favorable or a boolean function which returns `True`
+                if favorable. All others are unfavorable. Label values are
+                mapped to 1 (favorable) and 0 (unfavorable) if they are not
+                already binary and numerical.
             protected_attribute_names (list): List of names corresponding to
                 protected attribute columns in `df`.
             privileged_classes (list(list or function)): Each element is
-                a list of values which are considered privileged (1) or a
-                boolean function which return `True` if privileged (1) for the
-                corresponding column in `protected_attribute_names`. All others
-                are unprivileged (0).
+                a list of values which are considered privileged or a boolean
+                function which return `True` if privileged for the corresponding
+                column in `protected_attribute_names`. All others are
+                unprivileged. Values are mapped to 1 (privileged) and 0
+                (unprivileged) if they are not already numerical.
             instance_weights_name (optional): Name of the instance weights
                 column in `df`.
             categorical_features (optional, list): List of column names in the

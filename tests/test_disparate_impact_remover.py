@@ -37,7 +37,7 @@ def test_adult():
     assert np.any(test.labels)
 
     train.features = scaler.fit_transform(train.features)
-    test.features = scaler.fit_transform(test.features)
+    test.features = scaler.transform(test.features)
 
     index = train.feature_names.index(protected)
     X_tr = np.delete(train.features, index, axis=1)

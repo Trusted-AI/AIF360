@@ -16,3 +16,4 @@ numba
 tensorflow==1.1.0
 networkx==1.11
 BlackBoxAuditing;python_version>="3"
+lime
