@@ -19,6 +19,13 @@ ART Classifier
    :inherited-members:
    :exclude-members: transform, fit_transform
 
+Meta Fair Classifier
+--------------------
+.. autoclass:: MetaFairClassifier
+   :members:
+   :inherited-members:
+   :exclude-members: transform, fit_transform
+
 Prejudice Remover
 -----------------
 
