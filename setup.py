@@ -1,10 +1,10 @@
 from setuptools import setup, find_packages
 
-long_description = """The AI Fairness 360 toolkit is an open-source library to help detect and remove bias in machine 
-learning models. The AI Fairness 360 Python package includes a comprehensive set of metrics for datasets and models to 
+long_description = """The AI Fairness 360 toolkit is an open-source library to help detect and remove bias in machine
+learning models. The AI Fairness 360 Python package includes a comprehensive set of metrics for datasets and models to
 test for biases, explanations for these metrics, and algorithms to mitigate bias in datasets and models.
 
-We have developed the package with extensibility in mind. This library is still in development. We encourage the 
+We have developed the package with extensibility in mind. This library is still in development. We encourage the
 contribution of your datasets, metrics, explainers, and debiasing algorithms."""
 
 setup(name='aif360',
@@ -25,5 +25,6 @@ setup(name='aif360',
           'scikit-learn',
           'numba',
       ],
+      package_data={'aif360': ['data/*', 'data/*/*', 'data/*/*/*']},
       include_package_data=True,
       zip_safe=False)
