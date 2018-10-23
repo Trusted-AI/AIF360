@@ -1,3 +1,5 @@
+from __future__ import division
+
 import os,sys
 from scipy.stats import multivariate_normal
 import scipy.stats as st
@@ -76,7 +78,7 @@ class FalseDiscovery(General):
 
 				temp = np.append(np.append(x, -1), 0)
 				prob_m1_0 = ut.getProbability(dist_params, temp)
-				
+
 				if (prob_1_1 + prob_1_0 + prob_m1_0 + prob_m1_1) == 0:
 					print("Probability is 0.\n")
 					return 0
@@ -139,7 +141,7 @@ class FalseDiscovery(General):
 			pos_1 = float(pos_1)/z1_1
 			if pos_0 == 0 or pos_1 == 0:
 				return 0
-			else:			
+			else:
 				return min(pos_0/pos_1 , pos_1/pos_0)
 
 
@@ -147,4 +149,3 @@ if __name__ == '__main__':
 	obj = FalseDiscovery()
 	obj.testPreprocessedData()
 	#obj.testSyntheticData()
-
