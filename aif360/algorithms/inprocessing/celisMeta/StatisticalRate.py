@@ -1,3 +1,5 @@
+from __future__ import division
+
 import os,sys
 from scipy.stats import multivariate_normal
 import scipy.stats as st
@@ -51,8 +53,8 @@ class StatisticalRate(General):
 
 		exp1 = np.mean(res1)
 		exp2 = np.mean(res2)
-		dl1 = exp1 - b + (b-a)/2 + (b-a)* l_1 / (2* math.sqrt(l_1*l_1 + mu*mu)) 
-		dl2 = exp2 - b + (b-a)/2 + (b-a)* l_2 / (2* math.sqrt(l_2*l_2 + mu*mu)) 
+		dl1 = exp1 - b + (b-a)/2 + (b-a)* l_1 / (2* math.sqrt(l_1*l_1 + mu*mu))
+		dl2 = exp2 - b + (b-a)/2 + (b-a)* l_2 / (2* math.sqrt(l_2*l_2 + mu*mu))
 		return [dl1, dl2]
 
 	def getValueForX(self, dist_params, a,b, params, samples,  z_0, z_1, x, flag):
@@ -141,7 +143,7 @@ class StatisticalRate(General):
 			pos_1 = float(pos_1)/z1_1
 			if pos_0 == 0 or pos_1 == 0:
 				return 0
-			else:			
+			else:
 				return min(pos_0/pos_1 , pos_1/pos_0)
 
 

@@ -1,3 +1,5 @@
+from __future__ import division
+
 import os,sys
 from scipy.stats import multivariate_normal
 import scipy.stats as st
@@ -7,7 +9,7 @@ from sklearn.mixture import GaussianMixture
 import logging
 from . import utils as ut
 
-# This is the class with the general functions of the algorithm. 
+# This is the class with the general functions of the algorithm.
 # For different fairness metrics, the objective function of the optimization problem is different and hence needs different implementations.
 # The fairness-metric specific methods need to extend this class and implement the necessary functions
 class General:
@@ -94,7 +96,7 @@ class General:
 			#print("-----",a,b)
 			samples = ut.getRandomSamples(dist_params_train)
 
-			#try : 
+			#try :
 			params = self.gradientDescent(dist_params, a, b, samples, z_0, z_1)
 			#print(params)
 			y_res = []
@@ -170,7 +172,7 @@ class General:
 		#checkNormalFit(x_train, y_train, x_control_train)
 
 		for i in range(1,11):
-			try : 
+			try :
 				tau = i/10.0
 				print("Tau : ", tau)
 				y_res = self.processGivenData(tau, x_train, y_train, x_control_train, x_test, y_test, x_control_test, [], [])

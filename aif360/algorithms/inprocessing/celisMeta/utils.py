@@ -1,3 +1,5 @@
+from __future__ import division
+
 import os,sys
 from scipy.stats import multivariate_normal
 import scipy.stats as st
@@ -73,7 +75,7 @@ def getStats(y_test, y_res, x_control_test):
 		total_0 = float(total_0)
 		total_1 = float(total_1)
 
-		#print("Accuracy DIFF: ", abs(pos_0/total_0 - pos_1/total_1)) 
+		#print("Accuracy DIFF: ", abs(pos_0/total_0 - pos_1/total_1))
 
 		pos_0 = 0
 		pos_1 = 0
@@ -99,7 +101,7 @@ def getStats(y_test, y_res, x_control_test):
 		pos_1 = float(pos_1)/z1_1
 		# if pos_0 == 0 or pos_1 == 0:
 		# 		print("Observed tau : 0")
-		# else:			
+		# else:
 		# 	print("TPR DIFF : ", abs(pos_0 - pos_1))
 
 
@@ -118,7 +120,7 @@ def getStats(y_test, y_res, x_control_test):
 				fail += 1
 
 
-		print("Accuracy : ", fail, total, 1 - fail/(float(total))) 
+		print("Accuracy : ", fail, total, 1 - fail/(float(total)))
 		acc = 1 - fail/(float(total))
 
 		pos_0 = 0
@@ -145,7 +147,7 @@ def getStats(y_test, y_res, x_control_test):
 		pos_1 = float(pos_1)/z1_1
 		if pos_0 == 0 or pos_1 == 0:
 				print("Observed tau : 0")
-		else:			
+		else:
 			print("SR tau : ", min(pos_0/pos_1 , pos_1/pos_0))
 		sr = min(pos_0/pos_1 , pos_1/pos_0)
 
@@ -174,7 +176,7 @@ def getStats(y_test, y_res, x_control_test):
 		pos_1 = float(pos_1)/z1_1
 		if pos_0 == 0 or pos_1 == 0:
 				print("Observed tau : 0")
-		else:			
+		else:
 			print("FPR tau : ", min(pos_0/pos_1 , pos_1/pos_0))
 
 
@@ -202,7 +204,7 @@ def getStats(y_test, y_res, x_control_test):
 		pos_1 = float(pos_1)/z1_1
 		if pos_0 == 0 or pos_1 == 0:
 				print("Observed tau : 0")
-		else:			
+		else:
 			print("FNR tau : ", min(pos_0/pos_1 , pos_1/pos_0))
 
 		pos_0 = 0
@@ -229,7 +231,7 @@ def getStats(y_test, y_res, x_control_test):
 		pos_1 = float(pos_1)/z1_1
 		if pos_0 == 0 or pos_1 == 0:
 				print("Observed tau : 0")
-		else:			
+		else:
 			print("TPR tau : ", min(pos_0/pos_1 , pos_1/pos_0))
 
 
@@ -257,7 +259,7 @@ def getStats(y_test, y_res, x_control_test):
 		pos_1 = float(pos_1)/z1_1
 		if pos_0 == 0 or pos_1 == 0:
 				print("Observed tau : 0")
-		else:			
+		else:
 			print("TNR tau : ", min(pos_0/pos_1 , pos_1/pos_0))
 
 
@@ -285,7 +287,7 @@ def getStats(y_test, y_res, x_control_test):
 		pos_1 = float(pos_1)/z1_1
 		if pos_0 == 0 or pos_1 == 0:
 				print("Observed tau : 0")
-		else:			
+		else:
 			print("AR tau : ", min(pos_0/pos_1 , pos_1/pos_0))
 
 		pos_0 = 0
@@ -312,7 +314,7 @@ def getStats(y_test, y_res, x_control_test):
 		pos_1 = float(pos_1)/z1_1
 		if pos_0 == 0 or pos_1 == 0:
 				print("Observed tau : 0")
-		else:			
+		else:
 			print("FDR tau : ", min(pos_0/pos_1 , pos_1/pos_0))
 		fdr = min(pos_0/pos_1 , pos_1/pos_0)
 
@@ -340,7 +342,7 @@ def getStats(y_test, y_res, x_control_test):
 		pos_1 = float(pos_1)/z1_1
 		if pos_0 == 0 or pos_1 == 0:
 				print("Observed tau : 0")
-		else:			
+		else:
 			print("FOR tau : ", min(pos_0/pos_1 , pos_1/pos_0))
 
 		pos_0 = 0
@@ -367,7 +369,7 @@ def getStats(y_test, y_res, x_control_test):
 		pos_1 = float(pos_1)/z1_1
 		if pos_0 == 0 or pos_1 == 0:
 				print("Observed tau : 0")
-		else:			
+		else:
 			print("PPR tau : ", min(pos_0/pos_1 , pos_1/pos_0))
 
 		pos_0 = 0
@@ -394,7 +396,7 @@ def getStats(y_test, y_res, x_control_test):
 		pos_1 = float(pos_1)/z1_1
 		if pos_0 == 0 or pos_1 == 0:
 				print("Observed tau : 0")
-		else:			
+		else:
 			print("NPR tau : ", min(pos_0/pos_1 , pos_1/pos_0))
 
 		return acc, sr, fdr
@@ -473,7 +475,7 @@ def checkNormalFit(x_train, y_train, x_control_train):
 	l = len(mean) - 2
 	for i in range(0, l):
 		for j in range(0, l):
-			if i != j:				
+			if i != j:
 				cov[i][j] = 0
 
 	for i in range(0, len(train[0])):
