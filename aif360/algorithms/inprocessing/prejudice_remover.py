@@ -186,7 +186,7 @@ class PrejudiceRemover(Transformer):
         #ADDED FOLLOWING LINE to get absolute path of this file, i.e. KamishimaAlgorithm.py
         k_path = os.path.dirname(os.path.abspath(__file__))
         #changed paths in the calls below to (a) specify path of train_pr,predict_lr RELATIVE to this file, and (b) compute & use absolute path, and (c) replace python3 with python
-        subprocess.run(['python', os.path.join(k_path, 'kamfadm-2012ecmlpkdd', 'train_pr.py'),
+        subprocess.call(['python', os.path.join(k_path, 'kamfadm-2012ecmlpkdd', 'train_pr.py'),
                         '-e', str(eta_val),
                         '-i', train_name,
                         '-o', model_name,
@@ -228,7 +228,7 @@ class PrejudiceRemover(Transformer):
         #ADDED FOLLOWING LINE to get absolute path of this file, i.e. KamishimaAlgorithm.py
         k_path = os.path.dirname(os.path.abspath(__file__))
         #changed paths in the calls below to (a) specify path of train_pr,predict_lr RELATIVE to this file, and (b) compute & use absolute path, and (c) replace python3 with python
-        subprocess.run(['python', os.path.join(k_path, 'kamfadm-2012ecmlpkdd', 'predict_lr.py'),
+        subprocess.call(['python', os.path.join(k_path, 'kamfadm-2012ecmlpkdd', 'predict_lr.py'),
                         '-i', test_name,
                         '-m', self.model_name,
                         '-o', output_name,
