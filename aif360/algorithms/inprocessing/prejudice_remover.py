@@ -26,6 +26,8 @@ Changes made to fairness-comparison code:
         - kamfadm-2012ecmlpkdd/train_lr.py
         - kamfadm-2012ecmlpkdd/train_nb.py
     * fixed typo in kamfadm-2012ecmlpkdd/fadm/lr/pr.py:244 (typeError -> TypeError)
+    * removed commands.py and instead use subprocess.getoutput if commands is
+      not available
 
 Notes from fairness-comparison's KamishimaAlgorithm.py on changes made to
 original Kamishima code.
@@ -187,10 +189,10 @@ class PrejudiceRemover(Transformer):
         k_path = os.path.dirname(os.path.abspath(__file__))
         #changed paths in the calls below to (a) specify path of train_pr,predict_lr RELATIVE to this file, and (b) compute & use absolute path, and (c) replace python3 with python
         subprocess.call(['python', os.path.join(k_path, 'kamfadm-2012ecmlpkdd', 'train_pr.py'),
-                        '-e', str(eta_val),
-                        '-i', train_name,
-                        '-o', model_name,
-                        '--quiet'])
+                         '-e', str(eta_val),
+                         '-i', train_name,
+                         '-o', model_name,
+                         '--quiet'])
         os.unlink(train_name)
         #os.unlink(model_name)
 
@@ -229,10 +231,10 @@ class PrejudiceRemover(Transformer):
         k_path = os.path.dirname(os.path.abspath(__file__))
         #changed paths in the calls below to (a) specify path of train_pr,predict_lr RELATIVE to this file, and (b) compute & use absolute path, and (c) replace python3 with python
         subprocess.call(['python', os.path.join(k_path, 'kamfadm-2012ecmlpkdd', 'predict_lr.py'),
-                        '-i', test_name,
-                        '-m', self.model_name,
-                        '-o', output_name,
-                        '--quiet'])
+                         '-i', test_name,
+                         '-m', self.model_name,
+                         '-o', output_name,
+                         '--quiet'])
 
         #os.unlink(model_name)
         os.unlink(test_name)
