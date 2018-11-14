@@ -63,7 +63,10 @@ import sys
 import argparse
 import os
 import platform
-import commands
+try:
+    from commands import getoutput
+except ImportError:
+    from subprocess import getoutput
 import logging
 import datetime
 import pickle
@@ -263,13 +266,13 @@ if __name__ == '__main__':
     opt.sys_uname = platform.uname()
     if platform.system() == 'Darwin':
         opt.sys_info =\
-        commands.getoutput('system_profiler'
-                           ' -detailLevel mini SPHardwareDataType')\
+        getoutput('system_profiler'
+                  ' -detailLevel mini SPHardwareDataType')\
         .split('\n')[4:-1]
     elif platform.system() == 'FreeBSD':
-        opt.sys_info = commands.getoutput('sysctl hw').split('\n')
+        opt.sys_info = getoutput('sysctl hw').split('\n')
     elif platform.system() == 'Linux':
-        opt.sys_info = commands.getoutput('cat /proc/cpuinfo').split('\n')
+        opt.sys_info = getoutput('cat /proc/cpuinfo').split('\n')
 
     ### suppress warnings in numerical computation
     np.seterr(all='ignore')
