@@ -14,8 +14,8 @@ specific language governing permissions and limitations under the License.
 
 import numpy as np
 import pandas as pd
-from cvxpy import Problem, Minimize, Variable, sum_entries,\
-                  mul_elemwise, norm
+from cvxpy import Problem, Minimize, Variable, sum,\
+                  multiply, norm
 from logging import info, debug, warn
 
 
@@ -303,11 +303,11 @@ class OptTools():
 
         # add constraints
         # 1. valid distribution
-        constraints = [sum_entries(Pmap, axis=1)==1]
+        constraints = [sum(Pmap, axis=1)==1]
         constraints.append(Pmap>=0)
 
         # 2. definition of marginal PxhYh
-        constraints.append(PXhYh == sum_entries(np.diag(PxydMarginal)*Pmap,axis=0).T)
+        constraints.append(PXhYh == sum(np.diag(PxydMarginal)*Pmap,axis=0).T)
 
         # add the conditional mapping
         constraints.append(PYhgD == np.diag(np.ravel(PdMarginal)**(-1)).dot(self.dfMask_Pxyd_to_Pd.values.T).dot(np.diag(PxydMarginal))*Pmap*self.dfMask_Pxy_to_Py.values)
@@ -319,7 +319,7 @@ class OptTools():
 
 
         for i in range(len(self.CMlist)):
-            constraints.append(sum_entries(mul_elemwise(self.CMlist[i],Pxy_xhyh),axis=1)<=self.dlist[i])
+            constraints.append(sum(multiply(self.CMlist[i],Pxy_xhyh),axis=1)<=self.dlist[i])
         
         # 4. Discrimination control
         for d in range(self.dfMask_Pxyd_to_Pd.shape[1]):
@@ -348,7 +348,7 @@ class OptTools():
         self.const = []
         
         for i in range(len(self.CMlist)):
-            self.const.append(sum_entries(mul_elemwise(self.CMlist[i],Pxy_xhyh),axis=1).value.max())
+            self.const.append(sum(multiply(self.CMlist[i],Pxy_xhyh),axis=1).value.max())
 
     def compute_marginals(self):
         """ Compute a bunch of required marginal distributions """
