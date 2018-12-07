@@ -11,8 +11,15 @@
 # specific language governing permissions and limitations under the License.
 import numpy as np
 import pandas as pd
-import cvxpy as cp
-from cvxpy import Problem, Minimize, Variable
+try:
+    import cvxpy as cp
+    from cvxpy import Problem, Minimize, Variable
+except ImportError as error:
+    error.msg += "\nTry:\n\tpip install -e .[optim_preproc]" + \
+                 "\nor\n\tpip install -e .[all]" + \
+                 "\nSee additional instructions for Windows:" + \
+                 "\n\thttps://github.com/IBM/AIF360#cvxpy"
+    raise error
 
 
 class OptTools():

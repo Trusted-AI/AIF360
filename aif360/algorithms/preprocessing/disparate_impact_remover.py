@@ -5,6 +5,19 @@ from __future__ import unicode_literals
 
 import numpy as np
 
+try:
+    from BlackBoxAuditing.repairers.GeneralRepairer import Repairer
+except ImportError as error:
+    INSTALL_HINT = """
+Try:
+    pip install -e .[disparate_impact_remover]
+or
+    pip install -e .[all]
+See additional instructions for Windows with Python 2:
+    https://github.com/IBM/AIF360#blackboxauditing"""
+    error.msg += INSTALL_HINT
+    raise error
+
 from aif360.algorithms import Transformer
 
 
@@ -29,10 +42,6 @@ class DisparateImpactRemover(Transformer):
                 do repair.
         """
         super(DisparateImpactRemover, self).__init__(repair_level=repair_level)
-        # avoid importing early since this package can throw warnings in some
-        # jupyter notebooks
-        from BlackBoxAuditing.repairers.GeneralRepairer import Repairer
-        self.Repairer = Repairer
 
         if not 0.0 <= repair_level <= 1.0:
             raise ValueError("'repair_level' must be between 0.0 and 1.0.")
@@ -59,7 +68,7 @@ class DisparateImpactRemover(Transformer):
 
         features = dataset.features.tolist()
         index = dataset.feature_names.index(sensitive_attribute)
-        repairer = self.Repairer(features, index, self.repair_level, False)
+        repairer = Repairer(features, index, self.repair_level, False)
 
         repaired = dataset.copy()
         repaired_features = repairer.repair(features)

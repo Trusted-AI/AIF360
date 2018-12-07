@@ -8,7 +8,9 @@ import numpy as np
 try:
     import tensorflow as tf
 except ImportError as error:
-    print("Import error: %s" % (error))
+    error.msg += "\nTry:\n\tpip install -e .[adversarial_debiasing]\nor" + \
+                 "\n\tpip install -e .[all]"
+    raise error
 
 from aif360.algorithms import Transformer
 
@@ -132,16 +134,16 @@ class AdversarialDebiasing(Transformer):
         # Map the dataset labels to 0 and 1.
         temp_labels = dataset.labels.copy()
 
-        temp_labels[(dataset.labels == dataset.favorable_label).ravel(),0] = 1.0
-        temp_labels[(dataset.labels == dataset.unfavorable_label).ravel(),0] = 0.0
+        temp_labels[(dataset.labels == dataset.favorable_label).ravel(), 0] = 1.0
+        temp_labels[(dataset.labels == dataset.unfavorable_label).ravel(), 0] = 0.0
 
         with tf.variable_scope(self.scope_name):
             num_train_samples, self.features_dim = np.shape(dataset.features)
 
             # Setup placeholders
             self.features_ph = tf.placeholder(tf.float32, shape=[None, self.features_dim])
-            self.protected_attributes_ph = tf.placeholder(tf.float32, shape=[None,1])
-            self.true_labels_ph = tf.placeholder(tf.float32, shape=[None,1])
+            self.protected_attributes_ph = tf.placeholder(tf.float32, shape=[None, 1])
+            self.true_labels_ph = tf.placeholder(tf.float32, shape=[None, 1])
             self.keep_prob = tf.placeholder(tf.float32)
 
             # Obtain classifier predictions and classifier loss
@@ -172,7 +174,7 @@ class AdversarialDebiasing(Transformer):
             normalize = lambda x: x / (tf.norm(x) + np.finfo(np.float32).tiny)
 
             classifier_grads = []
-            for (grad,var) in classifier_opt.compute_gradients(pred_labels_loss, var_list=classifier_vars):
+            for (grad, var) in classifier_opt.compute_gradients(pred_labels_loss, var_list=classifier_vars):
                 if self.debias:
                     unit_adversary_grad = normalize(adversary_grads[var])
                     grad -= tf.reduce_sum(grad * unit_adversary_grad) * unit_adversary_grad
@@ -193,9 +195,9 @@ class AdversarialDebiasing(Transformer):
                 for i in range(num_train_samples//self.batch_size):
                     batch_ids = shuffled_ids[self.batch_size*i: self.batch_size*(i+1)]
                     batch_features = dataset.features[batch_ids]
-                    batch_labels = np.reshape(temp_labels[batch_ids], [-1,1])
+                    batch_labels = np.reshape(temp_labels[batch_ids], [-1, 1])
                     batch_protected_attributes = np.reshape(dataset.protected_attributes[batch_ids][:,
-                                                 dataset.protected_attribute_names.index(self.protected_attribute_name)], [-1,1])
+                                                 dataset.protected_attribute_names.index(self.protected_attribute_name)], [-1, 1])
 
                     batch_feed_dict = {self.features_ph: batch_features,
                                        self.true_labels_ph: batch_labels,
@@ -215,7 +217,7 @@ class AdversarialDebiasing(Transformer):
                              pred_labels_loss], feed_dict=batch_feed_dict)
                         if i % 200 == 0:
                             print("epoch %d; iter: %d; batch classifier loss: %f" % (
-                            epoch, i, pred_labels_loss_value))
+                                  epoch, i, pred_labels_loss_value))
         return self
 
     def predict(self, dataset):
@@ -242,21 +244,21 @@ class AdversarialDebiasing(Transformer):
                 end = num_test_samples
             batch_ids = np.arange(start, end)
             batch_features = dataset.features[batch_ids]
-            batch_labels = np.reshape(dataset.labels[batch_ids], [-1,1])
+            batch_labels = np.reshape(dataset.labels[batch_ids], [-1, 1])
             batch_protected_attributes = np.reshape(dataset.protected_attributes[batch_ids][:,
-                                         dataset.protected_attribute_names.index(self.protected_attribute_name)], [-1,1])
+                                         dataset.protected_attribute_names.index(self.protected_attribute_name)], [-1, 1])
 
             batch_feed_dict = {self.features_ph: batch_features,
                                self.true_labels_ph: batch_labels,
                                self.protected_attributes_ph: batch_protected_attributes,
                                self.keep_prob: 1.0}
 
-            pred_labels += self.sess.run(self.pred_labels, feed_dict=batch_feed_dict)[:,0].tolist()
+            pred_labels += self.sess.run(self.pred_labels, feed_dict=batch_feed_dict)[:, 0].tolist()
             samples_covered += len(batch_features)
 
         # Mutated, fairer dataset with new labels
-        dataset_new = dataset.copy(deepcopy = True)
-        dataset_new.labels = (np.array(pred_labels)>0.5).astype(np.float64).reshape(-1,1)
+        dataset_new = dataset.copy(deepcopy=True)
+        dataset_new.labels = (np.array(pred_labels) > 0.5).astype(np.float64).reshape(-1, 1)
 
         # Map the dataset labels to back to their original values.
         temp_labels = dataset_new.labels.copy()
