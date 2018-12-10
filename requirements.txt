@@ -5,7 +5,7 @@ ipykernel
 ipython
 ipywidgets
 tqdm
-numpy
+numpy>=1.14
 matplotlib
 pandas==0.23.3
 pytest
