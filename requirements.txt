@@ -11,7 +11,7 @@ pandas==0.23.3
 pytest
 scipy
 scikit-learn
-cvxpy==0.4.11
+cvxpy>=1.0
 numba
 tensorflow==1.1.0
 networkx==1.11
