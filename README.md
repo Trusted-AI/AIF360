@@ -1,6 +1,6 @@
 # AI Fairness 360 (AIF360 v0.1.1)
 
-[![Build Status](https://travis-ci.com/IBM/AIF360.svg?branch=master)](https://travis-ci.com/IBM/AIF360)
+[![Build Status](https://travis-ci.org/IBM/AIF360.svg?branch=master)](https://travis-ci.org/IBM/AIF360)
 
 The AI Fairness 360 toolkit is an open-source library to help detect and remove
 bias in machine learning models. The AI Fairness 360 Python package includes a
@@ -174,21 +174,16 @@ TensorFlow is only required for use with the
 #### CVXPY
 
 On Windows, you may need to download the appropriate [Visual Studio C++
-compiler for Python](https://wiki.python.org/moin/WindowsCompilers) and run:
+compiler for Python](https://wiki.python.org/moin/WindowsCompilers). Then,
+re-run:
 
 ```bat
-conda install -c https://conda.anaconda.org/omnia scs
+pip install -r requirements.txt
 ```
 
-Then, rerun:
-
-```bat
-pip install cvxpy==0.4.11
-```
-
-See the [CVXPY 0.4.11 Installation
-Instructions](https://www.cvxpy.org/versions/0.4.11/install/index.html#windows-with-anaconda)
-for details.
+See the [CVXPY Installation
+Instructions](https://www.cvxpy.org/install/index.html#windows)
+for an alternate installation procedure using conda.
 
 CVXPY is only required for use with the
 `aif360.algorithms.preprocessing.OptimPreproc` class.
