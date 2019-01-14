@@ -19,7 +19,8 @@ extras = {'art_classifier': ['adversarial-robustness-toolbox'],
           'examples': ['jupyter', 'tqdm', 'matplotlib'],
           'lime_explainer': ['lime'],
           'lfr': ['numba'],
-          'optim_preproc': ['cvxpy==0.4.11']}
+          'optim_preproc': ['cvxpy>=1.0'],
+          'tests': ['pytest', 'nbconvert', 'nbformat']}
 extras['all'] = [p for pkgs in extras.values() for p in pkgs]
 
 setup(name='aif360',
@@ -34,13 +35,12 @@ setup(name='aif360',
       packages=[pkg for pkg in find_packages() if pkg.startswith('aif360')],
       # python_requires='>=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, <3.7',
       install_requires=[
-          'numpy>=1.14,<1.16',
+          'numpy>=1.14',
           'scipy',
           'pandas==0.23.3',
           'scikit-learn',
       ],
       extras_require=extras,
-      tests_require=['pytest', 'nbconvert', 'nbformat'] + extras['examples'],
       package_data={'aif360': ['data/*', 'data/*/*', 'data/*/*/*']},
       include_package_data=True,
       zip_safe=False)

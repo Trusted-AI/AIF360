@@ -117,33 +117,19 @@ Clone the latest version of this repository:
 git clone https://github.com/IBM/AIF360
 ```
 
-If you'd like to run the examples, download the datasets now and place them in
-their respective folders as described in
-[aif360/data/README.md](aif360/data/README.md).
-
 Then, navigate to the root directory of the project and run:
 
 ```bash
-pip install .
+pip install -e .[all]
 ```
 
-#### Run the Examples
+Finally, follow the [Getting Started](https://pytorch.org)
+instructions from PyTorch to download and install the latest version for your
+machine.
 
-To run the example notebooks, install the additional requirements as follows:
-
-```bash
-pip install -r requirements.txt
-```
-
-Then, follow the [Getting Started](https://pytorch.org) instructions from
-PyTorch to download and install the latest version for your machine.
-
-Finally, if you did not already, download the datasets as described in
-[aif360/data/README.md](aif360/data/README.md) but place them **in the
-appropriate sub-folder** in
-`$ANACONDA_PATH/envs/aif360/lib/python3.5/site-packages/aif360/data/raw` where
-`$ANACONDA_PATH` is the base path to your conda installation (e.g.
-`~/anaconda`).
+If you'd like to run the examples, download the datasets and place them in their
+respective folders as described in
+[aif360/data/README.md](aif360/data/README.md).
 
 ### Troubleshooting
 
@@ -174,12 +160,8 @@ TensorFlow is only required for use with the
 #### CVXPY
 
 On Windows, you may need to download the appropriate [Visual Studio C++
-compiler for Python](https://wiki.python.org/moin/WindowsCompilers). Then,
-re-run:
-
-```bat
-pip install -r requirements.txt
-```
+compiler for Python](https://wiki.python.org/moin/WindowsCompilers) before
+installing.
 
 See the [CVXPY Installation
 Instructions](https://www.cvxpy.org/install/index.html#windows)
