@@ -6,7 +6,7 @@ from __future__ import unicode_literals
 from collections import defaultdict
 from contextlib import contextmanager
 from copy import deepcopy
-from logging import warn
+from logging import warning
 
 import numpy as np
 import pandas as pd
@@ -64,7 +64,7 @@ class StructuredDataset(Dataset):
     """
 
     def __init__(self, df, label_names, protected_attribute_names,
-                 instance_weights_name=None,
+                 instance_weights_name=None, scores_names=[],
                  unprivileged_protected_attributes=[],
                  privileged_protected_attributes=[], metadata=None):
         """
@@ -109,13 +109,17 @@ class StructuredDataset(Dataset):
         protected_attribute_names = list(map(str, protected_attribute_names))
 
         self.feature_names = [n for n in df.columns if n not in label_names
+                              and (not scores_names or n not in scores_names)
                               and n != instance_weights_name]
         self.label_names = label_names
         self.features = df[self.feature_names].values.copy()
         self.labels = df[self.label_names].values.copy()
         self.instance_names = df.index.astype(str).tolist()
 
-        self.scores = self.labels.copy()
+        if scores_names:
+            self.scores = df[scores_names].values.copy()
+        else:
+            self.scores = self.labels.copy()
 
         df_prot = df.loc[:, protected_attribute_names]
         self.protected_attribute_names = df_prot.columns.astype(str).tolist()
@@ -234,7 +238,7 @@ class StructuredDataset(Dataset):
 
         # =========================== VALUE CHECKING ===========================
         if np.any(np.logical_or(self.scores < 0., self.scores > 1.)):
-            warn("'scores' has no well-defined meaning out of range [0, 1].")
+            warning("'scores' has no well-defined meaning out of range [0, 1].")
 
         for i in range(len(self.privileged_protected_attributes)):
             priv = set(self.privileged_protected_attributes[i])
@@ -255,7 +259,7 @@ class StructuredDataset(Dataset):
                         self.protected_attribute_names[i]))
             # warn for unobserved values
             if not (priv | unpriv) <= set(self.protected_attributes[:, i]):
-                warn("{} listed but not observed for feature {}".format(
+                warning("{} listed but not observed for feature {}".format(
                     list((priv | unpriv) - set(self.protected_attributes[:, i])),
                     self.protected_attribute_names[i]))
 

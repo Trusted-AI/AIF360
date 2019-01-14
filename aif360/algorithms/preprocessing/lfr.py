@@ -4,7 +4,6 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import numpy as np
-
 import scipy.optimize as optim
 
 from aif360.algorithms import Transformer
@@ -31,7 +30,7 @@ class LFR(Transformer):
                  Ax=0.01,
                  Ay=1.0,
                  Az=50.0,
-                 print_interval = 250,
+                 print_interval=250,
                  verbose=1,
                  seed=None):
         """
@@ -42,7 +41,8 @@ class LFR(Transformer):
             Ax (float, optional): Input recontruction quality term weight.
             Az (float, optional): Fairness constraint term weight.
             Ay (float, optional): Output prediction error.
-            print_interval (int, optional): Print optimization objective value every print_interval iterations.
+            print_interval (int, optional): Print optimization objective value
+                every print_interval iterations.
             verbose (int, optional): If zero, then no output.
             seed (int, optional): Seed to make `predict` repeatable.
         """
@@ -85,7 +85,7 @@ class LFR(Transformer):
         num_train_samples, self.features_dim = np.shape(dataset.features)
 
         d = np.reshape(
-            dataset.protected_attributes[:,dataset.protected_attribute_names.index(self.protected_attribute_name)],
+            dataset.protected_attributes[:, dataset.protected_attribute_names.index(self.protected_attribute_name)],
             [-1, 1])
         sensitive_idx = np.array(np.where(d == self.unprivileged_group_protected_attribute_value))[0].flatten()
         nonsensitive_idx = np.array(np.where(d == self.privileged_group_protected_attribute_value))[0].flatten()
@@ -104,7 +104,7 @@ class LFR(Transformer):
 
         self.learned_model = optim.fmin_l_bfgs_b(lfr_helpers.LFR_optim_obj, x0=model_inits, epsilon=1e-5,
                                   args=(training_sensitive, training_nonsensitive,
-                                        ytrain_sensitive[:,0], ytrain_nonsensitive[:,0], self.k, self.Ax,
+                                        ytrain_sensitive[:, 0], ytrain_nonsensitive[:, 0], self.k, self.Ax,
                                         self.Ay, self.Az, 0, self.print_interval),
                                   bounds=bnd, approx_grad=True, maxfun=5000,
                                   maxiter=5000, disp=self.verbose)[0]
@@ -173,14 +173,13 @@ class LFR(Transformer):
         transformed_labels = (np.array(transformed_labels) > threshold).astype(np.float64)
 
         # Mutated, fairer dataset with new labels
-        dataset_new = dataset.copy(deepcopy = True)
+        dataset_new = dataset.copy(deepcopy=True)
         dataset_new.features = transformed_features
         dataset_new.labels = transformed_labels
-
 
         return dataset_new
 
     def fit_transform(self, dataset, seed=None):
-        """ fit and transform methods sequentially """
+        """fit and transform methods sequentially"""
 
         return self.fit(dataset, seed=seed).transform(dataset)

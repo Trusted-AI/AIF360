@@ -34,7 +34,6 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import numpy as np
-# from scipy.optimize import linprog
 
 from aif360.algorithms import Transformer
 from aif360.metrics import ClassificationMetric, utils

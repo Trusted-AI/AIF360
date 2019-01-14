@@ -14,13 +14,12 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
+from warnings import warn
+
 import numpy as np
-# from copy import deepcopy
 import pandas as pd
-from logging import warn
 
 from aif360.algorithms import Transformer
-# from aif360.datasets import StructuredDataset
 from aif360.datasets import BinaryLabelDataset
 
 
@@ -39,8 +38,8 @@ class OptimPreproc(Transformer):
     Based on code available at: https://github.com/fair-preprocessing/nips2017
     """
 
-    def __init__(self, optimizer, optim_options, unprivileged_groups,
-                privileged_groups, verbose=False, seed=None):
+    def __init__(self, optimizer, optim_options, unprivileged_groups=None,
+                 privileged_groups=None, verbose=False, seed=None):
         """
         Args:
             optimizer (class): Optimizer class.
@@ -70,11 +69,12 @@ class OptimPreproc(Transformer):
 
         self.unprivileged_groups = unprivileged_groups
         self.privileged_groups = privileged_groups
-        warn("Privileged and unprivileged groups specified will not be used. "
-             "The protected attributes are directly specified in data "
-             "preprocessing function. The current implementation automatically "
-             "adjusts for discrimination across all groups. This can be changed"
-             " by changing the optimization code.")
+        if unprivileged_groups or privileged_groups:
+            warn("Privileged and unprivileged groups specified will not be "
+                 "used. The protected attributes are directly specified in the "
+                 "data preprocessing function. The current implementation "
+                 "automatically adjusts for discrimination across all groups. "
+                 "This can be changed by changing the optimization code.")
 
     def fit(self, dataset, sep='='):
         """Compute optimal pre-processing transformation based on distortion
@@ -88,7 +88,7 @@ class OptimPreproc(Transformer):
             OptimPreproc: Returns self.
         """
         if len(np.unique(dataset.instance_weights)) > 1:
-            warn("Optimized pre-processing will ignore instance_weights in"
+            warn("Optimized pre-processing will ignore instance_weights in "
                  "the dataset during fit.")
         # Convert the dataset to a dataframe and preprocess
         df, _ = dataset.convert_to_dataframe(de_dummy_code=True, sep=sep,
@@ -141,8 +141,8 @@ class OptimPreproc(Transformer):
         """
 
         if len(np.unique(dataset.instance_weights)) > 1:
-            warn("Optimized pre-processing will ignore instance_weights in"
-                 "the dataset during predict. The transformed dataset will"
+            warn("Optimized pre-processing will ignore instance_weights in "
+                 "the dataset during predict. The transformed dataset will "
                  "have all instance weights set to 1.")
 
         # Convert the dataset to a dataframe and preprocess

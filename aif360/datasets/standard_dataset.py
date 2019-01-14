@@ -3,7 +3,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-from logging import warn
+from logging import warning
 
 import numpy as np
 import pandas as pd
@@ -24,9 +24,10 @@ class StandardDataset(BinaryLabelDataset):
 
     def __init__(self, df, label_name, favorable_classes,
                  protected_attribute_names, privileged_classes,
-                 instance_weights_name='', categorical_features=[],
-                 features_to_keep=[], features_to_drop=[], na_values=[],
-                 custom_preprocessing=None, metadata=None):
+                 instance_weights_name='', scores_name='',
+                 categorical_features=[], features_to_keep=[],
+                 features_to_drop=[], na_values=[], custom_preprocessing=None,
+                 metadata=None):
         """
         Subclasses of StandardDataset should perform the following before
         calling `super().__init__`:
@@ -96,13 +97,13 @@ class StandardDataset(BinaryLabelDataset):
             keep |= set([instance_weights_name])
         df = df[sorted(keep - set(features_to_drop), key=df.columns.get_loc)]
         categorical_features = sorted(set(categorical_features) - set(features_to_drop), key=df.columns.get_loc)
-        
+
         # 4. Remove any rows that have missing data.
         dropped = df.dropna()
         count = df.shape[0] - dropped.shape[0]
         if count > 0:
-            warn("Missing Data: {} rows removed from {}.".format(count,
-                type(self).__name__))
+            warning("Missing Data: {} rows removed from {}.".format(count,
+                    type(self).__name__))
         df = dropped
 
         # 5. Create a one-hot encoding of the categorical variables.
@@ -152,5 +153,6 @@ class StandardDataset(BinaryLabelDataset):
             privileged_protected_attributes=privileged_protected_attributes,
             unprivileged_protected_attributes=unprivileged_protected_attributes,
             instance_weights_name=instance_weights_name,
+            scores_names=[scores_name] if scores_name else [],
             favorable_label=favorable_label,
             unfavorable_label=unfavorable_label, metadata=metadata)
