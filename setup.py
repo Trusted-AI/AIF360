@@ -19,7 +19,7 @@ setup(name='aif360',
       packages=find_packages(),
       # python_requires='>=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, <3.7',
       install_requires=[
-          'numpy',
+          'numpy>=1.14,<1.16',
           'scipy',
           'pandas==0.23.3',
           'scikit-learn',
