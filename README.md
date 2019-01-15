@@ -123,12 +123,11 @@ Then, navigate to the root directory of the project and run:
 pip install -e .[all]
 ```
 
-Finally, follow the [Getting Started](https://pytorch.org)
-instructions from PyTorch to download and install the latest version for your
-machine.
+If you are running Python 2.7, see the [additional instructions for
+BlackBoxAuditing](#blackboxauditing).
 
-If you'd like to run the examples, download the datasets and place them in their
-respective folders as described in
+Finally, if you'd like to run the examples, download the datasets and place them
+in their respective folders as described in
 [aif360/data/README.md](aif360/data/README.md).
 
 ### Troubleshooting
@@ -159,13 +158,25 @@ TensorFlow is only required for use with the
 
 #### CVXPY
 
-On Windows, you may need to download the appropriate [Visual Studio C++
-compiler for Python](https://wiki.python.org/moin/WindowsCompilers) before
-installing.
+On Windows, you need to download the appropriate [Visual Studio C++ compiler for
+Python](https://wiki.python.org/moin/WindowsCompilers) before installing. You
+may need to restart your computer after this.
 
-See the [CVXPY Installation
-Instructions](https://www.cvxpy.org/install/index.html#windows)
-for an alternate installation procedure using conda.
+Likewise, Mac users may need to install the Command Line Tools via:
+
+```bash
+xcode-select --install
+```
+
+Then try:
+
+```bat
+pip install -e .[optim_preproc]
+```
+
+See the [CVXPY Installation Instructions](
+https://www.cvxpy.org/install/index.html) for an alternate installation
+procedure using conda.
 
 CVXPY is only required for use with the
 `aif360.algorithms.preprocessing.OptimPreproc` class.

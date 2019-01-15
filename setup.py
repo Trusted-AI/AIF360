@@ -17,7 +17,7 @@ extras = {'art_classifier': ['adversarial-robustness-toolbox'],
           'disparate_impact_remover':
               ['networkx==1.11', 'BlackBoxAuditing;python_version>="3"'],
           'examples': ['jupyter', 'tqdm', 'matplotlib'],
-          'lime_explainer': ['lime'],
+          'lime_encoder': ['lime'],
           'lfr': ['numba'],
           'optim_preproc': ['cvxpy>=1.0'],
           'tests': ['pytest', 'nbconvert', 'nbformat']}
@@ -34,8 +34,8 @@ setup(name='aif360',
       license='Apache License 2.0',
       packages=[pkg for pkg in find_packages() if pkg.startswith('aif360')],
       # python_requires='>=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, <3.7',
+      setup_requires=['numpy>=1.14,<1.16'],
       install_requires=[
-          'numpy>=1.14',
           'scipy',
           'pandas==0.23.3',
           'scikit-learn',
