@@ -10,6 +10,7 @@ branches:
     - master
 
 install:
+  - pip install numpy==1.15
   - pip install -r requirements.txt
   - pip install flake8
   - if ! wget ${UCI_HTTPS_URL}/adult/adult.data -P aif360/data/raw/adult/ ; then wget ${UCI_FTP_URL}/adult/adult.data -P aif360/data/raw/adult/ ; fi
@@ -28,6 +29,7 @@ matrix:
     - echo -n /tmp/BlackBoxAuditing/BlackBoxAuditing/weka.jar > /tmp/BlackBoxAuditing/python2_source/BlackBoxAuditing/model_factories/weka.path
     - echo include python2_source/BlackBoxAuditing/model_factories/weka.path >> /tmp/BlackBoxAuditing/MANIFEST.in
     - pip install --no-deps /tmp/BlackBoxAuditing/
+    - pip list
   - python: "3.6"
     before_script:
     # exit-zero treats all errors as warnings.  The GitHub editor is 127 chars wide
