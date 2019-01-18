@@ -9,3 +9,4 @@
 docs/build/
 aif360/data/raw/**
 !aif360/data/raw/*/*.md
+aif360/version.py
