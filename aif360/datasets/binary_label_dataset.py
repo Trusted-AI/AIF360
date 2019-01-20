@@ -3,6 +3,8 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
+import numpy as np
+
 from aif360.datasets import StructuredDataset
 
 
@@ -41,7 +43,10 @@ class BinaryLabelDataset(StructuredDataset):
 
         # =========================== VALUE CHECKING ===========================
         # Check if the favorable and unfavorable labels match those in the dataset
-        if (set([self.favorable_label, self.unfavorable_label])
-                != set(self.labels.ravel())):
+        if (not set(self.labels.ravel()) <=
+                set([self.favorable_label, self.unfavorable_label])):
             raise ValueError("The favorable and unfavorable labels provided do "
                              "not match the labels in the dataset.")
+
+        if np.all(self.scores == self.labels):
+            self.scores = (self.scores == self.favorable_label).astype(np.float64)

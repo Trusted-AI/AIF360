@@ -20,7 +20,14 @@ class DisparateImpactRemover(Transformer):
            Mining, 2015.
     """
 
-    def __init__(self, repair_level=1.0):
+    def __init__(self, repair_level=1.0, sensitive_attribute=''):
+        """
+        Args:
+            repair_level (float): Repair amount. 0.0 is no repair while 1.0 is
+                full repair.
+            sensitive_attribute (str): Single protected attribute with which to
+                do repair.
+        """
         super(DisparateImpactRemover, self).__init__(repair_level=repair_level)
         # avoid importing early since this package can throw warnings in some
         # jupyter notebooks
@@ -30,6 +37,8 @@ class DisparateImpactRemover(Transformer):
         if not 0.0 <= repair_level <= 1.0:
             raise ValueError("'repair_level' must be between 0.0 and 1.0.")
         self.repair_level = repair_level
+
+        self.sensitive_attribute = sensitive_attribute
 
     def fit_transform(self, dataset):
         """Run a repairer on the non-protected features and return the
@@ -45,10 +54,8 @@ class DisparateImpactRemover(Transformer):
             the distributions of attributes conditioned on the protected
             attribute must be the same.
         """
-        if len(dataset.protected_attribute_names) > 1:
-            raise ValueError("'dataset' must have only a single protected "
-                             "attribute.")
-        sensitive_attribute = dataset.protected_attribute_names[0]
+        if not self.sensitive_attribute:
+            sensitive_attribute = dataset.protected_attribute_names[0]
 
         features = dataset.features.tolist()
         index = dataset.feature_names.index(sensitive_attribute)

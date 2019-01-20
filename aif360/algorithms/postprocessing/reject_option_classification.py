@@ -79,6 +79,7 @@ class RejectOptionClassification(Transformer):
             (self.high_class_thresh < 0.0) or (self.high_class_thresh > 1.0) or\
             (self.low_class_thresh >= self.high_class_thresh) or\
             (self.num_class_thresh < 1) or (self.num_ROC_margin < 1)):
+
             raise ValueError("Input parameter values out of bounds")
 
         if metric_name not in allowed_metrics:
