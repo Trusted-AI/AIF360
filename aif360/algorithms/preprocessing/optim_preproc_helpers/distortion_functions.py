@@ -15,7 +15,7 @@ def get_distortion_adult(vold, vnew):
     for an example
 
     Note:
-        Users can use this as templates to create other distorion functions.
+        Users can use this as templates to create other distortion functions.
 
     Args:
         vold (dict) : {attr:value} with old values
@@ -148,7 +148,7 @@ def get_distortion_compas(vold, vnew):
     for an example
 
     Note:
-        Users can use this as templates to create other distorion functions.
+        Users can use this as templates to create other distortion functions.
 
     Args:
         vold (dict) : {attr:value} with old values
