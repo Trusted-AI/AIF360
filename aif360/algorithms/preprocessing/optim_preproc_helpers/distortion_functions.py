@@ -89,7 +89,7 @@ def get_distortion_german(vold, vnew):
     for an example
 
     Note:
-        Users can use this as templates to create other distorion functions.
+        Users can use this as templates to create other distortion functions.
 
     Args:
         vold (dict) : {attr:value} with old values
