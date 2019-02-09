@@ -6,6 +6,8 @@ from __future__ import unicode_literals
 from aif360.explainers import Explainer
 from aif360.metrics import Metric
 
+from typing import Union
+
 
 class MetricTextExplainer(Explainer):
     """Class for explaining metric values with text.
@@ -29,6 +31,28 @@ class MetricTextExplainer(Explainer):
             self.metric = metric
         else:
             raise TypeError("metric must be a Metric.")
+
+    def explain(self,
+                disp: bool = True) -> Union[None, str]:
+        """Explain everything available for the given metric.
+
+        Args:
+            disp: If true print generated string, else return generated string.
+        """
+
+        # Find intersecting methods/attributes between MetricTextExplainer and provided metric.
+        inter = set(dir(self)).intersection(set(dir(self.metric)))
+
+        # Ignore private and dunder methods
+        metric_methods = [getattr(self, c) for c in inter if c.startswith('_') < 1]
+
+        # Call methods, join to new lines
+        s = "\n".join([f() for f in metric_methods if callable(f)])
+
+        if disp:
+            print(s)
+        else:
+            return s
 
     def accuracy(self, privileged=None):
         if privileged is None:
