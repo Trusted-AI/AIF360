@@ -103,7 +103,7 @@ class ClassificationMetric(BinaryLabelDatasetMetric):
             self.dataset.favorable_label, self.dataset.unfavorable_label,
             condition=condition)
 
-    def compute_ROC_metric(self, privileged=None):
+    def compute_ROC(self, privileged=None):
 
         """Compute area under Receiver Operating Characteristic curve.
 
