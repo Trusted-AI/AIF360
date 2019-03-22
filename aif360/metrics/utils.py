@@ -189,18 +189,16 @@ def compute_ROC(X, y_true, y_pred, w, feature_names, favorable_label,
     true_positive_matrix /= number_of_positives
     false_positive_maxtrix /= number_of_negatives
 
-    plt.title('Receiver Operating Characteristic')
-    plt.plot(false_positive_maxtrix, true_positive_matrix, 'b')
-    plt.legend(loc='lower right')
-    plt.plot([0, 1], [0, 1], 'r--')
-    plt.xlim([0, 1])
-    plt.ylim([0, 1])
-    plt.ylabel('True Positive Rate')
-    plt.xlabel('False Positive Rate')
+    #calculate AUC using trapezoidal sums
+    height = (np.add([true_positive_matrix[i] for i in range(1,true_positive_matrix.size)],
+                     [true_positive_matrix[x] for x in range(0,true_positive_matrix.size-1)]))
+    height /= 2.
+    width = -np.diff(false_positive_maxtrix)
 
-    plt.show()
+    #calculate AUC
+    auc = np.sum(height*width)
 
-    return false_positive_maxtrix, true_positive_matrix
+    return false_positive_maxtrix, true_positive_matrix, auc
 
 
 
