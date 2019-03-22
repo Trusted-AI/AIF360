@@ -7,7 +7,8 @@ import numpy as np
 import pandas as pd
 
 from aif360.datasets import BinaryLabelDataset
-from aif360.metrics import classification_metric
+from aif360.metrics import ClassificationMetric
+
 
 def test_generalized_entropy_index():
     data = np.array([[0, 1],
