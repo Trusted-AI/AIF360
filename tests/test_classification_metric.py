@@ -31,9 +31,6 @@ def test_generalized_entropy_index():
         protected_attribute_names=['feat'])
     cm = ClassificationMetric(bld, bld2)
 
-    print("__TESTING ROC___")
-    cm.compute_ROC_Metric()
-
     assert cm.generalized_entropy_index() == 0.2
 
     pred = data.copy()
@@ -44,8 +41,6 @@ def test_generalized_entropy_index():
     cm = ClassificationMetric(bld, bld2)
 
     assert cm.generalized_entropy_index() == 0.3
-
-test_generalized_entropy_index()
 
 def test_theil_index():
     data = np.array([[0, 1],
