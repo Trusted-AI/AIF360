@@ -5,8 +5,6 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import numpy as np
-import matplotlib.pyplot as plt
-
 
 def compute_boolean_conditioning_vector(X, feature_names, condition=None):
     """Compute the boolean conditioning vector.
@@ -128,9 +126,9 @@ def compute_num_TF_PN(X, y_true, y_pred, w, feature_names, favorable_label,
     )
 
 def compute_ROC(X, y_true, y_pred, w, feature_names, favorable_label,
-                      unfavorable_label, condition = None, resolution = 0.01) :
+                      unfavorable_label, condition=None, resolution=0.01):
 
-    """Calculate Area under Receiver Operating Characteristic Curve.
+    """Compute area under Receiver Operating Characteristic curve.
 
     Args:
         X (numpy.ndarray): Dataset features.
@@ -143,29 +141,24 @@ def compute_ROC(X, y_true, y_pred, w, feature_names, favorable_label,
         unfavorable_label (float): Value of unfavorable/negative label.
         condition (list(dict)): Same format as
             :func:`compute_boolean_conditioning_vector`.
-        resolution : steps to increment classification threshold
+        resolution (float) : steps to increment classification threshold
 
     Returns:
-        False negative rate matrix for given classification thresholds
-        True positive rate matrix for given classification thresholds
-        Area under Receiver Operating Characteristic Curve
+        False negative rate matrix for given classification thresholds (list)
+        True positive rate matrix for given classification thresholds  (list)
+        Area under Receiver Operating Characteristic Curve (float)
     """
 
     #condition if necessary
     condition_vector = compute_boolean_conditioning_vector(X, feature_names, condition=condition)
 
-    #range of values for threshold
-    rangeArr = np.arange(np.minimum(favorable_label, unfavorable_label),
-                      np.maximum(favorable_label, unfavorable_label),
-                      resolution)
-
     # avoid broadcasts
-    y_true = y_true.ravel()
+    y_true_r = y_true.ravel()
     y_predicted = y_pred.ravel()
 
     #true positives and negatives
-    y_true_positive = (y_true == favorable_label)
-    y_true_negative = (y_true == unfavorable_label)
+    y_true_positive = (y_true_r == favorable_label)
+    y_true_negative = (y_true_r == unfavorable_label)
 
     #calculate amount of positive and negative instances
     number_of_positives = np.sum(np.logical_and(y_true_positive, condition_vector))
@@ -173,32 +166,33 @@ def compute_ROC(X, y_true, y_pred, w, feature_names, favorable_label,
 
     #hold true and false positives at different thresholds
     true_positive_matrix = []
-    false_positive_maxtrix = []
+    false_positive_matrix = []
 
     #calculate thresholds
-    for threshold in rangeArr:
+    for threshold in np.arange(0, 1, resolution):
 
         #calculate new predicted positives for the threshold
         y_pred_positive = np.logical_and(y_predicted > threshold, condition_vector)
 
         #append to the matrix for graphing
         true_positive_matrix.append(np.sum(w[np.logical_and(y_true_positive, y_pred_positive)], dtype=np.float64))
-        false_positive_maxtrix.append(np.sum(w[np.logical_and(y_true_negative, y_pred_positive)],dtype=np.float64))
+        false_positive_matrix.append(np.sum(w[np.logical_and(y_true_negative, y_pred_positive)],dtype=np.float64))
 
     #devide by number of positive and negative instances to get rates
     true_positive_matrix /= number_of_positives
-    false_positive_maxtrix /= number_of_negatives
+    false_positive_matrix /= number_of_negatives
 
     #calculate AUC using trapezoidal sums
     height = (np.add([true_positive_matrix[i] for i in range(1,true_positive_matrix.size)],
                      [true_positive_matrix[x] for x in range(0,true_positive_matrix.size-1)]))
     height /= 2.
-    width = -np.diff(false_positive_maxtrix)
+    width = -np.diff(false_positive_matrix)
 
     #calculate AUC
     auc = np.sum(height*width)
 
-    return false_positive_maxtrix, true_positive_matrix, auc
+    #return values
+    return false_positive_matrix, true_positive_matrix, auc
 
 
 
