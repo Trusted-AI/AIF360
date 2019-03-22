@@ -7,9 +7,8 @@ from itertools import product
 
 import numpy as np
 
-from aif360.metrics import BinaryLabelDatasetMetric
+from aif360.metrics import BinaryLabelDatasetMetric, utils
 from aif360.datasets import BinaryLabelDataset
-from aif360.metrics import utils
 
 class ClassificationMetric(BinaryLabelDatasetMetric):
     """Class for computing metrics based on two BinaryLabelDatasets.
