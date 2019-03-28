@@ -182,14 +182,8 @@ def compute_ROC(X, y_true, y_pred, w, feature_names, favorable_label,
     true_positive_matrix /= number_of_positives
     false_positive_matrix /= number_of_negatives
 
-    #calculate AUC using trapezoidal sums
-    height = (np.add([true_positive_matrix[i] for i in range(1,true_positive_matrix.size)],
-                     [true_positive_matrix[x] for x in range(0,true_positive_matrix.size-1)]))
-    height /= 2.
-    width = -np.diff(false_positive_matrix)
-
     #calculate AUC
-    auc = np.sum(height*width)
+    auc = np.trapz(false_positive_matrix, true_positive_matrix)
 
     #return values
     return false_positive_matrix, true_positive_matrix, auc
