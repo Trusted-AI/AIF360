@@ -183,7 +183,7 @@ def compute_ROC(X, y_true, y_pred, w, feature_names, favorable_label,
     false_positive_matrix /= number_of_negatives
 
     #calculate AUC
-    auc = -1*np.trapz(true_positive_matrix, false_positive_matrix)
+    auc = np.trapz(true_positive_matrix, false_positive_matrix)
 
     #return values
     return false_positive_matrix, true_positive_matrix, auc
