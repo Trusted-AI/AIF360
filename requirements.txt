@@ -9,7 +9,7 @@ numpy>=1.14,<1.16
 matplotlib
 pandas==0.23.3
 pytest>=3.5.0
-scipy
+scipy<=1.2.1
 scikit-learn
 cvxpy>=1.0
 numba
