@@ -121,40 +121,40 @@ class RejectOptionClassification(Transformer):
                 low_ROC_margin = 0.0
                 high_ROC_margin = (1.0-class_thresh)
 
-                # Iterate through ROC margins
-                for ROC_margin in np.linspace(
-                                    low_ROC_margin,
-                                    high_ROC_margin,
-                                    self.num_ROC_margin):
-                    self.ROC_margin = ROC_margin
+            # Iterate through ROC margins
+            for ROC_margin in np.linspace(
+                                low_ROC_margin,
+                                high_ROC_margin,
+                                self.num_ROC_margin):
+                self.ROC_margin = ROC_margin
 
-                    # Predict using the current threshold and margin
-                    dataset_transf_pred = self.predict(dataset_pred)
+                # Predict using the current threshold and margin
+                dataset_transf_pred = self.predict(dataset_pred)
 
-                    dataset_transf_metric_pred = BinaryLabelDatasetMetric(
-                                                 dataset_transf_pred,
-                                                 unprivileged_groups=self.unprivileged_groups,
-                                                 privileged_groups=self.privileged_groups)
-                    classified_transf_metric = ClassificationMetric(
-                                                 dataset_true,
-                                                 dataset_transf_pred,
-                                                 unprivileged_groups=self.unprivileged_groups,
-                                                 privileged_groups=self.privileged_groups)
+                dataset_transf_metric_pred = BinaryLabelDatasetMetric(
+                                             dataset_transf_pred,
+                                             unprivileged_groups=self.unprivileged_groups,
+                                             privileged_groups=self.privileged_groups)
+                classified_transf_metric = ClassificationMetric(
+                                             dataset_true,
+                                             dataset_transf_pred,
+                                             unprivileged_groups=self.unprivileged_groups,
+                                             privileged_groups=self.privileged_groups)
 
-                    ROC_margin_arr[cnt] = self.ROC_margin
-                    class_thresh_arr[cnt] = self.classification_threshold
+                ROC_margin_arr[cnt] = self.ROC_margin
+                class_thresh_arr[cnt] = self.classification_threshold
 
-                    # Balanced accuracy and fairness metric computations
-                    balanced_acc_arr[cnt] = 0.5*(classified_transf_metric.true_positive_rate()\
-                                           +classified_transf_metric.true_negative_rate())
-                    if self.metric_name == "Statistical parity difference":
-                        fair_metric_arr[cnt] = dataset_transf_metric_pred.mean_difference()
-                    elif self.metric_name == "Average odds difference":
-                        fair_metric_arr[cnt] = classified_transf_metric.average_odds_difference()
-                    elif self.metric_name == "Equal opportunity difference":
-                        fair_metric_arr[cnt] = classified_transf_metric.equal_opportunity_difference()
+                # Balanced accuracy and fairness metric computations
+                balanced_acc_arr[cnt] = 0.5*(classified_transf_metric.true_positive_rate()\
+                                       +classified_transf_metric.true_negative_rate())
+                if self.metric_name == "Statistical parity difference":
+                    fair_metric_arr[cnt] = dataset_transf_metric_pred.mean_difference()
+                elif self.metric_name == "Average odds difference":
+                    fair_metric_arr[cnt] = classified_transf_metric.average_odds_difference()
+                elif self.metric_name == "Equal opportunity difference":
+                    fair_metric_arr[cnt] = classified_transf_metric.equal_opportunity_difference()
 
-                    cnt += 1
+                cnt += 1
 
         rel_inds = np.logical_and(fair_metric_arr >= self.metric_lb,
                                   fair_metric_arr <= self.metric_ub)
