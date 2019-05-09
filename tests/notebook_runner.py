@@ -2,7 +2,6 @@
 # http://www.christianmoscardi.com/blog/2016/01/20/jupyter-testing.html
 
 import os
-import sys
 import subprocess
 import tempfile
 
@@ -15,10 +14,7 @@ def notebook_run(path):
     dirname, __ = os.path.split(path)
     os.chdir(dirname)
 
-    if sys.version.startswith('2'):
-        kername = "python2"
-    else:
-        kername = "python3"
+    kername = "python3"
 
     with tempfile.NamedTemporaryFile(suffix=".ipynb") as fout:
         args = ["jupyter", "nbconvert", "--to", "notebook", "--execute",

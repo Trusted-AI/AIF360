@@ -26,8 +26,7 @@ Changes made to fairness-comparison code:
         - kamfadm-2012ecmlpkdd/train_lr.py
         - kamfadm-2012ecmlpkdd/train_nb.py
     * fixed typo in kamfadm-2012ecmlpkdd/fadm/lr/pr.py:244 (typeError -> TypeError)
-    * removed commands.py and instead use subprocess.getoutput if commands is
-      not available
+    * removed commands.py and instead use subprocess.getoutput
 
 Notes from fairness-comparison's KamishimaAlgorithm.py on changes made to
 original Kamishima code.
