@@ -61,9 +61,6 @@ def load_adult(usecols=[], dropcols=[], numeric_only=False, dropna=True):
         >>> adult_num = load_adult(numeric_only=True)
         >>> adult_num.X.shape
         (48842, 5)
-
-        >>> privileged = adult.xs('White', level='race', drop_level=False)
-        >>> privileged = adult.query('race == "White"')
     """
     return standarize_dataset(fetch_and_format_openml('adult'),
                               protected_attributes=['race', 'sex'],

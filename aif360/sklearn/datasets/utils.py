@@ -32,13 +32,16 @@ def standarize_dataset(df, *, protected_attributes, target, pos_label=None,
         dropna (bool): Drop rows with NAs.
 
     Returns:
-        (X, y, [sample_weight]):
+        namedtuple:
 
-            * `pandas.DataFrame`: Feature array.
+            A tuple-like object where items can be accessed by index or name.
+            Contains the following attributes:
 
-            * `pandas.DataFrame` or `pandas.Series`: Target array.
+            * `pandas.DataFrame`: X: Feature array.
 
-            * `pandas.Series`, optional: Sample weights.
+            * `pandas.DataFrame` or `pandas.Series`: y: Target array.
+
+            * `pandas.Series`, optional: sample_weight: Sample weights.
 
     Note:
         The order of execution for the dropping parameters is: dropcols ->
@@ -77,6 +80,9 @@ def standarize_dataset(df, *, protected_attributes, target, pos_label=None,
     # Column-wise drops
     df = df.drop(dropcols, axis=1)
     if usecols:
+        if not is_list_like(usecols):
+            # make sure we don't return a Series instead of a DataFrame
+            usecols = [usecols]
         df = df[usecols]
     if numeric_only:
         df = df.select_dtypes(['number', 'bool'])
@@ -90,9 +96,8 @@ def standarize_dataset(df, *, protected_attributes, target, pos_label=None,
 
     if sample_weight is not None:
         sample_weight = df.pop(sample_weight)
-        # return namedtuple('Dataset', ['X', 'y', 'sample_weight'])(df, y, sample_weight)
-        # TODO: is this less readable?
-        return namedtuple('Dataset', 'X y sample_weight')(df, y, sample_weight)
+        return namedtuple('WeightedDataset', ['X', 'y', 'sample_weight'])(
+                          df, y, sample_weight)
     return namedtuple('Dataset', ['X', 'y'])(df, y)
 
 def make_onehot_transformer(X):
