@@ -99,7 +99,7 @@ class AdultDataset(StandardDataset):
             import sys
             sys.exit(1)
 
-        df = pd.concat([train, test], ignore_index=True)
+        df = pd.concat([test, train], ignore_index=True)
 
         super(AdultDataset, self).__init__(df=df, label_name=label_name,
             favorable_classes=favorable_classes,
