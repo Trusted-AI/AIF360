@@ -37,13 +37,13 @@ def test_pos_label_basic():
     assert (basic(pos_label=lambda y: 10 > y > 5).y == [0, 1, 0]).all()
 
 def test_usecols_dropcols_basic():
-    assert basic(usecols='X1').X.columns.to_list() == ['X1']
-    assert basic(usecols=['X1', 'Z']).X.columns.to_list() == ['X1', 'Z']
+    assert basic(usecols='X1').X.columns.tolist() == ['X1']
+    assert basic(usecols=['X1', 'Z']).X.columns.tolist() == ['X1', 'Z']
 
-    assert basic(dropcols='X1').X.columns.to_list() == ['X2', 'Z']
-    assert basic(dropcols=['X1', 'Z']).X.columns.to_list() == ['X2']
+    assert basic(dropcols='X1').X.columns.tolist() == ['X2', 'Z']
+    assert basic(dropcols=['X1', 'Z']).X.columns.tolist() == ['X2']
 
-    assert basic(usecols='X1', dropcols=['X2']).X.columns.to_list() == ['X1']
+    assert basic(usecols='X1', dropcols=['X2']).X.columns.tolist() == ['X1']
     with pytest.raises(KeyError):
         basic(usecols=['X1', 'X2'], dropcols='X2')
 
