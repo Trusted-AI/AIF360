@@ -16,7 +16,7 @@ from sklearn.neighbors import NearestNeighbors
 
 
 # ============================= META-METRICS ===================================
-def difference(func, y_true, y_pred=None, *, priv_expr):
+def difference(func, y, *args, priv_expr, sample_weight=None, **kwargs):
     """Compute the difference between unprivileged and privileged subsets for an
     arbitrary metric.
 
@@ -27,13 +27,15 @@ def difference(func, y_true, y_pred=None, *, priv_expr):
 
     Args:
         func (function): A metric function from `aif360.sklearn.metrics` or
-            `sklearn.metrics`. Keyword args should be filled in with partial.
-        y_true (pandas.Series): Ground truth (correct) target values.
-        y_pred (array-like, optional): Estimated targets as returned by a
-            classifier.
+            `sklearn.metrics`.
+        y (pandas.Series): Outcome vector with protected attributes as index.
+        *args: Additional positional args to be passed through to `func`.
         priv_expr (string, keyword-only): A query expression describing the
             privileged group (see `pandas.DataFrame.eval` and
             `pandas.DataFrame.query` for details).
+        sample_weight (array-like, optional): Sample weights passed through to
+            `func`.
+        **kwargs: Additional keyword args to be passed through to `func`.
 
     Returns:
         scalar: Difference in metric value for unprivileged and privileged groups.
@@ -44,14 +46,18 @@ def difference(func, y_true, y_pred=None, *, priv_expr):
         >>> difference(precision_score, y, y_pred, priv_expr='sex == "male"')
         -0.06955430006277463
     """
+    args = (y,) + args
     # Note: provide blank name because if index name clashes with column name,
     # column name gets preference
-    priv = y_true.to_frame('').eval(priv_expr)
-    if y_pred is None:
-        return func(y_true[~priv]) - func(y_true[priv])
-    return func(y_true[~priv], y_pred[~priv]) - func(y_true[priv], y_pred[priv])
+    idx = y.to_frame('').eval(priv_expr)
+    unpriv = map(lambda a: a[~idx], args)
+    priv = map(lambda a: a[idx], args)
+    if sample_weight is not None:
+        return (func(*unpriv, sample_weight=sample_weight[~idx], **kwargs)
+              - func(*priv, sample_weight=sample_weight[idx], **kwargs))
+    return func(*unpriv, **kwargs) - func(*priv, **kwargs)
 
-def ratio(func, y_true, y_pred=None, *, priv_expr):
+def ratio(func, y, *args, priv_expr, sample_weight=None, **kwargs):
     """Compute the ratio between unprivileged and privileged subsets for an
     arbitrary metric.
 
@@ -62,23 +68,27 @@ def ratio(func, y_true, y_pred=None, *, priv_expr):
 
     Args:
         func (function): A metric function from `aif360.sklearn.metrics` or
-            `sklearn.metrics`. Keyword args should be filled in with partial.
-        y_true (pandas.Series): Ground truth (correct) target values.
-        y_pred (array-like, optional): Estimated targets as returned by a
-            classifier.
+            `sklearn.metrics`.
+        y (pandas.Series): Outcome vector with protected attributes as index.
+        *args: Additional positional args to be passed through to `func`.
         priv_expr (string, keyword-only): A query expression describing the
             privileged group (see `pandas.DataFrame.eval` and
             `pandas.DataFrame.query` for details).
+        sample_weight (array-like, optional): Sample weights passed through to
+            `func`.
+        **kwargs: Additional keyword args to be passed through to `func`.
 
     Returns:
         scalar: Ratio of metric values for unprivileged and privileged groups.
     """
-    # Note: provide blank name because if index name clashes with column name,
-    # column name gets preference
-    priv = y_true.to_frame('').eval(priv_expr)
-    if y_pred is None:
-        return func(y_true[~priv]) - func(y_true[priv])
-    return func(y_true[~priv], y_pred[~priv]) / func(y_true[priv], y_pred[priv])
+    args = (y,) + args
+    idx = y.to_frame('').eval(priv_expr)
+    unpriv = map(lambda a: a[~idx], args)
+    priv = map(lambda a: a[idx], args)
+    if sample_weight is not None:
+        return (func(*unpriv, sample_weight=sample_weight[~idx], **kwargs)
+              / func(*priv, sample_weight=sample_weight[idx], **kwargs))
+    return func(*unpriv, **kwargs) / func(*priv, **kwargs)
 
 
 # =========================== SCORER FACTORIES =================================
@@ -109,10 +119,7 @@ def specificity_score(y_true, y_pred, neg_label=0, sample_weight=None):
                         sample_weight=sample_weight)
 
 def base_rate(y, y_pred=None, pos_label=1, sample_weight=None):
-    y = np.array(y)
-    if sample_weight is not None:
-        return ((y == pos_label) * sample_weight).sum() / sample_weight.sum()
-    return (y == pos_label).sum() / len(y)
+    return np.average(y == pos_label, weights=sample_weight)
 
 def selection_rate(y_true, y_pred, pos_label=1, sample_weight=None):
     return base_rate(y_pred, pos_label=pos_label, sample_weight=sample_weight)
@@ -121,37 +128,35 @@ def selection_rate(y_true, y_pred, pos_label=1, sample_weight=None):
 # ============================ GROUP FAIRNESS ==================================
 def statistical_parity_difference(*y, priv_expr, pos_label=1, sample_weight=None):
     rate = base_rate if len(y) == 1 or y[1] is None else selection_rate
-    rate = partial(rate, pos_label=pos_label, sample_weight=sample_weight)
-    return difference(rate, *y, priv_expr=priv_expr)
+    return difference(rate, *y, priv_expr=priv_expr, pos_label=pos_label,
+                      sample_weight=sample_weight)
 
 def disparate_impact_ratio(*y, priv_expr, pos_label=1, sample_weight=None):
     rate = base_rate if len(y) == 1 or y[1] is None else selection_rate
-    rate = partial(rate, pos_label=pos_label, sample_weight=sample_weight)
-    return ratio(rate, *y, priv_expr=priv_expr)
+    return ratio(rate, *y, priv_expr=priv_expr, pos_label=pos_label,
+                 sample_weight=sample_weight)
 
 
 def equal_opportunity_difference(y_true, y_pred, priv_expr, pos_label=1,
                                  sample_weight=None):
-    rec = partial(recall_score, pos_label=pos_label,
-                  sample_weight=sample_weight)
-    return difference(rec, y_true, y_pred, priv_expr=priv_expr)
+    return difference(recall_score, y_true, y_pred, priv_expr=priv_expr,
+                      pos_label=pos_label, sample_weight=sample_weight)
 
-def average_odds_difference(y_true, y_pred, priv_expr, pos_label=1,
+def average_odds_difference(y_true, y_pred, priv_expr, pos_label=1, neg_label=0,
                             sample_weight=None):
-    tnr = partial(specificity_score, labels=labels, pos_label=pos_label,
-                  sample_weight=sample_weight)
-    tpr = partial(recall_score, labels=labels, pos_label=pos_label,
-                  sample_weight=sample_weight)
-    return 0.5 * (difference(tnr, y_true, y_pred, priv_expr=priv_expr)
-                + difference(tpr, y_true, y_pred, priv_expr=priv_expr))
+    tnr_diff = difference(specificity_score, y_true, y_pred, priv_expr=priv_expr,
+                          neg_label=neg_label, sample_weight=sample_weight)
+    tpr_diff = difference(recall_score, y_true, y_pred, priv_expr=priv_expr,
+                          pos_label=pos_label, sample_weight=sample_weight)
+    return (tpr_diff - tnr_diff) / 2
 
-def average_odds_error(y_true, y_pred, priv_expr, pos_label=1,
+def average_odds_error(y_true, y_pred, priv_expr, pos_label=1, neg_label=0,
                        sample_weight=None):
-    tnr = partial(specificity_score, pos_label=pos_label,
-                  sample_weight=sample_weight)
-    tpr = partial(recall_score, pos_label=pos_label, sample_weight=sample_weight)
-    return 0.5 * (abs(difference(tnr, y_true, y_pred, priv_expr=priv_expr))
-                + abs(difference(tpr, y_true, y_pred, priv_expr=priv_expr)))
+    tnr_diff = difference(specificity_score, y_true, y_pred, priv_expr=priv_expr,
+                          neg_label=neg_label, sample_weight=sample_weight)
+    tpr_diff = difference(recall_score, y_true, y_pred, priv_expr=priv_expr,
+                          pos_label=pos_label, sample_weight=sample_weight)
+    return (abs(tnr_diff) + abs(tpr_diff)) / 2
 
 
 # ================================ INDICES =====================================
@@ -169,14 +174,14 @@ def generalized_entropy_error(y_true, y_pred, alpha=2, pos_label=1):
     b = 1 + (y_pred == pos_label) - (y_true == pos_label)
     return generalized_entropy_index(b, alpha=alpha)
 
-def between_group_generalized_entropy_error(priv_expr, y_true, y_pred, alpha=2,
+def between_group_generalized_entropy_error(y_true, y_pred, priv_expr, alpha=2,
                                             pos_label=1):
     b = np.empty_like(y_true, dtype='float')
-    priv = y_true.to_frame().eval(priv_expr)
-    b[priv] = (1 + (y_pred.loc[priv] == pos_label)
-                 - (y_true.loc[priv] == pos_label)).mean()
-    b[~priv] = (1 + (y_pred.loc[~priv] == pos_label)
-                  - (y_true.loc[~priv] == pos_label)).mean()
+    priv = y_true.to_frame('').eval(priv_expr)
+    b[priv] = (1 + (y_pred[priv] == pos_label)
+                 - (y_true[priv] == pos_label)).mean()
+    b[~priv] = (1 + (y_pred[~priv] == pos_label)
+                  - (y_true[~priv] == pos_label)).mean()
     return generalized_entropy_index(b, alpha=alpha)
 
 def theil_index(b):
@@ -189,6 +194,7 @@ def coefficient_of_variation(b):
 # ========================== INDIVIDUAL FAIRNESS ===============================
 # TODO: not technically a scorer but you should be allowed to score transformers
 # Is consistency_difference posible?
+# use sample_weight?
 def consistency_score(X, y, n_neighbors=5):
     # learn a KNN on the features
     nbrs = NearestNeighbors(n_neighbors, algorithm='ball_tree').fit(X)
