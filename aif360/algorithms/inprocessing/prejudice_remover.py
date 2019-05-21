@@ -154,8 +154,8 @@ class PrejudiceRemover(Transformer):
             all_sensitive_attributes, self.sensitive_attr, None)
 
         pred_dataset = dataset.copy()
-        pred_dataset.labels = predictions
-        pred_dataset.scores = scores
+        pred_dataset.labels = predictions[:, np.newaxis]
+        pred_dataset.scores = scores[:, np.newaxis]
 
         return pred_dataset
 
