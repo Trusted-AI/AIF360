@@ -24,7 +24,7 @@ def fetch_and_format_openml(name):
 
     Returns:
         pandas.DataFrame: A DataFrame containing all data, including target,
-            with categorical features converted to 'category' dtypes.
+        with categorical features converted to 'category' dtypes.
     """
     def categorize(item):
         return cats[int(item)] if not pd.isna(item) else item
@@ -50,7 +50,7 @@ def load_adult(usecols=[], dropcols=[], numeric_only=False, dropna=True):
 
     Returns:
         namedtuple: Tuple containing X, y, and sample_weights for the Adult
-            dataset accessible by index or name.
+        dataset accessible by index or name.
 
     Examples:
         >>> adult = load_adult()
@@ -80,7 +80,7 @@ def load_german(usecols=[], dropcols=[], numeric_only=False, dropna=True):
 
     Returns:
         namedtuple: Tuple containing X and y for the German dataset accessible
-            by index or name.
+        by index or name.
 
     Examples:
         >>> german = load_german()
@@ -114,7 +114,7 @@ def load_bank(usecols=[], dropcols='duration', numeric_only=False, dropna=False)
 
     Returns:
         namedtuple: Tuple containing X and y for the Bank dataset accessible by
-            index or name.
+        index or name.
 
     Examples:
         >>> bank = load_bank()
