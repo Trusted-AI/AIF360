@@ -7,7 +7,7 @@ from sklearn.compose import make_column_transformer
 from sklearn.preprocessing import OneHotEncoder
 
 # TODO: binarize protected_attributes option?
-def standarize_dataset(df, *, protected_attributes, target, pos_label=None,
+def standarize_dataset(df, protected_attributes, target, pos_label=None,
                        sample_weight=None, usecols=[], dropcols=[],
                        numeric_only=False, dropna=True):
     """Separate data, targets, and possibly sample weights and populate
@@ -32,16 +32,16 @@ def standarize_dataset(df, *, protected_attributes, target, pos_label=None,
         dropna (bool): Drop rows with NAs.
 
     Returns:
-        namedtuple:
+        collections.namedtuple:
 
             A tuple-like object where items can be accessed by index or name.
             Contains the following attributes:
 
-            * `pandas.DataFrame`: X: Feature array.
+            * **X** (`pandas.DataFrame`) -- Feature array.
 
-            * `pandas.DataFrame` or `pandas.Series`: y: Target array.
+            * **y** (`pandas.DataFrame` or `pandas.Series`) -- Target array.
 
-            * `pandas.Series`, optional: sample_weight: Sample weights.
+            * **sample_weight** (`pandas.Series`, optional) -- Sample weights.
 
     Note:
         The order of execution for the dropping parameters is: dropcols ->
@@ -103,11 +103,12 @@ def standarize_dataset(df, *, protected_attributes, target, pos_label=None,
 def make_onehot_transformer(X):
     """Shortcut for encoding categorical features as one-hot vectors.
 
-    Note: This changes the column order as well as removes DataFrame formatting.
+    Note:
+        This changes the column order as well as removes DataFrame formatting.
 
     Returns:
         sklearn.compose.ColumnTransformer: Class capable of transforming
-            categorical features in X to one-hot features.
+        categorical features in X to one-hot features.
     """
     return make_column_transformer((OneHotEncoder(), X.dtypes == 'category'),
                                    remainder='passthrough')

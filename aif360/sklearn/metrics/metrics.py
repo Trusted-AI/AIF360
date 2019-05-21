@@ -206,7 +206,7 @@ def consistency_score(X, y, n_neighbors=5):
 
 # ================================ ALIASES =====================================
 def sensitivity_score(y_true, y_pred, pos_label=1, sample_weight=None):
-    """Alias of `sklearn.metrics.recall_score` for binary classes only."""
+    """Alias of :func:`sklearn.metrics.recall_score` for binary classes only."""
     return recall_score(y_true, y_pred, pos_label=pos_label,
                         sample_weight=sample_weight)
 
@@ -218,5 +218,7 @@ def sensitivity_score(y_true, y_pred, pos_label=1, sample_weight=None):
 #     return 1 - specificity_score(y_true, y_pred, pos_label=pos_label,
 #                                  sample_weight=sample_weight)
 
-mean_difference = statistical_parity_difference
-mean_difference.__doc__ = """Alias of :meth:`statistical_parity_difference`."""
+def mean_difference(*y, priv_expr, pos_label=1, sample_weight=None):
+    """Alias of :func:`statistical_parity_difference`."""
+    return statistical_parity_difference(*y, priv_expr=priv_expr,
+            pos_label=pos_label, sample_weight=sample_weight)

@@ -38,10 +38,10 @@ extensions = ['sphinx.ext.autodoc',
     'sphinx.ext.intersphinx',
     'sphinx.ext.mathjax']
 
-intersphinx_mapping = {'numpy': ('http://docs.scipy.org/doc/numpy/', None),
-    'scipy': ('http://docs.scipy.org/doc/scipy/reference/', None),
+intersphinx_mapping = {'numpy': ('https://docs.scipy.org/doc/numpy/', None),
+    'scipy': ('https://docs.scipy.org/doc/scipy/reference/', None),
     'pandas': ('https://pandas.pydata.org/pandas-docs/stable/', None),
-    'sklearn': ('https://scikit-learn.org/stable/modules/generated/', None),
+    'sklearn': ('https://scikit-learn.org/stable/', None),
     'python': ('https://docs.python.org/{}.{}'.format(*sys.version_info), None)}
 
 autoclass_content = 'both'

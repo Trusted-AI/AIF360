@@ -14,6 +14,7 @@ Welcome to AI Fairness 360's documentation!
    modules/datasets
    modules/explainers
    modules/metrics
+   modules/sklearn
 
 
 Indices and tables
