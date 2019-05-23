@@ -30,6 +30,7 @@ def test_dataset_equality():
     # print(adult.feature_names)
     # print(adult.features[:5])
     assert (adult.features == X.values).all()
+    assert (adult.labels == y.values).all()
 
 def test_consistency():
     assert consistency_score(X, y) == cm.consistency()

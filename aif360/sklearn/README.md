@@ -9,13 +9,14 @@ To do:
 
 - [x] Reformat datasets as separate X and y (and sample_weight) DataFrame
 objects with sample properties (protected attributes) as the index
-- [ ] Load included datasets in the above format (partially done)
+- [ ] Load included datasets in the above format
   - [x] Use `sklearn.datasets.fetch_openml` to load UCI datasets (#53)
   - [ ] COMPAS
   - [ ] MEPS
 - [ ] Implement metrics as individual functions instead of instance methods
-(mostly done)
   - [x] Make certain metrics compatible as sklearn scorers
+  - [ ] Use "groups" and "priv_group" keywords to specify protected attributes to
+  functions (partially done)
   - [ ] Generalized confusion matrix
   - [ ] Sample distortion metrics
 - [ ] Make inprocessing algorithms compatible as sklearn `Estimator`s
