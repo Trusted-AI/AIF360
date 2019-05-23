@@ -1,15 +1,12 @@
 from collections import namedtuple
 
-import numpy as np
 import pandas as pd
 from pandas.core.dtypes.common import is_list_like
 from sklearn.compose import make_column_transformer
 from sklearn.preprocessing import OneHotEncoder
 
-# TODO: binarize protected_attributes option?
-def standarize_dataset(df, protected_attributes, target, pos_label=None,
-                       sample_weight=None, usecols=[], dropcols=[],
-                       numeric_only=False, dropna=True):
+def standarize_dataset(df, protected_attributes, target, sample_weight=None,
+                       usecols=[], dropcols=[], numeric_only=False, dropna=True):
     """Separate data, targets, and possibly sample weights and populate
     protected attributes as sample properties.
 
@@ -20,9 +17,11 @@ def standarize_dataset(df, protected_attributes, target, pos_label=None,
             are dropped from the features, they remain in the index.
         target (single label or list-like): Column label of the target (outcome)
             variable.
-        pos_label (scalar, list-like, or function, optional): A value, list of
-            values, or function designating the positive binary label from the
-            raw data.
+        # pos_label (scalar, list-like, or function, optional): A value, list of
+        #     values, or boolean function (True if positive) designating the
+        #     positive binary label from the raw data. All others will be
+        #     considered negative. The resulting target array will have value 1 if
+        #     positive and 0 if negative.
         sample_weight (single label, optional): Name of the column containing
             sample weights.
         usecols (single label or list-like, optional): Column(s) to keep. All
@@ -62,20 +61,17 @@ def standarize_dataset(df, protected_attributes, target, pos_label=None,
         >>> X, y = standarize_dataset(df, protected_attributes=0, target=5)
         >>> X_tr, X_te, y_tr, y_te = train_test_split(X, y)
     """
-    df = df.set_index(protected_attributes, drop=False)  # append=True?
+    df = df.set_index(protected_attributes, drop=False)  # TODO: append=True?
 
+    # TODO: convert to 1/0 if numeric_only?
     y = df.pop(target)
-    if pos_label is not None:
-        if not callable(pos_label):
-            pos = pos_label if is_list_like(pos_label) else [pos_label]
-            pos = np.array(pos)
-            # find all instances which match any of the favorable classes
-            def pos_label(val):
-                # return np.logical_or.reduce(np.equal.outer(pos, col), axis=(0, 2))
-                return np.logical_or.reduce(pos == val)
-
-        # TODO: won't work for multilabel (target is list) case, try DataFrame.eval()?
-        y = y.apply(pos_label).astype('int')
+    # if not callable(pos_label):
+    #     if not is_list_like(pos_label):
+    #         pos_label = [pos_label]
+    #     # find all instances which match any of the favorable classes
+    #     y = y.isin(pos_label).astype('int')
+    # else:
+    #     y = y.apply(pos_label).astype('int')
 
     # Column-wise drops
     df = df.drop(dropcols, axis=1)
@@ -85,6 +81,11 @@ def standarize_dataset(df, protected_attributes, target, pos_label=None,
             usecols = [usecols]
         df = df[usecols]
     if numeric_only:
+        # binary categorical columns -> 1/0
+        for col in df.select_dtypes('category'):
+            # TODO: allow any size ordered categorical?
+            if len(df[col].cat.categories) == 2 and df[col].cat.ordered:
+                df[col] = df[col].cat.factorize(sort=True)[0]
         df = df.select_dtypes(['number', 'bool'])
         # upcast all feature dimensions to a consistent numerical dtype
         df = df.apply(pd.to_numeric, axis=1)

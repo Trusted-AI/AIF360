@@ -7,7 +7,7 @@ ipywidgets
 tqdm
 numpy>=1.16
 matplotlib
-pandas>=0.23.3
+pandas>=0.24
 pytest>=3.5.0
 scipy
 scikit-learn

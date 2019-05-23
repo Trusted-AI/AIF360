@@ -17,5 +17,3 @@ Metrics
 
 .. automodule:: aif360.sklearn.metrics.metrics
     :members:
-
-.. autofunction:: aif360.sklearn.metrics.mean_difference
