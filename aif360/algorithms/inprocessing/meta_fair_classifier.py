@@ -1,10 +1,5 @@
 # The code for Meta-Classification-Algorithm is based on, the paper https://arxiv.org/abs/1806.06055
 # See: https://github.com/vijaykeswani/FairClassification
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-
 import numpy as np
 
 from aif360.algorithms import Transformer

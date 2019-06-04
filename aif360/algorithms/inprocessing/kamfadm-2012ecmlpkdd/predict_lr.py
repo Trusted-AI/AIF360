@@ -63,10 +63,7 @@ import sys
 import argparse
 import os
 import platform
-try:
-    from commands import getoutput
-except ImportError:
-    from subprocess import getoutput
+from subprocess import getoutput
 import logging
 import datetime
 import pickle

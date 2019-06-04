@@ -1,22 +1,11 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-
-import abc
+from abc import ABC, abstractmethod
 import copy
-import sys
-
-if sys.version_info >= (3, 4):
-    ABC = abc.ABC
-else:
-    ABC = abc.ABCMeta(str('ABC'), (), {})
 
 
 class Dataset(ABC):
     """Abstract base class for datasets."""
 
-    @abc.abstractmethod
+    @abstractmethod
     def __init__(self, **kwargs):
         self.metadata = kwargs.pop('metadata', dict()) or dict()
         self.metadata.update({
@@ -51,12 +40,12 @@ class Dataset(ABC):
         })
         return cpy
 
-    @abc.abstractmethod
+    @abstractmethod
     def export_dataset(self):
         """Save this Dataset to disk."""
         raise NotImplementedError
 
-    @abc.abstractmethod
+    @abstractmethod
     def split(self, num_or_size_splits, shuffle=False):
         """Split this dataset into multiple partitions.
 

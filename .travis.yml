@@ -1,5 +1,7 @@
 language: python
 
+python: "3.6"
+
 env:
   global:
     - UCI_HTTPS_URL="https://archive.ics.uci.edu/ml/machine-learning-databases"
@@ -20,20 +22,9 @@ install:
   - if ! wget ${UCI_HTTPS_URL}/statlog/german/german.doc -P aif360/data/raw/german/ ; then wget ${UCI_FTP_URL}/statlog/german/german.doc -P aif360/data/raw/german/; fi
   - wget https://raw.githubusercontent.com/propublica/compas-analysis/master/compas-scores-two-years.csv -P aif360/data/raw/compas/
 
-matrix:
-  # Python 2.7 has a special requirement for BlackBoxAuditing
-  include:
-  - python: "2.7"
-    before_script:
-    - git clone https://github.com/algofairness/BlackBoxAuditing.git /tmp/BlackBoxAuditing/
-    - echo -n /tmp/BlackBoxAuditing/BlackBoxAuditing/weka.jar > /tmp/BlackBoxAuditing/python2_source/BlackBoxAuditing/model_factories/weka.path
-    - echo include python2_source/BlackBoxAuditing/model_factories/weka.path >> /tmp/BlackBoxAuditing/MANIFEST.in
-    - pip install --no-deps /tmp/BlackBoxAuditing/
-    - pip list
-  - python: "3.6"
-    before_script:
-    # exit-zero treats all errors as warnings.  The GitHub editor is 127 chars wide
-    - flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+before_script:
+  # exit-zero treats all errors as warnings.  The GitHub editor is 127 chars wide
+  - flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
 
 script:
   # stop the build if there are Python syntax errors or undefined names
