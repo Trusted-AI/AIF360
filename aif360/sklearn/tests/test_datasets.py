@@ -30,11 +30,11 @@ def test_sample_weight_basic():
     assert len(with_weights) == 3
     assert with_weights.X.shape == (3, 2)
 
-def test_pos_label_basic():
-    assert (basic().y == [3, 7, 11]).all()
-    assert (basic(pos_label=3).y == [1, 0, 0]).all()
-    assert (basic(pos_label=[3, 7, 11]).y == 1).all()
-    assert (basic(pos_label=lambda y: 10 > y > 5).y == [0, 1, 0]).all()
+# def test_pos_label_basic():
+#     assert (basic().y == [3, 7, 11]).all()
+#     assert (basic(pos_label=3).y == [1, 0, 0]).all()
+#     assert (basic(pos_label=[3, 7, 11]).y == 1).all()
+#     assert (basic(pos_label=lambda y: 10 > y > 5).y == [0, 1, 0]).all()
 
 def test_usecols_dropcols_basic():
     assert basic(usecols='X1').X.columns.tolist() == ['X1']
@@ -59,26 +59,26 @@ def test_numeric_only_basic():
     assert basic(dropcols='Z', numeric_only=True).X.shape == (3, 2)
     assert (basic(dropcols='X1', numeric_only=True).X.dtypes == 'int').all()
 
-def test_fetch_and_format_openml():
-    df = fetch_and_format_openml('german')
-    assert df.equals(df.select_dtypes(['number', 'category']))
+# def test_fetch_and_format_openml():
+#     df = fetch_and_format_openml('german')
+#     assert df.equals(df.select_dtypes(['number', 'category']))
 
-def test_load_adult():
-    adult = load_adult()
+def test_fetch_adult():
+    adult = fetch_adult()
     assert len(adult) == 3
     assert adult.X.shape == (45222, 13)
-    assert load_adult(dropna=False).X.shape == (48842, 13)
-    assert load_adult(numeric_only=True).X.shape == (48842, 5)
+    assert fetch_adult(dropna=False).X.shape == (48842, 13)
+    assert fetch_adult(numeric_only=True).X.shape == (48842, 7)
 
-def test_load_german():
-    german = load_german()
+def test_fetch_german():
+    german = fetch_german()
     assert len(german) == 2
     assert german.X.shape == (1000, 21)
-    assert load_german(numeric_only=True).X.shape == (1000, 7)
+    assert fetch_german(numeric_only=True).X.shape == (1000, 8)
 
-def test_load_bank():
-    bank = load_bank()
+def test_fetch_bank():
+    bank = fetch_bank()
     assert len(bank) == 2
     assert bank.X.shape == (45211, 15)
-    assert load_bank(dropcols=[]).X.shape == (45211, 16)
-    assert load_bank(numeric_only=True).X.shape == (45211, 6)
+    assert fetch_bank(dropcols=[]).X.shape == (45211, 16)
+    assert fetch_bank(numeric_only=True).X.shape == (45211, 6)

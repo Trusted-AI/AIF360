@@ -29,7 +29,7 @@ def difference(func, y, *args, groups, priv_group=1, sample_weight=None, **kwarg
         scalar: Difference in metric value for unprivileged and privileged groups.
 
     Examples:
-        >>> X, y = load_german(numeric_only=True)
+        >>> X, y = fetch_german(numeric_only=True)
         >>> y_pred = LogisticRegression().fit(X, y).predict(X)
         >>> sex = X.index.get_level_values('sex')
         >>> difference(precision_score, y, y_pred, groups=sex, priv_group='male')
