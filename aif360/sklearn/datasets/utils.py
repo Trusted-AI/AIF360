@@ -85,7 +85,7 @@ def standarize_dataset(df, protected_attributes, target, sample_weight=None,
         for col in df.select_dtypes('category'):
             # TODO: allow any size ordered categorical?
             if len(df[col].cat.categories) == 2 and df[col].cat.ordered:
-                df[col] = df[col].cat.factorize(sort=True)[0]
+                df[col] = df[col].factorize(sort=True)[0]
         df = df.select_dtypes(['number', 'bool'])
         # upcast all feature dimensions to a consistent numerical dtype
         df = df.apply(pd.to_numeric, axis=1)
