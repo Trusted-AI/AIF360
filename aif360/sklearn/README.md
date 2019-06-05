@@ -5,6 +5,9 @@ and running debiasing algorithms than the main AIF360 package. The purpose of
 this sub-package is to match scikit-learn paradigms/APIs for easier integration
 in typical machine learning workflows.
 
+See [Getting Started](examples/Getting%20Started.ipynb) to see `aif360.sklearn`
+in action.
+
 To do:
 
 - [x] Reformat datasets as separate X and y (and sample_weight) DataFrame
@@ -15,8 +18,8 @@ objects with sample properties (protected attributes) as the index
   - [ ] MEPS
 - [ ] Implement metrics as individual functions instead of instance methods
   - [x] Make certain metrics compatible as sklearn scorers
-  - [ ] Use "groups" and "priv_group" keywords to specify protected attributes to
-  functions (partially done)
+  - [x] Use "groups" and "priv_group" keywords to specify protected attributes to
+  functions
   - [ ] Generalized confusion matrix
   - [ ] Sample distortion metrics
 - [ ] Make inprocessing algorithms compatible as sklearn `Estimator`s

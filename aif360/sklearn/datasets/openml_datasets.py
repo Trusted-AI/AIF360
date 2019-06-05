@@ -198,9 +198,9 @@ def fetch_bank(data_home=None, percent10=False, usecols=[], dropcols='duration',
     df.deposit = df.deposit.cat.rename_categories({'1': 'no', '2': 'yes'})
     # df.deposit = df.deposit.cat.as_ordered()
     # replace 'unknown' marker with NaN
-    df.select_dtypes('category').apply(lambda s: s.cat.remove_categories('unknown')
-                                       if 'unknown' in s.cat.categories else s,
-                                       inplace=True)
+    df.select_dtypes('category').apply(lambda s:
+            s.cat.remove_categories('unknown', inplace=True)
+            if 'unknown' in s.cat.categories else s)
     return standarize_dataset(df, protected_attributes='age', target='deposit',
                               usecols=usecols, dropcols=dropcols,
                               numeric_only=numeric_only, dropna=dropna)
