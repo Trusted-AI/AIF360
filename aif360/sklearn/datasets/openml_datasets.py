@@ -79,8 +79,8 @@ def fetch_adult(subset='all', data_home=None, binary_race=True, usecols=[],
     elif subset == 'test':
         df = df.iloc[:16281]
 
-    df.class = df.class.cat.as_ordered()  # '<=50K' < '>50K'
     df = df.rename(columns={'class': 'annual-income'})  # more descriptive name
+    df['annual-income'] = df['annual-income'].cat.as_ordered()  # '<=50K' < '>50K'
 
     # binarize protected attributes
     if binary_race:
@@ -136,8 +136,8 @@ def fetch_german(data_home=None, usecols=[], dropcols=[], numeric_only=False,
     df = to_dataframe(fetch_openml(data_id=31, data_home=data_home or
                                    DATA_HOME_DEFAULT, target_column=None))
 
-    df.class = df.class.cat.as_ordered()  # 'bad' < 'good'
     df = df.rename(columns={'class': 'credit-risk'})  # more descriptive name
+    df['credit-risk'] = df['credit-risk'].cat.as_ordered()  # 'bad' < 'good'
 
     # Note: marital_status directly implies sex. i.e. 'div/dep/mar' => 'female'
     # and all others => 'male'
