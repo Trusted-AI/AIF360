@@ -79,7 +79,7 @@ class MetaFairClassifier(Transformer):
             scores.append((t+1)/2)
 
         pred_dataset = dataset.copy()
-        pred_dataset.labels = np.array([predictions])
-        pred_dataset.scores = np.array([scores])
+        pred_dataset.labels = np.array([predictions]).T
+        pred_dataset.scores = np.array([scores]).T
 
         return pred_dataset
