@@ -4,7 +4,7 @@ import numpy as np
 
 @jit
 def distances(X, v, alpha, N, P, k):
-    dists = np.zeros((N, P))
+    dists = np.zeros((N, k))
     for i in range(N):
         for p in range(P):
             for j in range(k):
