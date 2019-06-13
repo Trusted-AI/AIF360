@@ -25,12 +25,15 @@ objects with sample properties (protected attributes) as the index
   - [ ] Generalized confusion matrix
   - [ ] Sample distortion metrics
 - [ ] Make inprocessing algorithms compatible as sklearn `Estimator`s
+  - [ ] **[External]** `get_feature_names()` from data preprocessing
+  steps that would remove DataFrame formatting
+    - [ ] SLEP008?
+  - [ ] Prejudice remover
   - [ ] Adversarial debiasing
   - [ ] Meta-fair classifier
-  - [ ] Prejudice remover
 - [ ] Make preprocessing algorithms compatible as sklearn `Transformer`s
-  - [ ] Add functionality to modify X and y (worst case: just `predict()` +
-  `transform()` separately)
+  - [ ] **[External]** Add functionality to modify X and y
+    - [ ] SLEP001
   - [ ] Disparate impact remover
   - [ ] Learning fair representations
   - [ ] Optimized preprocessing
@@ -38,7 +41,8 @@ objects with sample properties (protected attributes) as the index
     - [ ] Use dynamic object to pass sample_weight to estimator, etc. after they
     are fitted
 - [ ] Make postprocessing algorithms compatible
-  - [ ] Allow `fit()` on `y_true`,`y_pred`
+  - [ ] **[External]** Allow for `fit(y_true, y_pred)`
+    - [ ] New SLEP?
   - [ ] Calibrated equalized odds postprocessing
   - [ ] Equalized odds postprocessing
   - [ ] Reject option classification
