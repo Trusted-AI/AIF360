@@ -93,18 +93,18 @@ def fetch_adult(subset='all', data_home=None, binary_race=True, usecols=[],
                               usecols=usecols, dropcols=dropcols,
                               numeric_only=numeric_only, dropna=dropna)
 
-def fetch_german(data_home=None, usecols=[], dropcols=[], numeric_only=False,
-                 dropna=True):
+def fetch_german(data_home=None, binary_age=False, usecols=[], dropcols=[],
+                 numeric_only=False, dropna=True):
     """Load the German Credit Dataset.
 
     Protected attributes are 'sex' ('male' is privileged and 'female' is
-    unprivileged) and 'age' (left as continuous but [1]_ recommends `age >= 25`
-    be considered privileged and `age < 25` be considered unprivileged; this can
-    be done at metric evaluation time). The outcome variable is 'good'
-    (favorable) or 'bad' (unfavorable).
+    unprivileged) and 'age' (left as continuous but [#kamiran09]_ recommends
+    `age >= 25` be considered privileged and `age < 25` be considered
+    unprivileged; this can be done at metric evaluation time). The outcome
+    variable is 'good' (favorable) or 'bad' (unfavorable).
 
     References:
-        .. [1] F. Kamiran and T. Calders, "Classifying without
+        .. [#kamiran09] F. Kamiran and T. Calders, "Classifying without
            discriminating," 2nd International Conference on Computer,
            Control and Communication, 2009.
 
@@ -131,13 +131,25 @@ def fetch_german(data_home=None, usecols=[], dropcols=[], numeric_only=False,
         >>> german_num.X.shape
         (1000, 7)
 
-        >>> DISPARATE IMPACT AGE EXAMPLE HERE
+
+
+        >>> X, y = fetch_german(numeric_only=True)
+        >>> y_pred = LogisticRegression().fit(X, y).predict(X)
+        >>> age = X.index.get_level_values('age') >= 25
+        >>> disparate_impact_ratio(y, y_pred, groups=age, priv_group=True,
+        ... pos_label='good')
+        0.9483094846144106
+
     """
     df = to_dataframe(fetch_openml(data_id=31, data_home=data_home or
                                    DATA_HOME_DEFAULT, target_column=None))
 
     df = df.rename(columns={'class': 'credit-risk'})  # more descriptive name
     df['credit-risk'] = df['credit-risk'].cat.as_ordered()  # 'bad' < 'good'
+
+    # binarize protected attributes
+    if binary_age:
+        df.age = pd.cut(df.age, [0, 25, 100], right=False, labels=['young', 'aged'])
 
     # Note: marital_status directly implies sex. i.e. 'div/dep/mar' => 'female'
     # and all others => 'male'

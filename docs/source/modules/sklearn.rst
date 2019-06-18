@@ -17,3 +17,9 @@ Metrics
 
 .. automodule:: aif360.sklearn.metrics.metrics
     :members:
+
+Preprocessing
+-------------
+
+.. autoclass:: aif360.sklearn.preprocessing.reweighing.Reweighing
+    :members:
