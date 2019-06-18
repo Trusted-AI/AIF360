@@ -16,7 +16,7 @@ def difference(func, y, *args, groups, priv_group=1, sample_weight=None, **kwarg
     Args:
         func (function): A metric function from `aif360.sklearn.metrics` or
             `sklearn.metrics`.
-        y (pandas.Series): Outcome vector with protected attributes as index.
+        y (array-like): Outcome vector with protected attributes as index.
         *args: Additional positional args to be passed through to `func`.
         groups (array-like, keyword-only): Group labels (protected attributes)
             for the samples.
@@ -55,7 +55,7 @@ def ratio(func, y, *args, groups, priv_group=1, sample_weight=None, **kwargs):
     Args:
         func (function): A metric function from `aif360.sklearn.metrics` or
             `sklearn.metrics`.
-        y (pandas.Series): Outcome vector with protected attributes as index.
+        y (array-like): Outcome vector with protected attributes as index.
         *args: Additional positional args to be passed through to `func`.
         groups (array-like, keyword-only): Group labels (protected attributes)
             for the samples.
