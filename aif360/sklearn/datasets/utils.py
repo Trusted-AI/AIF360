@@ -17,11 +17,6 @@ def standarize_dataset(df, protected_attributes, target, sample_weight=None,
             are dropped from the features, they remain in the index.
         target (single label or list-like): Column label of the target (outcome)
             variable.
-        # pos_label (scalar, list-like, or function, optional): A value, list of
-        #     values, or boolean function (True if positive) designating the
-        #     positive binary label from the raw data. All others will be
-        #     considered negative. The resulting target array will have value 1 if
-        #     positive and 0 if negative.
         sample_weight (single label, optional): Name of the column containing
             sample weights.
         usecols (single label or list-like, optional): Column(s) to keep. All
@@ -65,13 +60,6 @@ def standarize_dataset(df, protected_attributes, target, sample_weight=None,
 
     # TODO: convert to 1/0 if numeric_only?
     y = df.pop(target)
-    # if not callable(pos_label):
-    #     if not is_list_like(pos_label):
-    #         pos_label = [pos_label]
-    #     # find all instances which match any of the favorable classes
-    #     y = y.isin(pos_label).astype('int')
-    # else:
-    #     y = y.apply(pos_label).astype('int')
 
     # Column-wise drops
     df = df.drop(dropcols, axis=1)

@@ -22,10 +22,6 @@ cm = ClassificationMetric(adult, adult_pred,
                           privileged_groups=[{'sex': 1}])
 
 def test_dataset_equality():
-    # print(X.shape, adult.features.shape)
-    # print(X.head())
-    # print(adult.feature_names)
-    # print(adult.features[:5])
     assert (adult.features == X.values).all()
     assert (adult.labels.ravel() == y).all()
 

@@ -24,17 +24,13 @@ def test_reweighing_sex():
     rew = Reweighing()
     rew.fit_transform(X, y, groups=X.index.get_level_values('sex'))
 
-    # assert orig_rew.w_up_unfav == rew.reweigh_factors_[0, 0]
-    # assert orig_rew.w_up_fav == rew.reweigh_factors_[0, 1]
-    # assert np.isclose(orig_rew.w_p_unfav, rew.reweigh_factors_[1, 0])
-    # assert orig_rew.w_p_fav, rew.reweigh_factors_[1, 1]
     assert np.allclose(german_fair.instance_weights, rew.sample_weight_)
 
 def test_reweighing_intersection():
     rew = Reweighing()
     rew.fit_transform(X, y, groups=X.index.to_flat_index())
-    # assert rew.reweigh_factors_.shape == (4, 2)
     assert len(rew.groups_) == 4
+    assert len(rew.classes_) == 2
 
 def test_pipeline():
     logreg = LogisticRegression(solver='liblinear')
