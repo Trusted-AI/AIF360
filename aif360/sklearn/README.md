@@ -27,13 +27,13 @@ objects with sample properties (protected attributes) as the index
 - [ ] Make inprocessing algorithms compatible as sklearn `Estimator`s
   - [ ] **[External]** `get_feature_names()` from data preprocessing
   steps that would remove DataFrame formatting
-    - [ ] SLEP008
+    - [ ] [SLEP008](https://github.com/scikit-learn/enhancement_proposals/pull/18 )?
   - [ ] Prejudice remover
   - [ ] Adversarial debiasing
   - [ ] Meta-fair classifier
 - [ ] Make preprocessing algorithms compatible as sklearn `Transformer`s
   - [ ] **[External]** Add functionality to modify X and y
-    - [ ] SLEP005 - Resampling API
+    - [ ] [SLEP001](https://github.com/scikit-learn/enhancement_proposals/blob/master/slep001/proposal.rst)
   - [ ] Disparate impact remover
   - [ ] Learning fair representations
   - [ ] Optimized preprocessing
