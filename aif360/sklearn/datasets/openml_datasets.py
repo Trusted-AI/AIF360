@@ -72,8 +72,8 @@ def fetch_adult(subset='all', data_home=None, binary_race=True, usecols=[],
     if subset not in {'train', 'test', 'all'}:
         raise ValueError("subset must be either 'train', 'test', or 'all'; "
                          "cannot be {}".format(subset))
-    df = to_dataframe(fetch_openml(data_id=1590, data_home=data_home or
-                                   DATA_HOME_DEFAULT, target_column=None))
+    df = to_dataframe(fetch_openml(data_id=1590, target_column=None,
+                                   data_home=data_home or DATA_HOME_DEFAULT))
     if subset == 'train':
         df = df.iloc[16281:]
     elif subset == 'test':
@@ -93,15 +93,15 @@ def fetch_adult(subset='all', data_home=None, binary_race=True, usecols=[],
                               usecols=usecols, dropcols=dropcols,
                               numeric_only=numeric_only, dropna=dropna)
 
-def fetch_german(data_home=None, binary_age=False, usecols=[], dropcols=[],
+def fetch_german(data_home=None, binary_age=True, usecols=[], dropcols=[],
                  numeric_only=False, dropna=True):
     """Load the German Credit Dataset.
 
     Protected attributes are 'sex' ('male' is privileged and 'female' is
-    unprivileged) and 'age' (left as continuous but [#kamiran09]_ recommends
-    `age >= 25` be considered privileged and `age < 25` be considered
-    unprivileged; this can be done at metric evaluation time). The outcome
-    variable is 'good' (favorable) or 'bad' (unfavorable).
+    unprivileged) and 'age' (binarized by default as recommended by
+    [#kamiran09]_: `age >= 25` is considered privileged and `age < 25` is
+    considered unprivileged; see the `binary_age` flag to keep this continuous).
+    The outcome variable is 'good' (favorable) or 'bad' (unfavorable).
 
     References:
         .. [#kamiran09] F. Kamiran and T. Calders, "Classifying without
@@ -112,6 +112,9 @@ def fetch_german(data_home=None, binary_age=False, usecols=[], dropcols=[],
         data_home (string, optional): Specify another download and cache folder
             for the datasets. By default all AIF360 datasets are stored in
             'aif360/sklearn/data/raw' subfolders.
+        binary_age (bool, optional): If `True`, split protected attribute,
+            `age`, into 'aged' (privileged) and 'youth' (unprivileged). The
+            `age` feature remains continuous.
         usecols (single label or list-like, optional): Column name(s) to keep.
             All others are dropped.
         dropcols (single label or list-like, optional): Column name(s) to drop.
@@ -135,21 +138,20 @@ def fetch_german(data_home=None, binary_age=False, usecols=[], dropcols=[],
 
         >>> X, y = fetch_german(numeric_only=True)
         >>> y_pred = LogisticRegression().fit(X, y).predict(X)
-        >>> age = X.index.get_level_values('age') >= 25
-        >>> disparate_impact_ratio(y, y_pred, groups=age, priv_group=True,
+        >>> disparate_impact_ratio(y, y_pred, prot_attr='age', priv_group=True,
         ... pos_label='good')
         0.9483094846144106
 
     """
-    df = to_dataframe(fetch_openml(data_id=31, data_home=data_home or
-                                   DATA_HOME_DEFAULT, target_column=None))
+    df = to_dataframe(fetch_openml(data_id=31, target_column=None,
+                                   data_home=data_home or DATA_HOME_DEFAULT))
 
     df = df.rename(columns={'class': 'credit-risk'})  # more descriptive name
     df['credit-risk'] = df['credit-risk'].cat.as_ordered()  # 'bad' < 'good'
 
-    # binarize protected attributes
-    if binary_age:
-        df.age = pd.cut(df.age, [0, 25, 100], right=False, labels=['young', 'aged'])
+    # binarize protected attribute (but not corresponding feature)
+    age = (pd.cut(df.age, [0, 25, 100], right=False, labels=['young', 'aged'])
+           if binary_age else 'age')
 
     # Note: marital_status directly implies sex. i.e. 'div/dep/mar' => 'female'
     # and all others => 'male'
@@ -158,7 +160,7 @@ def fetch_german(data_home=None, binary_age=False, usecols=[], dropcols=[],
     df = df.join(personal_status.astype('category'))
     df.sex = df.sex.cat.as_ordered()  # 'female' < 'male'
 
-    return standarize_dataset(df, protected_attributes=['sex', 'age'],
+    return standarize_dataset(df, protected_attributes=['sex', age],
                               target='credit-risk', usecols=usecols,
                               dropcols=dropcols, numeric_only=numeric_only,
                               dropna=dropna)
@@ -210,9 +212,8 @@ def fetch_bank(data_home=None, percent10=False, usecols=[], dropcols='duration',
     df.deposit = df.deposit.cat.rename_categories({'1': 'no', '2': 'yes'})
     # df.deposit = df.deposit.cat.as_ordered()
     # replace 'unknown' marker with NaN
-    df.select_dtypes('category').apply(lambda s:
-            s.cat.remove_categories('unknown', inplace=True)
-            if 'unknown' in s.cat.categories else s)
+    df.apply(lambda s: s.cat.remove_categories('unknown', inplace=True)
+             if hasattr(s, 'cat') and 'unknown' in s.cat.categories else s)
     return standarize_dataset(df, protected_attributes='age', target='deposit',
                               usecols=usecols, dropcols=dropcols,
                               numeric_only=numeric_only, dropna=dropna)
