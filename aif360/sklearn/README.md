@@ -27,7 +27,7 @@ objects with sample properties (protected attributes) as the index
 - [ ] Make inprocessing algorithms compatible as sklearn `Estimator`s
   - [ ] **[External]** `get_feature_names()` from data preprocessing
   steps that would remove DataFrame formatting
-    - [ ] [SLEP008](https://github.com/scikit-learn/enhancement_proposals/pull/18 )?
+    - [ ] SLEP007/8
   - [ ] Prejudice remover
   - [ ] Adversarial debiasing
   - [ ] Meta-fair classifier
@@ -38,8 +38,7 @@ objects with sample properties (protected attributes) as the index
   - [ ] Learning fair representations
   - [ ] Optimized preprocessing
   - [X] Reweighing
-    - [X] Use dynamic object to pass sample_weight to estimator, etc. after they
-    are fitted (NOTE: does not work with GridSearchCV)
+    - [X] Meta-estimator workaround
     - [ ] **[External]** SLEP006 - Sample properties
 - [ ] Make postprocessing algorithms compatible
   - [ ] **[External]** Allow for `fit(y_true, y_pred)`
