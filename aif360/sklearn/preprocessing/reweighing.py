@@ -1,21 +1,10 @@
 import numpy as np
-from pandas.core.dtypes.common import is_list_like
 from sklearn.base import BaseEstimator, MetaEstimatorMixin, clone
-from sklearn.utils import check_consistent_length
 from sklearn.utils.metaestimators import if_delegate_has_method
-from sklearn.utils.validation import column_or_1d, has_fit_parameter
+from sklearn.utils.validation import has_fit_parameter
 
+from aif360.sklearn.utils import check_inputs, check_groups
 
-def check_inputs(X, y, sample_weight):
-    if not hasattr(X, 'index'):
-        raise TypeError("Expected `DataFrame`, got {} instead.".format(type(X)))
-    y = column_or_1d(y)
-    if sample_weight is not None:
-        sample_weight = column_or_1d(sample_weight)
-    else:
-        sample_weight = np.ones(X.shape[0])
-    check_consistent_length(X, y, sample_weight)
-    return X, y, sample_weight
 
 class Reweighing(BaseEstimator):
     """Reweighing is a preprocessing technique that weights the examples in each
@@ -53,7 +42,7 @@ class Reweighing(BaseEstimator):
             prot_attr (single label or list-like, optional): Protected
                 attribute(s) to use as sensitive attribute(s) in the reweighing
                 process. If more than one attribute, all combinations of values
-                (intersections) are considered. Default is `None` meaning all
+                (intersections) are considered. Default is ``None`` meaning all
                 protected attributes from the dataset are used.
         """
         self.prot_attr = prot_attr
@@ -77,22 +66,8 @@ class Reweighing(BaseEstimator):
         """
         X, y, sample_weight = check_inputs(X, y, sample_weight)
 
-        all_prot_attrs = X.index.names[1:]
-        if self.prot_attr is None:
-            self.prot_attr_ = all_prot_attrs
-        elif not is_list_like(self.prot_attr):
-            self.prot_attr_ = [self.prot_attr]
-        else:
-            self.prot_attr_ = self.prot_attr
-
-        if any(p not in X.index.names for p in self.prot_attr_):
-            raise ValueError("Some of the attributes provided are not present "
-                             "in the dataset. Expected a subset of:\n{}\nGot:\n"
-                             "{}".format(all_prot_attrs, self.prot_attr_))
-
         self.sample_weight_ = np.empty_like(sample_weight)
-        groups = X.index.droplevel(list(set(X.index.names)
-                                      - set(self.prot_attr_))).to_flat_index()
+        groups, self.prot_attr_ = check_groups(X, self.prot_attr)
         # TODO: maintain categorical ordering
         self.groups_ = np.unique(groups)
         self.classes_ = np.unique(y)
@@ -132,18 +107,18 @@ class ReweighingMeta(BaseEstimator, MetaEstimatorMixin):
         self.estimator_.fit(X, y, sample_weight=self.reweigher_.sample_weight_)
         return self
 
-    @if_delegate_has_method('estimator')
+    @if_delegate_has_method('estimator_')
     def predict(self, X):
         return self.estimator_.predict(X)
 
-    @if_delegate_has_method('estimator')
+    @if_delegate_has_method('estimator_')
     def predict_proba(self, X):
         return self.estimator_.predict_proba(X)
 
-    @if_delegate_has_method('estimator')
+    @if_delegate_has_method('estimator_')
     def predict_log_proba(self, X):
         return self.estimator_.predict_log_proba(X)
 
-    @if_delegate_has_method('estimator')
+    @if_delegate_has_method('estimator_')
     def score(self, X, y, sample_weight=None):
         return self.estimator_.score(X, y, sample_weight=sample_weight)
