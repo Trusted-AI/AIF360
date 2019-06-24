@@ -15,9 +15,9 @@ def to_dataframe(data):
     if needed.
 
     Args:
-        data (Bunch): Dict-like object containing `data`, `feature_names` and,
-            optionally, `categories` attributes. Note: `data` should contain
-            both X and y data.
+        data (Bunch): Dict-like object containing ``data``, ``feature_names``
+            and, optionally, ``categories`` attributes. Note: ``data`` should
+            contain both X and y data.
 
     Returns:
         pandas.DataFrame: A DataFrame containing all data, including target,
@@ -99,9 +99,10 @@ def fetch_german(data_home=None, binary_age=True, usecols=[], dropcols=[],
 
     Protected attributes are 'sex' ('male' is privileged and 'female' is
     unprivileged) and 'age' (binarized by default as recommended by
-    [#kamiran09]_: `age >= 25` is considered privileged and `age < 25` is
-    considered unprivileged; see the `binary_age` flag to keep this continuous).
-    The outcome variable is 'good' (favorable) or 'bad' (unfavorable).
+    [#kamiran09]_: ``age >= 25`` is considered privileged and ``age < 25`` is
+    considered unprivileged; see the ``binary_age`` flag to keep this
+    continuous). The outcome variable is 'good' (favorable) or 'bad'
+    (unfavorable).
 
     References:
         .. [#kamiran09] F. Kamiran and T. Calders, "Classifying without
@@ -113,8 +114,8 @@ def fetch_german(data_home=None, binary_age=True, usecols=[], dropcols=[],
             for the datasets. By default all AIF360 datasets are stored in
             'aif360/sklearn/data/raw' subfolders.
         binary_age (bool, optional): If `True`, split protected attribute,
-            `age`, into 'aged' (privileged) and 'youth' (unprivileged). The
-            `age` feature remains continuous.
+            ``age``, into 'aged' (privileged) and 'youth' (unprivileged). The
+            ``age`` feature remains continuous.
         usecols (single label or list-like, optional): Column name(s) to keep.
             All others are dropped.
         dropcols (single label or list-like, optional): Column name(s) to drop.
