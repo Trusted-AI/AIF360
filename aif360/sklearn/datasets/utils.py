@@ -2,8 +2,9 @@ from collections import namedtuple
 
 import pandas as pd
 from pandas.core.dtypes.common import is_list_like
-from sklearn.compose import make_column_transformer
+from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import OneHotEncoder
+from sklearn.utils.validation import check_is_fitted
 
 def standarize_dataset(df, protected_attributes, target, sample_weight=None,
                        usecols=[], dropcols=[], numeric_only=False, dropna=True):
@@ -56,7 +57,9 @@ def standarize_dataset(df, protected_attributes, target, sample_weight=None,
         >>> X, y = standarize_dataset(df, protected_attributes=0, target=5)
         >>> X_tr, X_te, y_tr, y_te = train_test_split(X, y)
     """
-    df = df.set_index(protected_attributes, drop=False)  # TODO: append=True?
+    df = df.set_index(protected_attributes, drop=False, append=True)
+    # df = df.set_index(sample_weight or np.ones(df.shape[0]), append=True)
+    # df.index = df.index.set_names('sample_weight', level=-1)
 
     # TODO: convert to 1/0 if numeric_only?
     y = df.pop(target)
@@ -84,20 +87,48 @@ def standarize_dataset(df, protected_attributes, target, sample_weight=None,
         y = y.loc[notna]
 
     if sample_weight is not None:
-        sample_weight = df.pop(sample_weight)
         return namedtuple('WeightedDataset', ['X', 'y', 'sample_weight'])(
-                          df, y, sample_weight)
+                          df, y, df.pop(sample_weight).rename('sample_weight'))
     return namedtuple('Dataset', ['X', 'y'])(df, y)
 
-def make_onehot_transformer(X):
+def make_onehot_transformer():
     """Shortcut for encoding categorical features as one-hot vectors.
 
     Note:
-        This changes the column order as well as removes DataFrame formatting.
+        This changes the column order.
 
     Returns:
         sklearn.compose.ColumnTransformer: Class capable of transforming
         categorical features in X to one-hot features.
     """
-    return make_column_transformer((OneHotEncoder(), X.dtypes == 'category'),
-                                   remainder='passthrough')
+    class PandasOutOneHotTransformer(ColumnTransformer):
+        def __init__(self):
+            ohe = ('onehotencoder', OneHotEncoder(),
+                   lambda X: X.dtypes == 'category')
+            super().__init__([ohe], remainder='passthrough')
+
+        def get_feature_names(self):
+            check_is_fitted(self, 'transformers_')
+            dummies = self.named_transformers_.onehotencoder.get_feature_names(
+                    input_features=self.ohe_input_features_)
+            passthroughs = self.passthrough_features_
+            return list(dummies) + list(passthroughs)
+
+        def fit(self, X, y=None):
+            self.ohe_input_features_ = X.columns[X.dtypes == 'category']
+            self.passthrough_features_ = X.columns[X.dtypes != 'category']
+            return super().fit(X, y=y)
+
+        def fit_transform(self, X, y=None):
+            Xt = super().fit_transform(X, y=y)
+            self.ohe_input_features_ = X.columns[X.dtypes == 'category']
+            self.passthrough_features_ = X.columns[X.dtypes != 'category']
+            columns = self.get_feature_names()
+            return pd.DataFrame(Xt, columns=columns, index=X.index)
+
+        def transform(self, X):
+            Xt = super().transform(X)
+            columns = self.get_feature_names()
+            return pd.DataFrame(Xt, columns=columns, index=X.index)
+
+    return PandasOutOneHotTransformer()

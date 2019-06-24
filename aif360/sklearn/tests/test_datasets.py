@@ -4,7 +4,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from aif360.sklearn.datasets import *
+from aif360.sklearn.datasets import fetch_adult, fetch_bank, fetch_german
+from aif360.sklearn.datasets import standarize_dataset, make_onehot_transformer
 
 
 df = pd.DataFrame([[1, 2, 3, 'a'], [5, 6, 7, 'b'], [np.NaN, 10, 11, 'c']],
@@ -72,3 +73,7 @@ def test_fetch_bank():
     assert bank.X.shape == (45211, 15)
     assert fetch_bank(dropcols=[]).X.shape == (45211, 16)
     assert fetch_bank(numeric_only=True).X.shape == (45211, 6)
+
+def test_onehot_transformer():
+    X, y = fetch_german()
+    assert len(make_onehot_transformer().fit_transform(X).columns) == 63
