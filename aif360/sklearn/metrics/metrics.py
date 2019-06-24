@@ -2,39 +2,52 @@ import numpy as np
 from sklearn.metrics import make_scorer, recall_score
 from sklearn.neighbors import NearestNeighbors
 
+from aif360.sklearn.utils import check_groups
+
+
+__all__ = [
+    'consistency_score', 'specificity_score', 'selection_rate',
+    'disparate_impact_ratio', 'statistical_parity_difference',
+    'equal_opportunity_difference', 'average_odds_difference',
+    'average_odds_error', 'generalized_entropy_error',
+    'between_group_generalized_entropy_error'
+]
 
 # ============================= META-METRICS ===================================
-def difference(func, y, *args, groups, priv_group=1, sample_weight=None, **kwargs):
+def difference(func, y, *args, prot_attr=None, priv_group=1, sample_weight=None,
+               **kwargs):
     """Compute the difference between unprivileged and privileged subsets for an
     arbitrary metric.
 
     Note: The optimal value of a difference is 0. To make it a scorer, one must
-    take the absolute value and set `greater_is_better` to False.
+    take the absolute value and set ``greater_is_better`` to False.
 
     Unprivileged group is taken to be the inverse of the privileged group.
 
     Args:
-        func (function): A metric function from `aif360.sklearn.metrics` or
-            `sklearn.metrics`.
+        func (function): A metric function from :mod:`sklearn.metrics` or
+            :mod:`aif360.sklearn.metrics.metrics`.
         y (array-like): Outcome vector with protected attributes as index.
-        *args: Additional positional args to be passed through to `func`.
-        groups (array-like, keyword-only): Group labels (protected attributes)
-            for the samples.
+        *args: Additional positional args to be passed through to ``func``.
+        prot_attr (array-like, keyword-only): Protected attribute(s). If
+            ``None``, all protected attributes in ``y`` are used.
         priv_group (scalar, optional): Label value for the privileged group.
         sample_weight (array-like, optional): Sample weights passed through to
-            `func`.
-        **kwargs: Additional keyword args to be passed through to `func`.
+            ``func``.
+        **kwargs: Additional keyword args to be passed through to ``func``.
 
     Returns:
-        scalar: Difference in metric value for unprivileged and privileged groups.
+        scalar: Difference in metric value for unprivileged and privileged
+        groups.
 
     Examples:
         >>> X, y = fetch_german(numeric_only=True)
         >>> y_pred = LogisticRegression().fit(X, y).predict(X)
-        >>> sex = X.index.get_level_values('sex')
-        >>> difference(precision_score, y, y_pred, groups=sex, priv_group='male')
+        >>> difference(precision_score, y, y_pred, prot_attr='sex',
+        ... priv_group='male')
         -0.06955430006277463
     """
+    groups, _ = check_groups(y, prot_attr)
     idx = (groups == priv_group)
     unpriv = map(lambda a: a[~idx], (y,) + args)
     priv = map(lambda a: a[idx], (y,) + args)
@@ -43,30 +56,32 @@ def difference(func, y, *args, groups, priv_group=1, sample_weight=None, **kwarg
               - func(*priv, sample_weight=sample_weight[idx], **kwargs))
     return func(*unpriv, **kwargs) - func(*priv, **kwargs)
 
-def ratio(func, y, *args, groups, priv_group=1, sample_weight=None, **kwargs):
+def ratio(func, y, *args, prot_attr=None, priv_group=1, sample_weight=None,
+          **kwargs):
     """Compute the ratio between unprivileged and privileged subsets for an
     arbitrary metric.
 
     Note: The optimal value of a ratio is 1. To make it a scorer, one must
-    subtract 1, take the absolute value, and set `greater_is_better` to False.
+    subtract 1, take the absolute value, and set ``greater_is_better`` to False.
 
     Unprivileged group is taken to be the inverse of the privileged group.
 
     Args:
-        func (function): A metric function from `aif360.sklearn.metrics` or
-            `sklearn.metrics`.
+        func (function): A metric function from :mod:`sklearn.metrics` or
+            :mod:`aif360.sklearn.metrics.metrics`.
         y (array-like): Outcome vector with protected attributes as index.
-        *args: Additional positional args to be passed through to `func`.
+        *args: Additional positional args to be passed through to ``func``.
         groups (array-like, keyword-only): Group labels (protected attributes)
             for the samples.
         priv_group (scalar, optional): Label value for the privileged group.
         sample_weight (array-like, optional): Sample weights passed through to
-            `func`.
-        **kwargs: Additional keyword args to be passed through to `func`.
+            ``func``.
+        **kwargs: Additional keyword args to be passed through to ``func``.
 
     Returns:
         scalar: Ratio of metric values for unprivileged and privileged groups.
     """
+    groups, _ = check_groups(y, prot_attr)
     idx = (groups == priv_group)
     unpriv = map(lambda a: a[~idx], (y,) + args)
     priv = map(lambda a: a[idx], (y,) + args)
@@ -107,40 +122,40 @@ def selection_rate(y_true, y_pred, pos_label=1, sample_weight=None):
 
 
 # ============================ GROUP FAIRNESS ==================================
-def statistical_parity_difference(*y, groups, priv_group=1, pos_label=1,
+def statistical_parity_difference(*y, prot_attr=None, priv_group=1, pos_label=1,
                                   sample_weight=None):
     rate = base_rate if len(y) == 1 or y[1] is None else selection_rate
-    return difference(rate, *y, groups=groups, priv_group=priv_group,
+    return difference(rate, *y, prot_attr=prot_attr, priv_group=priv_group,
                       pos_label=pos_label, sample_weight=sample_weight)
 
-def disparate_impact_ratio(*y, groups, priv_group=1, pos_label=1,
+def disparate_impact_ratio(*y, prot_attr=None, priv_group=1, pos_label=1,
                            sample_weight=None):
     rate = base_rate if len(y) == 1 or y[1] is None else selection_rate
-    return ratio(rate, *y, groups=groups, priv_group=priv_group,
+    return ratio(rate, *y, prot_attr=prot_attr, priv_group=priv_group,
                  pos_label=pos_label, sample_weight=sample_weight)
 
-def equal_opportunity_difference(y_true, y_pred, groups, priv_group=1,
+def equal_opportunity_difference(y_true, y_pred, prot_attr=None, priv_group=1,
                                  pos_label=1, sample_weight=None):
-    return difference(recall_score, y_true, y_pred, groups=groups,
+    return difference(recall_score, y_true, y_pred, prot_attr=prot_attr,
                       priv_group=priv_group, pos_label=pos_label,
                       sample_weight=sample_weight)
 
-def average_odds_difference(y_true, y_pred, groups, priv_group=1, pos_label=1,
+def average_odds_difference(y_true, y_pred, prot_attr=None, priv_group=1, pos_label=1,
                             neg_label=0, sample_weight=None):
-    tnr_diff = difference(specificity_score, y_true, y_pred, groups=groups,
+    tnr_diff = difference(specificity_score, y_true, y_pred, prot_attr=prot_attr,
                           priv_group=priv_group, neg_label=neg_label,
                           sample_weight=sample_weight)
-    tpr_diff = difference(recall_score, y_true, y_pred, groups=groups,
+    tpr_diff = difference(recall_score, y_true, y_pred, prot_attr=prot_attr,
                           priv_group=priv_group, pos_label=pos_label,
                           sample_weight=sample_weight)
     return (tpr_diff - tnr_diff) / 2
 
-def average_odds_error(y_true, y_pred, groups, priv_group=1, pos_label=1,
+def average_odds_error(y_true, y_pred, prot_attr=None, priv_group=1, pos_label=1,
                        neg_label=0, sample_weight=None):
-    tnr_diff = difference(specificity_score, y_true, y_pred, groups=groups,
+    tnr_diff = difference(specificity_score, y_true, y_pred, prot_attr=prot_attr,
                           priv_group=priv_group, neg_label=neg_label,
                           sample_weight=sample_weight)
-    tpr_diff = difference(recall_score, y_true, y_pred, groups=groups,
+    tpr_diff = difference(recall_score, y_true, y_pred, prot_attr=prot_attr,
                           priv_group=priv_group, pos_label=pos_label,
                           sample_weight=sample_weight)
     return (abs(tnr_diff) + abs(tpr_diff)) / 2
@@ -157,13 +172,14 @@ def generalized_entropy_index(b, alpha=2):
         return ((b / b.mean())**alpha - 1).mean() / (alpha * (alpha - 1))
 
 def generalized_entropy_error(y_true, y_pred, alpha=2, pos_label=1):
-                              # sample_weight=None):
+    #                           sample_weight=None):
     b = 1 + (y_pred == pos_label) - (y_true == pos_label)
     return generalized_entropy_index(b, alpha=alpha)
 
-def between_group_generalized_entropy_error(y_true, y_pred, groups,
+def between_group_generalized_entropy_error(y_true, y_pred, prot_attr=None,
                                             priv_group=None, alpha=2,
                                             pos_label=1):
+    groups = check_groups(y_true, prot_attr)
     b = np.empty_like(y_true, dtype='float')
     if priv_group is not None:
         groups = [1 if g == priv_group else 0 for g in groups]
@@ -205,7 +221,7 @@ def sensitivity_score(y_true, y_pred, pos_label=1, sample_weight=None):
 #     return 1 - specificity_score(y_true, y_pred, pos_label=pos_label,
 #                                  sample_weight=sample_weight)
 
-def mean_difference(*y, groups, priv_group=1, pos_label=1, sample_weight=None):
+def mean_difference(*y, prot_attr=None, priv_group=1, pos_label=1, sample_weight=None):
     """Alias of :func:`statistical_parity_difference`."""
-    return statistical_parity_difference(*y, groups=groups, priv_group=priv_group,
+    return statistical_parity_difference(*y, prot_attr=prot_attr, priv_group=priv_group,
             pos_label=pos_label, sample_weight=sample_weight)
