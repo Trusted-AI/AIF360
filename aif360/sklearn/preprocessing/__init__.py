@@ -1,1 +1,1 @@
-from aif360.sklearn.preprocessing.reweighing import *
+from aif360.sklearn.preprocessing.reweighing import Reweighing, ReweighingMeta
