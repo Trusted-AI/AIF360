@@ -100,6 +100,24 @@ class PrejudiceRemover(Transformer):
         self.sensitive_attr = sensitive_attr
         self.class_attr = class_attr
 
+    def _create_file_in_kamishima_format(self, df, class_attr,
+                                         positive_class_val, sensitive_attrs,
+                                         single_sensitive, privileged_vals):
+        """Format the data for the Kamishima code and save it."""
+        x = []
+        for col in df:
+            if col != class_attr and col not in sensitive_attrs:
+                x.append(np.array(df[col].values, dtype=np.float64))
+        x.append(np.array(single_sensitive.isin(privileged_vals),
+                          dtype=np.float64))
+        x.append(np.array(df[class_attr] == positive_class_val,
+                          dtype=np.float64))
+
+        fd, name = tempfile.mkstemp()
+        os.close(fd)
+        np.savetxt(name, np.array(x).T)
+        return name
+
     def fit(self, dataset):
         """Learns the regularized logistic regression model.
 
@@ -113,23 +131,45 @@ class PrejudiceRemover(Transformer):
         columns = dataset.feature_names + dataset.label_names
         train_df = pd.DataFrame(data=data, columns=columns)
 
-        # privileged_vals = [1 for x in dataset.protected_attribute_names]
         all_sensitive_attributes = dataset.protected_attribute_names
 
         if not self.sensitive_attr:
             self.sensitive_attr = all_sensitive_attributes[0]
+        self.sensitive_ind = all_sensitive_attributes.index(self.sensitive_attr)
+
+        sens_df = pd.Series(dataset.protected_attributes[:, self.sensitive_ind],
+                            name=self.sensitive_attr)
 
         if not self.class_attr:
             self.class_attr = dataset.label_names[0]
-        model_name = self._runTrain(train_df, self.class_attr, None,
-            all_sensitive_attributes, self.sensitive_attr, None)
+
+        fd, model_name = tempfile.mkstemp()
+        os.close(fd)
+        train_name = self._create_file_in_kamishima_format(train_df,
+                self.class_attr, dataset.favorable_label,
+                all_sensitive_attributes, sens_df,
+                dataset.privileged_protected_attributes[self.sensitive_ind])
+        # ADDED FOLLOWING LINE to get absolute path of this file, i.e.
+        # prejudice_remover.py
+        k_path = os.path.dirname(os.path.abspath(__file__))
+        train_pr = os.path.join(k_path, 'kamfadm-2012ecmlpkdd', 'train_pr.py')
+        # changed paths in the calls below to (a) specify path of train_pr,
+        # predict_lr RELATIVE to this file, and (b) compute & use absolute path
+        #  and (c) replace python3 with python
+        subprocess.call(['python', train_pr,
+                         '-e', str(self.eta),
+                         '-i', train_name,
+                         '-o', model_name,
+                         '--quiet'])
+        os.unlink(train_name)
 
         self.model_name = model_name
+
         return self
 
     def predict(self, dataset):
-        """Obtain the predictions for the provided dataset using the learned prejudice remover
-        model
+        """Obtain the predictions for the provided dataset using the learned
+        prejudice remover model.
 
         Args:
             dataset (BinaryLabelDataset): Dataset containing labels that needs
@@ -137,113 +177,44 @@ class PrejudiceRemover(Transformer):
         Returns:
             dataset (BinaryLabelDataset): Transformed dataset.
         """
-
         data = np.column_stack([dataset.features, dataset.labels])
         columns = dataset.feature_names + dataset.label_names
         test_df = pd.DataFrame(data=data, columns=columns)
+        sens_df = pd.Series(dataset.protected_attributes[:, self.sensitive_ind],
+                            name=self.sensitive_attr)
 
-        all_sensitive_attributes = dataset.protected_attribute_names
-
-        predictions, scores = self._runTest(test_df, self.class_attr, None,
-            all_sensitive_attributes, self.sensitive_attr, None)
-
-        pred_dataset = dataset.copy()
-        pred_dataset.labels = predictions[:, np.newaxis]
-        pred_dataset.scores = scores[:, np.newaxis]
-
-        return pred_dataset
-
-    def _runTrain(self, train_df, class_attr, positive_class_val, sensitive_attrs,
-                  single_sensitive, privileged_vals):
-        def create_file_in_kamishima_format(df):
-            s = df[single_sensitive]
-
-            x = []
-            for col in df:
-                if col == class_attr:
-                    continue
-                if col in sensitive_attrs:
-                    continue
-                x.append(np.array(df[col].values, dtype=np.float64))
-
-            x.append(np.array(s, dtype=np.float64))
-            x.append(np.array(df[class_attr], dtype=np.float64))
-
-            result = np.array(x).T
-            fd, name = tempfile.mkstemp()
-            os.close(fd)
-            np.savetxt(name, result)
-            return name
-
-        fd, model_name = tempfile.mkstemp()
-        os.close(fd)
-        train_name = create_file_in_kamishima_format(train_df)
-        eta_val = self.eta
-        #ADDED FOLLOWING LINE to get absolute path of this file, i.e. KamishimaAlgorithm.py
-        k_path = os.path.dirname(os.path.abspath(__file__))
-        #changed paths in the calls below to (a) specify path of train_pr,predict_lr RELATIVE to this file, and (b) compute & use absolute path, and (c) replace python3 with python
-        subprocess.call(['python', os.path.join(k_path, 'kamfadm-2012ecmlpkdd', 'train_pr.py'),
-                         '-e', str(eta_val),
-                         '-i', train_name,
-                         '-o', model_name,
-                         '--quiet'])
-        os.unlink(train_name)
-        #os.unlink(model_name)
-
-        return model_name
-
-    def _runTest(self, test_df, class_attr, positive_class_val, sensitive_attrs,
-                 single_sensitive, privileged_vals):
-        def create_file_in_kamishima_format(df):
-            s = df[single_sensitive]
-
-            x = []
-            for col in df:
-                if col == class_attr:
-                    continue
-                if col in sensitive_attrs:
-                    continue
-                x.append(np.array(df[col].values, dtype=np.float64))
-
-            x.append(np.array(s, dtype=np.float64))
-            x.append(np.array(df[class_attr], dtype=np.float64))
-
-            result = np.array(x).T
-            fd, name = tempfile.mkstemp()
-            os.close(fd)
-            np.savetxt(name, result)
-            return name
-
-        #fd, model_name = tempfile.mkstemp()
-        #os.close(fd)
         fd, output_name = tempfile.mkstemp()
         os.close(fd)
 
-        test_name = create_file_in_kamishima_format(test_df)
+        test_name = self._create_file_in_kamishima_format(test_df,
+                self.class_attr, dataset.favorable_label,
+                dataset.protected_attribute_names, sens_df,
+                dataset.privileged_protected_attributes[self.sensitive_ind])
 
-        #ADDED FOLLOWING LINE to get absolute path of this file, i.e. KamishimaAlgorithm.py
+        # ADDED FOLLOWING LINE to get absolute path of this file, i.e.
+        # prejudice_remover.py
         k_path = os.path.dirname(os.path.abspath(__file__))
-        #changed paths in the calls below to (a) specify path of train_pr,predict_lr RELATIVE to this file, and (b) compute & use absolute path, and (c) replace python3 with python
-        subprocess.call(['python', os.path.join(k_path, 'kamfadm-2012ecmlpkdd', 'predict_lr.py'),
+        predict_lr = os.path.join(k_path, 'kamfadm-2012ecmlpkdd', 'predict_lr.py')
+        # changed paths in the calls below to (a) specify path of train_pr,
+        # predict_lr RELATIVE to this file, and (b) compute & use absolute path,
+        # and (c) replace python3 with python
+        subprocess.call(['python', predict_lr,
                          '-i', test_name,
                          '-m', self.model_name,
                          '-o', output_name,
                          '--quiet'])
-
-        #os.unlink(model_name)
         os.unlink(test_name)
-
         m = np.loadtxt(output_name)
         os.unlink(output_name)
 
-        # Columns of Outputs: (as per Kamishima implementation...predict_lr.py)
-        #
-        # 1. true sample class number
-        # 2. predicted class number
-        # 3. sensitive feature
-        # 4. class 0 probability
-        # 5. class 1 probability
-        predictions = m[:, 1]
-        prediction_probs = m[:, 3:5]
+        pred_dataset = dataset.copy()
+        # Columns of Outputs: (as per Kamishima implementation predict_lr.py)
+        # 0. true sample class number
+        # 1. predicted class number
+        # 2. sensitive feature
+        # 3. class 0 probability
+        # 4. class 1 probability
+        pred_dataset.labels = m[:, [1]]
+        pred_dataset.scores = m[:, [4]]
 
-        return predictions, prediction_probs
+        return pred_dataset
