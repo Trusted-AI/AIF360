@@ -12,6 +12,7 @@ pytest>=3.5.0
 scipy
 scikit-learn
 cvxpy>=1.0
+scs==2.1.0
 numba==0.42.0
 tensorflow==1.1.0
 networkx==1.11
