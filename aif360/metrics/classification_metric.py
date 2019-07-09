@@ -5,7 +5,6 @@ import numpy as np
 from aif360.metrics import BinaryLabelDatasetMetric, utils
 from aif360.datasets import BinaryLabelDataset
 
-
 class ClassificationMetric(BinaryLabelDatasetMetric):
     """Class for computing metrics based on two BinaryLabelDatasets.
 
@@ -93,6 +92,30 @@ class ClassificationMetric(BinaryLabelDatasetMetric):
         condition = self._to_condition(privileged)
 
         return utils.compute_num_gen_TF_PN(self.dataset.protected_attributes,
+            self.dataset.labels, self.classified_dataset.scores,
+            self.dataset.instance_weights,
+            self.dataset.protected_attribute_names,
+            self.dataset.favorable_label, self.dataset.unfavorable_label,
+            condition=condition)
+
+    def compute_ROC_metric(self, privileged=None):
+
+        """Compute area under Receiver Operating Characteristic curve.
+
+        Args:
+            privileged (bool, optional): Boolean prescribing whether to
+                condition this metric on the `privileged_groups`, if `True`, or
+                the `unprivileged_groups`, if `False`. Defaults to `None`
+                meaning this metric is computed over the entire dataset.
+        Returns:
+            list : False positive list at classification thresholds ranging from 0 to 1
+                   True positive list at classification thresholds ranging from 0 to 1
+                   Area under Receiver Operator Characteristic curve
+        """
+
+        condition = self._to_condition(privileged)
+
+        return utils.compute_ROC(self.dataset.protected_attributes,
             self.dataset.labels, self.classified_dataset.scores,
             self.dataset.instance_weights,
             self.dataset.protected_attribute_names,
