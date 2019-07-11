@@ -1,3 +1,4 @@
+import numpy as np
 from pandas.core.dtypes.common import is_list_like
 from sklearn.utils import check_consistent_length
 from sklearn.utils.validation import column_or_1d
