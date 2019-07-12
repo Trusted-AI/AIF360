@@ -120,12 +120,7 @@ class ClassificationMetric(BinaryLabelDatasetMetric):
 
         condition = self._to_condition(privileged)
 
-        return utils.compute_ROC(self.dataset.protected_attributes,
-            self.dataset.labels, self.classified_dataset.scores,
-            self.dataset.instance_weights,
-            self.dataset.protected_attribute_names,
-            self.dataset.favorable_label, self.dataset.unfavorable_label,
-            condition=condition)
+        return utils.compute_ROC(self.dataset.labels, self.classified_dataset.scores, condition=condition)
 
     def num_true_positives(self, privileged=None):
         r"""Return the number of instances in the dataset where both the

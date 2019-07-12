@@ -4,6 +4,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
+import sklearn
 import numpy as np
 
 def compute_boolean_conditioning_vector(X, feature_names, condition=None):
@@ -125,23 +126,15 @@ def compute_num_TF_PN(X, y_true, y_pred, w, feature_names, favorable_label,
         FN=np.sum(w[np.logical_and(y_true_pos, y_pred_neg)], dtype=np.float64)
     )
 
-def compute_ROC(X, y_true, y_pred, w, feature_names, favorable_label,
-                      unfavorable_label, condition=None, resolution=0.01):
+def compute_ROC(y_true, scores, pos_label = 0, condition = None):
 
     """Compute area under Receiver Operating Characteristic curve.
 
     Args:
-        X (numpy.ndarray): Dataset features.
         y_true (numpy.ndarray): True label vector.
-        y_pred (numpy.ndarray): Predicted label vector.
-        w (numpy.ndarray): Instance weight vector - the true and predicted
-            datasets are supposed to have same instance level weights.
-        feature_names (list): names of the features.
-        favorable_label (float): Value of favorable/positive label.
-        unfavorable_label (float): Value of unfavorable/negative label.
+        scores (numpy.ndarray): Models confidences
         condition (list(dict)): Same format as
             :func:`compute_boolean_conditioning_vector`.
-        resolution (float) : steps to increment classification threshold
 
     Returns:
         False negative rate matrix for given classification thresholds (list)
@@ -149,44 +142,10 @@ def compute_ROC(X, y_true, y_pred, w, feature_names, favorable_label,
         Area under Receiver Operating Characteristic Curve (float)
     """
 
-    #condition if necessary
-    condition_vector = compute_boolean_conditioning_vector(X, feature_names, condition=condition)
-
-    # avoid broadcasts
-    y_true_r = y_true.ravel()
-    y_predicted = y_pred.ravel()
-
-    #true positives and negatives
-    y_true_positive = (y_true_r == favorable_label)
-    y_true_negative = (y_true_r == unfavorable_label)
-
-    #calculate amount of positive and negative instances
-    number_of_positives = np.sum(np.logical_and(y_true_positive, condition_vector))
-    number_of_negatives = np.sum(np.logical_and(y_true_negative, condition_vector))
-
-    #hold true and false positives at different thresholds
-    true_positive_matrix = []
-    false_positive_matrix = []
-
-    #calculate thresholds
-    for threshold in np.arange(0, 1, resolution):
-
-        #calculate new predicted positives for the threshold
-        y_pred_positive = np.logical_and(y_predicted > threshold, condition_vector)
-
-        #append to the matrix for graphing
-        true_positive_matrix.append(np.sum(w[np.logical_and(y_true_positive, y_pred_positive)], dtype=np.float64))
-        false_positive_matrix.append(np.sum(w[np.logical_and(y_true_negative, y_pred_positive)],dtype=np.float64))
-
-    #devide by number of positive and negative instances to get rates
-    true_positive_matrix /= number_of_positives
-    false_positive_matrix /= number_of_negatives
-
-    #calculate AUC
-    auc = -1*np.trapz(true_positive_matrix, false_positive_matrix)
+    fpr, tpr, thresholds = metrics.roc_curve(y_true, scores, pos_label = pos_label)
 
     #return values
-    return false_positive_matrix, true_positive_matrix, auc
+    return fpr, tpr, auc
 
 
 
