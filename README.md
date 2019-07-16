@@ -55,16 +55,14 @@ Supported Configurations:
 
 | OS      | Python version |
 | ------- | -------------- |
-| macOS   | 3.5, 3.6       |
-| Ubuntu  | 3.5, 3.6       |
-| Windows | 3.5            |
+| macOS   | 3.5, 3.6, 3.7  |
+| Ubuntu  | 3.5, 3.6, 3.7  |
+| Windows | 3.5, 3.6, 3.7  |
 
 NOTE: Python 2.7 support has been **deprecated** in this version. This message
 will be removed in the next release.
 
-Installation is easiest on a Unix-like system running Python 3. See the
-[Troubleshooting](#troubleshooting) section if you have issues with other
-configurations.
+See the [Troubleshooting](#troubleshooting) section if you have issues.
 
 ### (Optional) Create a virtual environment
 
@@ -165,22 +163,32 @@ In some cases, the URL is required for installation:
 
 ```bat
 # WINDOWS
-pip install --upgrade https://storage.googleapis.com/tensorflow/windows/cpu/tensorflow-1.1.0-cp35-cp35m-win_amd64.whl
+pip install --upgrade https://storage.googleapis.com/tensorflow/windows/cpu/tensorflow-1.14.0-cp36-cp36m-win_amd64.whl
 
 # MACOS
-pip install --upgrade https://storage.googleapis.com/tensorflow/mac/cpu/tensorflow-1.1.0-py3-none-any.whl
+pip install --upgrade https://storage.googleapis.com/tensorflow/mac/cpu/tensorflow-1.14.0-py3-none-any.whl
 
 # LINUX
-pip install --upgrade https://storage.googleapis.com/tensorflow/linux/cpu/tensorflow-1.1.0-cp36-cp36m-linux_x86_64.whl
+pip install --upgrade https://storage.googleapis.com/tensorflow/linux/cpu/tensorflow-1.14.0-cp36-cp36m-linux_x86_64.whl
 ```
-
-Substitute Python version numbers for your configuration as appropriate (Note:
-TensorFlow 1.1.0 only supports Python 3.5 officially on Windows).
 
 TensorFlow is only required for use with the
 `aif360.algorithms.inprocessing.AdversarialDebiasing` class.
 
 #### CVXPY
+
+On MacOS, you may first have to install the Xcode Command Line Tools if you
+never have previously:
+
+```sh
+xcode-select --install
+```
+
+And then, re-run:
+
+```sh
+pip install -r requirements.txt
+```
 
 On Windows, you may need to download the appropriate [Visual Studio C++
 compiler for Python](https://wiki.python.org/moin/WindowsCompilers#Microsoft_Visual_C.2B-.2B-_14.0_standalone:_Build_Tools_for_Visual_Studio_2017_.28x86.2C_x64.2C_ARM.2C_ARM64.29). Then,

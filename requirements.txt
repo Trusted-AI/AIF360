@@ -14,7 +14,7 @@ scikit-learn
 cvxpy>=1.0
 scs==2.1.0
 numba==0.42.0
-tensorflow==1.1.0
+tensorflow>=1.13.1,<2
 networkx==1.11
 BlackBoxAuditing;python_version>="3"
 Orange3>=3.3.5,<=3.7.1;python_version>="3"
