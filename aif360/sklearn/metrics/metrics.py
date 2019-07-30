@@ -1,6 +1,7 @@
 import numpy as np
 from sklearn.metrics import make_scorer, recall_score
 from sklearn.neighbors import NearestNeighbors
+from sklearn.utils import check_X_y
 
 from aif360.sklearn.utils import check_groups
 
@@ -62,7 +63,8 @@ def ratio(func, y, *args, prot_attr=None, priv_group=1, sample_weight=None,
     arbitrary metric.
 
     Note: The optimal value of a ratio is 1. To make it a scorer, one must
-    subtract 1, take the absolute value, and set ``greater_is_better`` to False.
+    take the minimum of the ratio and its inverse, subtract it from 1, and set
+    ``greater_is_better`` to False.
 
     Unprivileged group is taken to be the inverse of the privileged group.
 
@@ -97,8 +99,10 @@ def make_difference_scorer(func):
                        greater_is_better=False)
 
 def make_ratio_scorer(func):
-    return make_scorer(lambda y, y_pred, **kw: abs(func(y, y_pred, **kw) - 1),
-                       greater_is_better=False)
+    def score_fn(y, y_pred, **kwargs):
+        ratio = func(y, y_pred, **kwargs)
+        return 1 - min(ratio, 1/ratio)
+    return make_scorer(score_fn, greater_is_better=False)
 
 
 # ================================ HELPERS =====================================
@@ -179,7 +183,7 @@ def generalized_entropy_error(y_true, y_pred, alpha=2, pos_label=1):
 def between_group_generalized_entropy_error(y_true, y_pred, prot_attr=None,
                                             priv_group=None, alpha=2,
                                             pos_label=1):
-    groups = check_groups(y_true, prot_attr)
+    groups, _ = check_groups(y_true, prot_attr)
     b = np.empty_like(y_true, dtype='float')
     if priv_group is not None:
         groups = [1 if g == priv_group else 0 for g in groups]
@@ -199,9 +203,11 @@ def coefficient_of_variation(b):
 # Is consistency_difference posible?
 # use sample_weight?
 def consistency_score(X, y, n_neighbors=5):
+    # cast as ndarrays
+    X, y = check_X_y(X, y)
     # learn a KNN on the features
     nbrs = NearestNeighbors(n_neighbors, algorithm='ball_tree').fit(X)
-    _, indices = nbrs.kneighbors(X)
+    indices = nbrs.kneighbors(X, return_distance=False)
 
     # compute consistency score
     return 1 - abs(y - y[indices].mean(axis=1)).mean()

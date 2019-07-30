@@ -38,7 +38,7 @@ def check_groups(X, prot_attr):
                 "Expected `Series` or `DataFrame`, got {} instead.".format(
                         type(X).__name__))
 
-    all_prot_attrs = X.index.names[1:]
+    all_prot_attrs = [name for name in X.index.names if name]  # not None or ''
     if prot_attr is None:
         prot_attr = all_prot_attrs
     elif not is_list_like(prot_attr):

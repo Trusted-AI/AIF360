@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 from sklearn.linear_model import LogisticRegression
 
 from aif360.datasets import AdultDataset
@@ -13,7 +14,8 @@ from aif360.sklearn.metrics import (
 
 
 X, y, sample_weight = fetch_adult(numeric_only=True)
-y = y.factorize(sort=True)[0]
+# y = y.cat.rename_categories(range(len(y.cat.categories)))
+y = pd.Series(y.factorize(sort=True)[0], name=y.name, index=y.index)
 y_pred = LogisticRegression(solver='liblinear').fit(X, y,
         sample_weight=sample_weight).predict(X)
 adult = AdultDataset(instance_weights_name='fnlwgt', categorical_features=[],
