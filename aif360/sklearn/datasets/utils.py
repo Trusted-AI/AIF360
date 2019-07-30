@@ -23,7 +23,7 @@ def standarize_dataset(df, protected_attributes, target, sample_weight=None,
         usecols (single label or list-like, optional): Column(s) to keep. All
             others are dropped.
         dropcols (single label or list-like, optional): Column(s) to drop.
-        numeric_only (bool): Drop all non-numeric feature columns.
+        numeric_only (bool): Drop all non-numeric, non-binary feature columns.
         dropna (bool): Drop rows with NAs.
 
     Returns:
@@ -58,10 +58,7 @@ def standarize_dataset(df, protected_attributes, target, sample_weight=None,
         >>> X_tr, X_te, y_tr, y_te = train_test_split(X, y)
     """
     df = df.set_index(protected_attributes, drop=False, append=True)
-    # df = df.set_index(sample_weight or np.ones(df.shape[0]), append=True)
-    # df.index = df.index.set_names('sample_weight', level=-1)
 
-    # TODO: convert to 1/0 if numeric_only?
     y = df.pop(target)
 
     # Column-wise drops
