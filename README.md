@@ -25,8 +25,8 @@ We have developed the package with extensibility in mind. This library is still
 in development. We encourage the contribution of your metrics, explainers, and
 debiasing algorithms.
 
-Get in touch with us on [Slack](https://aix360.slack.com) (invitation
-[here](https://join.slack.com/t/aix360/shared_invite/enQtNzEyOTAwOTk1NzY2LTM1ZTMwM2M4OWQzNjhmNGRiZjg3MmJiYTAzNDU1MTRiYTIyMjFhZTI4ZDUwM2M1MGYyODkwNzQ2OWQzMThlN2Q))!
+Get in touch with us on [Slack](https://aif360.slack.com) (invitation
+[here](https://join.slack.com/t/aif360/shared_invite/enQtNDI5Nzg2NTk0MTMyLTU4N2UwODVmMTYxZWMwZmEzZmZkODdjMTk5NWUwZDNhNDhlMzNkZDNhOTYwZDNlODc1MTdjYzY5OTU2OWQ1ZmY))!
 
 
 ## Supported bias mitigation algorithms
