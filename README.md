@@ -1,4 +1,4 @@
-# AI Fairness 360 (AIF360 v0.2.0)
+# AI Fairness 360 (AIF360 v0.2.1)
 
 [![Build Status](https://travis-ci.org/IBM/AIF360.svg?branch=master)](https://travis-ci.org/IBM/AIF360)
 [![Documentation](https://readthedocs.org/projects/aif360/badge/?version=latest)](http://aif360.readthedocs.io/en/latest/?badge=latest)

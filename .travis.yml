@@ -12,7 +12,6 @@ branches:
     - master
 
 install:
-  - pip install numpy==1.15
   - pip install -r requirements.txt
   - pip install flake8
   - if ! wget ${UCI_HTTPS_URL}/adult/adult.data -P aif360/data/raw/adult/ ; then wget ${UCI_FTP_URL}/adult/adult.data -P aif360/data/raw/adult/ ; fi
