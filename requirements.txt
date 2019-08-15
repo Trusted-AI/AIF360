@@ -19,3 +19,4 @@ networkx==1.11
 BlackBoxAuditing
 Orange3>=3.3.5,<=3.7.1
 lime
+fairsearchcore
