@@ -1,9 +1,3 @@
-"""This is the helper script for implementing metrics."""
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-
 import sklearn
 import numpy as np
 
@@ -126,7 +120,7 @@ def compute_num_TF_PN(X, y_true, y_pred, w, feature_names, favorable_label,
         FN=np.sum(w[np.logical_and(y_true_pos, y_pred_neg)], dtype=np.float64)
     )
 
-def compute_ROC(y_true, scores, pos_label = 0, condition = None):
+def compute_ROC(y_true, scores, pos_label = 1, condition = None):
 
     """Compute area under Receiver Operating Characteristic curve.
 
