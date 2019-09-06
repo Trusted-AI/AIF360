@@ -380,7 +380,7 @@ class OptTools():
         prob = Problem(obj, constraints)
         prob.solve(verbose=verbose)
 
-        if prob.status == "optimal":
+        if prob.status in ["optimal", "optimal_inaccurate"]:
             print("Optimized Preprocessing: Objective converged to %f"
                 % (prob.value))
         else:
