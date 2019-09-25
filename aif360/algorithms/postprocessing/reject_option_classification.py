@@ -211,9 +211,9 @@ class RejectOptionClassification(Transformer):
 
         return dataset_new
 
-    def fit_predict(self, dataset):
+    def fit_predict(self, dataset_true, dataset_pred):
         """fit and predict methods sequentially."""
-        return self.fit().predict(dataset)
+        return self.fit(dataset_true, dataset_pred).predict(dataset_pred)
 
 # Function to obtain the pareto frontier
 def _get_pareto_frontier(costs, return_mask = True):  # <- Fastest for many points
