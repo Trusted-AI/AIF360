@@ -17,5 +17,4 @@ numba==0.42.0
 tensorflow>=1.13.1,<2
 networkx==1.11
 BlackBoxAuditing
-Orange3>=3.3.5,<=3.7.1
 lime
