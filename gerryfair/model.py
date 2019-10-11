@@ -2,15 +2,16 @@ import numpy as np
 import pandas as pd
 from sklearn import linear_model
 import gerryfair.fairness_plots
-import gerryfair.heatmap
+import gerryfair.heatmap as heatmap
 from gerryfair.learner import Learner
 from gerryfair.auditor import Auditor
 from gerryfair.classifier_history import ClassifierHistory
 from gerryfair.reg_oracle_class import RegOracle
 import matplotlib
 
-matplotlib.use('TkAgg')
+#matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
+
 
 class Model:
     """Model object for fair learning and classification"""
@@ -48,11 +49,11 @@ class Model:
         iteration = 1
         while iteration < self.max_iters:
             # learner's best response: solve the CSC problem, get mixture decisions on X to update prediction probabilities
-            history.append_classifier(learner.best_response(costs_0, costs_1)) 
+            history.append_classifier(learner.best_response(costs_0, costs_1))
             (error, predictions) = learner.generate_predictions(history.get_most_recent(), predictions, iteration)
-            
+
             # auditor's best response: find group, update costs
-            metric_baseline = auditor.get_baseline(y, predictions) 
+            metric_baseline = auditor.get_baseline(y, predictions)
             group = auditor.get_group(predictions, metric_baseline)
             costs_0, costs_1 = auditor.update_costs(costs_0, costs_1, group, self.C, iteration, self.gamma)
 
@@ -64,7 +65,9 @@ class Model:
             iteration += 1
 
             # early termination:
-            if early_termination and (len(errors) >= 5) and ((errors[-1] == errors[-2]) or fairness_violations[-1] == fairness_violations[-2]) and fairness_violations[-1] < self.gamma:
+            if early_termination and (len(errors) >= 5) and (
+                    (errors[-1] == errors[-2]) or fairness_violations[-1] == fairness_violations[-2]) and \
+                    fairness_violations[-1] < self.gamma:
                 iteration = self.max_iters
 
         self.classifiers = history.classifiers
@@ -94,7 +97,8 @@ class Model:
             # initial heat map
             X_prime_heat = X_prime.iloc[:, 0:2]
             eta = 0.1
-            minmax = heatmap.heat_map(X, X_prime_heat, y, predictions_t, eta, self.heatmap_path + '/heatmap_iteration_{}'.format(iteration), vmin, vmax)
+            minmax = heatmap.heat_map(X, X_prime_heat, y, predictions, eta,
+                                      self.heatmap_path + '/heatmap_iteration_{}'.format(iteration), vmin, vmax)
             if iteration == 1:
                 vmin = minmax[0]
                 vmax = minmax[1]
@@ -105,7 +109,7 @@ class Model:
 
         num_classifiers = len(self.classifiers)
         y_hat = None
-        for c in self.classifiers: 
+        for c in self.classifiers:
             new_preds = np.multiply(1.0 / num_classifiers, c.predict(X))
             if y_hat is None:
                 y_hat = new_preds
@@ -114,11 +118,11 @@ class Model:
         return [1 if y > .5 else 0 for y in y_hat]
 
     def pareto(self, X, X_prime, y, gamma_list):
-        '''Assumes Model has FP specified for metric. 
+        '''Assumes Model has FP specified for metric.
         Trains for each value of gamma, returns error, FP (via training), and FN (via auditing) values.'''
 
-        C=self.C
-        max_iters=self.max_iters
+        C = self.C
+        max_iters = self.max_iters
 
         # Store errors and fp over time for each gamma
 
@@ -135,7 +139,7 @@ class Model:
             errors, fairness_violations = self.train(X, X_prime, y)
             predictions = self.predict(X)
             _, fn_violation = auditor.audit(predictions)
-            all_errors.append(errors_gt[-1])
+            all_errors.append(errors[-1])
             all_fp_violations.append(fairness_violations[-1])
             all_fn_violations.append(fn_violation)
 
@@ -151,13 +155,13 @@ class Model:
             raise Exception("Specified algorithm is invalid")
 
     def set_options(self, C=None,
-                        printflag=None,
-                        heatmapflag=None,
-                        heatmap_iter=None,
-                        heatmap_path=None,
-                        max_iters=None,
-                        gamma=None,
-                        fairness_def=None):
+                    printflag=None,
+                    heatmapflag=None,
+                    heatmap_iter=None,
+                    heatmap_path=None,
+                    max_iters=None,
+                    gamma=None,
+                    fairness_def=None):
         ''' A method to switch the options before training. '''
 
         if C:
@@ -178,14 +182,14 @@ class Model:
             self.fairness_def = fairness_def
 
     def __init__(self, C=10,
-                        printflag=False,
-                        heatmapflag=False,
-                        heatmap_iter=10,
-                        heatmap_path='.',
-                        max_iters=10,
-                        gamma=0.01,
-                        fairness_def='FP',
-                        predictor=linear_model.LinearRegression()):
+                 printflag=False,
+                 heatmapflag=False,
+                 heatmap_iter=10,
+                 heatmap_path='.',
+                 max_iters=10,
+                 gamma=0.01,
+                 fairness_def='FP',
+                 predictor=linear_model.LinearRegression()):
         self.C = C
         self.printflag = printflag
         self.heatmapflag = heatmapflag
@@ -196,4 +200,5 @@ class Model:
         self.fairness_def = fairness_def
         self.predictor = predictor
         if self.fairness_def not in ['FP', 'FN']:
-            raise Exception('This metric is not yet supported for learning. Metric specified: {}.'.format(self.fairness_def))
+            raise Exception(
+                'This metric is not yet supported for learning. Metric specified: {}.'.format(self.fairness_def))

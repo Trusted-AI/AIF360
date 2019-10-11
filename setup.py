@@ -27,7 +27,6 @@ setup(name='aif360',
           'numpy>=1.16',
           'scipy',
           'pandas>=0.23.3',
-          'sys',
           'scikit-learn',
           'matplotlib'
       ],
