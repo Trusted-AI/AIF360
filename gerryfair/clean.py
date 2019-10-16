@@ -1,6 +1,7 @@
 import argparse
 import numpy as np
 import pandas as pd
+import pdb
 
 def setup():
     parser = argparse.ArgumentParser(description='Fairness Data Cleaning')
@@ -16,17 +17,17 @@ def setup():
     return [args.name, args.dataset, args.attributes, args.centered]
 
 
-'''
-Clean a dataset, given the filename for the dataset and the filename for the attributes.
-
-Dataset: Filename for dataset. The dataset should be formatted such that categorical variables use one-hot encoding
-and the label should be 0/1
-
-Attributes: Filename for the attributes of the dataset. The file should have each column name in a list, and under this
-list should have 0 for an unprotected attribute, 1 for a protected attribute, and 2 for the attribute of the label.
-
-'''
 def clean_dataset(dataset, attributes, centered):
+    '''
+    Clean a dataset, given the filename for the dataset and the filename for the attributes.
+
+    Dataset: Filename for dataset. The dataset should be formatted such that categorical variables use one-hot encoding
+    and the label should be 0/1
+
+    Attributes: Filename for the attributes of the dataset. The file should have each column name in a list, and under this
+    list should have 0 for an unprotected attribute, 1 for a protected attribute, and 2 for the attribute of the label.
+    '''
+
     df = pd.read_csv(dataset)
     sens_df = pd.read_csv(attributes)
 
@@ -63,11 +64,11 @@ def clean_dataset(dataset, attributes, centered):
     return X, X_prime, y
 
 
-
 def center(X):
     for col in X.columns:
         X.loc[:, col] = X.loc[:, col]-np.mean(X.loc[:, col])
     return X
+
 
 def one_hot_code(df1, sens_dict):
     cols = df1.columns
@@ -89,6 +90,26 @@ def one_hot_code(df1, sens_dict):
                 col = [1 if el == unique_values[0] else 0 for el in column]
                 df1[col_name] = col
     return df1, sens_dict
+
+
+def extract_df_from_ds(dataset):
+
+    """Extract data frames from Transformer Data set
+
+    Args:
+         dataset: aif360 dataset
+
+    Returns:
+         X, X_prime, y (pandas dataframes of attributes, sensitive attributes, labels)
+    """
+
+    X = pd.DataFrame(dataset.convert_to_dataframe()[0])
+    # remove labels
+    X = X.drop(columns=dataset.label_names)
+    # get sensitive attributes
+    X_prime = X[dataset.protected_attribute_names]
+    y = tuple(dataset.labels[:, 0])
+    return X, X_prime, y
 
 
 # Helper for main method

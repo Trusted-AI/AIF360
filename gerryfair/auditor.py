@@ -2,6 +2,9 @@ import numpy as np
 import pandas as pd
 from sklearn import linear_model
 from gerryfair.reg_oracle_class import RegOracle
+from aif360.metrics.metric import Metric
+from gerryfair import clean
+import pdb
 
 class Group(object):
     """Group class: created by Auditor when identifying violation"""
@@ -18,10 +21,12 @@ class Group(object):
         self.disparity_direction = disparity_direction
         self.group_rate = group_rate
 
-class Auditor:
+class Auditor(Metric):
     """This is the Auditor class. It is used in the training algorithm to repeatedly find subgroups that break the
     fairness disparity constraint. You can also use it independently as a stand alone auditor."""
-    def __init__(self, X_prime, y, fairness_def):
+    def __init__(self, dataset, fairness_def):
+        super(Auditor, self).__init__(dataset)
+        X, X_prime, y = clean.extract_df_from_ds(dataset)
         self.X_prime = X_prime
         self.y_input = y
         self.y_inverse = np.array([abs(1-y_value) for y_value in self.y_input])
@@ -43,17 +48,21 @@ class Auditor:
         elif self.fairness_def == 'FN':
             costs_1 = [0.0] * n
             costs_0 = [1.0 / n * (2 * i - 1) for i in self.y_input]
-        return costs_0, costs_1, self.X_prime_0
+        return tuple(costs_0), tuple(costs_1), self.X_prime_0
 
-    def get_baseline(self, y, y_hat):
+    def get_baseline(self, y, predictions):
         if self.fairness_def == 'FP':
-            return np.mean([y_hat[i] for i, c in enumerate(y) if c == 0])
+            return np.mean([predictions[i] for i, c in enumerate(y) if c == 0])
         elif self.fairness_def == 'FN':
-            return np.mean([(1 - y_hat[i]) for i, c in enumerate(y) if c == 1])
+            return np.mean([(1 - predictions[i]) for i, c in enumerate(y) if c == 1])
 
     def update_costs(self, c_0, c_1, group, C, iteration, gamma):
         """Recursively update the costs from incorrectly predicting 1 for the learner."""
         # store whether FP disparity was + or -
+
+        # make costs mutable type
+        c_0 = list(c_0)
+        c_1 = list(c_1)
 
         pos_neg = group.disparity_direction
         n = len(self.y)
@@ -79,7 +88,7 @@ class Auditor:
                     c_1[i] = -1.0/n
                 elif self.fairness_def == 'FN':
                     c_0[i] = -1.0/n
-        return c_0, c_1
+        return tuple(c_0), tuple(c_1)
 
     def get_subset(self, predictions):
         if self.fairness_def == 'FP':

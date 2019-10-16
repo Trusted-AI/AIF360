@@ -1,4 +1,5 @@
 import numpy as np
+import gerryfair.clean as clean
 import pandas as pd
 from sklearn import linear_model
 import gerryfair.fairness_plots
@@ -7,20 +8,45 @@ from gerryfair.learner import Learner
 from gerryfair.auditor import Auditor
 from gerryfair.classifier_history import ClassifierHistory
 from gerryfair.reg_oracle_class import RegOracle
+from aif360.algorithms import Transformer
 import matplotlib
-
-#matplotlib.use('TkAgg')
+import pdb
 import matplotlib.pyplot as plt
+try:
+    matplotlib.use('TkAgg')
+except RecursionError as error:
+    print("Matplotlib Error, comment out matplotlib.use('TkAgg')")
 
 
-class Model:
+class Model(Transformer):
+
     """Model object for fair learning and classification"""
+    def __init__(self, C=10,
+                 printflag=False,
+                 heatmapflag=False,
+                 heatmap_iter=10,
+                 heatmap_path='.',
+                 max_iters=10,
+                 gamma=0.01,
+                 fairness_def='FP',
+                 predictor=linear_model.LinearRegression()):
 
-    def fictitious_play(self,
-                        X,
-                        X_prime,
-                        y,
-                        early_termination=True):
+        super(Model, self).__init__()
+        self.C = C
+        self.printflag = printflag
+        self.heatmapflag = heatmapflag
+        self.heatmap_iter = heatmap_iter
+        self.heatmap_path = heatmap_path
+        self.max_iters = max_iters
+        self.gamma = gamma
+        self.fairness_def = fairness_def
+        self.predictor = predictor
+        self.classifiers = None
+        if self.fairness_def not in ['FP', 'FN']:
+            raise Exception(
+                'This metric is not yet supported for learning. Metric specified: {}.'.format(self.fairness_def))
+
+    def fit(self, dataset, early_termination=True, return_values=False):
         """
         Fictitious Play Algorithm
         Input: dataset cleaned into X, X_prime, y
@@ -28,8 +54,9 @@ class Model:
         """
 
         # defining variables and data structures for algorithm
+        X, X_prime, y = clean.extract_df_from_ds(dataset)
         learner = Learner(X, y, self.predictor)
-        auditor = Auditor(X_prime, y, self.fairness_def)
+        auditor = Auditor(dataset, self.fairness_def)
         history = ClassifierHistory()
 
         # initialize variables
@@ -50,8 +77,7 @@ class Model:
         while iteration < self.max_iters:
             # learner's best response: solve the CSC problem, get mixture decisions on X to update prediction probabilities
             history.append_classifier(learner.best_response(costs_0, costs_1))
-            (error, predictions) = learner.generate_predictions(history.get_most_recent(), predictions, iteration)
-
+            error, predictions = learner.generate_predictions(history.get_most_recent(), predictions, iteration)
             # auditor's best response: find group, update costs
             metric_baseline = auditor.get_baseline(y, predictions)
             group = auditor.get_group(predictions, metric_baseline)
@@ -61,7 +87,7 @@ class Model:
             errors.append(error)
             fairness_violations.append(group.weighted_disparity)
             self.print_outputs(iteration, error, group)
-            vmin, vmax = self.save_heatmap(iteration, X, X_prime, y, history.get_most_recent().predict(X), vmin, vmax)
+            vmin, vmax = self.save_heatmap(iteration, dataset, history.get_most_recent().predict(X), vmin, vmax)
             iteration += 1
 
             # early termination:
@@ -71,7 +97,38 @@ class Model:
                 iteration = self.max_iters
 
         self.classifiers = history.classifiers
-        return errors, fairness_violations
+        if return_values:
+            return errors, fairness_violations
+
+    def predict(self, dataset, threshold=.5):
+
+        # Generates predictions. We do not yet advise using this in sensitive real-world settings.
+        dataset_new = dataset.copy(deepcopy=True)
+        data, _, _ = clean.extract_df_from_ds(dataset_new)
+        num_classifiers = len(self.classifiers)
+        y_hat = None
+        for c in self.classifiers:
+            new_predictions = np.multiply(1.0 / num_classifiers, c.predict(data))
+            if y_hat is None:
+                y_hat = new_predictions
+            else:
+                y_hat = np.add(y_hat, new_predictions)
+        dataset_new.labels = (1 if y >= threshold else 0 for y in y_hat)
+        return dataset_new
+
+    def fit_transform(self, dataset):
+        """Train a model on the input and transform the dataset accordingly.
+
+        Equivalent to calling `fit(dataset)` followed by `transform(dataset)`.
+
+        Args:
+            dataset (Dataset): Input dataset.
+
+        Returns:
+            Dataset: Output dataset. `metadata` should reflect the details of
+            this transformation.
+        """
+        raise NotImplementedError("'transform' is not supported for this class. ")
 
     def print_outputs(self, iteration, error, group):
         print('iteration: {}'.format(int(iteration)))
@@ -89,9 +146,10 @@ class Model:
                     group.weighted_disparity,
                     group.group_size))
 
-    def save_heatmap(self, iteration, X, X_prime, y, predictions, vmin, vmax):
+    def save_heatmap(self, iteration, dataset, predictions, vmin, vmax):
         '''Helper method: save heatmap frame'''
 
+        X, X_prime, y = clean.extract_df_from_ds(dataset)
         # save heatmap every heatmap_iter iterations
         if self.heatmapflag and (iteration % self.heatmap_iter) == 0:
             # initial heat map
@@ -104,23 +162,11 @@ class Model:
                 vmax = minmax[1]
         return vmin, vmax
 
-    def predict(self, X):
-        ''' Generates predictions. We do not yet advise using this in sensitive real-world settings. '''
-
-        num_classifiers = len(self.classifiers)
-        y_hat = None
-        for c in self.classifiers:
-            new_preds = np.multiply(1.0 / num_classifiers, c.predict(X))
-            if y_hat is None:
-                y_hat = new_preds
-            else:
-                y_hat = np.add(y_hat, new_preds)
-        return [1 if y > .5 else 0 for y in y_hat]
-
-    def pareto(self, X, X_prime, y, gamma_list):
+    def pareto(self, dataset, gamma_list):
         '''Assumes Model has FP specified for metric.
         Trains for each value of gamma, returns error, FP (via training), and FN (via auditing) values.'''
 
+        X, X_prime_y = clean.extract_df_from_ds(dataset)
         C = self.C
         max_iters = self.max_iters
 
@@ -133,26 +179,17 @@ class Model:
         self.C = C
         self.max_iters = max_iters
 
-        auditor = Auditor(X_prime, y, 'FN')
+        auditor = Auditor(dataset, 'FN')
         for g in gamma_list:
             self.gamma = g
-            errors, fairness_violations = self.train(X, X_prime, y)
+            errors, fairness_violations = self.fit(dataset, early_termination=True, return_values=True)
             predictions = self.predict(X)
             _, fn_violation = auditor.audit(predictions)
             all_errors.append(errors[-1])
             all_fp_violations.append(fairness_violations[-1])
             all_fn_violations.append(fn_violation)
 
-        return (all_errors, all_fp_violations, all_fn_violations)
-
-    def train(self, X, X_prime, y, alg="fict"):
-        ''' Trains a subgroup-fair model using provided data and specified parameters. '''
-
-        if alg == "fict":
-            err, fairness_violations = self.fictitious_play(X, X_prime, y)
-            return err, fairness_violations
-        else:
-            raise Exception("Specified algorithm is invalid")
+        return all_errors, all_fp_violations, all_fn_violations
 
     def set_options(self, C=None,
                     printflag=None,
@@ -181,24 +218,6 @@ class Model:
         if fairness_def:
             self.fairness_def = fairness_def
 
-    def __init__(self, C=10,
-                 printflag=False,
-                 heatmapflag=False,
-                 heatmap_iter=10,
-                 heatmap_path='.',
-                 max_iters=10,
-                 gamma=0.01,
-                 fairness_def='FP',
-                 predictor=linear_model.LinearRegression()):
-        self.C = C
-        self.printflag = printflag
-        self.heatmapflag = heatmapflag
-        self.heatmap_iter = heatmap_iter
-        self.heatmap_path = heatmap_path
-        self.max_iters = max_iters
-        self.gamma = gamma
-        self.fairness_def = fairness_def
-        self.predictor = predictor
-        if self.fairness_def not in ['FP', 'FN']:
-            raise Exception(
-                'This metric is not yet supported for learning. Metric specified: {}.'.format(self.fairness_def))
+
+
+

@@ -2,7 +2,7 @@ import numpy as np
 import copy
 from sklearn import linear_model
 from gerryfair.reg_oracle_class import RegOracle
-
+import pdb
 class Learner:
     def __init__(self, X, y, predictor):
         self.X = X
@@ -31,4 +31,5 @@ class Learner:
         ds = np.multiply((iteration - 1.0) / iteration, A)
         ds = np.add(ds, new_preds)
         error = np.mean([np.abs(ds[k] - self.y[k]) for k in range(len(self.y))])
+        ds = tuple(ds)
         return (error, ds)
