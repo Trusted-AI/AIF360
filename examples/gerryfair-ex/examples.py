@@ -1,28 +1,31 @@
 # testing integration of gerry fair with aif360
 import sys
-import gerryfair
-from gerryfair.auditor import *
 sys.path.append("../")
 from aif360.algorithms.preprocessing.optim_preproc_helpers.data_preproc_functions import load_preproc_data_adult
+from aif360.algorithms.inprocessing.gerryfair_classifier import *
+import aif360.algorithms.inprocessing.gerryfair
+
+
+
 dataset_orig = load_preproc_data_adult()
 
 C = 10
 printflag = True
 gamma = .01
-max_iters = 30
+max_iters = 10
 fair_def = 'FP'
 
-fair_model = gerryfair.model.Model(C=C, printflag=printflag, gamma=gamma, fairness_def=fair_def)
+fair_model = Model(C=C, printflag=printflag, gamma=gamma, fairness_def=fair_def)
 fair_model.set_options(max_iters=max_iters)
 
 
 # fit method
 communities_all_errors, communities_violations = fair_model.fit(dataset_orig,
-                                                            early_termination=True, return_values=True)
+                                                                early_termination=True, return_values=True)
 # predict method
 dataset_yhat = fair_model.predict(dataset_orig)
 
-# fit_transform method (not implemented)
+# fit_transform method will throw an error (not implemented)
 fair_model.fit_transform(dataset_orig)
 
 # test other methods

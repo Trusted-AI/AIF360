@@ -1,9 +1,9 @@
 import numpy as np
 import pandas as pd
 from sklearn import linear_model
-from gerryfair.reg_oracle_class import RegOracle
+from aif360.algorithms.inprocessing.gerryfair.reg_oracle_class import RegOracle
 from aif360.metrics.metric import Metric
-from gerryfair import clean
+import aif360.algorithms.inprocessing.gerryfair.clean as clean
 import pdb
 
 class Group(object):

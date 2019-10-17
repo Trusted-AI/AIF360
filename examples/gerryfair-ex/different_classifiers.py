@@ -1,7 +1,7 @@
-import gerryfair
-from gerryfair.model import Model
-from gerryfair.clean import clean_dataset
-from gerryfair.oracles import TorchPredictor, ThreeLayerNet
+import aif360.algorithms.inprocessing.gerryfair
+from aif360.algorithms.inprocessing.gerryfair_classifier import Model
+from aif360.algorithms.inprocessing.gerryfair.clean import clean_dataset
+from aif360.algorithms.inprocessing.gerryfair.oracles import TorchPredictor, ThreeLayerNet
 
 from sklearn import svm
 from sklearn import tree

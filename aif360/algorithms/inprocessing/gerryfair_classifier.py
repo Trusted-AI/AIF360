@@ -1,20 +1,17 @@
 import numpy as np
-import gerryfair.clean as clean
 import pandas as pd
 from sklearn import linear_model
-import gerryfair.fairness_plots
-import gerryfair.heatmap as heatmap
-from gerryfair.learner import Learner
-from gerryfair.auditor import Auditor
-from gerryfair.classifier_history import ClassifierHistory
-from gerryfair.reg_oracle_class import RegOracle
+import aif360.algorithms.inprocessing.gerryfair.clean as clean
+import aif360.algorithms.inprocessing.gerryfair.heatmap as heatmap
+from aif360.algorithms.inprocessing.gerryfair.learner import Learner
+from aif360.algorithms.inprocessing.gerryfair.auditor import Auditor
+from aif360.algorithms.inprocessing.gerryfair.classifier_history import ClassifierHistory
 from aif360.algorithms import Transformer
 import matplotlib
-import pdb
-import matplotlib.pyplot as plt
+
 try:
     matplotlib.use('TkAgg')
-except RecursionError as error:
+except:
     print("Matplotlib Error, comment out matplotlib.use('TkAgg')")
 
 
@@ -113,7 +110,7 @@ class Model(Transformer):
                 y_hat = new_predictions
             else:
                 y_hat = np.add(y_hat, new_predictions)
-        dataset_new.labels = (1 if y >= threshold else 0 for y in y_hat)
+        dataset_new.labels = tuple([1 if y >= threshold else 0 for y in y_hat])
         return dataset_new
 
     def fit_transform(self, dataset):

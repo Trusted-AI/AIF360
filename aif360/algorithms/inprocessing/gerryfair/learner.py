@@ -1,8 +1,7 @@
 import numpy as np
 import copy
 from sklearn import linear_model
-from gerryfair.reg_oracle_class import RegOracle
-import pdb
+from aif360.algorithms.inprocessing.gerryfair.reg_oracle_class import RegOracle
 class Learner:
     def __init__(self, X, y, predictor):
         self.X = X
