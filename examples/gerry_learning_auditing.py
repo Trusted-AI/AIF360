@@ -3,7 +3,7 @@ import sys
 sys.path.append("../")
 from aif360.algorithms.preprocessing.optim_preproc_helpers.data_preproc_functions import load_preproc_data_adult
 from aif360.algorithms.inprocessing.gerryfair_classifier import *
-import aif360.algorithms.inprocessing.gerryfair
+
 
 
 
@@ -31,7 +31,7 @@ fair_model.fit_transform(dataset_orig)
 # test other methods
 
 # save heatmap
-fair_model.save_heatmap(fair_model.max_iters, dataset_orig, dataset_yhat.labels, None, None, force_heatmap=True)
+fair_model.save_heatmappython (fair_model.max_iters, dataset_orig, dataset_yhat.labels, None, None, force_heatmap=True)
 
 # run & create pareto curves
 gamma_list = [.01, .02, .03, 1.0]

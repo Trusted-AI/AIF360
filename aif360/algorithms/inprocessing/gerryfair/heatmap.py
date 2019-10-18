@@ -1,10 +1,10 @@
 
 import matplotlib
+try:
+    matplotlib.use('TkAgg')
+except:
+    print("Matplotlib Error, comment out matplotlib.use('TkAgg')")
 import pandas as pd
-# matplotlib.use('TkAgg')
-import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
-
 import matplotlib.pyplot as plt
 from matplotlib import cm
 from aif360.algorithms.inprocessing.gerryfair.reg_oracle_class import *
