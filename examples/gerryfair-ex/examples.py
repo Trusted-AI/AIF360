@@ -31,7 +31,7 @@ fair_model.fit_transform(dataset_orig)
 # test other methods
 
 # save heatmap
-fair_model.save_heatmap(fair_model.max_iters, dataset_orig, dataset_yhat.labels, None, None)
+fair_model.save_heatmap(fair_model.max_iters, dataset_orig, dataset_yhat.labels, None, None, force_heatmap=True)
 
 # run & create pareto curves
 gamma_list = [.01, .02, .03, 1.0]

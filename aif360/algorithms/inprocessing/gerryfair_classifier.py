@@ -143,12 +143,12 @@ class Model(Transformer):
                     group.weighted_disparity,
                     group.group_size))
 
-    def save_heatmap(self, iteration, dataset, predictions, vmin, vmax):
+    def save_heatmap(self, iteration, dataset, predictions, vmin, vmax, force_heatmap=False):
         '''Helper method: save heatmap frame'''
 
         X, X_prime, y = clean.extract_df_from_ds(dataset)
         # save heatmap every heatmap_iter iterations
-        if self.heatmapflag and (iteration % self.heatmap_iter) == 0:
+        if (self.heatmapflag and (iteration % self.heatmap_iter) == 0) or force_heatmap:
             # initial heat map
             X_prime_heat = X_prime.iloc[:, 0:2]
             eta = 0.1
