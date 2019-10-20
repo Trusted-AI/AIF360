@@ -100,7 +100,7 @@ class Model(Transformer):
     def predict(self, dataset, threshold=.5):
 
         # Generates predictions. We do not yet advise using this in sensitive real-world settings.
-        dataset_new = dataset.copy(deepcopy=True)
+        dataset_new = dataset.copy(deep=True)
         data, _, _ = clean.extract_df_from_ds(dataset_new)
         num_classifiers = len(self.classifiers)
         y_hat = None
