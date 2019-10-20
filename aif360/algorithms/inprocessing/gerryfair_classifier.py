@@ -163,7 +163,7 @@ class Model(Transformer):
         '''Assumes Model has FP specified for metric.
         Trains for each value of gamma, returns error, FP (via training), and FN (via auditing) values.'''
 
-        X, X_prime_y = clean.extract_df_from_ds(dataset)
+        X, X_prime, y = clean.extract_df_from_ds(dataset)
         C = self.C
         max_iters = self.max_iters
 
