@@ -90,7 +90,7 @@ def fp_vs_fn(dataset):
     C = 10
     printflag = True
     gamma = .01
-    max_iters = 50
+    max_iters = 5
     fair_model = gerryfair.model.Model(C=C, printflag=printflag, gamma=gamma, fairness_def='FP', max_iters=max_iters)
     gamma_list = [0.001, 0.002, 0.003, 0.004, 0.005, 0.0075, 0.01, 0.02, 0.03, 0.05]
     fp_auditor = gerryfair.model.Auditor(dataset, 'FP')
