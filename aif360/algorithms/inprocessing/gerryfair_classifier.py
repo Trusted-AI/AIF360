@@ -1,4 +1,5 @@
 import numpy as np
+import copy
 from sklearn import linear_model
 import aif360.algorithms.inprocessing.gerryfair.clean as clean
 import aif360.algorithms.inprocessing.gerryfair.heatmap as heatmap
@@ -131,7 +132,7 @@ class GerryFair(Transformer):
         """
 
         # Generates predictions. We do not yet advise using this in sensitive real-world settings.
-        dataset_new = dataset.copy(deep=True)
+        dataset_new = copy.deepcopy(dataset)
         data, _, _ = clean.extract_df_from_ds(dataset_new)
         num_classifiers = len(self.classifiers)
         y_hat = None
