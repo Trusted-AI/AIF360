@@ -15,7 +15,7 @@ gamma = .01
 max_iters = 10
 fair_def = 'FP'
 
-fair_model = Model(C=C, printflag=printflag, gamma=gamma, fairness_def=fair_def)
+fair_model = GerryFair(C=C, printflag=printflag, gamma=gamma, fairness_def=fair_def)
 fair_model.set_options(max_iters=max_iters)
 
 
@@ -36,7 +36,6 @@ fair_model.save_heatmappython (fair_model.max_iters, dataset_orig, dataset_yhat.
 # run & create pareto curves
 gamma_list = [.01, .02, .03, 1.0]
 fair_model.pareto(dataset_orig, gamma_list)
-
 
 # auditing a classifier for unfairness
 # instantiate auditor

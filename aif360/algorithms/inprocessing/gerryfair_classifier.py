@@ -15,9 +15,19 @@ except:
 
 
 
-class Model(Transformer):
+class GerryFair(Transformer):
+    """GerryFair is an algorithm for learning classifiers that are fair with respect to rich subgroups.
+       Rich subgroups are defined by [linear] functions over the sensitive attributes, and fairness notions are statistical: false
+       positive, false negative, and statistical parity rates. This implementation uses a max of two regressions
+       as a cost-sensitive classification oracle, and supports linear regression, support vector machines, decision trees,
+       and kernel regression. For details see:
 
-    """Model object for fair learning and classification"""
+       References:
+        .. [1] "Preventing Fairness Gerrymandering: Auditing and Learning for Subgroup Fairness." Michale Kearns,
+        Seth Neel, Aaron Roth, Steven Wu. ICML 18'.
+        .. [2] "An Empirical Study of Rich Subgroup Fairness for Machine Learning". Michael Kearns,
+        Seth Neel, Aaron Roth, Steven Wu. FAT '19.
+    """
     def __init__(self, C=10,
                  printflag=False,
                  heatmapflag=False,
@@ -27,8 +37,19 @@ class Model(Transformer):
                  gamma=0.01,
                  fairness_def='FP',
                  predictor=linear_model.LinearRegression()):
+        """
+        :param C: Maximum L1 Norm for the Dual Variables (hyperparameter)
+        :param printflag: Print Output Flag
+        :param heatmapflag: Save Heatmaps every heatmap_iter Flag
+        :param heatmap_iter: Save Heatmaps every heatmap_iter
+        :param heatmap_path: Save Heatmaps path
+        :param max_iters: Time Horizon for the fictitious play dynamic.
+        :param gamma: Fairness Approximation Paramater
+        :param fairness_def: Fairness notion, FP, FN, SP.
+        :param predictor: Hypothesis class for the Learner. Supports LR, SVM, KR, Trees.
+        """
 
-        super(Model, self).__init__()
+        super(GerryFair, self).__init__()
         self.C = C
         self.printflag = printflag
         self.heatmapflag = heatmapflag
@@ -45,9 +66,12 @@ class Model(Transformer):
 
     def fit(self, dataset, early_termination=True, return_values=False):
         """
-        Fictitious Play Algorithm
-        Input: dataset cleaned into X, X_prime, y
-        Output: for each iteration the error and fairness violation - heatmap can also be produced. classifiers stored in class state.
+        Run Fictitious play to compute the approximately fair classifier.
+
+        :param dataset:
+        :param early_termination: Terminate Early if Auditor can't find fairness violation of more than gamma.
+        :param return_values: flag to return errors and fairness violations lists.
+        :return: errors, fairness violations
         """
 
         # defining variables and data structures for algorithm
@@ -98,6 +122,13 @@ class Model(Transformer):
             return errors, fairness_violations
 
     def predict(self, dataset, threshold=.5):
+        """
+        Function to return dataset object where labels are the predictions returned by the fitted model.
+
+        :param dataset:
+        :param threshold: The positive prediction cutoff for the soft-classifier.
+        :return: modified dataset object
+        """
 
         # Generates predictions. We do not yet advise using this in sensitive real-world settings.
         dataset_new = dataset.copy(deep=True)
@@ -114,20 +145,18 @@ class Model(Transformer):
         return dataset_new
 
     def fit_transform(self, dataset):
-        """Train a model on the input and transform the dataset accordingly.
-
-        Equivalent to calling `fit(dataset)` followed by `transform(dataset)`.
-
-        Args:
-            dataset (Dataset): Input dataset.
-
-        Returns:
-            Dataset: Output dataset. `metadata` should reflect the details of
-            this transformation.
+        """
+        Not implemented
         """
         raise NotImplementedError("'transform' is not supported for this class. ")
 
     def print_outputs(self, iteration, error, group):
+        """
+        :param iteration: current iter
+        :param error: most recent error
+        :param group: most recent group found by the auditor
+        :return: n/a
+        """
         print('iteration: {}'.format(int(iteration)))
         if iteration == 1:
             print(
@@ -144,7 +173,17 @@ class Model(Transformer):
                     group.group_size))
 
     def save_heatmap(self, iteration, dataset, predictions, vmin, vmax, force_heatmap=False):
-        '''Helper method: save heatmap frame'''
+        """
+        Helper Function to save the heatmap
+
+        :param iteration:
+        :param dataset:
+        :param predictions:
+        :param vmin:
+        :param vmax:
+        :param force_heatmap:
+        :return:
+        """
 
         X, X_prime, y = clean.extract_df_from_ds(dataset)
         # save heatmap every heatmap_iter iterations
@@ -160,10 +199,15 @@ class Model(Transformer):
         return vmin, vmax
 
     def pareto(self, dataset, gamma_list):
-        '''Assumes Model has FP specified for metric.
-        Trains for each value of gamma, returns error, FP (via training), and FN (via auditing) values.'''
+        """
+        Assumes GerryFair has FP specified for metric. Trains for each value of gamma,
+        returns error, FP (via training), and FN (via auditing) values.
 
-        X, X_prime, y = clean.extract_df_from_ds(dataset)
+        :param dataset:
+        :param gamma_list:
+        :return:
+        """
+
         C = self.C
         max_iters = self.max_iters
 
@@ -180,7 +224,7 @@ class Model(Transformer):
         for g in gamma_list:
             self.gamma = g
             errors, fairness_violations = self.fit(dataset, early_termination=True, return_values=True)
-            predictions = self.predict(X)
+            predictions = (self.predict(dataset)).labels
             _, fn_violation = auditor.audit(predictions)
             all_errors.append(errors[-1])
             all_fp_violations.append(fairness_violations[-1])
@@ -196,7 +240,19 @@ class Model(Transformer):
                     max_iters=None,
                     gamma=None,
                     fairness_def=None):
-        ''' A method to switch the options before training. '''
+        """
+        A method to switch the options before training.
+
+        :param C:
+        :param printflag:
+        :param heatmapflag:
+        :param heatmap_iter:
+        :param heatmap_path:
+        :param max_iters:
+        :param gamma:
+        :param fairness_def:
+        :return:
+        """
 
         if C:
             self.C = C

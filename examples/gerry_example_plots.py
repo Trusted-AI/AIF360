@@ -1,4 +1,4 @@
-from aif360.algorithms.inprocessing.gerryfair_classifier import Model
+from aif360.algorithms.inprocessing.gerryfair_classifier import GerryFair
 from aif360.algorithms.preprocessing.optim_preproc_helpers.data_preproc_functions import load_preproc_data_adult
 from aif360.algorithms.inprocessing import gerryfair
 from sklearn import svm
@@ -23,7 +23,7 @@ def single_trial(dataset, predictor='kernel', C=15, printflag=True, gamma=0.1, m
         model = svm.LinearSVR()
     else:
         model = linear_model.LinearRegression()
-    fair_clf = Model(C=C, printflag=printflag, gamma=gamma, predictor=model, max_iters=max_iter)
+    fair_clf = GerryFair(C=C, printflag=printflag, gamma=gamma, predictor=model, max_iters=max_iter)
     fair_clf.fit(dataset)
 
 
@@ -44,7 +44,7 @@ def multiple_comparision(dataset, gamma_list=tuple([0.01]), max_iter_list=tuple(
             print('Curr Predictor: ')
             print(curr_predictor)
             predictor = predictor_dict[curr_predictor]
-            fair_clf = Model(C=C, printflag=printflag, gamma=1, predictor=predictor, max_iters=max_iter)
+            fair_clf = GerryFair(C=C, printflag=printflag, gamma=1, predictor=predictor, max_iters=max_iter)
             print(fair_clf.predictor)
             all_errors, all_fp = fair_clf.pareto(dataset, gamma_list)
             results_dict[curr_predictor] = {'Errors' : all_errors, 'FP_disp': all_fp}
@@ -60,10 +60,10 @@ def multiple_classifiers_pareto(dataset, gamma_list=[0.002, 0.005, 0.01, 0.02, 0
     svm_predictor = svm.LinearSVR()
     tree_predictor = tree.DecisionTreeRegressor(max_depth=3)
     kernel_predictor = KernelRidge(alpha=1.0, gamma=1.0, kernel='rbf')
-    predictor_dict = {'Linear': {'predictor': ln_predictor, 'iters': 100},
+    predictor_dict = {'Linear': {'predictor': ln_predictor, 'iters': 10},
                       'SVR': {'predictor': svm_predictor, 'iters': 10},
-                      'DT': {'predictor': tree_predictor, 'iters': 100},
-                      'DT': {'predictor': kernel_predictor, 'iters': 100}}
+                      'DT': {'predictor': tree_predictor, 'iters': 10},
+                      'DT': {'predictor': kernel_predictor, 'iters': 10}}
 
     results_dict = {}
 
@@ -71,7 +71,7 @@ def multiple_classifiers_pareto(dataset, gamma_list=[0.002, 0.005, 0.01, 0.02, 0
         print('Curr Predictor: {}'.format(pred))
         predictor = predictor_dict[pred]['predictor']
         max_iters = predictor_dict[pred]['iters']
-        fair_clf = Model(C=100, printflag=True, gamma=1, predictor=predictor, max_iters=max_iters)
+        fair_clf = GerryFair(C=100, printflag=True, gamma=1, predictor=predictor, max_iters=max_iters)
         fair_clf.set_options(max_iters=max_iters)
         errors, fp_violations, fn_violations = fair_clf.pareto(dataset, gamma_list)
         results_dict[pred] = {'errors': errors, 'fp_violations': fp_violations, 'fn_violations': fn_violations}
@@ -90,8 +90,8 @@ def fp_vs_fn(dataset):
     C = 10
     printflag = True
     gamma = .01
-    max_iters = 5
-    fair_model = gerryfair.model.Model(C=C, printflag=printflag, gamma=gamma, fairness_def='FP', max_iters=max_iters)
+    max_iters = 10
+    fair_model = gerryfair.model.GerryFair(C=C, printflag=printflag, gamma=gamma, fairness_def='FP', max_iters=max_iters)
     gamma_list = [0.001, 0.002, 0.003, 0.004, 0.005, 0.0075, 0.01, 0.02, 0.03, 0.05]
     fp_auditor = gerryfair.model.Auditor(dataset, 'FP')
     fn_auditor = gerryfair.model.Auditor(dataset, 'FP')
@@ -117,12 +117,8 @@ def fp_vs_fn(dataset):
     plt.show()
 
 
-
-
-
-
 if __name__ == '__main__':
 
-    dataset = load_preproc_data_adult()
-    multiple_classifiers_pareto(dataset)
-    fp_vs_fn(dataset)
+    data_set = load_preproc_data_adult()
+    multiple_classifiers_pareto(data_set)
+    fp_vs_fn(data_set)
