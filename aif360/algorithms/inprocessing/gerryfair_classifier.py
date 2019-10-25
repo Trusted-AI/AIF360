@@ -14,8 +14,8 @@ except:
     print("Matplotlib Error, comment out matplotlib.use('TkAgg')")
 
 
-class GerryFair(Transformer):
-    """GerryFair is an algorithm for learning classifiers that are fair with respect to rich subgroups.
+class Model(Transformer):
+    """Model is an algorithm for learning classifiers that are fair with respect to rich subgroups.
        Rich subgroups are defined by [linear] functions over the sensitive attributes, and fairness notions are statistical: false
        positive, false negative, and statistical parity rates. This implementation uses a max of two regressions
        as a cost-sensitive classification oracle, and supports linear regression, support vector machines, decision trees,
@@ -48,7 +48,7 @@ class GerryFair(Transformer):
         :param predictor: Hypothesis class for the Learner. Supports LR, SVM, KR, Trees.
         """
 
-        super(GerryFair, self).__init__()
+        super(Model, self).__init__()
         self.C = C
         self.printflag = printflag
         self.heatmapflag = heatmapflag
@@ -199,7 +199,7 @@ class GerryFair(Transformer):
 
     def pareto(self, dataset, gamma_list):
         """
-        Assumes GerryFair has FP specified for metric. Trains for each value of gamma,
+        Assumes Model has FP specified for metric. Trains for each value of gamma,
         returns error, FP (via training), and FN (via auditing) values.
 
         :param dataset:

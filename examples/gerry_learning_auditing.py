@@ -15,7 +15,7 @@ gamma = .01
 max_iters = 10
 fair_def = 'FP'
 
-fair_model = GerryFair(C=C, printflag=printflag, gamma=gamma, fairness_def=fair_def)
+fair_model = Model(C=C, printflag=printflag, gamma=gamma, fairness_def=fair_def)
 fair_model.set_options(max_iters=max_iters)
 
 

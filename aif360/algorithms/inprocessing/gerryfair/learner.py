@@ -1,7 +1,8 @@
 import numpy as np
 import copy
-from sklearn import linear_model
 from aif360.algorithms.inprocessing.gerryfair.reg_oracle_class import RegOracle
+
+
 class Learner:
     def __init__(self, X, y, predictor):
         self.X = X
@@ -31,4 +32,4 @@ class Learner:
         ds = np.add(ds, new_preds)
         error = np.mean([np.abs(ds[k] - self.y[k]) for k in range(len(self.y))])
         ds = tuple(ds)
-        return (error, ds)
+        return error, ds
