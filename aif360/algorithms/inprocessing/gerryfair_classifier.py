@@ -14,8 +14,6 @@ except:
     print("Matplotlib Error, comment out matplotlib.use('TkAgg')")
 
 
-
-
 class GerryFair(Transformer):
     """GerryFair is an algorithm for learning classifiers that are fair with respect to rich subgroups.
        Rich subgroups are defined by [linear] functions over the sensitive attributes, and fairness notions are statistical: false
