@@ -88,7 +88,7 @@ def fetch_adult(subset='all', data_home=None, binary_race=True, usecols=[],
                                              ordered=True).fillna('Non-white')
     df.sex = df.sex.cat.as_ordered()  # 'Female' < 'Male'
 
-    return standarize_dataset(df, protected_attributes=['race', 'sex'],
+    return standarize_dataset(df, prot_attr=['race', 'sex'],
                               target='annual-income', sample_weight='fnlwgt',
                               usecols=usecols, dropcols=dropcols,
                               numeric_only=numeric_only, dropna=dropna)
@@ -161,10 +161,9 @@ def fetch_german(data_home=None, binary_age=True, usecols=[], dropcols=[],
     df = df.join(personal_status.astype('category'))
     df.sex = df.sex.cat.as_ordered()  # 'female' < 'male'
 
-    return standarize_dataset(df, protected_attributes=['sex', age],
-                              target='credit-risk', usecols=usecols,
-                              dropcols=dropcols, numeric_only=numeric_only,
-                              dropna=dropna)
+    return standarize_dataset(df, prot_attr=['sex', age], target='credit-risk',
+                              usecols=usecols, dropcols=dropcols,
+                              numeric_only=numeric_only, dropna=dropna)
 
 def fetch_bank(data_home=None, percent10=False, usecols=[], dropcols='duration',
                numeric_only=False, dropna=False):
@@ -215,6 +214,6 @@ def fetch_bank(data_home=None, percent10=False, usecols=[], dropcols='duration',
     # replace 'unknown' marker with NaN
     df.apply(lambda s: s.cat.remove_categories('unknown', inplace=True)
              if hasattr(s, 'cat') and 'unknown' in s.cat.categories else s)
-    return standarize_dataset(df, protected_attributes='age', target='deposit',
+    return standarize_dataset(df, prot_attr='age', target='deposit',
                               usecols=usecols, dropcols=dropcols,
                               numeric_only=numeric_only, dropna=dropna)
