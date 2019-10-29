@@ -5,12 +5,12 @@ import pandas as pd
 import pytest
 
 from aif360.sklearn.datasets import fetch_adult, fetch_bank, fetch_german
-from aif360.sklearn.datasets import standarize_dataset, make_onehot_transformer
+from aif360.sklearn.datasets import standarize_dataset
 
 
 df = pd.DataFrame([[1, 2, 3, 'a'], [5, 6, 7, 'b'], [np.NaN, 10, 11, 'c']],
                   columns=['X1', 'X2', 'y', 'Z'])
-basic = partial(standarize_dataset, df=df, protected_attributes='Z', target='y',
+basic = partial(standarize_dataset, df=df, prot_attr='Z', target='y',
                 dropna=False)
 
 def test_standardize_dataset_basic():
@@ -43,16 +43,16 @@ def test_usecols_dropcols_basic():
         basic(usecols=['X1', 'X2'], dropcols='X2')
 
 def test_dropna_basic():
-    basic_dropna = partial(standarize_dataset, df=df, protected_attributes='Z',
+    basic_dropna = partial(standarize_dataset, df=df, prot_attr='Z',
                            target='y', dropna=True)
     assert basic_dropna().X.shape == (2, 3)
     assert basic(dropcols='X1').X.shape == (3, 2)
 
 def test_numeric_only_basic():
-    assert basic(numeric_only=True).X.shape == (3, 2)
-    assert (basic(numeric_only=True).X.dtypes == 'float').all()
-    assert basic(dropcols='Z', numeric_only=True).X.shape == (3, 2)
-    assert (basic(dropcols='X1', numeric_only=True).X.dtypes == 'int').all()
+    assert basic(prot_attr='X2', numeric_only=True).X.shape == (3, 2)
+    with pytest.raises(KeyError):
+        assert (basic(prot_attr='X2', dropcols='Z', numeric_only=True).X.shape
+                == (3, 2))
 
 def test_fetch_adult():
     adult = fetch_adult()
@@ -76,4 +76,4 @@ def test_fetch_bank():
 
 def test_onehot_transformer():
     X, y = fetch_german()
-    assert len(make_onehot_transformer().fit_transform(X).columns) == 63
+    assert len(pd.get_dummies(X).columns) == 63
