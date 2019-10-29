@@ -1,17 +1,20 @@
+import warnings
+
 import numpy as np
 from sklearn.metrics import make_scorer, recall_score
 from sklearn.neighbors import NearestNeighbors
 from sklearn.utils import check_X_y
+from sklearn.exceptions import UndefinedMetricWarning
 
 from aif360.sklearn.utils import check_groups
 
 
 __all__ = [
-    'consistency_score', 'specificity_score', 'selection_rate',
+    'base_rate', 'consistency_score', 'specificity_score', 'selection_rate',
     'disparate_impact_ratio', 'statistical_parity_difference',
     'equal_opportunity_difference', 'average_odds_difference',
-    'average_odds_error', 'generalized_entropy_error',
-    'between_group_generalized_entropy_error'
+    'average_odds_error', 'generalized_entropy_error', 'generalized_fnr',
+    'between_group_generalized_entropy_error', 'generalized_fpr'
 ]
 
 # ============================= META-METRICS ===================================
@@ -88,9 +91,18 @@ def ratio(func, y, *args, prot_attr=None, priv_group=1, sample_weight=None,
     unpriv = map(lambda a: a[~idx], (y,) + args)
     priv = map(lambda a: a[idx], (y,) + args)
     if sample_weight is not None:
-        return (func(*unpriv, sample_weight=sample_weight[~idx], **kwargs)
-              / func(*priv, sample_weight=sample_weight[idx], **kwargs))
-    return func(*unpriv, **kwargs) / func(*priv, **kwargs)
+        numerator = func(*unpriv, sample_weight=sample_weight[~idx], **kwargs)
+        denominator = func(*priv, sample_weight=sample_weight[idx], **kwargs)
+    else:
+        numerator = func(*unpriv, **kwargs)
+        denominator = func(*priv, **kwargs)
+
+    if denominator == 0:
+        warnings.warn("The ratio is ill-defined and being set to 0.0 because "
+                      "the {} for privileged samples is 0.".format(func.__name__),
+                      UndefinedMetricWarning)
+
+    return numerator / denominator
 
 
 # =========================== SCORER FACTORIES =================================
@@ -106,6 +118,7 @@ def make_ratio_scorer(func):
 
 
 # ================================ HELPERS =====================================
+# TODO: make this more general
 def specificity_score(y_true, y_pred, neg_label=0, sample_weight=None):
     """Compute the specificity or true negative rate.
 
@@ -118,11 +131,31 @@ def specificity_score(y_true, y_pred, neg_label=0, sample_weight=None):
     return recall_score(y_true, y_pred, pos_label=neg_label,
                         sample_weight=sample_weight)
 
-def base_rate(y, y_pred=None, pos_label=1, sample_weight=None):
-    return np.average(y == pos_label, weights=sample_weight)
+def base_rate(y_true, y_pred=None, pos_label=1, sample_weight=None):
+    return np.average(y_true == pos_label, weights=sample_weight)
 
 def selection_rate(y_true, y_pred, pos_label=1, sample_weight=None):
     return base_rate(y_pred, pos_label=pos_label, sample_weight=sample_weight)
+
+def generalized_fpr(y_true, y_pred, pos_label=1, sample_weight=None):
+    idx = (y_true != pos_label)
+    if not np.any(idx):
+        warnings.warn("generalized_fpr is ill-defined because there are no true"
+                      " negatives in y_true.", UndefinedMetricWarning)
+        return 0.
+    if sample_weight is None:
+        return y_pred[idx].mean()
+    return np.average(y_pred[idx], weights=sample_weight[idx])
+
+def generalized_fnr(y_true, y_pred, pos_label=1, sample_weight=None):
+    idx = (y_true == pos_label)
+    if not np.any(idx):
+        warnings.warn("generalized_fnr is ill-defined because there are no true"
+                      " positives in y_true.", UndefinedMetricWarning)
+        return 0.
+    if sample_weight is None:
+        return 1 - y_pred[idx].mean()
+    return 1 - np.average(y_pred[idx], weights=sample_weight[idx])
 
 
 # ============================ GROUP FAIRNESS ==================================
@@ -144,25 +177,25 @@ def equal_opportunity_difference(y_true, y_pred, prot_attr=None, priv_group=1,
                       priv_group=priv_group, pos_label=pos_label,
                       sample_weight=sample_weight)
 
-def average_odds_difference(y_true, y_pred, prot_attr=None, priv_group=1, pos_label=1,
-                            neg_label=0, sample_weight=None):
-    tnr_diff = difference(specificity_score, y_true, y_pred, prot_attr=prot_attr,
-                          priv_group=priv_group, neg_label=neg_label,
-                          sample_weight=sample_weight)
+def average_odds_difference(y_true, y_pred, prot_attr=None, priv_group=1,
+                            pos_label=1, neg_label=0, sample_weight=None):
+    fpr_diff = -difference(specificity_score, y_true, y_pred,
+                           prot_attr=prot_attr, priv_group=priv_group,
+                           neg_label=neg_label, sample_weight=sample_weight)
     tpr_diff = difference(recall_score, y_true, y_pred, prot_attr=prot_attr,
                           priv_group=priv_group, pos_label=pos_label,
                           sample_weight=sample_weight)
-    return (tpr_diff - tnr_diff) / 2
+    return (tpr_diff + fpr_diff) / 2
 
-def average_odds_error(y_true, y_pred, prot_attr=None, priv_group=1, pos_label=1,
-                       neg_label=0, sample_weight=None):
-    tnr_diff = difference(specificity_score, y_true, y_pred, prot_attr=prot_attr,
-                          priv_group=priv_group, neg_label=neg_label,
-                          sample_weight=sample_weight)
+def average_odds_error(y_true, y_pred, prot_attr=None, priv_group=1,
+                       pos_label=1, neg_label=0, sample_weight=None):
+    fpr_diff = -difference(specificity_score, y_true, y_pred,
+                           prot_attr=prot_attr, priv_group=priv_group,
+                           neg_label=neg_label, sample_weight=sample_weight)
     tpr_diff = difference(recall_score, y_true, y_pred, prot_attr=prot_attr,
                           priv_group=priv_group, pos_label=pos_label,
                           sample_weight=sample_weight)
-    return (abs(tnr_diff) + abs(tpr_diff)) / 2
+    return (abs(tpr_diff) + abs(fpr_diff)) / 2
 
 
 # ========================== INDIVIDUAL FAIRNESS ===============================
@@ -223,8 +256,8 @@ def sensitivity_score(y_true, y_pred, pos_label=1, sample_weight=None):
 #     return 1 - recall_score(y_true, y_pred, pos_label=pos_label,
 #                             sample_weight=sample_weight)
 
-# def false_positive_rate_error(y_true, y_pred, pos_label=1, sample_weight=None):
-#     return 1 - specificity_score(y_true, y_pred, pos_label=pos_label,
+# def false_positive_rate_error(y_true, y_pred, neg_label=0, sample_weight=None):
+#     return 1 - specificity_score(y_true, y_pred, neg_label=neg_label,
 #                                  sample_weight=sample_weight)
 
 def mean_difference(*y, prot_attr=None, priv_group=1, pos_label=1, sample_weight=None):
