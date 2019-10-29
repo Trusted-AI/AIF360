@@ -35,8 +35,8 @@ def standarize_dataset(df, prot_attr, target, sample_weight=None, usecols=[],
             * **sample_weight** (`pandas.Series`, optional) -- Sample weights.
 
     Note:
-        The order of execution for the dropping parameters is: dropcols ->
-        usecols -> numeric_only -> dropna.
+        The order of execution for the dropping parameters is: numeric_only ->
+        dropcols -> usecols -> dropna.
 
     Examples:
         >>> import pandas as pd
@@ -53,6 +53,17 @@ def standarize_dataset(df, prot_attr, target, sample_weight=None, usecols=[],
         >>> X, y = standarize_dataset(df, prot_attr=0, target=5)
         >>> X_tr, X_te, y_tr, y_te = train_test_split(X, y)
     """
+    # TODO: warn user if label in prot_attr, target, or dropcols is already dropped
+    # TODO: error message if label in usecols is already dropped
+    if numeric_only:
+        for col in df.select_dtypes('category'):
+            if df[col].cat.ordered:
+                df[col] = df[col].factorize(sort=True)[0]
+        df = df.select_dtypes(['number', 'bool'])
+
+    df = df.set_index(prot_attr, drop=False, append=True)
+    y = df.pop(target)
+
     # Column-wise drops
     df = df.drop(columns=dropcols)
     if usecols:
@@ -61,18 +72,11 @@ def standarize_dataset(df, prot_attr, target, sample_weight=None, usecols=[],
             usecols = [usecols]
         df = df[usecols]
 
-    if numeric_only:
-        for col in df.select_dtypes('category'):
-            if df[col].cat.ordered:
-                df[col] = df[col].factorize(sort=True)[0]
-        df = df.select_dtypes(['number', 'bool'])
-
     # Index-wise drops
     if dropna:
-        df.dropna()
-
-    df = df.set_index(prot_attr, drop=False, append=True)
-    y = df.pop(target)
+        notna = df.notna().all(axis=1) & y.notna()
+        df = df.loc[notna]
+        y = y.loc[notna]
 
     if sample_weight is not None:
         return namedtuple('WeightedDataset', ['X', 'y', 'sample_weight'])(
