@@ -4,7 +4,7 @@ from sklearn.utils import check_consistent_length
 from sklearn.utils.validation import column_or_1d
 
 
-def check_inputs(X, y, sample_weight):
+def check_inputs(X, y, sample_weight=None):
     if not hasattr(X, 'index'):
         raise TypeError("Expected `DataFrame`, got {} instead.".format(
             type(X).__name__))
