@@ -24,12 +24,12 @@ def test_reweighing_sex():
                               privileged_groups=[{'sex': 1}])
     adult_fair = orig_rew.fit_transform(adult)
     rew = Reweighing('sex')
-    rew.fit_transform(X, y, sample_weight=sample_weight)
+    _, new_sample_weight = rew.fit_transform(X, y, sample_weight=sample_weight)
 
     # assert np.allclose([[orig_rew.w_up_unfav, orig_rew.w_up_fav],
     #                     [orig_rew.w_p_unfav, orig_rew.w_p_fav]],
     #                    rew.reweigh_factors_)
-    assert np.allclose(adult_fair.instance_weights, rew.sample_weight_)
+    assert np.allclose(adult_fair.instance_weights, new_sample_weight)
 
 def test_reweighing_intersection():
     rew = Reweighing()

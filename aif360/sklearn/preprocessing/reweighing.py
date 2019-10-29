@@ -16,8 +16,6 @@ class Reweighing(BaseEstimator):
             transformer.
         classes_ (array, shape (n_classes,)): A list of class labels known to
             the transformer.
-        sample_weight_ (array, shape (n_samples,)): New sample weights after
-            transformation. See examples for details.
         reweigh_factors_ (array, shape (n_groups, n_labels)): Reweighing factors
             for each combination of group and class labels used to debias
             samples. Existing sample weights are multiplied by the corresponding
@@ -61,12 +59,14 @@ class Reweighing(BaseEstimator):
             sample_weight (array-like, optional): Sample weights.
 
         Returns:
-            X: Unchanged samples. Only the sample weights are different after
-            transformation (see the `sample_weight_` attribute).
+            tuple:
+
+                **X** -- Unchanged samples.
+                **sample_weight** -- Transformed sample weights.
         """
         X, y, sample_weight = check_inputs(X, y, sample_weight)
 
-        self.sample_weight_ = np.empty_like(sample_weight)
+        sample_weight_t = np.empty_like(sample_weight)
         groups, self.prot_attr_ = check_groups(X, self.prot_attr)
         # TODO: maintain categorical ordering
         self.groups_ = np.unique(groups)
@@ -82,16 +82,13 @@ class Reweighing(BaseEstimator):
                 g_and_c = (groups == g) & (y == c)
                 if np.any(g_and_c):
                     W_gc = N_(groups == g) * N_(y == c) / (N * N_(g_and_c))
-                    self.sample_weight_[g_and_c] = W_gc * sample_weight[g_and_c]
+                    sample_weight_t[g_and_c] = W_gc * sample_weight[g_and_c]
                     self.reweigh_factors_[i, j] = W_gc
-        return X
+        return X, sample_weight_t
 
 
 class ReweighingMeta(BaseEstimator, MetaEstimatorMixin):
     def __init__(self, estimator, reweigher=Reweighing()):
-        if not has_fit_parameter(estimator, 'sample_weight'):
-            raise TypeError("`estimator` (type: {}) does not have fit parameter"
-                            " `sample_weight`.".format(type(estimator)))
         self.reweigher = reweigher
         self.estimator = estimator
 
@@ -100,11 +97,16 @@ class ReweighingMeta(BaseEstimator, MetaEstimatorMixin):
         return self.estimator._estimator_type
 
     def fit(self, X, y, sample_weight=None):
+        if not has_fit_parameter(self.estimator, 'sample_weight'):
+            raise TypeError("`estimator` (type: {}) does not have fit parameter"
+                            " `sample_weight`.".format(type(self.estimator)))
+
         self.reweigher_ = clone(self.reweigher)
         self.estimator_ = clone(self.estimator)
 
-        self.reweigher_.fit_transform(X, y, sample_weight=sample_weight)
-        self.estimator_.fit(X, y, sample_weight=self.reweigher_.sample_weight_)
+        X, sample_weight = self.reweigher_.fit_transform(X, y,
+                sample_weight=sample_weight)
+        self.estimator_.fit(X, y, sample_weight=sample_weight)
         return self
 
     @if_delegate_has_method('estimator_')
