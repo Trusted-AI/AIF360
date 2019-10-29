@@ -208,4 +208,4 @@ def weighted_cost(fp_rate, fn_rate, cm, privileged):
             * (1 - cm.base_rate(privileged=privileged))) +
            (fn_rate / norm_const
             * cm.generalized_false_negative_rate(privileged=privileged)
-            * (1 - cm.base_rate(privileged=privileged))))
+            * cm.base_rate(privileged=privileged)))
