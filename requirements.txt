@@ -9,7 +9,7 @@ numpy>=1.16
 matplotlib
 pandas>=0.24
 pytest>=3.5.0
-scipy
+scipy>=1.2.0
 scikit-learn
 cvxpy>=1.0
 scs==2.1.0
