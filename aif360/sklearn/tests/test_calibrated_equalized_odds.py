@@ -1,5 +1,6 @@
 import numpy as np
 from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import train_test_split
 
 from aif360.datasets import AdultDataset
 from aif360.sklearn.datasets import fetch_adult
@@ -25,6 +26,15 @@ def test_calib_eq_odds_sex():
 
     assert np.isclose(orig_cal_eq_odds.priv_mix_rate, cal_eq_odds.mix_rates_[1])
     assert np.isclose(orig_cal_eq_odds.unpriv_mix_rate, cal_eq_odds.mix_rates_[0])
+
+def test_split():
+    adult_est, adult_post = adult.split([0.75], shuffle=False)
+    X_est, X_post, y_est, y_post = train_test_split(X, y, shuffle=False)
+
+    assert np.all(adult_est.features == X_est)
+    assert np.all(adult_est.labels.ravel() == y_est)
+    assert np.all(adult_post.features == X_post)
+    assert np.all(adult_post.labels.ravel() == y_post)
 
 def test_postprocessingmeta():
     logreg = LogisticRegression(solver='lbfgs', max_iter=500)

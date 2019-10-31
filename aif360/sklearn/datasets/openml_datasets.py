@@ -209,7 +209,7 @@ def fetch_bank(data_home=None, percent10=False, usecols=[], dropcols='duration',
                   'housing', 'loan', 'contact', 'day', 'month', 'duration',
                   'campaign', 'pdays', 'previous', 'poutcome', 'deposit']
     # remap target
-    df.deposit = df.deposit.map({'1': False, '2': True})
+    df.deposit = df.deposit.map({'1': False, '2': True}).astype('bool')
     # replace 'unknown' marker with NaN
     df.apply(lambda s: s.cat.remove_categories('unknown', inplace=True)
              if hasattr(s, 'cat') and 'unknown' in s.cat.categories else s)
