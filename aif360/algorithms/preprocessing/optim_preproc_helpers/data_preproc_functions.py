@@ -2,10 +2,12 @@ from aif360.datasets import AdultDataset, GermanDataset, CompasDataset
 import pandas as pd
 import numpy as np
 
-def load_preproc_data_adult(protected_attributes=None):
+
+def load_preproc_data_adult(protected_attributes=None, sub_samp=False):
     def custom_preprocessing(df):
         """The custom pre-processing function is adapted from
             https://github.com/fair-preprocessing/nips2017/blob/master/Adult/code/Generate_Adult_Data.ipynb
+            If sub_samp != False, then return smaller version of dataset truncated to tiny_test data points.
         """
 
         # Group age by decade
@@ -46,6 +48,9 @@ def load_preproc_data_adult(protected_attributes=None):
         # Recode sex and race
         df['sex'] = df['sex'].replace({'Female': 0.0, 'Male': 1.0})
         df['race'] = df['race'].apply(lambda x: group_race(x))
+
+        if sub_samp:
+            df = df.sample(sub_samp)
 
         return df
 
