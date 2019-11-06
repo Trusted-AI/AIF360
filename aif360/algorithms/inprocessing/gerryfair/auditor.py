@@ -160,3 +160,5 @@ class Auditor(Metric):
         group = self.get_group(predictions, metric_baseline)
 
         return group.func.predict(self.X_prime), group.weighted_disparity
+
+
