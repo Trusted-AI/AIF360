@@ -9,4 +9,7 @@ The will contain designs, specifications, shared code and processes that meet th
 
 Samples:
 
-* [Kubeflow](kubeflow/)
+[Kubeflow](kubeflow/)
+
+<img src="https://www.kubeflow.org/images/logo.svg" width="100">
+
