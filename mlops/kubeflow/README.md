@@ -1,4 +1,4 @@
-# Kubeflow Pipeline components for AIF360
+# Kubeflow Pipeline Components for AIF360
 
 Kubeflow pipeline components are implementations of Kubeflow pipeline tasks. Each task takes
 one or more [artifacts](https://www.kubeflow.org/docs/pipelines/overview/concepts/output-artifact/)
