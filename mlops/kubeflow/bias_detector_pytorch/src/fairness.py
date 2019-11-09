@@ -1,16 +1,14 @@
-# Copyright 2019 IBM Corporation 
-# 
-# Licensed under the Apache License, Version 2.0 (the "License"); 
-# you may not use this file except in compliance with the License. 
-# You may obtain a copy of the License at 
-# 
-#     http://www.apache.org/licenses/LICENSE-2.0 
-# 
-# Unless required by applicable law or agreed to in writing, software 
-# distributed under the License is distributed on an "AS IS" BASIS, 
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
-# See the License for the specific language governing permissions and 
-# limitations under the License. 
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 import os
 from aif360.datasets import BinaryLabelDataset
 from aif360.metrics import ClassificationMetric
@@ -27,11 +25,6 @@ import torch
 import torch.utils.data
 from torch.autograd import Variable
 
-from flask import Flask, request, abort
-from flask_cors import CORS
-
-app = Flask(__name__)
-CORS(app)
 
 def dataset_wrapper(outcome, protected, unprivileged_groups, privileged_groups, favorable_label, unfavorable_label):
     """ A wrapper function to create aif360 dataset from outcome and protected in numpy array format.
@@ -47,15 +40,6 @@ def dataset_wrapper(outcome, protected, unprivileged_groups, privileged_groups, 
                                  protected_attribute_names=['race'],
                                  unprivileged_protected_attributes=unprivileged_groups)
     return dataset
-
-def get_s3_item(client, bucket, s3_path, name):
-    try:
-        client.Bucket(bucket).download_file(s3_path, name)
-    except botocore.exceptions.ClientError as e:
-        if e.response['Error']['Code'] == "404":
-            print("The object does not exist.")
-        else:
-            raise
 
 # Compute the accuaracy and predicted label using the given test dataset
 def evaluate(model, X_test, y_test):
@@ -95,7 +79,8 @@ def fairness_check(object_storage_url, object_storage_username, object_storage_p
     url = re.compile(r"https?://")
     cos = Minio(url.sub('', object_storage_url),
                 access_key=object_storage_username,
-                secret_key=object_storage_password)
+                secret_key=object_storage_password,
+                secure=False)  # Local Minio server won't have HTTPS
 
     dataset_filenamex = "X_test.npy"
     dataset_filenamey = "y_test.npy"
@@ -170,29 +155,3 @@ def fairness_check(object_storage_url, object_storage_username, object_storage_p
     }
     print("metrics: ", metrics)
     return metrics
-
-    # with open(metric_path, "w") as report:
-    #     report.write(json.dumps(metrics))
-
-
-@app.route('/', methods=['POST'])
-def fairness_api():
-    try:
-        s3_url = request.json['aws_endpoint_url']
-        result_bucket_name = request.json['training_results_bucket']
-        s3_username = request.json['aws_access_key_id']
-        s3_password = request.json['aws_secret_access_key']
-        training_id = request.json['model_id']
-        data_bucket_name = request.json['training_data_bucket']
-    except:
-        abort(400)
-    return json.dumps(fairness_check(s3_url, s3_username, s3_password, data_bucket_name, result_bucket_name, training_id))
-
-
-@app.route('/', methods=['OPTIONS'])
-def fairness_api_options():
-    return "200"
-
-
-if __name__ == "__main__":
-    app.run(debug=True,host='0.0.0.0',port=int(os.environ.get('PORT', 8080)))
