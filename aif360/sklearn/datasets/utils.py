@@ -1,6 +1,24 @@
 from collections import namedtuple
+import warnings
 
+import numpy as np
 from pandas.core.dtypes.common import is_list_like
+
+
+class ColumnAlreadyDroppedWarning(UserWarning):
+    """Warning used if a column is attempted to be dropped twice."""
+
+def check_already_dropped(labels, dropped_cols, name, dropped_by='numeric_only',
+                          warn=True):
+    if not is_list_like(labels):
+        labels = [labels]
+    labels = [c for c in labels if isinstance(c, str)]
+    already_dropped = dropped_cols.intersection(labels)
+    if warn and already_dropped.any():
+        warnings.warn("Some column labels from `{}` were already dropped by "
+                "`{}`:\n{}".format(name, dropped_by, already_dropped.tolist()),
+                ColumnAlreadyDroppedWarning, stacklevel=2)
+    return [c for c in labels if c not in already_dropped]
 
 def standarize_dataset(df, prot_attr, target, sample_weight=None, usecols=[],
                        dropcols=[], numeric_only=False, dropna=True):
@@ -36,7 +54,7 @@ def standarize_dataset(df, prot_attr, target, sample_weight=None, usecols=[],
 
     Note:
         The order of execution for the dropping parameters is: numeric_only ->
-        dropcols -> usecols -> dropna.
+        usecols -> dropcols -> dropna.
 
     Examples:
         >>> import pandas as pd
@@ -53,24 +71,35 @@ def standarize_dataset(df, prot_attr, target, sample_weight=None, usecols=[],
         >>> X, y = standarize_dataset(df, prot_attr=0, target=5)
         >>> X_tr, X_te, y_tr, y_te = train_test_split(X, y)
     """
-    # TODO: warn user if label in prot_attr, target, or dropcols is already dropped
-    # TODO: error message if label in usecols is already dropped
+    orig_cols = df.columns
     if numeric_only:
         for col in df.select_dtypes('category'):
             if df[col].cat.ordered:
                 df[col] = df[col].factorize(sort=True)[0]
+                df[col] = df[col].replace(-1, np.nan)
         df = df.select_dtypes(['number', 'bool'])
+    nonnumeric = orig_cols.difference(df.columns)
 
+    prot_attr = check_already_dropped(prot_attr, nonnumeric, 'prot_attr')
+    if len(prot_attr) == 0:
+        raise ValueError("At least one protected attribute must be present.")
     df = df.set_index(prot_attr, drop=False, append=True)
-    y = df.pop(target)
+
+    target = check_already_dropped(target, nonnumeric, 'target')
+    if len(target) == 0:
+        raise ValueError("At least one target must be present.")
+    y = df.pop(target if len(target) > 1 else target[0])  # maybe return Series
 
     # Column-wise drops
-    df = df.drop(columns=dropcols)
+    orig_cols = df.columns
     if usecols:
-        if not is_list_like(usecols):
-            # make sure we don't return a Series instead of a DataFrame
-            usecols = [usecols]
+        usecols = check_already_dropped(usecols, nonnumeric, 'usecols')
         df = df[usecols]
+    unused = orig_cols.difference(df.columns)
+
+    dropcols = check_already_dropped(dropcols, nonnumeric, 'dropcols', warn=False)
+    dropcols = check_already_dropped(dropcols, unused, 'dropcols', 'usecols', False)
+    df = df.drop(columns=dropcols)
 
     # Index-wise drops
     if dropna:
