@@ -151,7 +151,7 @@ def fetch_german(data_home=None, binary_age=True, usecols=[], dropcols=[],
     df['credit-risk'] = df['credit-risk'].cat.as_ordered()  # 'bad' < 'good'
 
     # binarize protected attribute (but not corresponding feature)
-    age = (pd.cut(df.age, [0, 25, 100], right=False, labels=['young', 'aged'])
+    age = (pd.cut(df.age, [0, 25, 100], labels=numeric_only and ['young', 'aged'])
            if binary_age else 'age')
 
     # Note: marital_status directly implies sex. i.e. 'div/dep/mar' => 'female'

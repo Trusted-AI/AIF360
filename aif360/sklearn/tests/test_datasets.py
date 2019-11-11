@@ -6,6 +6,7 @@ import pytest
 
 from aif360.sklearn.datasets import fetch_adult, fetch_bank, fetch_german
 from aif360.sklearn.datasets import standarize_dataset
+from aif360.sklearn.datasets import fetch_compas, ColumnAlreadyDroppedWarning
 
 
 df = pd.DataFrame([[1, 2, 3, 'a'], [5, 6, 7, 'b'], [np.NaN, 10, 11, 'c']],
@@ -39,8 +40,8 @@ def test_usecols_dropcols_basic():
     assert basic(dropcols=['X1', 'Z']).X.columns.tolist() == ['X2']
 
     assert basic(usecols='X1', dropcols=['X2']).X.columns.tolist() == ['X1']
-    with pytest.raises(KeyError):
-        basic(usecols=['X1', 'X2'], dropcols='X2')
+    assert isinstance(basic(usecols='X2', dropcols=['X1', 'X2'])[0],
+                      pd.DataFrame)
 
 def test_dropna_basic():
     basic_dropna = partial(standarize_dataset, df=df, prot_attr='Z',
@@ -50,9 +51,8 @@ def test_dropna_basic():
 
 def test_numeric_only_basic():
     assert basic(prot_attr='X2', numeric_only=True).X.shape == (3, 2)
-    with pytest.raises(KeyError):
-        assert (basic(prot_attr='X2', dropcols='Z', numeric_only=True).X.shape
-                == (3, 2))
+    assert (basic(prot_attr='X2', dropcols='Z', numeric_only=True).X.shape
+            == (3, 2))
 
 def test_fetch_adult():
     adult = fetch_adult()
@@ -73,6 +73,15 @@ def test_fetch_bank():
     assert bank.X.shape == (45211, 15)
     assert fetch_bank(dropcols=[]).X.shape == (45211, 16)
     assert fetch_bank(numeric_only=True).X.shape == (45211, 6)
+
+@pytest.mark.filterwarnings('error', category=ColumnAlreadyDroppedWarning)
+def test_fetch_compas():
+    compas = fetch_compas()
+    assert len(compas) == 2
+    assert compas.X.shape == (6167, 10)
+    assert fetch_compas(binary_race=True).X.shape == (5273, 10)
+    with pytest.raises(ColumnAlreadyDroppedWarning):
+        assert fetch_compas(numeric_only=True).X.shape == (6172, 6)
 
 def test_onehot_transformer():
     X, y = fetch_german()
