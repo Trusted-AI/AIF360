@@ -42,7 +42,7 @@ Get in touch with us on [Slack](https://aif360.slack.com) (invitation
 * Prejudice Remover Regularizer ([Kamishima et al., 2012](https://rd.springer.com/chapter/10.1007/978-3-642-33486-3_3))
 * Calibrated Equalized Odds Postprocessing ([Pleiss et al., 2017](https://papers.nips.cc/paper/7151-on-fairness-and-calibration))
 * Learning Fair Representations ([Zemel et al., 2013](http://proceedings.mlr.press/v28/zemel13.html))
-* Adversarial Debiasing ([Zhang et al., 2018](http://www.aies-conference.com/wp-content/papers/main/AIES_2018_paper_162.pdf))
+* Adversarial Debiasing ([Zhang et al., 2018](https://arxiv.org/abs/1801.07593))
 * Meta-Algorithm for Fair Classification ([Celis et al.. 2018](https://arxiv.org/abs/1806.06055))
 
 ## Supported fairness metrics
