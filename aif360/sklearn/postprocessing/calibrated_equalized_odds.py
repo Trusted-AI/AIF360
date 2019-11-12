@@ -1,6 +1,5 @@
 import numpy as np
 from sklearn.base import BaseEstimator, ClassifierMixin
-from sklearn.preprocessing import LabelEncoder
 from sklearn.utils import check_random_state
 
 from aif360.sklearn.metrics import base_rate, generalized_fnr, generalized_fpr
@@ -56,14 +55,16 @@ class CalibratedEqualizedOdds(BaseEstimator, ClassifierMixin):
                                             self.groups_))
 
         # ensure self.classes_ = [neg_label, pos_label]
-        self.classes_ = np.append(np.delete(self.classes_, pos_label), pos_label)
+        self.classes_ = np.append(np.delete(self.classes_, pos_label),
+                                  pos_label)
 
         def args(grp_idx, triv=False):
             i = (groups == self.groups_[grp_idx])
             pred = (np.full_like(y_pred, self.base_rates_[grp_idx]) if triv else
                     y_pred)
             return dict(y_true=y_true[i], y_pred=pred[i], pos_label=pos_label,
-                        sample_weight=sample_weight[i] if sample_weight is not None else None)
+                        sample_weight=None if sample_weight is None
+                                      else sample_weight[i])
 
         self.base_rates_ = [base_rate(**args(i)) for i in range(2)]
 
