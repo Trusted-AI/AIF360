@@ -1,3 +1,5 @@
+from itertools import product
+
 import numpy as np
 from sklearn.neighbors import NearestNeighbors
 
@@ -139,6 +141,54 @@ class BinaryLabelDatasetMetric(DatasetMetric):
         consistency = 1.0 - consistency/num_samples
 
         return consistency
+
+    def smoothed_empirical_differential_fairness(self):
+        """Compute smoothed EDF from [#foulds18]_.
+
+        References:
+            .. [#foulds18] J. R. Foulds, R. Islam, K. N. Keya, and S. Pan,
+               "An Intersectional Definition of Fairness," arXiv preprint
+               arXiv:1807.08362, 2018.
+        """
+        # Dirichlet smoothing parameters
+        num_classes = 2  # binary label dataset
+        concentration_parameter = 1.0
+        dirichlet_alpha = concentration_parameter / num_classes
+
+        # compute counts for all intersecting groups, e.g. black-women, white-man etc
+        intersect_groups = np.unique(self.dataset.protected_attributes, axis=0)
+        num_intersects = len(intersect_groups)
+        counts_pos = np.zeros(num_intersects)
+        counts_total = np.zeros(num_intersects)
+        for i in range(num_intersects):
+            condition = [dict(zip(self.dataset.protected_attribute_names,
+                                  intersect_groups[i]))]
+            counts_total[i] = utils.compute_num_instances(
+                    self.dataset.protected_attributes,
+                    self.dataset.instance_weights,
+                    self.dataset.protected_attribute_names, condition=condition)
+            counts_pos[i] = utils.compute_num_pos_neg(
+                    self.dataset.protected_attributes, self.dataset.labels,
+                    self.dataset.instance_weights,
+                    self.dataset.protected_attribute_names,
+                    self.dataset.favorable_label, condition=condition)
+
+        # probability of y given S (p(y=1|S))
+        smoothed_base_rate = ((counts_pos + dirichlet_alpha)
+                            / (counts_total + concentration_parameter))
+
+        def pos_ratio(i, j):
+            return abs(np.log(smoothed_base_rate[i])
+                     - np.log(smoothed_base_rate[j]))
+
+        def neg_ratio(i, j):
+            return abs(np.log(1 - smoothed_base_rate[i])
+                     - np.log(1 - smoothed_base_rate[j]))
+
+        # overall DF of the mechanism
+        return max(max(pos_ratio(i, j), neg_ratio(i, j))
+                   for i in range(num_intersects) for j in range(num_intersects)
+                   if i != j)
 
     # ============================== ALIASES ===================================
     def mean_difference(self):
