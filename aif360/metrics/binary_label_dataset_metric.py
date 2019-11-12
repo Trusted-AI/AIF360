@@ -1,5 +1,3 @@
-from itertools import product
-
 import numpy as np
 from sklearn.neighbors import NearestNeighbors
 
@@ -144,6 +142,25 @@ class BinaryLabelDatasetMetric(DatasetMetric):
 
     def smoothed_empirical_differential_fairness(self):
         """Compute smoothed EDF from [#foulds18]_.
+
+        Examples:
+            To use with non-binary protected attributes, the column must be
+            converted to ordinal:
+            
+            >>> mapping = {'Black': 0, 'White': 1, 'Asian-Pac-Islander': 2,
+            ... 'Amer-Indian-Eskimo': 3, 'Other': 4}
+            >>> def map_race(df):
+            ...     df['race-num'] = df.race.map(mapping)
+            ...     return df
+            ...
+            >>> adult = AdultDataset(protected_attribute_names=['sex',
+            ... 'race-num'], privileged_classes=[['Male'], [1]],
+            ... categorical_features=['workclass', 'education',
+            ... 'marital-status', 'occupation', 'relationship',
+            ... 'native-country', 'race'], custom_preprocessing=map_race)
+            >>> metric = BinaryLabelDatasetMetric(adult)
+            >>> metric.smoothed_empirical_differential_fairness()
+            1.7547611985549287
 
         References:
             .. [#foulds18] J. R. Foulds, R. Islam, K. N. Keya, and S. Pan,

@@ -1,4 +1,4 @@
-import pandas as pd
+import numpy as np
 from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LogisticRegression
 
@@ -28,3 +28,28 @@ def test_epsilon_classifier_binary_groups():
     classifier_metric = BinaryLabelDatasetMetric(adult_pred)
     eps_clf = classifier_metric.smoothed_empirical_differential_fairness()
     assert eps_clf == 1.6434003346776307  # verified with reference implementation
+
+def test_epsilon_all_groups():
+    def custom_preprocessing(df):
+        # slight workaround for non-binary protected attribute
+        # feature should be categorical but protected attribute should be numerical
+        mapping = {'Black': 0, 'White': 1, 'Asian-Pac-Islander': 2,
+                   'Amer-Indian-Eskimo': 3, 'Other': 4}
+        df['race-num'] = df.race.map(mapping)
+        return df.fillna('Unknown')
+
+    nonbinary_ad = AdultDataset(
+            protected_attribute_names=['sex', 'native-country', 'race-num'],
+            privileged_classes=[['Male'], ['United-States'], [1]],
+            categorical_features=['workclass', 'education', 'marital-status',
+                                  'occupation', 'relationship', 'race'],
+            custom_preprocessing=custom_preprocessing)
+    # drop redundant race feature (not relevant to this test)
+    index = nonbinary_ad.feature_names.index('race-num')
+    nonbinary_ad.features = np.delete(nonbinary_ad.features, index, axis=1)
+    nonbinary_ad.feature_names = np.delete(nonbinary_ad.feature_names, index)
+
+    _, nonbinary_test = nonbinary_ad.split([32561], shuffle=False)
+    dataset_metric = BinaryLabelDatasetMetric(nonbinary_test)
+    eps_data = dataset_metric.smoothed_empirical_differential_fairness()
+    assert eps_data == 2.063813731996515  # verified with reference implementation
