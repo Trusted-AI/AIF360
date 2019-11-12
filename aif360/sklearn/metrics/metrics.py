@@ -101,6 +101,7 @@ def ratio(func, y, *args, prot_attr=None, priv_group=1, sample_weight=None,
         warnings.warn("The ratio is ill-defined and being set to 0.0 because "
                       "the {} for privileged samples is 0.".format(func.__name__),
                       UndefinedMetricWarning)
+        return 0.
 
     return numerator / denominator
 
@@ -132,7 +133,13 @@ def specificity_score(y_true, y_pred, neg_label=0, sample_weight=None):
                         sample_weight=sample_weight)
 
 def base_rate(y_true, y_pred=None, pos_label=1, sample_weight=None):
-    return np.average(y_true == pos_label, weights=sample_weight)
+    idx = (y_true == pos_label)
+    if not np.any(idx):
+        warnings.warn("base_rate is ill-defined because there are no samples "
+                      "with value {} in y_true.".format(pos_label),
+                      UndefinedMetricWarning)
+        return 0.
+    return np.average(idx, weights=sample_weight)
 
 def selection_rate(y_true, y_pred, pos_label=1, sample_weight=None):
     return base_rate(y_pred, pos_label=pos_label, sample_weight=sample_weight)
