@@ -182,7 +182,7 @@ class ClassificationMetric(BinaryLabelDatasetMetric):
 
     def num_generalized_false_positives(self, privileged=None):
         """Return the generalized number of false positives, :math:`GFP`, the
-        weighted sum of predicted scores where true labels are 'favorable',
+        weighted sum of predicted scores where true labels are 'unfavorable',
         optionally conditioned on protected attributes.
 
         Args:
@@ -200,7 +200,7 @@ class ClassificationMetric(BinaryLabelDatasetMetric):
 
     def num_generalized_false_negatives(self, privileged=None):
         """Return the generalized number of false negatives, :math:`GFN`, the
-        weighted sum of predicted scores where true labels are 'favorable',
+        weighted sum of 1 - predicted scores where true labels are 'favorable',
         optionally conditioned on protected attributes.
 
         Args:
@@ -218,7 +218,7 @@ class ClassificationMetric(BinaryLabelDatasetMetric):
 
     def num_generalized_true_negatives(self, privileged=None):
         """Return the generalized number of true negatives, :math:`GTN`, the
-        weighted sum of predicted scores where true labels are 'favorable',
+        weighted sum of 1 - predicted scores where true labels are 'unfavorable',
         optionally conditioned on protected attributes.
 
         Args:
