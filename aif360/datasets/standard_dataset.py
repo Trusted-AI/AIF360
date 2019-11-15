@@ -118,14 +118,7 @@ class StandardDataset(BinaryLabelDataset):
                 unprivileged_values = list(set(df[attr]).difference(vals))
             else:
                 # find all instances which match any of the attribute values
-                df_tmp = df[attr].tolist()
-                equal_bool = np.empty([len(vals),len(df_tmp)], dtype=int)
-                # Apply np.equal iteratively 
-                for i in range(len(vals)):
-                    for j in range(len(df_tmp)):
-                        equal_bool[i,j] = np.char.equal(vals[i], df_tmp[j])
-
-                priv = np.logical_or.reduce(equal_bool)
+                priv = np.logical_or.reduce(np.equal.outer(vals, df[attr])).to_numpy()
                 df.loc[priv, attr] = privileged_values[0]
                 df.loc[~priv, attr] = unprivileged_values[0]
 
@@ -145,14 +138,8 @@ class StandardDataset(BinaryLabelDataset):
             unfavorable_label = set(df[label_name]).difference(favorable_classes).pop()
         else:
             # find all instances which match any of the favorable classes
-            df_labelnm = df[label_name].tolist()
-            equal_bool = np.empty([len(favorable_classes),len(df_labelnm)], dtype=int)
-            # Apply np.equal iteratively
-            for i in range(len(favorable_classes)):
-                for j in range(len(df_labelnm)):
-                    equal_bool[i,j] = np.char.equal(favorable_classes[i], df_labelnm[j])
-
-            pos = np.logical_or.reduce(equal_bool)
+            pos = np.logical_or.reduce(np.equal.outer(favorable_classes, 
+                                                      df[label_name])).to_numpy()
             df.loc[pos, label_name] = favorable_label
             df.loc[~pos, label_name] = unfavorable_label
 
