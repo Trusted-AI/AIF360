@@ -3,7 +3,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LogisticRegression
 
 from aif360.datasets import AdultDataset
-from aif360.metrics import BinaryLabelDatasetMetric
+from aif360.metrics import BinaryLabelDatasetMetric, ClassificationMetric
 
 ad = AdultDataset(protected_attribute_names=['race', 'sex', 'native-country'],
                   privileged_classes=[['White'], ['Male'], ['United-States']],
@@ -12,22 +12,31 @@ ad = AdultDataset(protected_attribute_names=['race', 'sex', 'native-country'],
                   custom_preprocessing=lambda df: df.fillna('Unknown'))
 adult_train, adult_test = ad.split([32561], shuffle=False)
 
+scaler = StandardScaler()
+X = scaler.fit_transform(adult_train.features)
+test_X = scaler.transform(adult_test.features)
+clf = LogisticRegression(C=1.0, random_state=0, solver='liblinear')
+
+adult_pred = adult_test.copy()
+adult_pred.labels = clf.fit(X, adult_train.labels.ravel()).predict(test_X)
+
+dataset_metric = BinaryLabelDatasetMetric(adult_test)
+classifier_metric = BinaryLabelDatasetMetric(adult_pred)
+
 def test_epsilon_dataset_binary_groups():
-    dataset_metric = BinaryLabelDatasetMetric(adult_test)
     eps_data = dataset_metric.smoothed_empirical_differential_fairness()
     assert eps_data == 1.53679014653623  # verified with reference implementation
 
 def test_epsilon_classifier_binary_groups():
-    scaler = StandardScaler()
-    X = scaler.fit_transform(adult_train.features)
-    test_X = scaler.transform(adult_test.features)
-    clf = LogisticRegression(C=1.0, random_state=0, solver='liblinear')
-
-    adult_pred = adult_test.copy()
-    adult_pred.labels = clf.fit(X, adult_train.labels.ravel()).predict(test_X)
-    classifier_metric = BinaryLabelDatasetMetric(adult_pred)
     eps_clf = classifier_metric.smoothed_empirical_differential_fairness()
     assert eps_clf == 1.6434003346776307  # verified with reference implementation
+
+def test_bias_amplification_binary_groups():
+    metric = ClassificationMetric(adult_test, adult_pred)
+    bias_amp = metric.differential_fairness_bias_amplification()
+    eps_data = dataset_metric.smoothed_empirical_differential_fairness()
+    eps_clf = classifier_metric.smoothed_empirical_differential_fairness()
+    assert bias_amp == (eps_clf - eps_data)
 
 def test_epsilon_all_groups():
     def custom_preprocessing(df):
