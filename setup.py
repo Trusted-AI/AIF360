@@ -26,7 +26,7 @@ setup(name='aif360',
       install_requires=[
           'numpy>=1.16',
           'scipy',
-          'pandas>=0.23.3',
+          'pandas>=0.24.0',
           'scikit-learn',
       ],
       package_data={'aif360': ['data/*', 'data/*/*', 'data/*/*/*']},
