@@ -796,6 +796,30 @@ class ClassificationMetric(BinaryLabelDatasetMetric):
         return 2 * np.sqrt(self.between_all_groups_generalized_entropy_index(
             alpha=2))
 
+    def differential_fairness_bias_amplification(self, concentration=1.0):
+        """Bias amplification is the difference in smoothed EDF between the
+        classifier and the original dataset. Positive values mean the bias
+        increased due to the classifier.
+
+        Args:
+            concentration (float, optional): Concentration parameter for
+                Dirichlet smoothing. Must be non-negative.
+        """
+        ssr = self._smoothed_base_rates(self.classified_dataset.labels,
+                                        concentration)
+
+        def pos_ratio(i, j):
+            return abs(np.log(ssr[i]) - np.log(ssr[j]))
+
+        def neg_ratio(i, j):
+            return abs(np.log(1 - ssr[i]) - np.log(1 - ssr[j]))
+
+        edf_clf = max(max(pos_ratio(i, j), neg_ratio(i, j))
+                for i in range(len(ssr)) for j in range(len(ssr)) if i != j)
+        edf_data = self.smoothed_empirical_differential_fairness(concentration)
+
+        return edf_clf - edf_data
+
     # ============================== ALIASES ===================================
     def equal_opportunity_difference(self):
         """Alias of :meth:`true_positive_rate_difference`."""
