@@ -70,6 +70,12 @@ def center(X):
     return X
 
 
+# have to cast ndarray to hashable type in get_baseline()
+def array_to_tuple(x):
+    x = tuple([el[0] for el in x]) if x.__class__.__name__ == 'ndarray' else x
+    return x
+
+
 def one_hot_code(df1, sens_dict):
     cols = df1.columns
     for c in cols:
