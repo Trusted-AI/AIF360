@@ -45,6 +45,7 @@ def fetch_compas(data_home=None, binary_race=False,
         df = pd.read_csv(cache_path, index_col='id')
     else:
         df = pd.read_csv(COMPAS_URL, index_col='id')
+        os.makedirs(os.path.dirname(cache_path), exist_ok=True)
         df.to_csv(cache_path)
 
     # Perform the same preprocessing as the original analysis:
