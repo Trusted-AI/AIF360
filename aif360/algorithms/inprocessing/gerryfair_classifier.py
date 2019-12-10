@@ -192,7 +192,6 @@ class Model(Transformer):
             # initial heat map
             X_prime_heat = X_prime.iloc[:, 0:2]
             eta = 0.1
-            pdb.set_trace()
             if self.heatmapflag:
                 minmax = heatmap.heat_map(X, X_prime_heat, y, predictions, eta, self.heatmap_path + '/heatmap_iteration_{}'.format(iteration), vmin, vmax)
             else: 
