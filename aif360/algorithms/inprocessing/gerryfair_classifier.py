@@ -131,13 +131,13 @@ class Model(Transformer):
         :return: modified dataset object
         """
 
-        # Generates predictions. We do not yet advise using this in sensitive real-world settings.
+        # Generates predictions. 
         dataset_new = copy.deepcopy(dataset)
         data, _, _ = clean.extract_df_from_ds(dataset_new)
         num_classifiers = len(self.classifiers)
         y_hat = None
-        for c in self.classifiers:
-            new_predictions = np.multiply(1.0 / num_classifiers, c.predict(data))
+        for hyp in self.classifiers:
+            new_predictions = np.multiply(1.0 / num_classifiers, hyp.predict(data))
             if y_hat is None:
                 y_hat = new_predictions
             else:
@@ -182,7 +182,6 @@ class Model(Transformer):
         :param predictions:
         :param vmin:
         :param vmax:
-        :param force_heatmap:
         :return:
         """
 
@@ -192,11 +191,7 @@ class Model(Transformer):
             # initial heat map
             X_prime_heat = X_prime.iloc[:, 0:2]
             eta = 0.1
-            if self.heatmapflag:
-                minmax = heatmap.heat_map(X, X_prime_heat, y, predictions, eta, self.heatmap_path + '/heatmap_iteration_{}'.format(iteration), vmin, vmax)
-            else: 
-                 minmax = heatmap.heat_map(X, X_prime_heat, y, predictions, eta,
-                          None, vmin, vmax)
+            minmax = heatmap.heat_map(X, X_prime_heat, y, predictions, eta, self.heatmap_path                       +'/heatmap_iteration_{}'.format(iteration), vmin, vmax)
             if iteration == 1:
                 vmin = minmax[0]
                 vmax = minmax[1]
