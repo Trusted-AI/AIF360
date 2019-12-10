@@ -8,6 +8,8 @@ from aif360.algorithms.inprocessing.gerryfair.auditor import Auditor
 from aif360.algorithms.inprocessing.gerryfair.classifier_history import ClassifierHistory
 from aif360.algorithms import Transformer
 import matplotlib
+import pdb 
+
 try:
     matplotlib.use('TkAgg')
 except:
@@ -171,7 +173,7 @@ class Model(Transformer):
                     group.weighted_disparity,
                     group.group_size))
 
-    def save_heatmap(self, iteration, dataset, predictions, vmin, vmax, force_heatmap=False):
+    def save_heatmap(self, iteration, dataset, predictions, vmin, vmax):
         """
         Helper Function to save the heatmap
 
@@ -185,13 +187,17 @@ class Model(Transformer):
         """
 
         X, X_prime, y = clean.extract_df_from_ds(dataset)
-        # save heatmap every heatmap_iter iterations
-        if (self.heatmapflag and (iteration % self.heatmap_iter) == 0) or force_heatmap:
+        # save heatmap every heatmap_iter iterations or the last iteration 
+        if (self.heatmapflag and (iteration % self.heatmap_iter) == 0):
             # initial heat map
             X_prime_heat = X_prime.iloc[:, 0:2]
             eta = 0.1
-            minmax = heatmap.heat_map(X, X_prime_heat, y, predictions, eta,
-                                      self.heatmap_path + '/heatmap_iteration_{}'.format(iteration), vmin, vmax)
+            pdb.set_trace()
+            if self.heatmapflag:
+                minmax = heatmap.heat_map(X, X_prime_heat, y, predictions, eta, self.heatmap_path + '/heatmap_iteration_{}'.format(iteration), vmin, vmax)
+            else: 
+                 minmax = heatmap.heat_map(X, X_prime_heat, y, predictions, eta,
+                          None, vmin, vmax)
             if iteration == 1:
                 vmin = minmax[0]
                 vmax = minmax[1]
