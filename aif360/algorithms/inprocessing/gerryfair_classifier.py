@@ -158,17 +158,10 @@ class Model(Transformer):
         :param group: most recent group found by the auditor
         :return: n/a
         """
-        print('iteration: {}'.format(int(iteration)))
-        if iteration == 1:
+        
+        if self.printflag:
             print(
-                'most accurate classifier error: {}, most accurate class unfairness: {}, violated group size: {}'.format(
-                    error,
-                    group.weighted_disparity,
-                    group.group_size))
-
-        elif self.printflag:
-            print(
-                'error: {}, fairness violation: {}, violated group size: {}'.format(
+                'iteration: {}, error: {}, fairness violation: {}, violated group size: {}'.format(int(iteration),
                     error,
                     group.weighted_disparity,
                     group.group_size))

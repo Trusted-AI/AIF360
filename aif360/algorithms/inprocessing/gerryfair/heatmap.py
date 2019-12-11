@@ -50,10 +50,9 @@ def heat_map(X, X_prime, y, A, eta, plot_path, vmin=None, vmax=None):
     ax.set_xlabel(columns[0] + ' coefficient')
     ax.set_ylabel(columns[1] + ' coefficient')
     ax.set_zlabel('gamma disparity')
-    ax.plot_surface(X_plot, Y_plot, disparity, cmap=cm.coolwarm, linewidth=0, antialiased=False, vmin=vmin, vmax=vmax)   
-    ax.set_zlim3d([-0.035, 0.035])
-    pdb.set_trace()
-    if plot_path is not None:
+    ax.set_zlim3d([np.min(disparity), np.max(disparity)])
+    surf = ax.plot_surface(X_plot, Y_plot, disparity, cmap=cm.coolwarm, linewidth=0, antialiased=False, vmin=vmin, vmax=vmax) 
+    if plot_path != '.':
         fig.savefig('{}.png'.format(plot_path))
-        # plt.cla()
+        plt.close()
     return [np.min(disparity), np.max(disparity)]
