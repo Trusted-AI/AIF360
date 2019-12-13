@@ -7,11 +7,25 @@ from aif360.sklearn.utils import check_inputs, check_groups
 
 
 class Reweighing(BaseEstimator):
-    """Reweighing is a preprocessing technique that weights the examples in each
+    """Sample reweighing.
+
+    Reweighing is a preprocessing technique that weights the examples in each
     (group, label) combination differently to ensure fairness before
     classification [#kamiran12]_.
 
+    Note:
+        This breaks the scikit-learn API by returning new sample weights from
+        ``fit_transform()``. See :class:`ReweighingMeta` for a workaround.
+
+    References:
+        .. [#kamiran12] `F. Kamiran and T. Calders,  "Data Preprocessing
+           Techniques for Classification without Discrimination," Knowledge and
+           Information Systems, 2012.
+           <https://link.springer.com/article/10.1007/s10115-011-0463-8>`_
+
     Attributes:
+        prot_attr_ (str or list(str)): Protected attribute(s) used for
+            reweighing.
         groups_ (array, shape (n_groups,)): A list of group labels known to the
             transformer.
         classes_ (array, shape (n_classes,)): A list of class labels known to
@@ -20,32 +34,21 @@ class Reweighing(BaseEstimator):
             for each combination of group and class labels used to debias
             samples. Existing sample weights are multiplied by the corresponding
             factor for that sample's group and class.
-
-    Examples:
-        >>> pipe = make_pipeline(Reweighing(), LinearRegression())
-        >>> # sample_weight_ will be used after it is fit
-        >>> fit_params = {'linearregression__sample_weight':
-        ...               pipe['reweighing'].sample_weight_}
-        >>> pipe.fit(X, y, **fit_params)
-
-    References:
-        .. [#kamiran12] F. Kamiran and T. Calders,  "Data Preprocessing
-           Techniques for Classification without Discrimination," Knowledge and
-           Information Systems, 2012.
     """
 
     def __init__(self, prot_attr=None):
         """
         Args:
             prot_attr (single label or list-like, optional): Protected
-                attribute(s) to use as sensitive attribute(s) in the reweighing
-                process. If more than one attribute, all combinations of values
-                (intersections) are considered. Default is ``None`` meaning all
-                protected attributes from the dataset are used.
+                attribute(s) to use in the reweighing process. If more than one
+                attribute, all combinations of values (intersections) are
+                considered. Default is ``None`` meaning all protected attributes
+                from the dataset are used.
         """
         self.prot_attr = prot_attr
 
     def fit(self, X, y, sample_weight=None):
+        """Only ``fit_transform`` is allowed for this algorithm."""
         self.fit_transform(X, y, sample_weight=sample_weight)
         return self
 
@@ -88,7 +91,22 @@ class Reweighing(BaseEstimator):
 
 
 class ReweighingMeta(BaseEstimator, MetaEstimatorMixin):
+    """A meta-estimator which wraps a given estimator with a reweighing
+    preprocessing step.
+
+    This is necessary for use in a Pipeline, etc.
+
+    Attributes:
+        estimator_ (sklearn.BaseEstimator): The fitted underlying estimator.
+        reweigher_: The fitted underlying reweigher.
+    """
     def __init__(self, estimator, reweigher=Reweighing()):
+        """
+        Args:
+            estimator (sklearn.BaseEstimator): Estimator to be wrapped.
+            reweigher: Preprocessor which returns new sample weights from
+                ``transform()``.
+        """
         self.reweigher = reweigher
         self.estimator = estimator
 
@@ -97,6 +115,18 @@ class ReweighingMeta(BaseEstimator, MetaEstimatorMixin):
         return self.estimator._estimator_type
 
     def fit(self, X, y, sample_weight=None):
+        """Performs ``self.reweigher_.fit_transform(X, y, sample_weight)`` and
+        then ``self.estimator_.fit(X, y, sample_weight)`` using the reweighed
+        samples.
+
+        Args:
+            X (array-like): Training samples.
+            y (array-like): Training labels.
+            sample_weight (array-like, optional): Sample weights.
+
+        Returns:
+            ReweighingMeta: self.
+        """
         if not has_fit_parameter(self.estimator, 'sample_weight'):
             raise TypeError("`estimator` (type: {}) does not have fit parameter"
                             " `sample_weight`.".format(type(self.estimator)))
@@ -111,16 +141,60 @@ class ReweighingMeta(BaseEstimator, MetaEstimatorMixin):
 
     @if_delegate_has_method('estimator_')
     def predict(self, X):
+        """Predict class labels for the given samples using ``self.estimator_``.
+
+        Args:
+            X (array-like): Test samples.
+
+        Returns:
+            array: Predicted class label per sample.
+        """
         return self.estimator_.predict(X)
 
     @if_delegate_has_method('estimator_')
     def predict_proba(self, X):
+        """Probability estimates from ``self.estimator_``.
+
+        The returned estimates for all classes are ordered by the label of
+        classes.
+
+        Args:
+            X (array-like): Test samples.
+
+        Returns:
+            array: Returns the probability of the sample for each class in the
+            model, where classes are ordered as they are in ``self.classes_``.
+        """
         return self.estimator_.predict_proba(X)
 
     @if_delegate_has_method('estimator_')
     def predict_log_proba(self, X):
+        """Log of probability estimates from ``self.estimator_``.
+
+        The returned estimates for all classes are ordered by the label of
+        classes.
+
+        Args:
+            X (array-like): Test samples.
+
+        Returns:
+            array: Returns the log-probability of the sample for each class in
+            the model, where classes are ordered as they are in
+            ``self.classes_``.
+        """
         return self.estimator_.predict_log_proba(X)
 
     @if_delegate_has_method('estimator_')
     def score(self, X, y, sample_weight=None):
+        """Returns the output of the estimator's score function on the given
+        test data and labels.
+
+        Args:
+            X (array-like): Test samples.
+            y (array-like): True labels for ``X``.
+            sample_weight (array-like, optional): Sample weights.
+
+        Returns:
+            float: `self.estimator.score(X, y, sample_weight)`
+        """
         return self.estimator_.score(X, y, sample_weight=sample_weight)

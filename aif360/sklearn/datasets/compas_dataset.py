@@ -2,7 +2,7 @@ import os
 
 import pandas as pd
 
-from aif360.sklearn.datasets.utils import standarize_dataset
+from aif360.sklearn.datasets.utils import standardize_dataset
 
 
 # cache location
@@ -19,7 +19,7 @@ def fetch_compas(data_home=None, binary_race=False,
 
     Optionally binarizes 'race' to 'Caucasian' (privileged) or 'African-American'
     (unprivileged). The other protected attribute is 'sex' ('Male' is
-    _unprivileged_ and 'Female' is _privileged_). The outcome variable is
+    *unprivileged* and 'Female' is *privileged*). The outcome variable is
     'no recid.' (favorable) if the person was not accused of a crime within two
     years or 'did recid.' (unfavorable) if they were.
 
@@ -67,7 +67,7 @@ def fetch_compas(data_home=None, binary_race=False,
 
     df.sex = df.sex.astype('category').cat.as_ordered()  # 'Female' < 'Male'
 
-    return standarize_dataset(df, prot_attr=['sex', 'race'],
-                              target='two_year_recid', usecols=usecols,
-                              dropcols=dropcols, numeric_only=numeric_only,
-                              dropna=dropna)
+    return standardize_dataset(df, prot_attr=['sex', 'race'],
+                               target='two_year_recid', usecols=usecols,
+                               dropcols=dropcols, numeric_only=numeric_only,
+                               dropna=dropna)

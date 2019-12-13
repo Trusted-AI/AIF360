@@ -5,13 +5,13 @@ import pandas as pd
 import pytest
 
 from aif360.sklearn.datasets import fetch_adult, fetch_bank, fetch_german
-from aif360.sklearn.datasets import standarize_dataset
+from aif360.sklearn.datasets import standardize_dataset
 from aif360.sklearn.datasets import fetch_compas, ColumnAlreadyDroppedWarning
 
 
 df = pd.DataFrame([[1, 2, 3, 'a'], [5, 6, 7, 'b'], [np.NaN, 10, 11, 'c']],
                   columns=['X1', 'X2', 'y', 'Z'])
-basic = partial(standarize_dataset, df=df, prot_attr='Z', target='y',
+basic = partial(standardize_dataset, df=df, prot_attr='Z', target='y',
                 dropna=False)
 
 def test_standardize_dataset_basic():
@@ -44,7 +44,7 @@ def test_usecols_dropcols_basic():
                       pd.DataFrame)
 
 def test_dropna_basic():
-    basic_dropna = partial(standarize_dataset, df=df, prot_attr='Z',
+    basic_dropna = partial(standardize_dataset, df=df, prot_attr='Z',
                            target='y', dropna=True)
     assert basic_dropna().X.shape == (2, 3)
     assert basic(dropcols='X1').X.shape == (3, 2)

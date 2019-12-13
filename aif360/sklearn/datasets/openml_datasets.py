@@ -3,7 +3,7 @@ import os
 import pandas as pd
 from sklearn.datasets import fetch_openml
 
-from aif360.sklearn.datasets.utils import standarize_dataset
+from aif360.sklearn.datasets.utils import standardize_dataset
 
 
 # cache location
@@ -38,8 +38,8 @@ def fetch_adult(subset='all', data_home=None, binary_race=True, usecols=[],
 
     Binarizes 'race' to 'White' (privileged) or 'Non-white' (unprivileged).
     The other protected attribute is 'sex' ('Male' is privileged and 'Female' is
-    unprivileged). The outcome variable is '>50K' (favorable) or '<=50K'
-    (unfavorable).
+    unprivileged). The outcome variable is 'annual-income': '>50K' (favorable)
+    or '<=50K' (unfavorable).
 
     Args:
         subset ({'train', 'test', or 'all'}, optional): Select the dataset to
@@ -88,7 +88,7 @@ def fetch_adult(subset='all', data_home=None, binary_race=True, usecols=[],
                                              ordered=True).fillna('Non-white')
     df.sex = df.sex.cat.as_ordered()  # 'Female' < 'Male'
 
-    return standarize_dataset(df, prot_attr=['race', 'sex'],
+    return standardize_dataset(df, prot_attr=['race', 'sex'],
                               target='annual-income', sample_weight='fnlwgt',
                               usecols=usecols, dropcols=dropcols,
                               numeric_only=numeric_only, dropna=dropna)
@@ -101,19 +101,20 @@ def fetch_german(data_home=None, binary_age=True, usecols=[], dropcols=[],
     unprivileged) and 'age' (binarized by default as recommended by
     [#kamiran09]_: ``age >= 25`` is considered privileged and ``age < 25`` is
     considered unprivileged; see the ``binary_age`` flag to keep this
-    continuous). The outcome variable is 'good' (favorable) or 'bad'
-    (unfavorable).
+    continuous). The outcome variable is 'credit-risk': 'good' (favorable) or
+    'bad' (unfavorable).
 
     References:
-        .. [#kamiran09] F. Kamiran and T. Calders, "Classifying without
+        .. [#kamiran09] `F. Kamiran and T. Calders, "Classifying without
            discriminating," 2nd International Conference on Computer,
            Control and Communication, 2009.
+           <https://ieeexplore.ieee.org/abstract/document/4909197>`_
 
     Args:
         data_home (string, optional): Specify another download and cache folder
             for the datasets. By default all AIF360 datasets are stored in
             'aif360/sklearn/data/raw' subfolders.
-        binary_age (bool, optional): If `True`, split protected attribute,
+        binary_age (bool, optional): If ``True``, split protected attribute,
             ``age``, into 'aged' (privileged) and 'youth' (unprivileged). The
             ``age`` feature remains continuous.
         usecols (single label or list-like, optional): Column name(s) to keep.
@@ -161,16 +162,16 @@ def fetch_german(data_home=None, binary_age=True, usecols=[], dropcols=[],
     df = df.join(personal_status.astype('category'))
     df.sex = df.sex.cat.as_ordered()  # 'female' < 'male'
 
-    return standarize_dataset(df, prot_attr=['sex', age], target='credit-risk',
-                              usecols=usecols, dropcols=dropcols,
-                              numeric_only=numeric_only, dropna=dropna)
+    return standardize_dataset(df, prot_attr=['sex', age], target='credit-risk',
+                               usecols=usecols, dropcols=dropcols,
+                               numeric_only=numeric_only, dropna=dropna)
 
 def fetch_bank(data_home=None, percent10=False, usecols=[], dropcols='duration',
                numeric_only=False, dropna=False):
     """Load the Bank Marketing Dataset.
 
     The protected attribute is 'age' (left as continuous). The outcome variable
-    is 'yes' or 'no'. TODO: which is favorable?
+    is 'deposit': ``True`` or ``False``.
 
     Args:
         data_home (string, optional): Specify another download and cache folder
@@ -213,6 +214,6 @@ def fetch_bank(data_home=None, percent10=False, usecols=[], dropcols='duration',
     # replace 'unknown' marker with NaN
     df.apply(lambda s: s.cat.remove_categories('unknown', inplace=True)
              if hasattr(s, 'cat') and 'unknown' in s.cat.categories else s)
-    return standarize_dataset(df, prot_attr='age', target='deposit',
-                              usecols=usecols, dropcols=dropcols,
-                              numeric_only=numeric_only, dropna=dropna)
+    return standardize_dataset(df, prot_attr='age', target='deposit',
+                               usecols=usecols, dropcols=dropcols,
+                               numeric_only=numeric_only, dropna=dropna)

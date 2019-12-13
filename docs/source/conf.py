@@ -33,7 +33,8 @@ import aif360
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = ['sphinx.ext.autodoc',
-    'sphinx.ext.viewcode',
+    'sphinx.ext.autosummary',
+    'sphinx.ext.linkcode',
     'sphinx.ext.napoleon',
     'sphinx.ext.intersphinx',
     'sphinx.ext.mathjax']
@@ -44,10 +45,22 @@ intersphinx_mapping = {'numpy': ('https://docs.scipy.org/doc/numpy/', None),
     'sklearn': ('https://scikit-learn.org/stable/', None),
     'python': ('https://docs.python.org/{}.{}'.format(*sys.version_info), None)}
 
+napoleon_include_init_with_doc = True
+napoleon_use_ivar = True
+napoleon_use_rtype = False
+
 autoclass_content = 'both'
 
 # Add any paths that contain templates here, relative to this directory.
-templates_path = []
+templates_path = ['templates']
+
+# generate autosummary even if no references
+autosummary_generate = True
+
+autodoc_default_options = {
+    'members': True,
+    'inherited-members': True
+}
 
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a list of string:
@@ -60,7 +73,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'aif360'
-copyright = u'2018, IBM Corporation'
+copyright = u'2018 - 2019, IBM Corporation'
 author = u'aif360 developers'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -82,7 +95,14 @@ language = None
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This patterns also effect to html_static_path and html_extra_path
-exclude_patterns = []
+exclude_patterns = ['templates']
+
+# The reST default role (used for this markup: `text`) to use for all
+# documents.
+default_role = 'literal'
+
+# If true, '()' will be appended to :func: etc. cross-reference text.
+add_function_parentheses = False
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'
@@ -95,8 +115,8 @@ todo_include_todos = False
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-#
-# html_theme = 'alabaster'
+
+# html_theme = 'bizstyle'
 if os.environ.get('READTHEDOCS') != 'True':
     try:
         import sphinx_rtd_theme
@@ -115,7 +135,10 @@ if os.environ.get('READTHEDOCS') != 'True':
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = []
+html_static_path = ['static']
+
+def setup(app):
+    app.add_stylesheet('style.css')
 
 # Custom sidebar templates, must be a dictionary that maps document names
 # to template names.
@@ -188,3 +211,60 @@ texinfo_documents = [
      author, 'aif360', 'One line description of project.',
      'Miscellaneous'),
 ]
+
+
+# -- Options for linkcode -------------------------------------------------
+# taken from numpy/doc/source/conf.py:
+import inspect
+from os.path import relpath, dirname
+def linkcode_resolve(domain, info):
+    """
+    Determine the URL corresponding to Python object
+    """
+    if domain != 'py':
+        return None
+
+    modname = info['module']
+    fullname = info['fullname']
+
+    submod = sys.modules.get(modname)
+    if submod is None:
+        return None
+
+    obj = submod
+    for part in fullname.split('.'):
+        try:
+            obj = getattr(obj, part)
+        except Exception:
+            return None
+
+    # strip decorators, which would resolve to the source of the decorator
+    # possibly an upstream bug in getsourcefile, bpo-1764286
+    try:
+        unwrap = inspect.unwrap
+    except AttributeError:
+        pass
+    else:
+        obj = unwrap(obj)
+
+    try:
+        fn = inspect.getsourcefile(obj)
+    except Exception:
+        fn = None
+    if not fn:
+        return None
+
+    try:
+        source, lineno = inspect.getsourcelines(obj)
+    except Exception:
+        lineno = None
+
+    if lineno:
+        linespec = "#L%d-L%d" % (lineno, lineno + len(source) - 1)
+    else:
+        linespec = ""
+
+    fn = relpath(fn, start=dirname(aif360.__file__))
+
+    return "https://github.com/IBM/AIF360/blob/master/aif360/%s%s" % (
+           fn, linespec)

@@ -10,6 +10,22 @@ class ColumnAlreadyDroppedWarning(UserWarning):
 
 def check_already_dropped(labels, dropped_cols, name, dropped_by='numeric_only',
                           warn=True):
+    """Check if columns have already been dropped and return only those that
+    haven't.
+
+    Args:
+        labels (single label or list-like): Column labels to check.
+        dropped_cols (set or pandas.Index): Columns that were already dropped.
+        name (str): Original arg that triggered the check (e.g. ``dropcols``).
+        dropped_by (str, optional): Original arg that caused ``dropped_cols``
+            (e.g. ``numeric_only``).
+        warn (bool, optional): If ``True``, produces a
+            :class:`ColumnAlreadyDroppedWarning` if there are columns in the
+            intersection of ``dropped_cols`` and ``labels``.
+
+    Returns:
+        list: Columns in ``labels`` which are not in ``dropped_cols``.
+    """
     if not is_list_like(labels):
         labels = [labels]
     labels = [c for c in labels if isinstance(c, str)]
@@ -20,7 +36,7 @@ def check_already_dropped(labels, dropped_cols, name, dropped_by='numeric_only',
                 ColumnAlreadyDroppedWarning, stacklevel=2)
     return [c for c in labels if c not in already_dropped]
 
-def standarize_dataset(df, prot_attr, target, sample_weight=None, usecols=[],
+def standardize_dataset(df, prot_attr, target, sample_weight=None, usecols=[],
                        dropcols=[], numeric_only=False, dropna=True):
     """Separate data, targets, and possibly sample weights and populate
     protected attributes as sample properties.
@@ -61,14 +77,14 @@ def standarize_dataset(df, prot_attr, target, sample_weight=None, usecols=[],
         >>> from sklearn.linear_model import LinearRegression
 
         >>> df = pd.DataFrame([[1, 2, 3], [4, 5, 6]], columns=['X', 'y', 'Z'])
-        >>> train = standarize_dataset(df, prot_attr='Z', target='y')
+        >>> train = standardize_dataset(df, prot_attr='Z', target='y')
         >>> reg = LinearRegression().fit(*train)
 
         >>> import numpy as np
         >>> from sklearn.datasets import make_classification
         >>> from sklearn.model_selection import train_test_split
         >>> df = pd.DataFrame(np.hstack(make_classification(n_features=5)))
-        >>> X, y = standarize_dataset(df, prot_attr=0, target=5)
+        >>> X, y = standardize_dataset(df, prot_attr=0, target=5)
         >>> X_tr, X_te, y_tr, y_te = train_test_split(X, y)
     """
     orig_cols = df.columns
