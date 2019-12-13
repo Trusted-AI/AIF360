@@ -1,4 +1,5 @@
 .. module:: aif360.datasets
+    :noindex:
 
 Base Class
 ----------

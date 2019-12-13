@@ -10,11 +10,23 @@ from aif360.sklearn.utils import check_groups
 
 
 __all__ = [
-    'base_rate', 'consistency_score', 'specificity_score', 'selection_rate',
-    'disparate_impact_ratio', 'statistical_parity_difference',
+    # meta-metrics
+    'difference', 'ratio',
+    # scorer factories
+    'make_difference_scorer', 'make_ratio_scorer',
+    # helpers
+    'specificity_score', 'base_rate', 'selection_rate', 'generalized_fpr',
+    'generalized_fnr',
+    # group fairness
+    'statistical_parity_difference', 'disparate_impact_ratio',
     'equal_opportunity_difference', 'average_odds_difference',
-    'average_odds_error', 'generalized_entropy_error', 'generalized_fnr',
-    'between_group_generalized_entropy_error', 'generalized_fpr'
+    'average_odds_error',
+    # individual fairness
+    'generalized_entropy_index', 'generalized_entropy_error',
+    'between_group_generalized_entropy_error', 'theil_index',
+    'coefficient_of_variation', 'consistency_score',
+    # aliases
+    'sensitivity_score', 'mean_difference',
 ]
 
 # ============================= META-METRICS ===================================
@@ -35,7 +47,7 @@ def difference(func, y, *args, prot_attr=None, priv_group=1, sample_weight=None,
         *args: Additional positional args to be passed through to ``func``.
         prot_attr (array-like, keyword-only): Protected attribute(s). If
             ``None``, all protected attributes in ``y`` are used.
-        priv_group (scalar, optional): Label value for the privileged group.
+        priv_group (scalar, optional): The label of the privileged group.
         sample_weight (array-like, optional): Sample weights passed through to
             ``func``.
         **kwargs: Additional keyword args to be passed through to ``func``.
@@ -66,8 +78,7 @@ def ratio(func, y, *args, prot_attr=None, priv_group=1, sample_weight=None,
     arbitrary metric.
 
     Note: The optimal value of a ratio is 1. To make it a scorer, one must
-    take the minimum of the ratio and its inverse, subtract it from 1, and set
-    ``greater_is_better`` to False.
+    take the minimum of the ratio and its inverse.
 
     Unprivileged group is taken to be the inverse of the privileged group.
 
@@ -76,9 +87,9 @@ def ratio(func, y, *args, prot_attr=None, priv_group=1, sample_weight=None,
             :mod:`aif360.sklearn.metrics.metrics`.
         y (array-like): Outcome vector with protected attributes as index.
         *args: Additional positional args to be passed through to ``func``.
-        groups (array-like, keyword-only): Group labels (protected attributes)
-            for the samples.
-        priv_group (scalar, optional): Label value for the privileged group.
+        prot_attr (array-like, keyword-only): Protected attribute(s). If
+            ``None``, all protected attributes in ``y`` are used.
+        priv_group (scalar, optional): The label of the privileged group.
         sample_weight (array-like, optional): Sample weights passed through to
             ``func``.
         **kwargs: Additional keyword args to be passed through to ``func``.
@@ -99,7 +110,7 @@ def ratio(func, y, *args, prot_attr=None, priv_group=1, sample_weight=None,
 
     if denominator == 0:
         warnings.warn("The ratio is ill-defined and being set to 0.0 because "
-                      "the {} for privileged samples is 0.".format(func.__name__),
+                      "'{}' for privileged samples is 0.".format(func.__name__),
                       UndefinedMetricWarning)
         return 0.
 
@@ -107,15 +118,40 @@ def ratio(func, y, *args, prot_attr=None, priv_group=1, sample_weight=None,
 
 
 # =========================== SCORER FACTORIES =================================
-def make_difference_scorer(func):
-    return make_scorer(lambda y, y_pred, **kw: abs(func(y, y_pred, **kw)),
+def make_difference_scorer(diff_func):
+    """Make a scorer from a 'difference' metric (e.g.
+    :func:`statistical_parity_difference`).
+
+    Since the optimal value of a difference metric is 0, this function takes the
+    absolute value and sets ``greater_is_better`` to ``False``.
+
+    See also:
+        :func:`~sklearn.metrics.make_scorer`
+
+    Args:
+        diff_func (callable): A difference metric with signature
+            ``diff_func(y, y_pred, **kwargs)``.
+    """
+    return make_scorer(lambda y, y_pred, **kw: abs(diff_func(y, y_pred, **kw)),
                        greater_is_better=False)
 
-def make_ratio_scorer(func):
+def make_ratio_scorer(ratio_func):
+    """Make a scorer from a 'ratio' metric (e.g. :func:`disparate_impact_ratio`)
+
+    Since the optimal value of a ratio metric is 1, this function takes the
+    minimum of the ratio and its inverse.
+
+    See also:
+        :func:`~sklearn.metrics.make_scorer`
+
+    Args:
+        ratio_func (callable): A ratio metric with signature
+            `ratio_func(y, y_pred, **kwargs)``.
+    """
     def score_fn(y, y_pred, **kwargs):
-        ratio = func(y, y_pred, **kwargs)
-        return 1 - min(ratio, 1/ratio)
-    return make_scorer(score_fn, greater_is_better=False)
+        ratio = ratio_func(y, y_pred, **kwargs)
+        return min(ratio, 1/ratio)
+    return make_scorer(score_fn)
 
 
 # ================================ HELPERS =====================================
@@ -126,66 +162,208 @@ def specificity_score(y_true, y_pred, neg_label=0, sample_weight=None):
     Args:
         y_true (array-like): Ground truth (correct) target values.
         y_pred (array-like): Estimated targets as returned by a classifier.
-        neg_label (scalar, optional): The class to report. Note: the data should
-            be binary.
+        neg_label (scalar, optional): The label of the negative class. Note:
+            the data should be binary.
+        sample_weight (array-like, optional): Sample weights.
     """
     return recall_score(y_true, y_pred, pos_label=neg_label,
                         sample_weight=sample_weight)
 
 def base_rate(y_true, y_pred=None, pos_label=1, sample_weight=None):
+    r"""Compute the base rate, :math:`Pr(Y = \text{pos_label}) = \frac{P}{P+N}`.
+
+    Args:
+        y_true (array-like): Ground truth (correct) target values.
+        y_pred (array-like, optional): Estimated targets. Ignored.
+        pos_label (scalar, optional): The label of the positive class.
+        sample_weight (array-like, optional): Sample weights.
+
+    Returns:
+        float: Base rate.
+    """
     idx = (y_true == pos_label)
-    if not np.any(idx):
-        warnings.warn("base_rate is ill-defined because there are no samples "
-                      "with value {} in y_true.".format(pos_label),
-                      UndefinedMetricWarning)
-        return 0.
     return np.average(idx, weights=sample_weight)
 
 def selection_rate(y_true, y_pred, pos_label=1, sample_weight=None):
+    r"""Compute the selection rate, :math:`Pr(\hat{Y} = \text{pos_label}) =
+    \frac{TP + FP}{P + N}`.
+
+    Args:
+        y_true (array-like): Ground truth (correct) target values. Ignored.
+        y_pred (array-like): Estimated targets as returned by a classifier.
+        pos_label (scalar, optional): The label of the positive class.
+        sample_weight (array-like, optional): Sample weights.
+
+    Returns:
+        float: Selection rate.
+    """
     return base_rate(y_pred, pos_label=pos_label, sample_weight=sample_weight)
 
-def generalized_fpr(y_true, y_pred, pos_label=1, sample_weight=None):
+def generalized_fpr(y_true, probas_pred, pos_label=1, sample_weight=None):
+    r"""Return the ratio of generalized false positives to negative examples in
+    the dataset, :math:`GFPR = \tfrac{GFP}{N}`.
+
+    The generalized confusion matrix is calculated by summing the probabilities
+    of the positive class instead of the hard predictions.
+
+    Args:
+        y_true (array-like): Ground-truth (correct) target values.
+        probas_pred (array-like): Probability estimates of the positive class.
+        pos_label (scalar, optional): The label of the positive class.
+        sample_weight (array-like, optional): Sample weights.
+
+    Returns:
+        float: Generalized false positive rate. If there are no negative samples
+        in ``y_true``, this will raise an
+        :class:`~sklearn.exceptions.UndefinedMetricWarning` and return 0.
+    """
     idx = (y_true != pos_label)
     if not np.any(idx):
-        warnings.warn("generalized_fpr is ill-defined because there are no true"
-                      " negatives in y_true.", UndefinedMetricWarning)
+        warnings.warn("generalized_fpr is ill-defined because there are no "
+                      "negative samples in y_true.", UndefinedMetricWarning)
         return 0.
     if sample_weight is None:
-        return y_pred[idx].mean()
-    return np.average(y_pred[idx], weights=sample_weight[idx])
+        return probas_pred[idx].mean()
+    return np.average(probas_pred[idx], weights=sample_weight[idx])
 
-def generalized_fnr(y_true, y_pred, pos_label=1, sample_weight=None):
+def generalized_fnr(y_true, probas_pred, pos_label=1, sample_weight=None):
+    r"""Return the ratio of generalized false negatives to positive examples in
+    the dataset, :math:`GFNR = \tfrac{GFN}{P}`.
+
+    The generalized confusion matrix is calculated by summing the probabilities
+    of the positive class instead of the hard predictions.
+
+    Args:
+        y_true (array-like): Ground-truth (correct) target values.
+        probas_pred (array-like): Probability estimates of the positive class.
+        pos_label (scalar, optional): The label of the positive class.
+        sample_weight (array-like, optional): Sample weights.
+
+    Returns:
+        float: Generalized false negative rate. If there are no positive samples
+        in ``y_true``, this will raise an
+        :class:`~sklearn.exceptions.UndefinedMetricWarning` and return 0.
+    """
     idx = (y_true == pos_label)
     if not np.any(idx):
-        warnings.warn("generalized_fnr is ill-defined because there are no true"
-                      " positives in y_true.", UndefinedMetricWarning)
+        warnings.warn("generalized_fnr is ill-defined because there are no "
+                      "positive samples in y_true.", UndefinedMetricWarning)
         return 0.
     if sample_weight is None:
-        return 1 - y_pred[idx].mean()
-    return 1 - np.average(y_pred[idx], weights=sample_weight[idx])
+        return 1 - probas_pred[idx].mean()
+    return 1 - np.average(probas_pred[idx], weights=sample_weight[idx])
 
 
 # ============================ GROUP FAIRNESS ==================================
 def statistical_parity_difference(*y, prot_attr=None, priv_group=1, pos_label=1,
                                   sample_weight=None):
+    r"""Difference in selection rates.
+
+    .. math::
+        Pr(\hat{Y} = \text{pos_label} | D = \text{unprivileged})
+        - Pr(\hat{Y} = \text{pos_label} | D = \text{privileged})
+
+    Note:
+        If only ``y_true`` is provided, this will return the difference in base
+        rates (statistical parity difference of the original dataset).
+
+    Args:
+        y_true (array-like): Ground truth (correct) target values. If ``y_pred``
+            is provided, this is ignored.
+        y_pred (array-like, optional): Estimated targets as returned by a
+            classifier.
+        prot_attr (array-like, keyword-only): Protected attribute(s). If
+            ``None``, all protected attributes in ``y_true`` are used.
+        priv_group (scalar, optional): The label of the privileged group.
+        pos_label (scalar, optional): The label of the positive class.
+        sample_weight (array-like, optional): Sample weights.
+
+    Returns:
+        float: Statistical parity difference.
+    """
     rate = base_rate if len(y) == 1 or y[1] is None else selection_rate
     return difference(rate, *y, prot_attr=prot_attr, priv_group=priv_group,
                       pos_label=pos_label, sample_weight=sample_weight)
 
 def disparate_impact_ratio(*y, prot_attr=None, priv_group=1, pos_label=1,
                            sample_weight=None):
+    r"""Ratio of selection rates.
+
+    .. math::
+        \frac{Pr(\hat{Y} = \text{pos_label} | D = \text{unprivileged})}
+        {Pr(\hat{Y} = \text{pos_label} | D = \text{privileged})}
+
+    Note:
+        If only ``y_true`` is provided, this will return the ratio of base rates
+        (disparate impact of the original dataset).
+
+    Args:
+        y_true (array-like): Ground truth (correct) target values. If ``y_pred``
+            is provided, this is ignored.
+        y_pred (array-like, optional): Estimated targets as returned by a
+            classifier.
+        prot_attr (array-like, keyword-only): Protected attribute(s). If
+            ``None``, all protected attributes in ``y_true`` are used.
+        priv_group (scalar, optional): The label of the privileged group.
+        pos_label (scalar, optional): The label of the positive class.
+        sample_weight (array-like, optional): Sample weights.
+
+    Returns:
+        float: Disparate impact.
+    """
     rate = base_rate if len(y) == 1 or y[1] is None else selection_rate
     return ratio(rate, *y, prot_attr=prot_attr, priv_group=priv_group,
                  pos_label=pos_label, sample_weight=sample_weight)
 
 def equal_opportunity_difference(y_true, y_pred, prot_attr=None, priv_group=1,
                                  pos_label=1, sample_weight=None):
+    r"""A relaxed version of equality of opportunity.
+
+    Returns the difference in recall scores (TPR) between the unprivileged and
+    privileged groups. A value of 0 indicates equality of opportunity.
+
+    Args:
+        y_true (array-like): Ground truth (correct) target values.
+        y_pred (array-like): Estimated targets as returned by a classifier.
+        prot_attr (array-like, keyword-only): Protected attribute(s). If
+            ``None``, all protected attributes in ``y_true`` are used.
+        priv_group (scalar, optional): The label of the privileged group.
+        pos_label (scalar, optional): The label of the positive class.
+        sample_weight (array-like, optional): Sample weights.
+
+    Returns:
+        float: Equal opportunity difference.
+    """
     return difference(recall_score, y_true, y_pred, prot_attr=prot_attr,
                       priv_group=priv_group, pos_label=pos_label,
                       sample_weight=sample_weight)
 
 def average_odds_difference(y_true, y_pred, prot_attr=None, priv_group=1,
                             pos_label=1, neg_label=0, sample_weight=None):
+    r"""A relaxed version of equality of odds.
+
+    Returns the average of the difference in FPR and TPR for the unprivileged
+    and privileged groups:
+
+    .. math::
+
+        \dfrac{(FPR_{D = \text{unprivileged}} - FPR_{D = \text{privileged}})
+        + (TPR_{D = \text{unprivileged}} - TPR_{D = \text{privileged}})}{2}
+
+    A value of 0 indicates equality of odds.
+
+    Args:
+        y_true (array-like): Ground truth (correct) target values.
+        y_pred (array-like): Estimated targets as returned by a classifier.
+        prot_attr (array-like, keyword-only): Protected attribute(s). If
+            ``None``, all protected attributes in ``y_true`` are used.
+        priv_group (scalar, optional): The label of the privileged group.
+        pos_label (scalar, optional): The label of the positive class.
+        sample_weight (array-like, optional): Sample weights.
+
+    Returns:
+        float: Average odds difference.
+    """
     fpr_diff = -difference(specificity_score, y_true, y_pred,
                            prot_attr=prot_attr, priv_group=priv_group,
                            neg_label=neg_label, sample_weight=sample_weight)
@@ -196,6 +374,30 @@ def average_odds_difference(y_true, y_pred, prot_attr=None, priv_group=1,
 
 def average_odds_error(y_true, y_pred, prot_attr=None, priv_group=1,
                        pos_label=1, neg_label=0, sample_weight=None):
+    r"""A relaxed version of equality of odds.
+
+    Returns the average of the absolute difference in FPR and TPR for the
+    unprivileged and privileged groups:
+
+    .. math::
+
+        \dfrac{|FPR_{D = \text{unprivileged}} - FPR_{D = \text{privileged}}|
+        + |TPR_{D = \text{unprivileged}} - TPR_{D = \text{privileged}}|}{2}
+
+    A value of 0 indicates equality of odds.
+
+    Args:
+        y_true (array-like): Ground truth (correct) target values.
+        y_pred (array-like): Estimated targets as returned by a classifier.
+        prot_attr (array-like, keyword-only): Protected attribute(s). If
+            ``None``, all protected attributes in ``y_true`` are used.
+        priv_group (scalar, optional): The label of the privileged group.
+        pos_label (scalar, optional): The label of the positive class.
+        sample_weight (array-like, optional): Sample weights.
+
+    Returns:
+        float: Average odds error.
+    """
     fpr_diff = -difference(specificity_score, y_true, y_pred,
                            prot_attr=prot_attr, priv_group=priv_group,
                            neg_label=neg_label, sample_weight=sample_weight)
@@ -207,6 +409,23 @@ def average_odds_error(y_true, y_pred, prot_attr=None, priv_group=1,
 
 # ========================== INDIVIDUAL FAIRNESS ===============================
 def generalized_entropy_index(b, alpha=2):
+    r"""Generalized entropy index measures inequality over a population.
+
+    .. math::
+
+        \mathcal{E}(\alpha) = \begin{cases}
+            \frac{1}{n \alpha (\alpha-1)}\sum_{i=1}^n\left[\left(\frac{b_i}{\mu}\right)^\alpha - 1\right],& \alpha \ne 0, 1,\\
+            \frac{1}{n}\sum_{i=1}^n\frac{b_{i}}{\mu}\ln\frac{b_{i}}{\mu},& \alpha=1,\\
+            -\frac{1}{n}\sum_{i=1}^n\ln\frac{b_{i}}{\mu},& \alpha=0.
+        \end{cases}
+
+    Args:
+        b (array-like): Parameter over which to calculate the entropy index.
+        alpha (scalar): Parameter that regulates the weight given to distances
+            between values at different parts of the distribution. A value of 0
+            is equivalent to the mean log deviation, 1 is the Theil index, and 2
+            is half the squared coefficient of variation.
+    """
     if alpha == 0:
         return -(np.log(b / b.mean()) / b.mean()).mean()
     elif alpha == 1:
@@ -217,12 +436,65 @@ def generalized_entropy_index(b, alpha=2):
 
 def generalized_entropy_error(y_true, y_pred, alpha=2, pos_label=1):
     #                           sample_weight=None):
+    r"""Compute the generalized entropy.
+
+    Generalized entropy index is proposed as a unified individual and
+    group fairness measure in [#speicher18]_.
+
+    Uses :math:`b_i = \hat{y}_i - y_i + 1`. See
+    :func:`generalized_entropy_index` for details.
+
+    Args:
+        y_true (array-like): Ground truth (correct) target values.
+        y_pred (array-like): Estimated targets as returned by a classifier.
+        alpha (scalar, optional): Parameter that regulates the weight given to
+            distances between values at different parts of the distribution. A
+            value of 0 is equivalent to the mean log deviation, 1 is the Theil
+            index, and 2 is half the squared coefficient of variation.
+        pos_label (scalar, optional): The label of the positive class.
+
+    References:
+        .. [#speicher18] `T. Speicher, H. Heidari, N. Grgic-Hlaca,
+           K. P. Gummadi, A. Singla, A. Weller, and M. B. Zafar, "A Unified
+           Approach to Quantifying Algorithmic Unfairness: Measuring Individual
+           and Group Unfairness via Inequality Indices," ACM SIGKDD
+           International Conference on Knowledge Discovery and Data Mining,
+           2018. <https://dl.acm.org/citation.cfm?id=3220046>`_
+    """
     b = 1 + (y_pred == pos_label) - (y_true == pos_label)
     return generalized_entropy_index(b, alpha=alpha)
 
 def between_group_generalized_entropy_error(y_true, y_pred, prot_attr=None,
-                                            priv_group=None, alpha=2,
-                                            pos_label=1):
+        priv_group=None, alpha=2, pos_label=1):
+    r"""Compute the between-group generalized entropy.
+
+    Between-group generalized entropy index is proposed as a group
+    fairness measure in [#speicher18]_ and is one of two terms that the
+    generalized entropy index decomposes to.
+
+    Args:
+        y_true (array-like): Ground truth (correct) target values.
+        y_pred (array-like): Estimated targets as returned by a classifier.
+        prot_attr (array-like, optional): Protected attribute(s). If ``None``,
+            all protected attributes in ``y_true`` are used.
+        priv_group (scalar, optional): The label of the privileged group. If
+            provided, the index will be computed between only the privileged and
+            unprivileged groups. Otherwise, the index will be computed between
+            all groups defined by the ``prot_attr``.
+        alpha (scalar, optional): Parameter that regulates the weight given to
+            distances between values at different parts of the distribution. A
+            value of 0 is equivalent to the mean log deviation, 1 is the Theil
+            index, and 2 is half the squared coefficient of variation.
+        pos_label (scalar, optional): The label of the positive class.
+
+    References:
+        .. [#speicher18] `T. Speicher, H. Heidari, N. Grgic-Hlaca,
+           K. P. Gummadi, A. Singla, A. Weller, and M. B. Zafar, "A Unified
+           Approach to Quantifying Algorithmic Unfairness: Measuring Individual
+           and Group Unfairness via Inequality Indices," ACM SIGKDD
+           International Conference on Knowledge Discovery and Data Mining,
+           2018. <https://dl.acm.org/citation.cfm?id=3220046>`_
+    """
     groups, _ = check_groups(y_true, prot_attr)
     b = np.empty_like(y_true, dtype='float')
     if priv_group is not None:
@@ -233,16 +505,46 @@ def between_group_generalized_entropy_error(y_true, y_pred, prot_attr=None,
     return generalized_entropy_index(b, alpha=alpha)
 
 def theil_index(b):
+    r"""The Theil index is the :func:`generalized_entropy_index` with
+    :math:`\alpha = 1`.
+
+    Args:
+        b (array-like): Parameter over which to calculate the entropy index.
+    """
     return generalized_entropy_index(b, alpha=1)
 
 def coefficient_of_variation(b):
+    r"""The coefficient of variation is two times the square root of the
+    :func:`generalized_entropy_index` with :math:`\alpha = 2`.
+
+    Args:
+        b (array-like): Parameter over which to calculate the entropy index.
+    """
     return 2 * np.sqrt(generalized_entropy_index(b, alpha=2))
 
 
-# TODO: not technically a scorer but you should be allowed to score transformers
-# Is consistency_difference posible?
-# use sample_weight?
+# TODO: use sample_weight?
 def consistency_score(X, y, n_neighbors=5):
+    r"""Compute the consistency score.
+
+    Individual fairness metric from [#zemel13]_ that measures how similar the
+    labels are for similar instances.
+
+    .. math::
+        1 - \frac{1}{n\cdot\text{n_neighbors}}\sum_{i=1}^n |\hat{y}_i -
+        \sum_{j\in\mathcal{N}_{\text{n_neighbors}}(x_i)} \hat{y}_j|
+
+    Args:
+        X (array-like): Sample features.
+        y (array-like): Sample targets.
+        n_neighbors (int, optional): Number of neighbors for the knn
+            computation.
+
+    References:
+        .. [#zemel13] `R. Zemel, Y. Wu, K. Swersky, T. Pitassi, and C. Dwork,
+           "Learning Fair Representations," International Conference on Machine
+           Learning, 2013. <http://proceedings.mlr.press/v28/zemel13.html>`_
+    """
     # cast as ndarrays
     X, y = check_X_y(X, y)
     # learn a KNN on the features
@@ -267,7 +569,9 @@ def sensitivity_score(y_true, y_pred, pos_label=1, sample_weight=None):
 #     return 1 - specificity_score(y_true, y_pred, neg_label=neg_label,
 #                                  sample_weight=sample_weight)
 
-def mean_difference(*y, prot_attr=None, priv_group=1, pos_label=1, sample_weight=None):
+def mean_difference(*y, prot_attr=None, priv_group=1, pos_label=1,
+                    sample_weight=None):
     """Alias of :func:`statistical_parity_difference`."""
-    return statistical_parity_difference(*y, prot_attr=prot_attr, priv_group=priv_group,
-            pos_label=pos_label, sample_weight=sample_weight)
+    return statistical_parity_difference(*y, prot_attr=prot_attr,
+            priv_group=priv_group, pos_label=pos_label,
+            sample_weight=sample_weight)
