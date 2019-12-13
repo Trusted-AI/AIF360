@@ -15,14 +15,14 @@ adult = AdultDataset(instance_weights_name='fnlwgt', categorical_features=[],
 
 def test_calib_eq_odds_sex():
     logreg = LogisticRegression(solver='lbfgs', max_iter=500)
-    y_pred = logreg.fit(X, y, sample_weight=sample_weight).predict_proba(X)[:, 1]
+    y_pred = logreg.fit(X, y, sample_weight=sample_weight).predict_proba(X)
     adult_pred = adult.copy()
-    adult_pred.scores = y_pred
+    adult_pred.scores = y_pred[:, 1]
     orig_cal_eq_odds = CalibratedEqOddsPostprocessing(
             unprivileged_groups=[{'sex': 0}], privileged_groups=[{'sex': 1}])
     orig_cal_eq_odds.fit(adult, adult_pred)
     cal_eq_odds = CalibratedEqualizedOdds('sex')
-    cal_eq_odds.fit(y, y_pred, sample_weight=sample_weight)
+    cal_eq_odds.fit(y_pred, y, sample_weight=sample_weight)
 
     assert np.isclose(orig_cal_eq_odds.priv_mix_rate, cal_eq_odds.mix_rates_[1])
     assert np.isclose(orig_cal_eq_odds.unpriv_mix_rate, cal_eq_odds.mix_rates_[0])

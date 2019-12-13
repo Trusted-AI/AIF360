@@ -1,16 +1,24 @@
 import numpy as np
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.utils import check_random_state
+from sklearn.utils.validation import check_is_fitted
 
-from aif360.sklearn.metrics import base_rate, generalized_fnr, generalized_fpr
+from aif360.sklearn.metrics import difference, base_rate
+from aif360.sklearn.metrics import generalized_fnr, generalized_fpr
 from aif360.sklearn.utils import check_groups
 
 
 class CalibratedEqualizedOdds(BaseEstimator, ClassifierMixin):
-    """Calibrated equalized odds postprocessing is a post-processing technique
-    that optimizes over calibrated classifier score outputs to find
-    probabilities with which to change output labels with an equalized odds
-    objective [#pleiss17]_.
+    """Calibrated equalized odds post-processor.
+
+    Calibrated equalized odds is a post-processing technique that optimizes over
+    calibrated classifier score outputs to find probabilities with which to
+    change output labels with an equalized odds objective [#pleiss17]_.
+
+    Note:
+        This breaks the sckit-learn API by requiring fit params ``y_true``,
+        ``y_pred``, and ``pos_label`` and predict param ``y_pred``. See
+        :class:`PostProcessingMeta` for a workaround.
 
     References:
         .. [#pleiss17] `G. Pleiss, M. Raghavan, F. Wu, J. Kleinberg, and
@@ -20,78 +28,125 @@ class CalibratedEqualizedOdds(BaseEstimator, ClassifierMixin):
 
     Adapted from:
     https://github.com/gpleiss/equalized_odds_and_calibration/blob/master/calib_eq_odds.py
+
+    Attributes:
+        prot_attr_ (str or list(str)): Protected attribute(s) used for post-
+            processing.
+        groups_ (array, shape (2,)): A list of group labels known to the
+            classifier. Note: this algorithm require a binary division of the
+            data.
+        classes_ (array, shape (num_classes,)): A list of class labels known to
+            the classifier. Note: this algorithm treats all non-positive
+            outcomes as negative (binary classification only).
+        pos_label_ (scalar): The label of the positive class.
+        mix_rates_ (array, shape (2,)): The interpolation parameters -- the
+            probability of randomly returning the group's base rate. The group
+            for which the cost function is higher is set to 0.
     """
     def __init__(self, prot_attr=None, cost_constraint='weighted',
                  random_state=None):
         """
         Args:
             prot_attr (single label or list-like, optional): Protected
-                attribute(s) to use as sensitive attribute(s) in the post-
-                processing. If more than one attribute, all combinations of
-                values (intersections) are considered. Default is ``None``
-                meaning all protected attributes from the dataset are used.
-                Note: This algorithm requires there be exactly 2 groups
-                (privileged and unprivileged).
-            cost_constraint ('fpr', 'fnr', or 'weighted'):
-            random_state (int or numpy.RandomState, optional):
+                attribute(s) to use in the post-processing. If more than one
+                attribute, all combinations of values (intersections) are
+                considered. Default is ``None`` meaning all protected attributes
+                from the dataset are used. Note: This algorithm requires there
+                be exactly 2 groups (privileged and unprivileged).
+            cost_constraint ('fpr', 'fnr', or 'weighted'): Which equal-cost
+                constraint to satisfy: generalized false positive rate ('fpr'),
+                generalized false negative rate ('fnr'), or a weighted
+                combination of both ('weighted').
+            random_state (int or numpy.RandomState, optional): Seed of pseudo-
+                random number generator for shuffling data.
         """
         self.prot_attr = prot_attr
         self.cost_constraint = cost_constraint
         self.random_state = random_state
 
-    def fit(self, y_true, y_pred, pos_label=1, sample_weight=None):
+    def _weighted_cost(self, y_true, probas_pred, pos_label, sample_weight):
+        """Evaluates the cost function specified by ``self.cost_constraint``."""
+        fpr = generalized_fpr(y_true, probas_pred, pos_label, sample_weight)
+        fnr = generalized_fnr(y_true, probas_pred, pos_label, sample_weight)
+        br = base_rate(y_true, probas_pred, pos_label, sample_weight)
+        if self.cost_constraint == 'fpr':
+            return fpr
+        elif self.cost_constraint == 'fnr':
+            return fnr
+        elif self.cost_constraint == 'weighted':
+            return fpr * (1 - br) + fnr * br
+        else:
+            raise ValueError("`cost_constraint` must be one of: 'fpr', 'fnr', "
+                             "or 'weighted'")
+
+    def fit(self, y_pred, y_true, labels=None, pos_label=1, sample_weight=None):
+        """Compute the mixing rates required to satisfy the cost constraint.
+
+        Args:
+            y_pred (array-like): Probability estimates of the targets as
+                returned by a ``predict_proba()`` call or equivalent.
+            y_true (array-like): Ground-truth (correct) target values.
+            labels (list, optional): The ordered set of labels values. Must
+                match the order of columns in ``y_pred`` if provided. By
+                default, all labels in ``y_true`` are used in sorted order.
+            pos_label (scalar, optional): The label of the positive class.
+            sample_weight (array-like, optional): Sample weights.
+
+        Returns:
+            CalibratedEqualizedOdds: self.
+        """
         groups, self.prot_attr_ = check_groups(y_true, self.prot_attr)
-        self.classes_ = np.unique(y_true)
+        self.classes_ = labels if labels is not None else np.unique(y_true)
         self.groups_ = np.unique(groups)
+        self.pos_label_ = pos_label
+
+        if len(self.classes_) > 2:
+            raise ValueError('Only binary classification is supported.')
 
         if pos_label not in self.classes_:
-            raise ValueError('pos_label={} is not present in y_true. The valid '
-                             'values are:\n{}'.format(pos_label, self.classes_))
+            raise ValueError('pos_label={} is not in the set of labels. The '
+                    'valid values are:\n{}'.format(pos_label, self.classes_))
 
         if len(self.groups_) != 2:
             raise ValueError('prot_attr={}\nyielded {} groups:\n{}\nbut this '
-                             'algorithm requires a binary division of the '
-                             'data.'.format(self.prot_attr_, len(self.groups_),
-                                            self.groups_))
+                    'algorithm requires a binary division of the data.'.format(
+                            self.prot_attr_, len(self.groups_), self.groups_))
 
-        # ensure self.classes_ = [neg_label, pos_label]
-        self.classes_ = np.append(np.delete(self.classes_, pos_label),
-                                  pos_label)
+        y_pred = y_pred[:, np.nonzero(self.classes_ == self.pos_label_)[0][0]]
 
-        def args(grp_idx, triv=False):
-            i = (groups == self.groups_[grp_idx])
+        # local function to return corresponding args for metric evaluation
+        def _args(grp_idx, triv=False):
+            idx = (groups == self.groups_[grp_idx])
             pred = (np.full_like(y_pred, self.base_rates_[grp_idx]) if triv else
                     y_pred)
-            return dict(y_true=y_true[i], y_pred=pred[i], pos_label=pos_label,
-                        sample_weight=None if sample_weight is None
-                                      else sample_weight[i])
+            return [y_true[idx], pred[idx], pos_label,
+                    sample_weight[idx] if sample_weight is not None else None]
 
-        self.base_rates_ = [base_rate(**args(i)) for i in range(2)]
+        self.base_rates_ = [base_rate(*_args(i)) for i in range(2)]
 
-        def weighted_cost(grp_idx, triv=False):
-            fpr = generalized_fpr(**args(grp_idx, triv=triv))
-            fnr = generalized_fnr(**args(grp_idx, triv=triv))
-            base_rate = self.base_rates_[grp_idx]
-            if self.cost_constraint == 'fpr':
-                return fpr
-            elif self.cost_constraint == 'fnr':
-                return fnr
-            elif self.cost_constraint == 'weighted':
-                return fpr * (1 - base_rate) + fnr * base_rate
-            else:
-                raise ValueError("`cost_constraint` must be one of: 'fpr', "
-                                 "'fnr', or 'weighted'")
-
-        costs = [weighted_cost(i) for i in range(2)]
+        costs = [self._weighted_cost(*_args(i)) for i in range(2)]
         self.mix_rates_ = [(costs[1] - costs[0])
-                           / (weighted_cost(0, triv=True) - costs[0]),
+                         / (self._weighted_cost(*_args(0, True)) - costs[0]),
                            (costs[0] - costs[1])
-                           / (weighted_cost(1, triv=True) - costs[1])]
+                         / (self._weighted_cost(*_args(1, True)) - costs[1])]
         self.mix_rates_[np.argmax(costs)] = 0
 
         return self
 
     def predict_proba(self, y_pred):
+        """The returned estimates for all classes are ordered by the label of
+        classes.
+
+        Args:
+            y_pred (array-like): Probability estimates of the targets as
+                returned by a ``predict_proba()`` call or equivalent.
+
+        Returns:
+            numpy.ndarray: Returns the probability of the sample for each class
+            in the model, where classes are ordered as they are in
+            ``self.classes_``.
+        """
+        check_is_fitted(self, 'mix_rates_')
         rng = check_random_state(self.random_state)
 
         groups, _ = check_groups(y_pred, self.prot_attr_)
@@ -99,6 +154,9 @@ class CalibratedEqualizedOdds(BaseEstimator, ClassifierMixin):
             raise ValueError('The protected groups from y_pred:\n{}\ndo not '
                              'match those from the training set:\n{}'.format(
                                      np.unique(groups), self.groups_))
+
+        pos_idx = np.nonzero(self.classes_ == self.pos_label_)[0][0]
+        y_pred = y_pred[:, pos_idx]
 
         yt = np.empty_like(y_pred)
         for grp_idx in range(2):
@@ -108,8 +166,39 @@ class CalibratedEqualizedOdds(BaseEstimator, ClassifierMixin):
             new_preds[to_replace] = self.base_rates_[grp_idx]
             yt[i] = new_preds
 
-        return np.stack([1 - yt, yt], axis=-1)
+        return np.c_[1 - yt, yt] if pos_idx == 1 else np.c_[yt, 1 - yt]
 
     def predict(self, y_pred):
+        """Predict class labels for the given scores.
+
+        Args:
+            y_pred (array-like): Probability estimates of the targets as
+                returned by a ``predict_proba()`` call or equivalent.
+
+        Returns:
+            numpy.ndarray: Predicted class label per sample.
+        """
         scores = self.predict_proba(y_pred)
-        return self.classes_[scores.argmax(axis=1)]
+        return self.classes[scores.argmax(axis=1)]
+
+    def score(self, y_pred, y_true, sample_weight=None):
+        """Score the predictions according to the cost constraint specified.
+
+        Args:
+            y_pred (array-like): Probability estimates of the targets as
+                returned by a ``predict_proba()`` call or equivalent.
+            y_true (array-like): Ground-truth (correct) target values.
+            sample_weight (array-like, optional): Sample weights.
+
+        Returns:
+            float: Absolute value of the difference in cost function for the two
+            groups (e.g. :func:`~aif360.sklearn.metrics.generalized_fpr` if
+            ``self.cost_constraint`` is 'fpr')
+        """
+        check_is_fitted(self, ['classes_', 'pos_label_'])
+        pos_idx = np.nonzero(self.classes_ == self.pos_label_)[0][0]
+        probas_pred = self.predict_proba(y_pred)[:, pos_idx]
+
+        return abs(difference(self._weighted_cost, y_true, probas_pred,
+                prot_attr=self.prot_attr_, priv_group=self.groups_[1],
+                sample_weight=sample_weight))
