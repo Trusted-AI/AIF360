@@ -1,3 +1,7 @@
+"""
+Post-processing algorithms modify predictions to be more fair (predictions in,
+predictions out).
+"""
 from logging import warning
 
 import numpy as np
@@ -11,7 +15,16 @@ from aif360.sklearn.postprocessing.calibrated_equalized_odds import CalibratedEq
 
 
 class PostProcessingMeta(BaseEstimator, MetaEstimatorMixin):
-    """
+    """A meta-estimator which wraps a given estimator with a post-processing
+    step.
+
+    The post-processor trains on a separate training set from the estimator to
+    prevent leakage.
+
+    Note:
+        Because of the dataset splitting, if a Pipeline is necessary it should
+        be used as the input to this meta-estimator not the other way around.
+
     Attributes:
         estimator_: Cloned ``estimator``.
         postprocessor_: Cloned ``postprocessor``.
@@ -40,6 +53,7 @@ class PostProcessingMeta(BaseEstimator, MetaEstimatorMixin):
         """
         self.estimator = estimator
         self.postprocessor = postprocessor
+        self.use_proba = use_proba
         self.val_size = val_size
         self.options = options
 
@@ -47,9 +61,26 @@ class PostProcessingMeta(BaseEstimator, MetaEstimatorMixin):
     def _estimator_type(self):
         return self.postprocessor._estimator_type
 
-    def fit(self, X, y, pos_label=1, sample_weight=None):
-        self.pos_label_ = pos_label
-        self.use_proba_ = isinstance(self.postprocessor, CalibratedEqualizedOdds)
+    def fit(self, X, y, sample_weight=None, **fit_params):
+        """Splits the training samples with
+        :func:`~sklearn.model_selection.train_test_split` and uses the resultant
+        'train' portion to train the estimator. Then the estimator predicts on
+        the 'test' portion of the split data and the post-processor is trained
+        with those prediction-ground-truth target pairs.
+
+        Args:
+            X (array-like): Training samples.
+            y (array-like): Training labels.
+            sample_weight (array-like, optional): Sample weights.
+            **fit_params: Parameters passed to the post-processor ``fit``
+                method. Note: these do not need to be prefixed with ``__``
+                notation.
+
+        Returns:
+            PostProcessingMeta: self.
+        """
+        self.use_proba_ = (self.use_proba if self.use_proba is not None else
+                isinstance(self.postprocessor, CalibratedEqualizedOdds))
         if self.use_proba_ and not hasattr(self.estimator, 'predict_proba'):
             raise TypeError("`estimator` (type: {}) does not implement method "
                             "`predict_proba()`.".format(type(self.estimator)))
@@ -72,48 +103,100 @@ class PostProcessingMeta(BaseEstimator, MetaEstimatorMixin):
             X_est, X_post, y_est, y_post = train_test_split(X, y, **options_)
             self.estimator_.fit(X_est, y_est)
 
-        pos_idx = np.nonzero(self.estimator_.classes_ == pos_label)[0][0]
         y_pred = (self.estimator_.predict(X_post) if not self.use_proba_ else
-                  self.estimator_.predict_proba(X_post)[:, pos_idx])
-        self.postprocessor_.fit(y_post, y_pred, pos_label=pos_label,
-                sample_weight=None if sample_weight is None else sw_post)
+                  self.estimator_.predict_proba(X_post))
+        # fit_params = fit_params.copy().update(labels=self.estimator_.classes_)
+        self.postprocessor_.fit(y_pred, y_post, sample_weight=sw_post
+                                if sample_weight is not None else None,
+                                **fit_params)
         return self
-
-    @property
-    def classes_(self):
-        # order of postprocessor.classes_ may differ from estimator_.classes_
-        check_is_fitted(self.postprocessor_, 'classes_')
-        return self.postprocessor_.classes_
 
     @if_delegate_has_method('postprocessor_')
     def predict(self, X):
-        pos_idx = np.nonzero(self.estimator_.classes_ == self.pos_label_)[0][0]
+        """Predict class labels for the given samples.
+
+        First, runs ``self.estimator_.predict`` (or ``predict_proba`` if
+        ``self.use_proba_`` is ``True``) then returns the post-processed output
+        from those predictions.
+
+        Args:
+            X (array-like): Test samples.
+
+        Returns:
+            numpy.ndarray: Predicted class label per sample.
+        """
         y_pred = (self.estimator_.predict(X) if not self.use_proba_ else
-                  self.estimator_.predict_proba(X)[:, pos_idx])
+                  self.estimator_.predict_proba(X))
         y_pred = pd.Series(y_pred, index=X.index)
         return self.postprocessor_.predict(y_pred)
 
     @if_delegate_has_method('postprocessor_')
     def predict_proba(self, X):
-        pos_idx = np.nonzero(self.estimator_.classes_ == self.pos_label_)[0][0]
+        """Probability estimates.
+
+        First, runs ``self.estimator_.predict`` (or ``predict_proba`` if
+        ``self.use_proba_`` is ``True``) then returns the post-processed output
+        from those predictions.
+
+        The returned estimates for all classes are ordered by the label of
+        classes.
+
+        Args:
+            X (array-like): Test samples.
+
+        Returns:
+            numpy.ndarray: Returns the probability of the sample for each class
+            in the model, where classes are ordered as they are in
+            ``self.classes_``.
+        """
         y_pred = (self.estimator_.predict(X) if not self.use_proba_ else
-                  self.estimator_.predict_proba(X)[:, pos_idx])
+                  self.estimator_.predict_proba(X))
         y_pred = pd.Series(y_pred, index=X.index)
         return self.postprocessor_.predict_proba(y_pred)
 
     @if_delegate_has_method('postprocessor_')
     def predict_log_proba(self, X):
-        pos_idx = np.nonzero(self.estimator_.classes_ == self.pos_label_)[0][0]
+        """Log of probability estimates.
+
+        First, runs ``self.estimator_.predict`` (or ``predict_proba`` if
+        ``self.use_proba_`` is ``True``) then returns the post-processed output
+        from those predictions.
+
+        The returned estimates for all classes are ordered by the label of
+        classes.
+
+        Args:
+            X (array-like): Test samples.
+
+        Returns:
+            array: Returns the log-probability of the sample for each class in
+            the model, where classes are ordered as they are in
+            ``self.classes_``.
+        """
         y_pred = (self.estimator_.predict(X) if not self.use_proba_ else
-                  self.estimator_.predict_proba(X)[:, pos_idx])
+                  self.estimator_.predict_proba(X))
         y_pred = pd.Series(y_pred, index=X.index)
         return self.postprocessor_.predict_log_proba(y_pred)
 
     @if_delegate_has_method('postprocessor_')
     def score(self, X, y, sample_weight=None):
-        pos_idx = np.nonzero(self.estimator_.classes_ == self.pos_label_)[0][0]
+        """Returns the output of the post-processor's score function on the
+        given test data and labels.
+
+        First, runs ``self.estimator_.predict`` (or ``predict_proba`` if
+        ``self.use_proba_`` is ``True``) then gets the post-processed output
+        from those predictions and scores it.
+
+        Args:
+            X (array-like): Test samples.
+            y (array-like): True labels for ``X``.
+            sample_weight (array-like, optional): Sample weights.
+
+        Returns:
+            float: Score value.
+        """
         y_pred = (self.estimator_.predict(X) if not self.use_proba_ else
-                  self.estimator_.predict_proba(X)[:, pos_idx])
+                  self.estimator_.predict_proba(X))
         y_pred = pd.Series(y_pred, index=X.index)
         return self.postprocessor_.score(y_pred, y, sample_weight=sample_weight)
 
