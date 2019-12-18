@@ -19,7 +19,7 @@ Below is a list of additional notebooks that demonstrate the use of AIF360.
 
 [demo_calibrated_eqodds_postprocessing.ipynb](demo_calibrated_eqodds_postprocessing.ipynb): demonstrates the use of an odds-equalizing post-processing algorithm for bias mitigiation
 
-[demo_disparate_impact_remover.ipynb](demo_calibrated_eqodds_postprocessing.ipynb): demonstrates the use of a disparate impact remover pre-processing algorithm for bias mitigiation
+[demo_disparate_impact_remover.ipynb](demo_disparate_impact_remover.ipynb): demonstrates the use of a disparate impact remover pre-processing algorithm for bias mitigiation
 
 [demo_json_explainers.ipynb](demo_json_explainers.ipynb): 
 
@@ -30,6 +30,8 @@ Below is a list of additional notebooks that demonstrate the use of AIF360.
 [demo_reject_option_classification.ipynb](demo_reject_option_classification.ipynb): demonstrates the use of the Reject Option Classification (ROC) post-processing algorithm for bias mitigation
 
 [demo_reweighing_preproc.ipynb](demo_reweighing_preproc.ipynb):  demonstrates the use of a reweighing pre-processing algorithm for bias mitigation
+
+[demo_pre_in_postproc.ipynb](demo_reweighing_preproc.ipynb):  demonstrates the use of a reweighing pre-processing, adversarial debiasing in-processing and Reject Option Classification (ROC) for bias mitigation
 
 
 
