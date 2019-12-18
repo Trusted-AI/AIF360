@@ -31,7 +31,7 @@ Below is a list of additional notebooks that demonstrate the use of AIF360.
 
 [demo_reweighing_preproc.ipynb](demo_reweighing_preproc.ipynb):  demonstrates the use of a reweighing pre-processing algorithm for bias mitigation
 
-[demo_pre_in_postproc.ipynb](demo_reweighing_preproc.ipynb):  demonstrates the use of a reweighing pre-processing, adversarial debiasing in-processing and Reject Option Classification (ROC) for bias mitigation
+[demo_pre_in_postproc.ipynb](demo_pre_in_postproc.ipynb):  demonstrates the use of a reweighing pre-processing, adversarial debiasing in-processing and Reject Option Classification (ROC) post-processing for bias mitigation
 
 
 
