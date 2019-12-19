@@ -16,15 +16,15 @@ def check_already_dropped(labels, dropped_cols, name, dropped_by='numeric_only',
     Args:
         labels (single label or list-like): Column labels to check.
         dropped_cols (set or pandas.Index): Columns that were already dropped.
-        name (str): Original arg that triggered the check (e.g. ``dropcols``).
-        dropped_by (str, optional): Original arg that caused ``dropped_cols``
-            (e.g. ``numeric_only``).
+        name (str): Original arg that triggered the check (e.g. dropcols).
+        dropped_by (str, optional): Original arg that caused dropped_cols``
+            (e.g. numeric_only).
         warn (bool, optional): If ``True``, produces a
             :class:`ColumnAlreadyDroppedWarning` if there are columns in the
-            intersection of ``dropped_cols`` and ``labels``.
+            intersection of dropped_cols and labels.
 
     Returns:
-        list: Columns in ``labels`` which are not in ``dropped_cols``.
+        list: Columns in labels which are not in dropped_cols.
     """
     if not is_list_like(labels):
         labels = [labels]

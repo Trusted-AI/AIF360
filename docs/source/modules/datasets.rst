@@ -1,30 +1,38 @@
+========
+Datasets
+========
+
 :mod:`aif360.datasets`
 ======================
 
 .. automodule:: aif360.datasets
+    :no-members:
+    :no-inherited-members:
 
-Base Class
-----------
+Base classes
+------------
 
-.. autoclass:: Dataset
-    :members:
+.. currentmodule:: aif360
 
-Structured Dataset
-------------------
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
 
-.. autoclass:: StructuredDataset
-    :members:
+   datasets.Dataset
+   datasets.StructuredDataset
+   datasets.BinaryLabelDataset
+   datasets.StandardDataset
 
-Binary Label Dataset
---------------------
+Common datasets
+---------------
 
-.. autoclass:: BinaryLabelDataset
-    :members:
+.. currentmodule:: aif360
 
-Standard Datasets
------------------
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
 
-.. toctree::
-   :maxdepth: 2
-
-   standard_datasets
+   datasets.AdultDataset
+   datasets.BankDataset
+   datasets.CompasDataset
+   datasets.GermanDataset

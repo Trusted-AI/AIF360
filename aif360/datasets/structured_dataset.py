@@ -432,14 +432,25 @@ class StructuredDataset(Dataset):
         return None
 
     def split(self, num_or_size_splits, shuffle=False, seed=None):
-        """Split the dataset into multiple datasets
+        """Split this dataset into multiple partitions.
+
         Args:
-            num_or_size_splits (list or int):
-            shuffle (bool):
-            seed (int or array_like): takes the same argument as `numpy.random.seed()`
-            function
+            num_or_size_splits (array or int): If `num_or_size_splits` is an
+                int, *k*, the value is the number of equal-sized folds to make
+                (if *k* does not evenly divide the dataset these folds are
+                approximately equal-sized). If `num_or_size_splits` is an array
+                of type int, the values are taken as the indices at which to
+                split the dataset. If the values are floats (< 1.), they are
+                considered to be fractional proportions of the dataset at which
+                to split.
+            shuffle (bool, optional): Randomly shuffle the dataset before
+                splitting.
+            seed (int or array_like): Takes the same argument as
+                :func:`numpy.random.seed()`.
+
         Returns:
-            list: Each element of this list is a dataset obtained during the split
+            list: Splits. Contains *k* or `len(num_or_size_splits) + 1`
+            datasets depending on `num_or_size_splits`.
         """
 
         # Set seed

@@ -1,14 +1,28 @@
 import numpy as np
+import pandas as pd
 from pandas.core.dtypes.common import is_list_like
 from sklearn.utils import check_consistent_length
 from sklearn.utils.validation import column_or_1d
 
 
-def check_inputs(X, y, sample_weight=None):
-    if not hasattr(X, 'index'):
-        raise TypeError("Expected `DataFrame`, got {} instead.".format(
-            type(X).__name__))
-    y = column_or_1d(y)
+def check_inputs(X, y, sample_weight=None, ensure_2d=True):
+    """Input validation for debiasing algorithms.
+
+    Checks all inputs for consistent length, validates shapes (optional for X),
+    and returns an array of all ones if sample_weight is ``None``.
+
+    Args:
+        X (array-like): Input data.
+        y (array-like, shape = (n_samples,)): Target values.
+        sample_weight (array-like): Sample weights.
+        ensure_2d (bool, optional): Whether to raise a ValueError if X is not
+            2D.
+    """
+    if ensure_2d and X.ndim != 2:
+        raise ValueError("Expected X to be 2D, got ndim == {} instead.".format(
+                X.ndim))
+    if not isinstance(y, pd.Series):  # don't cast Series -> ndarray
+        y = column_or_1d(y)
     if sample_weight is not None:
         sample_weight = column_or_1d(sample_weight)
     else:
@@ -17,13 +31,18 @@ def check_inputs(X, y, sample_weight=None):
     return X, y, sample_weight
 
 def check_groups(arr, prot_attr, ensure_binary=False):
-    """Validates ``arr`` and returns ``groups`` and ``prot_attr``.
+    """Get groups from the index of arr.
+
+    If there are multiple protected attributes provided, the index is flattened
+    to be a 1-D Index of tuples. If ensure_binary is ``True``, raises a
+    ValueError if there are not exactly two unique groups. Also checks that all
+    provided protected attributes are in the index.
 
     Args:
         arr (`pandas.Series` or `pandas.DataFrame`): A Pandas object containing
             protected attribute information in the index.
         prot_attr (single label or list-like): Protected attribute(s). If
-            ``None``, all protected attributes in ``arr`` are used.
+            ``None``, all protected attributes in arr are used.
         ensure_binary (bool): Raise an error if the resultant groups are not
             binary.
 
@@ -31,7 +50,7 @@ def check_groups(arr, prot_attr, ensure_binary=False):
         tuple:
 
             * **groups** (`pandas.Index`) -- Label (or tuple of labels) of
-              protected attribute for each sample in ``arr``.
+              protected attribute for each sample in arr.
             * **prot_attr** (list-like) -- Modified input. If input is a single
               label, returns single-item list. If input is ``None`` returns list
               of all protected attributes.

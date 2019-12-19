@@ -85,11 +85,11 @@ class AdversarialDebiasing(BaseEstimator, ClassifierMixin):
         given training data.
 
         Args:
-            X (array-like): Training samples.
+            X (pandas.DataFrame): Training samples.
             y (array-like): Training labels.
 
         Returns:
-            AdversarialDebiasing: self.
+            self
         """
         X, y, _ = check_inputs(X, y)
         rng = check_random_state(self.random_state)
@@ -268,7 +268,7 @@ class AdversarialDebiasing(BaseEstimator, ClassifierMixin):
         """Soft prediction scores.
 
         Args:
-            X (array-like): Test samples.
+            X (pandas.DataFrame): Test samples.
 
         Returns:
             numpy.ndarray: Confidence scores per (sample, class) combination. In
@@ -309,7 +309,7 @@ class AdversarialDebiasing(BaseEstimator, ClassifierMixin):
         classes.
 
         Args:
-            X (array-like): Test samples.
+            X (pandas.DataFrame): Test samples.
 
         Returns:
             numpy.ndarray: Returns the probability of the sample for each class
@@ -328,7 +328,7 @@ class AdversarialDebiasing(BaseEstimator, ClassifierMixin):
         """Predict class labels for the given samples.
 
         Args:
-            X (array-like): Test samples.
+            X (pandas.DataFrame): Test samples.
 
         Returns:
             numpy.ndarray: Predicted class label per sample.

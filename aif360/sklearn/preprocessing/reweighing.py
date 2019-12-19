@@ -48,7 +48,7 @@ class Reweighing(BaseEstimator):
         self.prot_attr = prot_attr
 
     def fit(self, X, y, sample_weight=None):
-        """Only ``fit_transform`` is allowed for this algorithm."""
+        """Only :meth:`fit_transform` is allowed for this algorithm."""
         self.fit_transform(X, y, sample_weight=sample_weight)
         return self
 
@@ -57,15 +57,16 @@ class Reweighing(BaseEstimator):
         sample weights.
 
         Args:
-            X (array-like): Training samples.
+            X (pandas.DataFrame): Training samples.
             y (array-like): Training labels.
             sample_weight (array-like, optional): Sample weights.
 
         Returns:
             tuple:
+                Samples and their weights.
 
-                **X** -- Unchanged samples.
-                **sample_weight** -- Transformed sample weights.
+                * **X** -- Unchanged samples.
+                * **sample_weight** -- Transformed sample weights.
         """
         X, y, sample_weight = check_inputs(X, y, sample_weight)
 
@@ -120,12 +121,12 @@ class ReweighingMeta(BaseEstimator, MetaEstimatorMixin):
         samples.
 
         Args:
-            X (array-like): Training samples.
+            X (pandas.DataFrame): Training samples.
             y (array-like): Training labels.
             sample_weight (array-like, optional): Sample weights.
 
         Returns:
-            ReweighingMeta: self.
+            self
         """
         if not has_fit_parameter(self.estimator, 'sample_weight'):
             raise TypeError("`estimator` (type: {}) does not have fit parameter"
@@ -191,7 +192,7 @@ class ReweighingMeta(BaseEstimator, MetaEstimatorMixin):
 
         Args:
             X (array-like): Test samples.
-            y (array-like): True labels for ``X``.
+            y (array-like): True labels for X.
             sample_weight (array-like, optional): Sample weights.
 
         Returns:

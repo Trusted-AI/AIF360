@@ -17,11 +17,11 @@ def fetch_compas(data_home=None, binary_race=False,
                  dropcols=[], numeric_only=False, dropna=True):
     """Load the COMPAS Recidivism Risk Scores dataset.
 
-    Optionally binarizes 'race' to 'Caucasian' (privileged) or 'African-American'
-    (unprivileged). The other protected attribute is 'sex' ('Male' is
-    *unprivileged* and 'Female' is *privileged*). The outcome variable is
-    'no recid.' (favorable) if the person was not accused of a crime within two
-    years or 'did recid.' (unfavorable) if they were.
+    Optionally binarizes 'race' to 'Caucasian' (privileged) or
+    'African-American' (unprivileged). The other protected attribute is 'sex'
+    ('Male' is *unprivileged* and 'Female' is *privileged*). The outcome
+    variable is 'no recid.' (favorable) if the person was not accused of a crime
+    within two years or 'did recid.' (unfavorable) if they were.
 
     Args:
         data_home (string, optional): Specify another download and cache folder
@@ -59,11 +59,14 @@ def fetch_compas(data_home=None, binary_race=False,
     for col in ['sex', 'age_cat', 'race', 'c_charge_degree', 'c_charge_desc']:
         df[col] = df[col].astype('category')
 
-    df.two_year_recid = df.two_year_recid.replace({0: 'no recid.', 1: 'did recid.'}).astype('category').cat.as_ordered()  # 'did recid' < 'no recid'
+    # 'did recid' < 'no recid'
+    df.two_year_recid = df.two_year_recid.replace({0: 'no recid.',
+            1: 'did recid.'}).astype('category').cat.as_ordered()
 
     if binary_race:
+        # 'African-American' < 'Caucasian'
         df.race = df.race.cat.set_categories(['African-American', 'Caucasian'],
-                                             ordered=True)  # 'African-American' < 'Caucasian'
+                                             ordered=True)
 
     df.sex = df.sex.astype('category').cat.as_ordered()  # 'Female' < 'Male'
 

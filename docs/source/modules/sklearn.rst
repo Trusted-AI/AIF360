@@ -4,7 +4,7 @@
 
 This is the class and function reference for the `scikit-learn`-compatible
 version of the AIF360 API. It is functionally equivalent to the normal API but
-it uses scikit-learn paradigms (where possible) and Pandas `DataFrames` for
+it uses scikit-learn paradigms (where possible) and :class:`pandas.DataFrame` for
 datasets. Not all functionality from AIF360 is supported yet. See
 `Getting Started <https://github.com/IBM/AIF360/aif360/sklearn/examples/Getting%20Started.ipynb>`_
 for a demo of the capabilities.
@@ -27,14 +27,12 @@ Utils
 .. autosummary::
    :toctree: generated/
    :template: class.rst
-   :nosignatures:
 
    datasets.ColumnAlreadyDroppedWarning
 
 .. autosummary::
    :toctree: generated/
    :template: base.rst
-   :nosignatures:
 
    datasets.check_already_dropped
    datasets.standardize_dataset
@@ -46,7 +44,6 @@ Loaders
 .. autosummary::
    :toctree: generated/
    :template: base.rst
-   :nosignatures:
 
    datasets.fetch_adult
    datasets.fetch_german
@@ -67,7 +64,6 @@ Meta-metrics
 .. autosummary::
    :toctree: generated/
    :template: base.rst
-   :nosignatures:
 
    metrics.difference
    metrics.ratio
@@ -79,7 +75,6 @@ Scorers
 .. autosummary::
    :toctree: generated/
    :template: base.rst
-   :nosignatures:
 
    metrics.make_difference_scorer
    metrics.make_ratio_scorer
@@ -91,7 +86,6 @@ Generic metrics
 .. autosummary::
    :toctree: generated/
    :template: base.rst
-   :nosignatures:
 
    metrics.specificity_score
    metrics.sensitivity_score
@@ -107,7 +101,6 @@ Group fairness metrics
 .. autosummary::
    :toctree: generated/
    :template: base.rst
-   :nosignatures:
 
    metrics.statistical_parity_difference
    metrics.mean_difference
@@ -124,7 +117,6 @@ Individual fairness metrics
 .. autosummary::
    :toctree: generated/
    :template: base.rst
-   :nosignatures:
 
    metrics.generalized_entropy_index
    metrics.generalized_entropy_error
@@ -132,7 +124,7 @@ Individual fairness metrics
    metrics.coefficient_of_variation
    metrics.consistency_score
 
-:mod:`aif360.sklearn.preprocessing`: Pre-processing Algorithms
+:mod:`aif360.sklearn.preprocessing`: Pre-processing algorithms
 ==============================================================
 
 .. automodule:: aif360.sklearn.preprocessing
@@ -146,7 +138,6 @@ Pre-processors
 .. autosummary::
    :toctree: generated/
    :template: class.rst
-   :nosignatures:
 
    preprocessing.Reweighing
 
@@ -157,11 +148,10 @@ Meta-Estimator
 .. autosummary::
    :toctree: generated/
    :template: class.rst
-   :nosignatures:
 
    preprocessing.ReweighingMeta
 
-:mod:`aif360.sklearn.inprocessing`: In-processing Algorithms
+:mod:`aif360.sklearn.inprocessing`: In-processing algorithms
 ============================================================
 
 .. automodule:: aif360.sklearn.inprocessing
@@ -175,11 +165,10 @@ In-processors
 .. autosummary::
    :toctree: generated/
    :template: class.rst
-   :nosignatures:
 
    inprocessing.AdversarialDebiasing
 
-:mod:`aif360.sklearn.postprocessing`: Post-processing Algorithms
+:mod:`aif360.sklearn.postprocessing`: Post-processing algorithms
 ================================================================
 
 .. automodule:: aif360.sklearn.postprocessing
@@ -193,7 +182,6 @@ Post-processors
 .. autosummary::
    :toctree: generated/
    :template: class.rst
-   :nosignatures:
 
    postprocessing.CalibratedEqualizedOdds
 
@@ -204,6 +192,24 @@ Meta-Estimator
 .. autosummary::
    :toctree: generated/
    :template: class.rst
-   :nosignatures:
 
    postprocessing.PostProcessingMeta
+
+:mod:`aif360.sklearn.utils`: Utility functions
+==============================================
+
+.. automodule:: aif360.sklearn.utils
+    :no-members:
+    :no-inherited-members:
+
+Validation
+----------
+
+.. currentmodule:: aif360.sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: base.rst
+
+   utils.check_inputs
+   utils.check_groups
