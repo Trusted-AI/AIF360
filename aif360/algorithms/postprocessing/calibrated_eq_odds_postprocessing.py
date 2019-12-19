@@ -171,15 +171,15 @@ class CalibratedEqOddsPostprocessing(Transformer):
             dataset.protected_attribute_names,
             self.unprivileged_groups)
 
-        priv_indices = (np.random.random(sum(cond_vec_priv))
-                     <= self.priv_mix_rate)
-        priv_new_pred = dataset.scores[cond_vec_priv].copy()
-        priv_new_pred[priv_indices] = self.base_rate_priv
-
         unpriv_indices = (np.random.random(sum(cond_vec_unpriv))
                        <= self.unpriv_mix_rate)
         unpriv_new_pred = dataset.scores[cond_vec_unpriv].copy()
         unpriv_new_pred[unpriv_indices] = self.base_rate_unpriv
+
+        priv_indices = (np.random.random(sum(cond_vec_priv))
+                     <= self.priv_mix_rate)
+        priv_new_pred = dataset.scores[cond_vec_priv].copy()
+        priv_new_pred[priv_indices] = self.base_rate_priv
 
         dataset_new = dataset.copy(deepcopy=True)
 
