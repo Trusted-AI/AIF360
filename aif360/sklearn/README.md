@@ -1,7 +1,5 @@
 ## `aif360.sklearn`
 
-[![Build Status](https://travis-ci.org/IBM/AIF360.svg?branch=sklearn-compat)](https://travis-ci.org/IBM/AIF360)
-
 This is a wholly separate interface for interacting with data, viewing metrics,
 and running debiasing algorithms than the main AIF360 package. The purpose of
 this sub-package is to match scikit-learn paradigms/APIs for easier integration

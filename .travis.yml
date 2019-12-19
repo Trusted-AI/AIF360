@@ -9,7 +9,7 @@ env:
 
 branches:
   only:
-    - sklearn-compat
+    - master
 
 install:
   - pip install -r requirements.txt
@@ -28,4 +28,4 @@ before_script:
 script:
   # stop the build if there are Python syntax errors or undefined names
   - flake8 . --count --select=E901,E999,F821,F822,F823 --show-source --statistics
-  - travis_wait python -m pytest tests/sklearn
+  - travis_wait pytest tests
