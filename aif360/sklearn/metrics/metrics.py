@@ -36,21 +36,21 @@ def difference(func, y, *args, prot_attr=None, priv_group=1, sample_weight=None,
     arbitrary metric.
 
     Note: The optimal value of a difference is 0. To make it a scorer, one must
-    take the absolute value and set ``greater_is_better`` to False.
+    take the absolute value and set greater_is_better to False.
 
     Unprivileged group is taken to be the inverse of the privileged group.
 
     Args:
         func (function): A metric function from :mod:`sklearn.metrics` or
             :mod:`aif360.sklearn.metrics.metrics`.
-        y (array-like): Outcome vector with protected attributes as index.
-        *args: Additional positional args to be passed through to ``func``.
+        y (pandas.Series): Outcome vector with protected attributes as index.
+        *args: Additional positional args to be passed through to func.
         prot_attr (array-like, keyword-only): Protected attribute(s). If
-            ``None``, all protected attributes in ``y`` are used.
+            ``None``, all protected attributes in y are used.
         priv_group (scalar, optional): The label of the privileged group.
         sample_weight (array-like, optional): Sample weights passed through to
-            ``func``.
-        **kwargs: Additional keyword args to be passed through to ``func``.
+            func.
+        **kwargs: Additional keyword args to be passed through to func.
 
     Returns:
         scalar: Difference in metric value for unprivileged and privileged
@@ -85,14 +85,14 @@ def ratio(func, y, *args, prot_attr=None, priv_group=1, sample_weight=None,
     Args:
         func (function): A metric function from :mod:`sklearn.metrics` or
             :mod:`aif360.sklearn.metrics.metrics`.
-        y (array-like): Outcome vector with protected attributes as index.
-        *args: Additional positional args to be passed through to ``func``.
+        y (pandas.Series): Outcome vector with protected attributes as index.
+        *args: Additional positional args to be passed through to func.
         prot_attr (array-like, keyword-only): Protected attribute(s). If
-            ``None``, all protected attributes in ``y`` are used.
+            ``None``, all protected attributes in y are used.
         priv_group (scalar, optional): The label of the privileged group.
         sample_weight (array-like, optional): Sample weights passed through to
-            ``func``.
-        **kwargs: Additional keyword args to be passed through to ``func``.
+            func.
+        **kwargs: Additional keyword args to be passed through to func.
 
     Returns:
         scalar: Ratio of metric values for unprivileged and privileged groups.
@@ -123,7 +123,7 @@ def make_difference_scorer(diff_func):
     :func:`statistical_parity_difference`).
 
     Since the optimal value of a difference metric is 0, this function takes the
-    absolute value and sets ``greater_is_better`` to ``False``.
+    absolute value and sets greater_is_better to ``False``.
 
     See also:
         :func:`~sklearn.metrics.make_scorer`
@@ -214,7 +214,7 @@ def generalized_fpr(y_true, probas_pred, pos_label=1, sample_weight=None):
 
     Returns:
         float: Generalized false positive rate. If there are no negative samples
-        in ``y_true``, this will raise an
+        in y_true, this will raise an
         :class:`~sklearn.exceptions.UndefinedMetricWarning` and return 0.
     """
     idx = (y_true != pos_label)
@@ -241,7 +241,7 @@ def generalized_fnr(y_true, probas_pred, pos_label=1, sample_weight=None):
 
     Returns:
         float: Generalized false negative rate. If there are no positive samples
-        in ``y_true``, this will raise an
+        in y_true, this will raise an
         :class:`~sklearn.exceptions.UndefinedMetricWarning` and return 0.
     """
     idx = (y_true == pos_label)
@@ -264,16 +264,16 @@ def statistical_parity_difference(*y, prot_attr=None, priv_group=1, pos_label=1,
         - Pr(\hat{Y} = \text{pos_label} | D = \text{privileged})
 
     Note:
-        If only ``y_true`` is provided, this will return the difference in base
+        If only y_true is provided, this will return the difference in base
         rates (statistical parity difference of the original dataset).
 
     Args:
-        y_true (array-like): Ground truth (correct) target values. If ``y_pred``
+        y_true (pandas.Series): Ground truth (correct) target values. If y_pred
             is provided, this is ignored.
         y_pred (array-like, optional): Estimated targets as returned by a
             classifier.
         prot_attr (array-like, keyword-only): Protected attribute(s). If
-            ``None``, all protected attributes in ``y_true`` are used.
+            ``None``, all protected attributes in y_true are used.
         priv_group (scalar, optional): The label of the privileged group.
         pos_label (scalar, optional): The label of the positive class.
         sample_weight (array-like, optional): Sample weights.
@@ -294,16 +294,16 @@ def disparate_impact_ratio(*y, prot_attr=None, priv_group=1, pos_label=1,
         {Pr(\hat{Y} = \text{pos_label} | D = \text{privileged})}
 
     Note:
-        If only ``y_true`` is provided, this will return the ratio of base rates
+        If only y_true is provided, this will return the ratio of base rates
         (disparate impact of the original dataset).
 
     Args:
-        y_true (array-like): Ground truth (correct) target values. If ``y_pred``
+        y_true (pandas.Series): Ground truth (correct) target values. If y_pred
             is provided, this is ignored.
         y_pred (array-like, optional): Estimated targets as returned by a
             classifier.
         prot_attr (array-like, keyword-only): Protected attribute(s). If
-            ``None``, all protected attributes in ``y_true`` are used.
+            ``None``, all protected attributes in y_true are used.
         priv_group (scalar, optional): The label of the privileged group.
         pos_label (scalar, optional): The label of the positive class.
         sample_weight (array-like, optional): Sample weights.
@@ -323,10 +323,10 @@ def equal_opportunity_difference(y_true, y_pred, prot_attr=None, priv_group=1,
     privileged groups. A value of 0 indicates equality of opportunity.
 
     Args:
-        y_true (array-like): Ground truth (correct) target values.
+        y_true (pandas.Series): Ground truth (correct) target values.
         y_pred (array-like): Estimated targets as returned by a classifier.
         prot_attr (array-like, keyword-only): Protected attribute(s). If
-            ``None``, all protected attributes in ``y_true`` are used.
+            ``None``, all protected attributes in y_true are used.
         priv_group (scalar, optional): The label of the privileged group.
         pos_label (scalar, optional): The label of the positive class.
         sample_weight (array-like, optional): Sample weights.
@@ -353,10 +353,10 @@ def average_odds_difference(y_true, y_pred, prot_attr=None, priv_group=1,
     A value of 0 indicates equality of odds.
 
     Args:
-        y_true (array-like): Ground truth (correct) target values.
+        y_true (pandas.Series): Ground truth (correct) target values.
         y_pred (array-like): Estimated targets as returned by a classifier.
         prot_attr (array-like, keyword-only): Protected attribute(s). If
-            ``None``, all protected attributes in ``y_true`` are used.
+            ``None``, all protected attributes in y_true are used.
         priv_group (scalar, optional): The label of the privileged group.
         pos_label (scalar, optional): The label of the positive class.
         sample_weight (array-like, optional): Sample weights.
@@ -387,10 +387,10 @@ def average_odds_error(y_true, y_pred, prot_attr=None, priv_group=1,
     A value of 0 indicates equality of odds.
 
     Args:
-        y_true (array-like): Ground truth (correct) target values.
+        y_true (pandas.Series): Ground truth (correct) target values.
         y_pred (array-like): Estimated targets as returned by a classifier.
         prot_attr (array-like, keyword-only): Protected attribute(s). If
-            ``None``, all protected attributes in ``y_true`` are used.
+            ``None``, all protected attributes in y_true are used.
         priv_group (scalar, optional): The label of the privileged group.
         pos_label (scalar, optional): The label of the positive class.
         sample_weight (array-like, optional): Sample weights.
@@ -473,14 +473,14 @@ def between_group_generalized_entropy_error(y_true, y_pred, prot_attr=None,
     generalized entropy index decomposes to.
 
     Args:
-        y_true (array-like): Ground truth (correct) target values.
+        y_true (pandas.Series): Ground truth (correct) target values.
         y_pred (array-like): Estimated targets as returned by a classifier.
         prot_attr (array-like, optional): Protected attribute(s). If ``None``,
-            all protected attributes in ``y_true`` are used.
+            all protected attributes in y_true are used.
         priv_group (scalar, optional): The label of the privileged group. If
             provided, the index will be computed between only the privileged and
             unprivileged groups. Otherwise, the index will be computed between
-            all groups defined by the ``prot_attr``.
+            all groups defined by the prot_attr.
         alpha (scalar, optional): Parameter that regulates the weight given to
             distances between values at different parts of the distribution. A
             value of 0 is equivalent to the mean log deviation, 1 is the Theil

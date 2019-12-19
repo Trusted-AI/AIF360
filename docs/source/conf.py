@@ -59,7 +59,7 @@ autosummary_generate = True
 
 autodoc_default_options = {
     'members': True,
-    'inherited-members': True
+    # 'inherited-members': True
 }
 
 # The suffix(es) of source filenames.
@@ -102,7 +102,7 @@ exclude_patterns = ['templates']
 default_role = 'literal'
 
 # If true, '()' will be appended to :func: etc. cross-reference text.
-add_function_parentheses = False
+add_function_parentheses = True
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'

@@ -1,36 +1,41 @@
+================
+Fairness Metrics
+================
+
 :mod:`aif360.metrics`
 =====================
 
 .. automodule:: aif360.metrics
+    :no-members:
+    :no-inherited-members:
 
-Dataset Metric
---------------
+.. currentmodule:: aif360
 
-.. autoclass:: DatasetMetric
-    :members:
-    :exclude-members: difference, ratio
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
 
-Binary Label Dataset Metric
----------------------------
+   metrics.DatasetMetric
+   metrics.BinaryLabelDatasetMetric
+   metrics.ClassificationMetric
+   metrics.SampleDistortionMetric
 
-.. autoclass:: BinaryLabelDatasetMetric
-    :members:
-
-Classification Metric
----------------------
-
-.. autoclass:: ClassificationMetric
-    :private-members:
-    :members:
-
-Sample Distortion Metric
-------------------------
-
-.. autoclass:: SampleDistortionMetric
-    :members:
-
-Utility Functions
------------------
+:mod:`aif360.metrics.utils`
+===========================
 
 .. automodule:: aif360.metrics.utils
-    :members:
+    :no-members:
+    :no-inherited-members:
+
+.. currentmodule:: aif360
+
+.. autosummary::
+   :toctree: generated/
+   :template: base.rst
+
+   metrics.utils.compute_boolean_conditioning_vector
+   metrics.utils.compute_num_instances
+   metrics.utils.compute_num_pos_neg
+   metrics.utils.compute_num_TF_PN
+   metrics.utils.compute_num_gen_TF_PN
+   metrics.utils.compute_distance

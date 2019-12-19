@@ -1,16 +1,19 @@
+==========
+Explainers
+==========
+
 :mod:`aif360.explainers`
 ========================
 
 .. automodule:: aif360.explainers
+    :no-members:
+    :no-inherited-members:
 
-Metric Text Explainer
----------------------
+.. currentmodule:: aif360
 
-.. autoclass:: MetricTextExplainer
-    :members:
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
 
-Metric JSON Explainer
----------------------
-
-.. autoclass:: MetricJSONExplainer
-    :members:
+   explainers.MetricTextExplainer
+   explainers.MetricJSONExplainer
