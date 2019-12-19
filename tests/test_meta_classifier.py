@@ -19,7 +19,7 @@ def test_adult():
     #scaler = MinMaxScaler(copy=False)
     # ad.features = scaler.fit_transform(ad.features)
 
-    train, test = ad.split([32561])
+    test, train = ad.split([16281])
 
     biased_model = MetaFairClassifier(tau=0, sensitive_attr=protected)
     biased_model.fit(train)
