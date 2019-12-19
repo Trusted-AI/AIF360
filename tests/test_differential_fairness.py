@@ -10,7 +10,7 @@ ad = AdultDataset(protected_attribute_names=['race', 'sex', 'native-country'],
                   categorical_features=['workclass', 'education',
                           'marital-status', 'occupation', 'relationship'],
                   custom_preprocessing=lambda df: df.fillna('Unknown'))
-adult_train, adult_test = ad.split([32561], shuffle=False)
+adult_test, adult_train = ad.split([16281], shuffle=False)
 
 scaler = StandardScaler()
 X = scaler.fit_transform(adult_train.features)
@@ -58,7 +58,7 @@ def test_epsilon_all_groups():
     nonbinary_ad.features = np.delete(nonbinary_ad.features, index, axis=1)
     nonbinary_ad.feature_names = np.delete(nonbinary_ad.feature_names, index)
 
-    _, nonbinary_test = nonbinary_ad.split([32561], shuffle=False)
+    nonbinary_test, _ = nonbinary_ad.split([16281], shuffle=False)
     dataset_metric = BinaryLabelDatasetMetric(nonbinary_test)
     eps_data = dataset_metric.smoothed_empirical_differential_fairness()
     assert eps_data == 2.063813731996515  # verified with reference implementation

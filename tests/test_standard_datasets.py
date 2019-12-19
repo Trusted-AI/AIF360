@@ -24,8 +24,8 @@ def test_german():
 
 def test_adult_test_set():
     ad = AdultDataset()
-    # train, test = ad.split([32561])
-    train, test = ad.split([30162])
+    # test, train = ad.split([16281])
+    test, train = ad.split([15060])
     assert np.any(test.labels)
 
 def test_adult():
