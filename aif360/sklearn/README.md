@@ -28,18 +28,18 @@ objects with sample properties (protected attributes) as the index
   - [x] Adversarial debiasing
   - [ ] **[External]** `get_feature_names()` from data preprocessing
   steps that would remove DataFrame formatting
-    - [ ] SLEP007/8
+    - [ ] [SLEP007](https://github.com/scikit-learn/enhancement_proposals/pull/17)/[SLEP008](https://github.com/scikit-learn/enhancement_proposals/pull/18) - feature names
   - [ ] Prejudice remover
   - [ ] Meta-fair classifier
 - [ ] Make preprocessing algorithms compatible as sklearn `Transformer`s
   - [ ] **[External]** Add functionality to modify X and y
-    - [ ] [SLEP001](https://github.com/scikit-learn/enhancement_proposals/blob/master/slep001/proposal.rst)
+    - [ ] [SLEP005](https://github.com/scikit-learn/enhancement_proposals/pull/15) - Resampler API (see discussion; meta-estimator workaround may be enough)
   - [ ] Disparate impact remover
   - [ ] Learning fair representations
   - [ ] Optimized preprocessing
   - [X] Reweighing
     - [X] Meta-estimator workaround
-    - [ ] **[External]** SLEP006 - Sample properties
+    - [ ] **[External]** [SLEP006](https://github.com/scikit-learn/enhancement_proposals/pull/16) - Sample properties (meta-estimator works but would be very nice to have)
 - [ ] Make postprocessing algorithms compatible
   - [x] Calibrated equalized odds postprocessing
     - [x] Meta-estimator workaround again
