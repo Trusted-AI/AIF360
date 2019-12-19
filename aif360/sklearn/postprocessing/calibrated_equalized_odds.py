@@ -5,7 +5,7 @@ from sklearn.utils.validation import check_is_fitted
 
 from aif360.sklearn.metrics import difference, base_rate
 from aif360.sklearn.metrics import generalized_fnr, generalized_fpr
-from aif360.sklearn.utils import check_groups
+from aif360.sklearn.utils import check_inputs, check_groups
 
 
 class CalibratedEqualizedOdds(BaseEstimator, ClassifierMixin):
@@ -16,9 +16,9 @@ class CalibratedEqualizedOdds(BaseEstimator, ClassifierMixin):
     change output labels with an equalized odds objective [#pleiss17]_.
 
     Note:
-        This breaks the sckit-learn API by requiring fit params ``y_true``,
-        ``y_pred``, and ``pos_label`` and predict param ``y_pred``. See
-        :class:`PostProcessingMeta` for a workaround.
+        This breaks the sckit-learn API by requiring fit params y_true, y_pred,
+        and pos_label and predict param y_pred. See :class:`PostProcessingMeta`
+        for a workaround.
 
     References:
         .. [#pleiss17] `G. Pleiss, M. Raghavan, F. Wu, J. Kleinberg, and
@@ -85,17 +85,20 @@ class CalibratedEqualizedOdds(BaseEstimator, ClassifierMixin):
         Args:
             y_pred (array-like): Probability estimates of the targets as
                 returned by a ``predict_proba()`` call or equivalent.
-            y_true (array-like): Ground-truth (correct) target values.
+            y_true (pandas.Series): Ground-truth (correct) target values.
             labels (list, optional): The ordered set of labels values. Must
-                match the order of columns in ``y_pred`` if provided. By
-                default, all labels in ``y_true`` are used in sorted order.
+                match the order of columns in y_pred if provided. By default,
+                all labels in y_true are used in sorted order.
             pos_label (scalar, optional): The label of the positive class.
             sample_weight (array-like, optional): Sample weights.
 
         Returns:
-            CalibratedEqualizedOdds: self.
+            self
         """
-        groups, self.prot_attr_ = check_groups(y_true, self.prot_attr)
+        y_pred, y_true, sample_weight = check_inputs(y_pred, y_true,
+                                                     sample_weight)
+        groups, self.prot_attr_ = check_groups(y_true, self.prot_attr,
+                                               ensure_binary=True)
         self.classes_ = labels if labels is not None else np.unique(y_true)
         self.groups_ = np.unique(groups)
         self.pos_label_ = pos_label
@@ -107,11 +110,6 @@ class CalibratedEqualizedOdds(BaseEstimator, ClassifierMixin):
             raise ValueError('pos_label={} is not in the set of labels. The '
                     'valid values are:\n{}'.format(pos_label, self.classes_))
 
-        if len(self.groups_) != 2:
-            raise ValueError('prot_attr={}\nyielded {} groups:\n{}\nbut this '
-                    'algorithm requires a binary division of the data.'.format(
-                            self.prot_attr_, len(self.groups_), self.groups_))
-
         y_pred = y_pred[:, np.nonzero(self.classes_ == self.pos_label_)[0][0]]
 
         # local function to return corresponding args for metric evaluation
@@ -119,8 +117,7 @@ class CalibratedEqualizedOdds(BaseEstimator, ClassifierMixin):
             idx = (groups == self.groups_[grp_idx])
             pred = (np.full_like(y_pred, self.base_rates_[grp_idx]) if triv else
                     y_pred)
-            return [y_true[idx], pred[idx], pos_label,
-                    sample_weight[idx] if sample_weight is not None else None]
+            return [y_true[idx], pred[idx], pos_label, sample_weight[idx]]
 
         self.base_rates_ = [base_rate(*_args(i)) for i in range(2)]
 
@@ -138,8 +135,9 @@ class CalibratedEqualizedOdds(BaseEstimator, ClassifierMixin):
         classes.
 
         Args:
-            y_pred (array-like): Probability estimates of the targets as
-                returned by a ``predict_proba()`` call or equivalent.
+            y_pred (pandas.DataFrame): Probability estimates of the targets as
+                returned by a ``predict_proba()`` call or equivalent. Note: must
+                include protected attributes in the index.
 
         Returns:
             numpy.ndarray: Returns the probability of the sample for each class
@@ -156,7 +154,7 @@ class CalibratedEqualizedOdds(BaseEstimator, ClassifierMixin):
                                      np.unique(groups), self.groups_))
 
         pos_idx = np.nonzero(self.classes_ == self.pos_label_)[0][0]
-        y_pred = y_pred[:, pos_idx]
+        y_pred = y_pred.iloc[:, pos_idx]
 
         yt = np.empty_like(y_pred)
         for grp_idx in range(2):
@@ -172,8 +170,9 @@ class CalibratedEqualizedOdds(BaseEstimator, ClassifierMixin):
         """Predict class labels for the given scores.
 
         Args:
-            y_pred (array-like): Probability estimates of the targets as
-                returned by a ``predict_proba()`` call or equivalent.
+            y_pred (pandas.DataFrame): Probability estimates of the targets as
+                returned by a ``predict_proba()`` call or equivalent. Note: must
+                include protected attributes in the index.
 
         Returns:
             numpy.ndarray: Predicted class label per sample.
@@ -185,8 +184,9 @@ class CalibratedEqualizedOdds(BaseEstimator, ClassifierMixin):
         """Score the predictions according to the cost constraint specified.
 
         Args:
-            y_pred (array-like): Probability estimates of the targets as
-                returned by a ``predict_proba()`` call or equivalent.
+            y_pred (pandas.DataFrame): Probability estimates of the targets as
+                returned by a ``predict_proba()`` call or equivalent. Note: must
+                include protected attributes in the index.
             y_true (array-like): Ground-truth (correct) target values.
             sample_weight (array-like, optional): Sample weights.
 

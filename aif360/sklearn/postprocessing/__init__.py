@@ -26,8 +26,8 @@ class PostProcessingMeta(BaseEstimator, MetaEstimatorMixin):
         be used as the input to this meta-estimator not the other way around.
 
     Attributes:
-        estimator_: Cloned ``estimator``.
-        postprocessor_: Cloned ``postprocessor``.
+        estimator_: Fitted estimator.
+        postprocessor_: Fitted postprocessor.
         use_proba_ (bool): Determined depending on the postprocessor type if
             `use_proba` is None.
     """
@@ -49,7 +49,7 @@ class PostProcessingMeta(BaseEstimator, MetaEstimatorMixin):
             **options: Keyword options passed through to
                 :func:`~sklearn.model_selection.train_test_split`.
                 Note: 'train_size' and 'test_size' will be ignored in favor of
-                ``val_size``.
+                'val_size'.
         """
         self.estimator = estimator
         self.postprocessor = postprocessor
@@ -70,14 +70,14 @@ class PostProcessingMeta(BaseEstimator, MetaEstimatorMixin):
 
         Args:
             X (array-like): Training samples.
-            y (array-like): Training labels.
+            y (pandas.Series): Training labels.
             sample_weight (array-like, optional): Sample weights.
-            **fit_params: Parameters passed to the post-processor ``fit``
+            **fit_params: Parameters passed to the post-processor ``fit()``
                 method. Note: these do not need to be prefixed with ``__``
                 notation.
 
         Returns:
-            PostProcessingMeta: self.
+            self
         """
         self.use_proba_ = (self.use_proba if self.use_proba is not None else
                 isinstance(self.postprocessor, CalibratedEqualizedOdds))
@@ -115,26 +115,26 @@ class PostProcessingMeta(BaseEstimator, MetaEstimatorMixin):
     def predict(self, X):
         """Predict class labels for the given samples.
 
-        First, runs ``self.estimator_.predict`` (or ``predict_proba`` if
+        First, runs ``self.estimator_.predict()`` (or ``predict_proba()`` if
         ``self.use_proba_`` is ``True``) then returns the post-processed output
         from those predictions.
 
         Args:
-            X (array-like): Test samples.
+            X (pandas.DataFrame): Test samples.
 
         Returns:
             numpy.ndarray: Predicted class label per sample.
         """
         y_pred = (self.estimator_.predict(X) if not self.use_proba_ else
                   self.estimator_.predict_proba(X))
-        y_pred = pd.Series(y_pred, index=X.index)
+        y_pred = pd.DataFrame(y_pred, index=X.index).squeeze('columns')
         return self.postprocessor_.predict(y_pred)
 
     @if_delegate_has_method('postprocessor_')
     def predict_proba(self, X):
         """Probability estimates.
 
-        First, runs ``self.estimator_.predict`` (or ``predict_proba`` if
+        First, runs ``self.estimator_.predict()`` (or ``predict_proba()`` if
         ``self.use_proba_`` is ``True``) then returns the post-processed output
         from those predictions.
 
@@ -142,7 +142,7 @@ class PostProcessingMeta(BaseEstimator, MetaEstimatorMixin):
         classes.
 
         Args:
-            X (array-like): Test samples.
+            X (pandas.DataFrame): Test samples.
 
         Returns:
             numpy.ndarray: Returns the probability of the sample for each class
@@ -151,14 +151,14 @@ class PostProcessingMeta(BaseEstimator, MetaEstimatorMixin):
         """
         y_pred = (self.estimator_.predict(X) if not self.use_proba_ else
                   self.estimator_.predict_proba(X))
-        y_pred = pd.Series(y_pred, index=X.index)
+        y_pred = pd.DataFrame(y_pred, index=X.index).squeeze('columns')
         return self.postprocessor_.predict_proba(y_pred)
 
     @if_delegate_has_method('postprocessor_')
     def predict_log_proba(self, X):
         """Log of probability estimates.
 
-        First, runs ``self.estimator_.predict`` (or ``predict_proba`` if
+        First, runs ``self.estimator_.predict()`` (or ``predict_proba()`` if
         ``self.use_proba_`` is ``True``) then returns the post-processed output
         from those predictions.
 
@@ -166,7 +166,7 @@ class PostProcessingMeta(BaseEstimator, MetaEstimatorMixin):
         classes.
 
         Args:
-            X (array-like): Test samples.
+            X (pandas.DataFrame): Test samples.
 
         Returns:
             array: Returns the log-probability of the sample for each class in
@@ -175,7 +175,7 @@ class PostProcessingMeta(BaseEstimator, MetaEstimatorMixin):
         """
         y_pred = (self.estimator_.predict(X) if not self.use_proba_ else
                   self.estimator_.predict_proba(X))
-        y_pred = pd.Series(y_pred, index=X.index)
+        y_pred = pd.DataFrame(y_pred, index=X.index).squeeze('columns')
         return self.postprocessor_.predict_log_proba(y_pred)
 
     @if_delegate_has_method('postprocessor_')
@@ -183,13 +183,13 @@ class PostProcessingMeta(BaseEstimator, MetaEstimatorMixin):
         """Returns the output of the post-processor's score function on the
         given test data and labels.
 
-        First, runs ``self.estimator_.predict`` (or ``predict_proba`` if
+        First, runs ``self.estimator_.predict()`` (or ``predict_proba()`` if
         ``self.use_proba_`` is ``True``) then gets the post-processed output
         from those predictions and scores it.
 
         Args:
-            X (array-like): Test samples.
-            y (array-like): True labels for ``X``.
+            X (pandas.DataFrame): Test samples.
+            y (array-like): True labels for X.
             sample_weight (array-like, optional): Sample weights.
 
         Returns:
@@ -197,7 +197,7 @@ class PostProcessingMeta(BaseEstimator, MetaEstimatorMixin):
         """
         y_pred = (self.estimator_.predict(X) if not self.use_proba_ else
                   self.estimator_.predict_proba(X))
-        y_pred = pd.Series(y_pred, index=X.index)
+        y_pred = pd.DataFrame(y_pred, index=X.index).squeeze('columns')
         return self.postprocessor_.score(y_pred, y, sample_weight=sample_weight)
 
 
