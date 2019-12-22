@@ -212,18 +212,21 @@ class AdversarialDebiasing(Transformer):
                             print("epoch %d; iter: %d; batch classifier loss: %f" % (
                             epoch, i, pred_labels_loss_value))
         return self
-    
-    def predict_proba(self, dataset):
-        """Obtain the probability predictions for the provided dataset using the fair
+
+    def predict(self, dataset):
+        """Obtain the predictions for the provided dataset using the fair
         classifier learned.
 
         Args:
             dataset (BinaryLabelDataset): Dataset containing labels that needs
                 to be transformed.
         Returns:
-            scores: Probability of belonging to the favourable class.
+            dataset (BinaryLabelDataset): Transformed dataset.
         """
- 
+        
+        if self.seed is not None:
+            np.random.seed(self.seed)
+        
         num_test_samples, _ = np.shape(dataset.features)
 
         samples_covered = 0
@@ -246,28 +249,12 @@ class AdversarialDebiasing(Transformer):
 
             pred_labels += self.sess.run(self.pred_labels, feed_dict=batch_feed_dict)[:,0].tolist()
             samples_covered += len(batch_features)
-        
-        return np.array(pred_labels)
-
-    def predict(self, dataset):
-        """Obtain the predictions for the provided dataset using the fair
-        classifier learned.
-
-        Args:
-            dataset (BinaryLabelDataset): Dataset containing labels that needs
-                to be transformed.
-        Returns:
-            dataset (BinaryLabelDataset): Transformed dataset.
-        """
-        
-        if self.seed is not None:
-            np.random.seed(self.seed)
-        
-        pred_labels = self.predict_proba(dataset);
       
         # Mutated, fairer dataset with new labels
         dataset_new = dataset.copy(deepcopy = True)
-        dataset_new.labels =(pred_labels>0.5).astype(np.float64).reshape(-1,1)
+        dataset_new.scores = np.array(pred_labels, dtype=np.float64).reshape(-1, 1)
+        dataset_new.labels = (np.array(pred_labels)>0.5).astype(np.float64).reshape(-1,1)
+        
         
         # Map the dataset labels to back to their original values.
         temp_labels = dataset_new.labels.copy()
