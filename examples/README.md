@@ -1,7 +1,7 @@
 # AI Fairness 360 Examples (Tutorials and Demos)
 
 This directory contains a diverse collection of jupyter notebooks that use [AI Fairness 360](http://aif360.mybluemix.net/) in various ways.
-Both tutorials and demos illustrate working code using AIF360.  Tutorials provide additional discussion that walks 
+Both tutorials and demos illustrate working code using AIF360.  Tutorials provide additional discussion that walks
 the user through the various steps of the notebook.
 
 ## Tutorials
@@ -13,6 +13,9 @@ Data from the Medical Expenditure Panel Survey ([2015](https://meps.ahrq.gov/mep
 ## Demos
 Below is a list of additional notebooks that demonstrate the use of AIF360.
 
+**NEW:** [sklearn/demo_new_features.ipynb](sklearn/demo_new_features.ipynb): highlights the
+features of the new `scikit-learn`-compatible API
+
 [demo_optim_data_preproc.ipynb](demo_optim_data_preproc.ipynb): demonstrates a generalization of the credit scoring tutorial that  shows the full machine learning workflow for the optimized data pre-processing algorithm for bias mitigation on several datasets
 
 [demo_adversarial_debiasing.ipynb](demo_adversarial_debiasing.ipynb): demonstrates the use of the adversarial debiasing in-processing algorithm to learn a fair classifier
@@ -21,7 +24,7 @@ Below is a list of additional notebooks that demonstrate the use of AIF360.
 
 [demo_disparate_impact_remover.ipynb](demo_disparate_impact_remover.ipynb): demonstrates the use of a disparate impact remover pre-processing algorithm for bias mitigiation
 
-[demo_json_explainers.ipynb](demo_json_explainers.ipynb): 
+[demo_json_explainers.ipynb](demo_json_explainers.ipynb):
 
 [demo_lfr.ipynb](demo_lfr.ipynb):  demonstrates the use of the learning fair representations algorithm for bias mitigation
 
