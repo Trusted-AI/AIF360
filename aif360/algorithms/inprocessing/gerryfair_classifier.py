@@ -142,7 +142,10 @@ class Model(Transformer):
                 y_hat = new_predictions
             else:
                 y_hat = np.add(y_hat, new_predictions)
-        dataset_new.labels = tuple([1 if y >= threshold else 0 for y in y_hat])
+        if threshold: 
+            dataset_new.labels = tuple([1 if y >= threshold else 0 for y in y_hat])
+        else:
+            dataset_new.labels = tuple([y for y in y_hat])
         return dataset_new
 
     def fit_transform(self, dataset):
@@ -189,6 +192,24 @@ class Model(Transformer):
                 vmin = minmax[0]
                 vmax = minmax[1]
         return vmin, vmax
+    
+    def generate_heatmap(self, dataset, predictions, vmin=None, vmax=None, cols_index=[0,1], eta=.1):
+        """
+        Helper Function to generate the heatmap at the current time 
+
+        :param iteration:
+        :param dataset:
+        :param predictions:
+        :param vmin:
+        :param vmax:
+        :return:
+        """
+        
+        X, X_prime, y = clean.extract_df_from_ds(dataset)
+        # save heatmap every heatmap_iter iterations or the last iteration 
+        X_prime_heat = X_prime.iloc[:, cols_index]
+        minmax = heatmap.heat_map(X, X_prime_heat, y, predictions, eta, self.heatmap_path,
+                 vmin, vmax)
 
     def pareto(self, dataset, gamma_list):
         """
