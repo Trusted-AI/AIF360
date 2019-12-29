@@ -8,7 +8,7 @@ from aif360.algorithms.inprocessing.gerryfair.auditor import Auditor
 from aif360.algorithms.inprocessing.gerryfair.classifier_history import ClassifierHistory
 from aif360.algorithms import Transformer
 import matplotlib
-import pdb 
+
 
 try:
     matplotlib.use('TkAgg')
