@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 from matplotlib import cm
 from mpl_toolkits.mplot3d import Axes3D
 from aif360.algorithms.inprocessing.gerryfair.reg_oracle_class import *
-
+import pdb 
 def calc_disp(A_p, X, y_g, X_sens, g):
     """Return the fp disparity in a group g."""
     X_0 = pd.DataFrame([X_sens.iloc[u, :] for u, s in enumerate(y_g) if s == 0])
@@ -25,7 +25,7 @@ def calc_disp(A_p, X, y_g, X_sens, g):
     fp_g = np.mean(fp_g)
     return (FP - fp_g) * g_size_0
 
-def heat_map(X, X_prime, y, A, eta, plot_name, vmin=None, vmax=None):
+def heat_map(X, X_prime, y, A, eta, plot_path, vmin=None, vmax=None):
     fig = plt.figure()
     ax = fig.add_subplot(1,1,1, projection='3d')
     
@@ -50,8 +50,9 @@ def heat_map(X, X_prime, y, A, eta, plot_name, vmin=None, vmax=None):
     ax.set_xlabel(columns[0] + ' coefficient')
     ax.set_ylabel(columns[1] + ' coefficient')
     ax.set_zlabel('gamma disparity')
-    ax.plot_surface(X_plot, Y_plot, disparity, cmap=cm.coolwarm, linewidth=0, antialiased=False, vmin=vmin, vmax=vmax)   
-    ax.set_zlim3d([-0.035, 0.035])
-    fig.savefig('{}.png'.format(plot_name))
-    plt.cla()
+    ax.set_zlim3d([np.min(disparity), np.max(disparity)])
+    surf = ax.plot_surface(X_plot, Y_plot, disparity, cmap=cm.coolwarm, linewidth=0, antialiased=False, vmin=vmin, vmax=vmax) 
+    if plot_path != '.':
+        fig.savefig('{}.png'.format(plot_path))
+        plt.close()
     return [np.min(disparity), np.max(disparity)]

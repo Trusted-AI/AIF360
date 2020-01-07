@@ -8,6 +8,8 @@ from aif360.algorithms.inprocessing.gerryfair.auditor import Auditor
 from aif360.algorithms.inprocessing.gerryfair.classifier_history import ClassifierHistory
 from aif360.algorithms import Transformer
 import matplotlib
+
+
 try:
     matplotlib.use('TkAgg')
 except:
@@ -129,13 +131,13 @@ class Model(Transformer):
         :return: modified dataset object
         """
 
-        # Generates predictions. We do not yet advise using this in sensitive real-world settings.
+        # Generates predictions. 
         dataset_new = copy.deepcopy(dataset)
         data, _, _ = clean.extract_df_from_ds(dataset_new)
         num_classifiers = len(self.classifiers)
         y_hat = None
-        for c in self.classifiers:
-            new_predictions = np.multiply(1.0 / num_classifiers, c.predict(data))
+        for hyp in self.classifiers:
+            new_predictions = np.multiply(1.0 / num_classifiers, hyp.predict(data))
             if y_hat is None:
                 y_hat = new_predictions
             else:
@@ -156,22 +158,15 @@ class Model(Transformer):
         :param group: most recent group found by the auditor
         :return: n/a
         """
-        print('iteration: {}'.format(int(iteration)))
-        if iteration == 1:
+        
+        if self.printflag:
             print(
-                'most accurate classifier error: {}, most accurate class unfairness: {}, violated group size: {}'.format(
+                'iteration: {}, error: {}, fairness violation: {}, violated group size: {}'.format(int(iteration),
                     error,
                     group.weighted_disparity,
                     group.group_size))
 
-        elif self.printflag:
-            print(
-                'error: {}, fairness violation: {}, violated group size: {}'.format(
-                    error,
-                    group.weighted_disparity,
-                    group.group_size))
-
-    def save_heatmap(self, iteration, dataset, predictions, vmin, vmax, force_heatmap=False):
+    def save_heatmap(self, iteration, dataset, predictions, vmin, vmax):
         """
         Helper Function to save the heatmap
 
@@ -180,18 +175,16 @@ class Model(Transformer):
         :param predictions:
         :param vmin:
         :param vmax:
-        :param force_heatmap:
         :return:
         """
 
         X, X_prime, y = clean.extract_df_from_ds(dataset)
-        # save heatmap every heatmap_iter iterations
-        if (self.heatmapflag and (iteration % self.heatmap_iter) == 0) or force_heatmap:
+        # save heatmap every heatmap_iter iterations or the last iteration 
+        if (self.heatmapflag and (iteration % self.heatmap_iter) == 0):
             # initial heat map
             X_prime_heat = X_prime.iloc[:, 0:2]
             eta = 0.1
-            minmax = heatmap.heat_map(X, X_prime_heat, y, predictions, eta,
-                                      self.heatmap_path + '/heatmap_iteration_{}'.format(iteration), vmin, vmax)
+            minmax = heatmap.heat_map(X, X_prime_heat, y, predictions, eta, self.heatmap_path                       +'/heatmap_iteration_{}'.format(iteration), vmin, vmax)
             if iteration == 1:
                 vmin = minmax[0]
                 vmax = minmax[1]
