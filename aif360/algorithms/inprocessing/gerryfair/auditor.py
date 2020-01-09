@@ -51,9 +51,6 @@ class Auditor(Metric):
         return tuple(costs_0), tuple(costs_1), self.X_prime_0
 
     def get_baseline(self, y, predictions):
-        predictions = predictions
-        y = y
-
         if self.fairness_def == 'FP':
             return np.mean([predictions[i] for i, c in enumerate(y) if c == 0])
         elif self.fairness_def == 'FN':
