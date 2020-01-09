@@ -18,3 +18,4 @@ tensorflow>=1.13.1,<2
 networkx==1.11
 BlackBoxAuditing
 lime
+adversarial-robustness-toolbox>=1.0.0

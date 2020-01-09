@@ -182,7 +182,7 @@ class ClassificationMetric(BinaryLabelDatasetMetric):
 
     def num_generalized_false_positives(self, privileged=None):
         """Return the generalized number of false positives, :math:`GFP`, the
-        weighted sum of predicted scores where true labels are 'favorable',
+        weighted sum of predicted scores where true labels are 'unfavorable',
         optionally conditioned on protected attributes.
 
         Args:
@@ -200,7 +200,7 @@ class ClassificationMetric(BinaryLabelDatasetMetric):
 
     def num_generalized_false_negatives(self, privileged=None):
         """Return the generalized number of false negatives, :math:`GFN`, the
-        weighted sum of predicted scores where true labels are 'favorable',
+        weighted sum of 1 - predicted scores where true labels are 'favorable',
         optionally conditioned on protected attributes.
 
         Args:
@@ -218,7 +218,7 @@ class ClassificationMetric(BinaryLabelDatasetMetric):
 
     def num_generalized_true_negatives(self, privileged=None):
         """Return the generalized number of true negatives, :math:`GTN`, the
-        weighted sum of predicted scores where true labels are 'favorable',
+        weighted sum of 1 - predicted scores where true labels are 'unfavorable',
         optionally conditioned on protected attributes.
 
         Args:
@@ -795,6 +795,30 @@ class ClassificationMetric(BinaryLabelDatasetMetric):
         """
         return 2 * np.sqrt(self.between_all_groups_generalized_entropy_index(
             alpha=2))
+
+    def differential_fairness_bias_amplification(self, concentration=1.0):
+        """Bias amplification is the difference in smoothed EDF between the
+        classifier and the original dataset. Positive values mean the bias
+        increased due to the classifier.
+
+        Args:
+            concentration (float, optional): Concentration parameter for
+                Dirichlet smoothing. Must be non-negative.
+        """
+        ssr = self._smoothed_base_rates(self.classified_dataset.labels,
+                                        concentration)
+
+        def pos_ratio(i, j):
+            return abs(np.log(ssr[i]) - np.log(ssr[j]))
+
+        def neg_ratio(i, j):
+            return abs(np.log(1 - ssr[i]) - np.log(1 - ssr[j]))
+
+        edf_clf = max(max(pos_ratio(i, j), neg_ratio(i, j))
+                for i in range(len(ssr)) for j in range(len(ssr)) if i != j)
+        edf_data = self.smoothed_empirical_differential_fairness(concentration)
+
+        return edf_clf - edf_data
 
     # ============================== ALIASES ===================================
     def equal_opportunity_difference(self):
