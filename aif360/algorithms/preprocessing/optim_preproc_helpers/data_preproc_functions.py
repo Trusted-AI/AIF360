@@ -254,7 +254,7 @@ def load_preproc_data_german(protected_attributes=None):
         df['credit_history'] = df['credit_history'].apply(lambda x: group_credit_hist(x))
         df['savings'] = df['savings'].apply(lambda x: group_savings(x))
         df['employment'] = df['employment'].apply(lambda x: group_employ(x))
-        df['age'] = df['age'].apply(lambda x: np.float(x >= 25))
+        df['age'] = df['age'].apply(lambda x: np.float(x >= 26))
         df['status'] = df['status'].apply(lambda x: group_status(x))
 
         return df
