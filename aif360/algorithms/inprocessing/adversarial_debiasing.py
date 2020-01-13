@@ -223,9 +223,10 @@ class AdversarialDebiasing(Transformer):
         Returns:
             dataset (BinaryLabelDataset): Transformed dataset.
         """
+        
         if self.seed is not None:
             np.random.seed(self.seed)
-
+        
         num_test_samples, _ = np.shape(dataset.features)
 
         samples_covered = 0
@@ -248,11 +249,13 @@ class AdversarialDebiasing(Transformer):
 
             pred_labels += self.sess.run(self.pred_labels, feed_dict=batch_feed_dict)[:,0].tolist()
             samples_covered += len(batch_features)
-
+      
         # Mutated, fairer dataset with new labels
         dataset_new = dataset.copy(deepcopy = True)
+        dataset_new.scores = np.array(pred_labels, dtype=np.float64).reshape(-1, 1)
         dataset_new.labels = (np.array(pred_labels)>0.5).astype(np.float64).reshape(-1,1)
-
+        
+        
         # Map the dataset labels to back to their original values.
         temp_labels = dataset_new.labels.copy()
 
