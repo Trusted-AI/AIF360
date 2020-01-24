@@ -1,3 +1,25 @@
+# Copyright 2019 Seth V. Neel, Michael J. Kearns, Aaron L. Roth, Zhiwei Steven Wu
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy of
+# the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+
+"""Class Model implementing the 'FairFictPlay' Algorithm of [KRNW18].
+
+This module contains functionality to instantiate, fit, and predict
+using the FairFictPlay algorithm of:
+https://arxiv.org/abs/1711.05144
+It also contains the ability to audit arbitrary classifiers for
+rich subgroup unfairness, where rich subgroups are defined by hyperplanes
+over the sensitive attributes. This iteration of the codebase supports hyperplanes, trees,
+kernel methods, and support vector machines. For usage examples refer to examples/gerry_plots.ipynb
+"""
+
 import numpy as np
 import copy
 from sklearn import linear_model
@@ -8,7 +30,6 @@ from aif360.algorithms.inprocessing.gerryfair.auditor import Auditor
 from aif360.algorithms.inprocessing.gerryfair.classifier_history import ClassifierHistory
 from aif360.algorithms import Transformer
 import matplotlib
-
 
 try:
     matplotlib.use('TkAgg')
@@ -29,6 +50,7 @@ class Model(Transformer):
         .. [2] "An Empirical Study of Rich Subgroup Fairness for Machine Learning". Michael Kearns,
         Seth Neel, Aaron Roth, Steven Wu. FAT '19.
     """
+
     def __init__(self, C=10,
                  printflag=False,
                  heatmapflag=False,
@@ -38,16 +60,17 @@ class Model(Transformer):
                  gamma=0.01,
                  fairness_def='FP',
                  predictor=linear_model.LinearRegression()):
-        """
-        :param C: Maximum L1 Norm for the Dual Variables (hyperparameter)
-        :param printflag: Print Output Flag
-        :param heatmapflag: Save Heatmaps every heatmap_iter Flag
-        :param heatmap_iter: Save Heatmaps every heatmap_iter
-        :param heatmap_path: Save Heatmaps path
-        :param max_iters: Time Horizon for the fictitious play dynamic.
-        :param gamma: Fairness Approximation Paramater
-        :param fairness_def: Fairness notion, FP, FN, SP.
-        :param predictor: Hypothesis class for the Learner. Supports LR, SVM, KR, Trees.
+        """Initialize Model Object and set hyperparameters.
+        Args:
+            :param C: Maximum L1 Norm for the Dual Variables (hyperparameter)
+            :param printflag: Print Output Flag
+            :param heatmapflag: Save Heatmaps every heatmap_iter Flag
+            :param heatmap_iter: Save Heatmaps every heatmap_iter
+            :param heatmap_path: Save Heatmaps path
+            :param max_iters: Time Horizon for the fictitious play dynamic.
+            :param gamma: Fairness Approximation Paramater
+            :param fairness_def: Fairness notion, FP, FN, SP.
+            :param predictor: Hypothesis class for the Learner. Supports LR, SVM, KR, Trees.
         """
 
         super(Model, self).__init__()
@@ -66,13 +89,16 @@ class Model(Transformer):
                 'This metric is not yet supported for learning. Metric specified: {}.'.format(self.fairness_def))
 
     def fit(self, dataset, early_termination=True, return_values=False):
-        """
-        Run Fictitious play to compute the approximately fair classifier.
+        """Run Fictitious play to compute the approximately fair classifier.
 
-        :param dataset:
-        :param early_termination: Terminate Early if Auditor can't find fairness violation of more than gamma.
-        :param return_values: flag to return errors and fairness violations lists.
-        :return: errors, fairness violations
+        Args:
+            dataset: dataset object with its own class definition in datasets folder inherits
+                    from class StandardDataset.
+            early_termination: Terminate Early if Auditor can't find fairness violation of more than gamma.
+            return_values: flag to return errors and fairness violations lists.
+
+        Returns:
+            A list (errors, fairness violations)
         """
 
         # defining variables and data structures for algorithm
@@ -123,15 +149,18 @@ class Model(Transformer):
             return errors, fairness_violations
 
     def predict(self, dataset, threshold=.5):
-        """
-        Function to return dataset object where labels are the predictions returned by the fitted model.
+        """Return dataset object where labels are the predictions returned by the fitted model.
 
-        :param dataset:
-        :param threshold: The positive prediction cutoff for the soft-classifier.
-        :return: modified dataset object
+        Args:
+            :param dataset: dataset object with its own class definition in datasets folder inherits
+                    from class StandardDataset.
+            :param threshold: The positive prediction cutoff for the soft-classifier.
+
+        Returns:
+            dataset_new: modified dataset object where the labels attribute are the predictions returned by the self model
         """
 
-        # Generates predictions. 
+        # Generates predictions.
         dataset_new = copy.deepcopy(dataset)
         data, _, _ = clean.extract_df_from_ds(dataset_new)
         num_classifiers = len(self.classifiers)
@@ -142,60 +171,61 @@ class Model(Transformer):
                 y_hat = new_predictions
             else:
                 y_hat = np.add(y_hat, new_predictions)
-        if threshold: 
+        if threshold:
             dataset_new.labels = tuple([1 if y >= threshold else 0 for y in y_hat])
         else:
             dataset_new.labels = tuple([y for y in y_hat])
         return dataset_new
 
     def fit_transform(self, dataset):
-        """
-        Not implemented
+        """Not implemented.
         """
         raise NotImplementedError("'transform' is not supported for this class. ")
 
     def print_outputs(self, iteration, error, group):
+        """Helper function to print outputs at each iteration of fit.
+        Args:
+            :param iteration: current iter
+            :param error: most recent error
+            :param group: most recent group found by the auditor
+            :return: n/a
         """
-        :param iteration: current iter
-        :param error: most recent error
-        :param group: most recent group found by the auditor
-        :return: n/a
-        """
-        
+
         if self.printflag:
             print(
                 'iteration: {}, error: {}, fairness violation: {}, violated group size: {}'.format(int(iteration),
-                    error,
-                    group.weighted_disparity,
-                    group.group_size))
+                                                                                                   error,
+                                                                                                   group.weighted_disparity,
+                                                                                                   group.group_size))
 
     def save_heatmap(self, iteration, dataset, predictions, vmin, vmax):
-        """
-        Helper Function to save the heatmap
+        """Helper Function to save the heatmap.
 
-        :param iteration:
-        :param dataset:
-        :param predictions:
-        :param vmin:
-        :param vmax:
-        :return:
+        Args:
+            :param iteration: current iteration
+            :param dataset: dataset object with its own class definition in datasets folder inherits
+                    from class StandardDataset.
+            :param predictions:
+            :param vmin:
+            :param vmax:
         """
 
         X, X_prime, y = clean.extract_df_from_ds(dataset)
-        # save heatmap every heatmap_iter iterations or the last iteration 
+        # save heatmap every heatmap_iter iterations or the last iteration
         if (self.heatmapflag and (iteration % self.heatmap_iter) == 0):
             # initial heat map
             X_prime_heat = X_prime.iloc[:, 0:2]
             eta = 0.1
-            minmax = heatmap.heat_map(X, X_prime_heat, y, predictions, eta, self.heatmap_path                       +'/heatmap_iteration_{}'.format(iteration), vmin, vmax)
+            minmax = heatmap.heat_map(X, X_prime_heat, y, predictions, eta, self.heatmap_path + '/heatmap_iteration_{}'.
+                                      format(iteration), vmin, vmax)
             if iteration == 1:
                 vmin = minmax[0]
                 vmax = minmax[1]
         return vmin, vmax
-    
-    def generate_heatmap(self, dataset, predictions, vmin=None, vmax=None, cols_index=[0,1], eta=.1):
+
+    def generate_heatmap(self, dataset, predictions, vmin=None, vmax=None, cols_index=[0, 1], eta=.1):
         """
-        Helper Function to generate the heatmap at the current time 
+        Helper Function to generate the heatmap at the current time
 
         :param iteration:
         :param dataset:
@@ -204,12 +234,12 @@ class Model(Transformer):
         :param vmax:
         :return:
         """
-        
+
         X, X_prime, y = clean.extract_df_from_ds(dataset)
-        # save heatmap every heatmap_iter iterations or the last iteration 
+        # save heatmap every heatmap_iter iterations or the last iteration
         X_prime_heat = X_prime.iloc[:, cols_index]
         minmax = heatmap.heat_map(X, X_prime_heat, y, predictions, eta, self.heatmap_path,
-                 vmin, vmax)
+                                  vmin, vmax)
 
     def pareto(self, dataset, gamma_list):
         """
