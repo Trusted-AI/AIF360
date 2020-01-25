@@ -101,7 +101,7 @@ class Auditor(Metric):
         elif self.fairness_def == 'FN':
             costs_1 = [0.0] * n
             costs_0 = [1.0 / n * (2 * i - 1) for i in self.y_input]
-        return tuple(costs_0), tuple(costs_1)
+        return tuple(costs_0), tuple(costs_1), self.X_prime_0
 
     def get_baseline(self, y, predictions):
         """Return the baseline FP or FN rate of the classifier predictions.
