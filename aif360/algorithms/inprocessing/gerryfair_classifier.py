@@ -205,9 +205,9 @@ class Model(Transformer):
             :param iteration: current iteration
             :param dataset: dataset object with its own class definition in datasets folder inherits
                     from class StandardDataset.
-            :param predictions:
-            :param vmin:
-            :param vmax:
+            :param predictions: predictions of the model self on dataset.
+            :param vmin: see documentation of heatmap.py heat_map function
+            :param vmax: see documentation of heatmap.py heat_map function
         """
 
         X, X_prime, y = clean.extract_df_from_ds(dataset)
@@ -224,15 +224,15 @@ class Model(Transformer):
         return vmin, vmax
 
     def generate_heatmap(self, dataset, predictions, vmin=None, vmax=None, cols_index=[0, 1], eta=.1):
-        """
-        Helper Function to generate the heatmap at the current time
+        """Helper Function to generate the heatmap at the current time.
 
-        :param iteration:
-        :param dataset:
-        :param predictions:
-        :param vmin:
-        :param vmax:
-        :return:
+        Args:
+            :param iteration:current iteration
+            :param dataset: dataset object with its own class definition in datasets folder inherits
+                        from class StandardDataset.
+            :param predictions: predictions of the model self on dataset.
+            :param vmin: see documentation of heatmap.py heat_map function
+            :param vmax: see documentation of heatmap.py heat_map function
         """
 
         X, X_prime, y = clean.extract_df_from_ds(dataset)
@@ -242,13 +242,16 @@ class Model(Transformer):
                                   vmin, vmax)
 
     def pareto(self, dataset, gamma_list):
-        """
-        Assumes Model has FP specified for metric. Trains for each value of gamma,
+        """Assumes Model has FP specified for metric. Trains for each value of gamma,
         returns error, FP (via training), and FN (via auditing) values.
 
-        :param dataset:
-        :param gamma_list:
-        :return:
+        Args:
+            :param dataset: dataset object with its own class definition in datasets folder inherits
+                            from class StandardDataset.
+            :param gamma_list: the list of gamma values to generate the pareto curve
+
+        Returns:
+            :return: list of errors, list of fp violations of those models, list of fn violations of those models
         """
 
         C = self.C
@@ -283,19 +286,7 @@ class Model(Transformer):
                     max_iters=None,
                     gamma=None,
                     fairness_def=None):
-        """
-        A method to switch the options before training.
-
-        :param C:
-        :param printflag:
-        :param heatmapflag:
-        :param heatmap_iter:
-        :param heatmap_path:
-        :param max_iters:
-        :param gamma:
-        :param fairness_def:
-        :return:
-        """
+        """A method to switch the options before training. See __init__ for param documentation."""
 
         if C:
             self.C = C

@@ -1,3 +1,28 @@
+# Copyright 2019 Seth V. Neel, Michael J. Kearns, Aaron L. Roth, Zhiwei Steven Wu
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy of
+# the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+
+"""Class Auditor and Class Group implementing auditing for rich subgroup fairness in [KRNW18].
+
+This module contains functionality to Audit an arbitrary classifier with respect to rich subgroup fairness,
+where rich subgroup fairness is defined by hyperplanes over the sensitive attributes.
+
+Basic Usage:
+    auditor = Auditor(data_set, 'FP')
+    # returns mean(predictions | y = 0) if 'FP' 1-mean(predictions | y = 1) if FN
+    metric_baseline = auditor.get_baseline(y, predictions)
+    group = auditor.get_group(dataset_yhat.labels, metric_baseline)
+"""
+
+
+
 import numpy as np
 import pandas as pd
 from sklearn import linear_model
@@ -7,12 +32,18 @@ import aif360.algorithms.inprocessing.gerryfair.clean as clean
 
 
 class Group(object):
-    """Group class: created by Auditor when identifying violation"""
-
-    def return_f(self):
-        return [self.func, self.group_size, self.weighted_disparity, self.disparity, self.disparity_direction, self.group_rate]
+    """Group class: created by Auditor when identifying violation."""
 
     def __init__(self, func, group_size, weighted_disparity, disparity, disparity_direction, group_rate):
+        """Constructor for Group Class.
+
+        :param func: the linear function that defines the group
+        :param group_size: the proportion of the dataset in the group
+        :param weighted_disparity: group_size*FP or FN disparity
+        :param disparity: FN or FP disparity
+        :param disparity_direction:
+        :param group_rate:
+        """
         super(Group, self).__init__()
         self.func = func
         self.group_size = group_size
@@ -20,6 +51,11 @@ class Group(object):
         self.disparity = disparity
         self.disparity_direction = disparity_direction
         self.group_rate = group_rate
+
+    def return_f(self):
+        return [self.func, self.group_size, self.weighted_disparity, self.disparity, self.disparity_direction, self.group_rate]
+
+
 
 class Auditor(Metric):
     """This is the Auditor class. It is used in the training algorithm to repeatedly find subgroups that break the
