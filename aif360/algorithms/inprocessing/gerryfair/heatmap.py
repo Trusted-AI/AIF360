@@ -8,7 +8,6 @@
 # under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
-
 """Function generating 3-d heatmap visualizing gamma-disparity.
 
 The main function in this module, heat_map(), generates and saves a 3-d
@@ -40,14 +39,18 @@ def calc_disp(predictions, X, group_labels, X_prime, group):
     Returns:
         :return: weighted disparity on the group g
     """
-    X_0 = pd.DataFrame([X_prime.iloc[u, :] for u, s in enumerate(group_labels) if s == 0])
+    X_0 = pd.DataFrame(
+        [X_prime.iloc[u, :] for u, s in enumerate(group_labels) if s == 0])
     group_0 = group.predict(X_0)
     n = len(group_labels)
     g_size_0 = np.sum(group_0) * 1.0 / n
     FP = [predictions[i] for i, c in enumerate(group_labels) if c == 0]
     FP = np.mean(FP)
     group_members = g.predict(X_prime)
-    fp_g = [predictions[i] for i, c in enumerate(group_labels) if group_members[i] == 1 and c == 0]
+    fp_g = [
+        predictions[i] for i, c in enumerate(group_labels)
+        if group_members[i] == 1 and c == 0
+    ]
     if len(fp_g) == 0:
         return 0
     fp_g = np.mean(fp_g)
@@ -66,20 +69,20 @@ def heat_map(X, X_prime, y, predictions, eta, plot_path, vmin=None, vmax=None):
         :return: the min and max gamma disparities on groups in the plot
     """
     fig = plt.figure()
-    ax = fig.add_subplot(1,1,1, projection='3d')
+    ax = fig.add_subplot(1, 1, 1, projection='3d')
     columns = [str(c) for c in X_prime.columns]
-    attribute_1 = np.zeros(int(1/eta))
-    attribute_2 = np.zeros(int(1/eta))
-    disparity = np.zeros((int(1/eta), int(1/eta)))
+    attribute_1 = np.zeros(int(1 / eta))
+    attribute_2 = np.zeros(int(1 / eta))
+    disparity = np.zeros((int(1 / eta), int(1 / eta)))
 
-    for i in range(int(1/eta)):
-        for j in range(int(1/eta)):
-            beta = [-1 + 2*eta*i, -1 + 2*eta*j]
+    for i in range(int(1 / eta)):
+        for j in range(int(1 / eta)):
+            beta = [-1 + 2 * eta * i, -1 + 2 * eta * j]
             group = LinearThresh(beta)
-            
+
             attribute_1[i] = beta[0]
             attribute_2[j] = beta[1]
-            disparity[i,j] = calc_disp(predictions, X, y, X_prime, group)
+            disparity[i, j] = calc_disp(predictions, X, y, X_prime, group)
 
     X_plot, Y_plot = np.meshgrid(attribute_1, attribute_2)
 
@@ -87,7 +90,14 @@ def heat_map(X, X_prime, y, predictions, eta, plot_path, vmin=None, vmax=None):
     ax.set_ylabel(columns[1] + ' coefficient')
     ax.set_zlabel('gamma disparity')
     ax.set_zlim3d([np.min(disparity), np.max(disparity)])
-    surface = ax.plot_surface(X_plot, Y_plot, disparity, cmap=cm.coolwarm, linewidth=0, antialiased=False, vmin=vmin, vmax=vmax)
+    surface = ax.plot_surface(X_plot,
+                              Y_plot,
+                              disparity,
+                              cmap=cm.coolwarm,
+                              linewidth=0,
+                              antialiased=False,
+                              vmin=vmin,
+                              vmax=vmax)
     if plot_path != '.':
         fig.savefig('{}.png'.format(plot_path))
         plt.close()

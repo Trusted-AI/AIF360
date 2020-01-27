@@ -8,7 +8,6 @@
 # under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
-
 """Class Model implementing the 'FairFictPlay' Algorithm of [KRNW18].
 
 This module contains functionality to instantiate, fit, and predict
@@ -51,8 +50,8 @@ class Model(Transformer):
         .. [2] "An Empirical Study of Rich Subgroup Fairness for Machine Learning". Michael Kearns,
         Seth Neel, Aaron Roth, Steven Wu. FAT '19.
     """
-
-    def __init__(self, C=10,
+    def __init__(self,
+                 C=10,
                  printflag=False,
                  heatmapflag=False,
                  heatmap_iter=10,
@@ -87,7 +86,8 @@ class Model(Transformer):
         self.classifiers = None
         if self.fairness_def not in ['FP', 'FN']:
             raise Exception(
-                'This metric is not yet supported for learning. Metric specified: {}.'.format(self.fairness_def))
+                'This metric is not yet supported for learning. Metric specified: {}.'
+                .format(self.fairness_def))
 
     def fit(self, dataset, early_termination=True, return_values=False):
         """Run Fictitious play to compute the approximately fair classifier.
@@ -126,17 +126,22 @@ class Model(Transformer):
         while iteration < self.max_iters:
             # learner's best response: solve the CSC problem, get mixture decisions on X to update prediction probabilities
             history.append_classifier(learner.best_response(costs_0, costs_1))
-            error, predictions = learner.generate_predictions(history.get_most_recent(), predictions, iteration)
+            error, predictions = learner.generate_predictions(
+                history.get_most_recent(), predictions, iteration)
             # auditor's best response: find group, update costs
             metric_baseline = auditor.get_baseline(y, predictions)
             group = auditor.get_group(predictions, metric_baseline)
-            costs_0, costs_1 = auditor.update_costs(costs_0, costs_1, group, self.C, iteration, self.gamma)
+            costs_0, costs_1 = auditor.update_costs(costs_0, costs_1, group,
+                                                    self.C, iteration,
+                                                    self.gamma)
 
             # outputs
             errors.append(error)
             fairness_violations.append(group.weighted_disparity)
             self.print_outputs(iteration, error, group)
-            vmin, vmax = self.save_heatmap(iteration, dataset, history.get_most_recent().predict(X), vmin, vmax)
+            vmin, vmax = self.save_heatmap(
+                iteration, dataset,
+                history.get_most_recent().predict(X), vmin, vmax)
             iteration += 1
 
             # early termination:
@@ -167,13 +172,15 @@ class Model(Transformer):
         num_classifiers = len(self.classifiers)
         y_hat = None
         for hyp in self.classifiers:
-            new_predictions = np.multiply(1.0 / num_classifiers, hyp.predict(data))
+            new_predictions = np.multiply(1.0 / num_classifiers,
+                                          hyp.predict(data))
             if y_hat is None:
                 y_hat = new_predictions
             else:
                 y_hat = np.add(y_hat, new_predictions)
         if threshold:
-            dataset_new.labels = tuple([1 if y >= threshold else 0 for y in y_hat])
+            dataset_new.labels = tuple(
+                [1 if y >= threshold else 0 for y in y_hat])
         else:
             dataset_new.labels = tuple([y for y in y_hat])
         return dataset_new
@@ -181,7 +188,8 @@ class Model(Transformer):
     def fit_transform(self, dataset):
         """Not implemented.
         """
-        raise NotImplementedError("'transform' is not supported for this class. ")
+        raise NotImplementedError(
+            "'transform' is not supported for this class. ")
 
     def print_outputs(self, iteration, error, group):
         """Helper function to print outputs at each iteration of fit.
@@ -194,10 +202,9 @@ class Model(Transformer):
 
         if self.printflag:
             print(
-                'iteration: {}, error: {}, fairness violation: {}, violated group size: {}'.format(int(iteration),
-                                                                                                   error,
-                                                                                                   group.weighted_disparity,
-                                                                                                   group.group_size))
+                'iteration: {}, error: {}, fairness violation: {}, violated group size: {}'
+                .format(int(iteration), error, group.weighted_disparity,
+                        group.group_size))
 
     def save_heatmap(self, iteration, dataset, predictions, vmin, vmax):
         """Helper Function to save the heatmap.
@@ -217,14 +224,22 @@ class Model(Transformer):
             # initial heat map
             X_prime_heat = X_prime.iloc[:, 0:2]
             eta = 0.1
-            minmax = heatmap.heat_map(X, X_prime_heat, y, predictions, eta, self.heatmap_path + '/heatmap_iteration_{}'.
-                                      format(iteration), vmin, vmax)
+            minmax = heatmap.heat_map(
+                X, X_prime_heat, y, predictions, eta,
+                self.heatmap_path + '/heatmap_iteration_{}'.format(iteration),
+                vmin, vmax)
             if iteration == 1:
                 vmin = minmax[0]
                 vmax = minmax[1]
         return vmin, vmax
 
-    def generate_heatmap(self, dataset, predictions, vmin=None, vmax=None, cols_index=[0, 1], eta=.1):
+    def generate_heatmap(self,
+                         dataset,
+                         predictions,
+                         vmin=None,
+                         vmax=None,
+                         cols_index=[0, 1],
+                         eta=.1):
         """Helper Function to generate the heatmap at the current time.
 
         Args:
@@ -239,8 +254,8 @@ class Model(Transformer):
         X, X_prime, y = clean.extract_df_from_ds(dataset)
         # save heatmap every heatmap_iter iterations or the last iteration
         X_prime_heat = X_prime.iloc[:, cols_index]
-        minmax = heatmap.heat_map(X, X_prime_heat, y, predictions, eta, self.heatmap_path,
-                                  vmin, vmax)
+        minmax = heatmap.heat_map(X, X_prime_heat, y, predictions, eta,
+                                  self.heatmap_path, vmin, vmax)
 
     def pareto(self, dataset, gamma_list):
         """Assumes Model has FP specified for metric. Trains for each value of gamma,
@@ -270,7 +285,9 @@ class Model(Transformer):
         auditor = Auditor(dataset, 'FN')
         for g in gamma_list:
             self.gamma = g
-            errors, fairness_violations = self.fit(dataset, early_termination=True, return_values=True)
+            errors, fairness_violations = self.fit(dataset,
+                                                   early_termination=True,
+                                                   return_values=True)
             predictions = (self.predict(dataset)).labels
             _, fn_violation = auditor.audit(predictions)
             all_errors.append(errors[-1])
@@ -279,7 +296,8 @@ class Model(Transformer):
 
         return all_errors, all_fp_violations, all_fn_violations
 
-    def set_options(self, C=None,
+    def set_options(self,
+                    C=None,
                     printflag=None,
                     heatmapflag=None,
                     heatmap_iter=None,
@@ -305,7 +323,3 @@ class Model(Transformer):
             self.gamma = gamma
         if fairness_def:
             self.fairness_def = fairness_def
-
-
-
-
