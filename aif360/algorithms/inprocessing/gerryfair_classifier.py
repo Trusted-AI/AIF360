@@ -39,6 +39,7 @@ except:
 
 class Model(Transformer):
     """Model is an algorithm for learning classifiers that are fair with respect to rich subgroups.
+
        Rich subgroups are defined by [linear] functions over the sensitive attributes, and fairness notions are statistical: false
        positive, false negative, and statistical parity rates. This implementation uses a max of two regressions
        as a cost-sensitive classification oracle, and supports linear regression, support vector machines, decision trees,

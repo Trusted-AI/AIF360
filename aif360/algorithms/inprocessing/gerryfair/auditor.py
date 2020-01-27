@@ -40,9 +40,9 @@ class Group(object):
         :param func: the linear function that defines the group
         :param group_size: the proportion of the dataset in the group
         :param weighted_disparity: group_size*FP or FN disparity
-        :param disparity: FN or FP disparity
-        :param disparity_direction:
-        :param group_rate:
+        :param disparity: FN or FP disparity (absolute value)
+        :param disparity_direction: indicator whether fp in group > fp_baseline, returns {1, -1}
+        :param group_rate: FN or FN rate in the group
         """
         super(Group, self).__init__()
         self.func = func
@@ -60,7 +60,14 @@ class Group(object):
 class Auditor(Metric):
     """This is the Auditor class. It is used in the training algorithm to repeatedly find subgroups that break the
     fairness disparity constraint. You can also use it independently as a stand alone auditor."""
+
     def __init__(self, dataset, fairness_def):
+        """Auditor constructor.
+
+        Args:
+            :param dataset: dataset object subclassing StandardDataset.
+            :param fairness_def: 'FP' or 'FN'
+        """
         super(Auditor, self).__init__(dataset)
         X, X_prime, y = clean.extract_df_from_ds(dataset)
         self.X_prime = X_prime
@@ -70,11 +77,21 @@ class Auditor(Metric):
         if self.fairness_def not in ['FP', 'FN']:
             raise Exception('Invalid fairness metric specified: {}. Please choose \'FP\' or \'FN\'.'.format(self.fairness_def))
         self.y = self.y_input
+        # flip the labels for FN rate auditing
         if self.fairness_def == 'FN':
             self.y = self.y_inverse
         self.X_prime_0 = pd.DataFrame([self.X_prime.iloc[u, :] for u, s in enumerate(self.y) if s == 0])
 
     def initialize_costs(self, n):
+        """Initialize the costs for CSC problem that corresponds to auditing. See paper for details.
+
+        Args:
+            :param self: object of class Auditor
+            :param n: size of the dataset
+
+        Return:
+            :return The costs for labeling a point 0, for labeling a point 1, as tuples.
+        """
         costs_0 = None
         costs_1 = None
         if self.fairness_def == 'FP':
@@ -87,14 +104,34 @@ class Auditor(Metric):
         return tuple(costs_0), tuple(costs_1), self.X_prime_0
 
     def get_baseline(self, y, predictions):
+        """Return the baseline FP or FN rate of the classifier predictions.
+
+        Args:
+            :param y: true labels (binary)
+            :param predictions: predictions of classifier (soft predictions)
+
+        Returns:
+            :return: The baseline FP or FN rate of the classifier predictions
+        """
         if self.fairness_def == 'FP':
             return np.mean([predictions[i] for i, c in enumerate(y) if c == 0])
         elif self.fairness_def == 'FN':
             return np.mean([(1 - predictions[i]) for i, c in enumerate(y) if c == 1])
 
     def update_costs(self, c_0, c_1, group, C, iteration, gamma):
-        """Recursively update the costs from incorrectly predicting 1 for the learner."""
-        # store whether FP disparity was + or -
+        """Recursively update the costs from incorrectly predicting 1 for the learner.
+
+        Args:
+            :param c_0: current costs for predicting 0
+            :param c_1: current costs for predicting 1
+            :param group: last group found by the auditor, object of class Group.
+            :param C: see Model class for details.
+            :param iteration: current iteration
+            :param gamma: target disparity
+
+        Returns:
+            :return c_0, c_1: tuples of new costs for CSC problem of learner
+        """
 
         # make costs mutable type
         c_0 = list(c_0)
@@ -127,14 +164,36 @@ class Auditor(Metric):
         return tuple(c_0), tuple(c_1)
 
     def get_subset(self, predictions):
+        """Returns subset of dataset with y = 0 for FP and labels, or subset with y = 0 with flipped labels
+        if the fairness_def is FN.
+
+        Args:
+            :param predictions: soft predictions of the classifier
+        Returns:
+            :return: X_prime_0: subset of features with y = 0
+            :return: labels: the labels on y = 0 if FP else 1-labels.
+        """
         if self.fairness_def == 'FP':
             return self.X_prime_0, [a for u, a in enumerate(predictions) if self.y[u] == 0]
+        # handles FN rate by flipping labels
         elif self.fairness_def == 'FN':
-            return self.X_prime_0, [(1 - a) for u, a in enumerate(predictions) if self.y[u] == 0] # changed 1 to 0, inverting labels
+            return self.X_prime_0, [(1 - a) for u, a in enumerate(predictions) if self.y[u] == 0]
 
     def get_group(self, predictions, metric_baseline):
         """Given decisions on sensitive attributes, labels, and FP rate audit wrt
             to gamma unfairness. Return the group found, the gamma unfairness, fp disparity, and sign(fp disparity).
+
+        Args:
+            :param predictions: soft predictions of the classifier
+            :param metric_baseline: see function get_baseline
+
+        Returns:
+            :return func: object of type RegOracle defining the group
+            :return g_size_0: the size of the group divided by n
+            :return fp_disp: |group_rate-baseline|
+            :return fp_disp_w: fp_disp*group_size_0
+            :return sgn(fp_disp): sgn(group_rate-baseline)
+            :return fp_group_rate_neg:
         """
 
         X_subset, predictions_subset = self.get_subset(predictions)
@@ -187,7 +246,8 @@ class Auditor(Metric):
 
     def audit(self, predictions):
         """Takes in predictions on dataset (X',y) and returns:
-            a vector which represents the group that violates the fairness metric, along with the u.
+            a membership vector which represents the group that violates the fairness metric,
+            along with the gamma disparity.
         """
         if isinstance(predictions, pd.DataFrame):
             predictions = predictions.values
