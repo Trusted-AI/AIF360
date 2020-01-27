@@ -1,3 +1,15 @@
+# Copyright 2019 Seth V. Neel, Michael J. Kearns, Aaron L. Roth, Zhiwei Steven Wu
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy of
+# the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+
+"""Functions for manipulating and loading input data."""
 import argparse
 import numpy as np
 import pandas as pd
@@ -18,15 +30,18 @@ def setup():
 
 
 def clean_dataset(dataset, attributes, centered):
-    '''
-    Clean a dataset, given the filename for the dataset and the filename for the attributes.
+    """Clean a dataset, given the filename for the dataset and the filename for the attributes.
 
-    Dataset: Filename for dataset. The dataset should be formatted such that categorical variables use one-hot encoding
+    Args:
+        :param dataset: Filename for dataset. The dataset should be formatted such that categorical
+        variables use one-hot encoding
     and the label should be 0/1
-
-    Attributes: Filename for the attributes of the dataset. The file should have each column name in a list, and under this
-    list should have 0 for an unprotected attribute, 1 for a protected attribute, and 2 for the attribute of the label.
-    '''
+        :param attributes: Filename for the attributes of the dataset. The file should have each column name in a list,
+         and under this list should have 0 for an unprotected attribute, 1 for a protected attribute, and 2 for the
+          attribute of the label.
+        :param centered: boolean flag that determines whether to center the input covariates.
+        :return X, X_prime, y: pandas dataframes of attributes, sensitive attributes, labels
+    """
 
     df = pd.read_csv(dataset)
     sens_df = pd.read_csv(attributes)
@@ -51,16 +66,10 @@ def clean_dataset(dataset, attributes, centered):
     X, sens_dict = one_hot_code(X, sens_dict)
     sens_names = [key for key in sens_dict.keys() if sens_dict[key] == 1]
     print('there are {} sensitive features including derivative features'.format(len(sens_names)))
-
     X_prime = X[sens_names]
-
-    #X = X.reset_index(drop=True)
-    #X_prime = X_prime.reset_index(drop=True)
-
-    if(centered):
+    if centered:
         X = center(X)
         X_prime = center(X_prime)
-
     return X, X_prime, y
 
 
@@ -70,8 +79,9 @@ def center(X):
     return X
 
 
-# have to cast ndarray to hashable type in get_baseline()
+
 def array_to_tuple(x):
+    # have to cast ndarray to hashable type in get_baseline()
     x = tuple([el[0] for el in x]) if x.__class__.__name__ == 'ndarray' else x
     return x
 
@@ -99,14 +109,13 @@ def one_hot_code(df1, sens_dict):
 
 
 def extract_df_from_ds(dataset):
-
     """Extract data frames from Transformer Data set
 
     Args:
-         dataset: aif360 dataset
+         :param dataset: aif360 dataset
 
     Returns:
-         X, X_prime, y (pandas dataframes of attributes, sensitive attributes, labels)
+         :return X, X_prime, y: pandas dataframes of attributes, sensitive attributes, labels
     """
 
     X = pd.DataFrame(dataset.convert_to_dataframe()[0])
@@ -118,11 +127,12 @@ def extract_df_from_ds(dataset):
     return X, X_prime, y
 
 
-# Helper for main method
-'''
-Given name of dataset, load in the three datasets associated from the clean.py file
-'''
 def get_data(dataset):
+    # Helper for main method
+    """Given name of dataset, load in the three datasets associated from the clean.py file
+    :param dataset:
+    :return:
+    """
     X = pd.read_csv('dataset/' + dataset + '_features.csv')
     X_prime = pd.read_csv('dataset/' + dataset + '_protectedfeatures.csv')
     y = pd.read_csv('dataset/' + dataset + '_labels.csv', names=['index', 'label'])

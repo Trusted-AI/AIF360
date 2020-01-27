@@ -182,6 +182,18 @@ class Auditor(Metric):
     def get_group(self, predictions, metric_baseline):
         """Given decisions on sensitive attributes, labels, and FP rate audit wrt
             to gamma unfairness. Return the group found, the gamma unfairness, fp disparity, and sign(fp disparity).
+
+        Args:
+            :param predictions: soft predictions of the classifier
+            :param metric_baseline: see function get_baseline
+
+        Returns:
+            :return func: object of type RegOracle defining the group
+            :return g_size_0: the size of the group divided by n
+            :return fp_disp: |group_rate-baseline|
+            :return fp_disp_w: fp_disp*group_size_0
+            :return sgn(fp_disp): sgn(group_rate-baseline)
+            :return fp_group_rate_neg:
         """
 
         X_subset, predictions_subset = self.get_subset(predictions)
@@ -234,7 +246,8 @@ class Auditor(Metric):
 
     def audit(self, predictions):
         """Takes in predictions on dataset (X',y) and returns:
-            a vector which represents the group that violates the fairness metric, along with the u.
+            a membership vector which represents the group that violates the fairness metric,
+            along with the gamma disparity.
         """
         if isinstance(predictions, pd.DataFrame):
             predictions = predictions.values
