@@ -244,4 +244,4 @@ paper.
   Fairness 360 by Kush Varshney, September 20, 2018 (32 mins)
   
 ## Contributing
-The development fork for Rich Subgroup Fairness (`inprocessing/gerryfair_classifier.py`) is located (here)[github.com/sethneel/aif360]. Contributions are welcome and a list of potential contributions can be found: https://trello.com/b/0OwPcbVr/gerryfair-development.
+The development fork for Rich Subgroup Fairness (`inprocessing/gerryfair_classifier.py`) is github.com/sethneel/aif360. Contributions are welcome and a list of potential contributions from the authors can be found: https://trello.com/b/0OwPcbVr/gerryfair-development.
