@@ -20,8 +20,12 @@ def fetch_compas(data_home=None, binary_race=False,
     Optionally binarizes 'race' to 'Caucasian' (privileged) or
     'African-American' (unprivileged). The other protected attribute is 'sex'
     ('Male' is *unprivileged* and 'Female' is *privileged*). The outcome
-    variable is 'no recid.' (favorable) if the person was not accused of a crime
-    within two years or 'did recid.' (unfavorable) if they were.
+    variable is 'Survived' (favorable) if the person was not accused of a crime
+    within two years or 'Recidivated' (unfavorable) if they were.
+
+    Note:
+        The values for the 'sex' variable if numeric_only is ``True`` are 1 for
+        'Female and 0 for 'Male' -- opposite the convention of other datasets.
 
     Args:
         data_home (string, optional): Specify another download and cache folder
@@ -59,16 +63,19 @@ def fetch_compas(data_home=None, binary_race=False,
     for col in ['sex', 'age_cat', 'race', 'c_charge_degree', 'c_charge_desc']:
         df[col] = df[col].astype('category')
 
-    # 'did recid' < 'no recid'
-    df.two_year_recid = df.two_year_recid.replace({0: 'no recid.',
-            1: 'did recid.'}).astype('category').cat.as_ordered()
+    # 'Survived' < 'Recidivated'
+    cats = ['Survived', 'Recidivated']
+    df.two_year_recid = df.two_year_recid.replace([0, 1], cats).astype('category')
+    df.two_year_recid = df.two_year_recid.cat.set_categories(cats, ordered=True)
 
     if binary_race:
         # 'African-American' < 'Caucasian'
         df.race = df.race.cat.set_categories(['African-American', 'Caucasian'],
                                              ordered=True)
 
-    df.sex = df.sex.astype('category').cat.as_ordered()  # 'Female' < 'Male'
+    # 'Male' < 'Female'
+    df.sex = df.sex.astype('category').cat.reorder_categories(
+            ['Male', 'Female'], ordered=True)
 
     return standardize_dataset(df, prot_attr=['sex', 'race'],
                                target='two_year_recid', usecols=usecols,
