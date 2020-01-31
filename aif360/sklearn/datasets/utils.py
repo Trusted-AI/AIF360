@@ -28,13 +28,13 @@ def check_already_dropped(labels, dropped_cols, name, dropped_by='numeric_only',
     """
     if not is_list_like(labels):
         labels = [labels]
-    labels = [c for c in labels if isinstance(c, str)]
-    already_dropped = dropped_cols.intersection(labels)
-    if warn and already_dropped.any():
+    str_labels = [c for c in labels if isinstance(c, str)]
+    already_dropped = dropped_cols.intersection(str_labels)
+    if warn and any(already_dropped):
         warnings.warn("Some column labels from `{}` were already dropped by "
                 "`{}`:\n{}".format(name, dropped_by, already_dropped.tolist()),
                 ColumnAlreadyDroppedWarning, stacklevel=2)
-    return [c for c in labels if c not in already_dropped]
+    return [c for c in labels if not isinstance(c, str) or c not in already_dropped]
 
 def standardize_dataset(df, prot_attr, target, sample_weight=None, usecols=[],
                        dropcols=[], numeric_only=False, dropna=True):

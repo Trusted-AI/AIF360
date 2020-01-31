@@ -36,8 +36,8 @@ def fetch_adult(subset='all', data_home=None, binary_race=True, usecols=[],
                 dropcols=[], numeric_only=False, dropna=True):
     """Load the Adult Census Income Dataset.
 
-    Binarizes 'race' to 'White' (privileged) or 'Non-white' (unprivileged).
-    The other protected attribute is 'sex' ('Male' is privileged and 'Female' is
+    Binarizes 'race' to 'White' (privileged) or 'Non-white' (unprivileged). The
+    other protected attribute is 'sex' ('Male' is privileged and 'Female' is
     unprivileged). The outcome variable is 'annual-income': '>50K' (favorable)
     or '<=50K' (unfavorable).
 
@@ -151,7 +151,8 @@ def fetch_german(data_home=None, binary_age=True, usecols=[], dropcols=[],
     df['credit-risk'] = df['credit-risk'].cat.as_ordered()  # 'bad' < 'good'
 
     # binarize protected attribute (but not corresponding feature)
-    age = (pd.cut(df.age, [0, 25, 100], labels=numeric_only and ['young', 'aged'])
+    age = (pd.cut(df.age, [0, 25, 100],
+                  labels=False if numeric_only else ['young', 'aged'])
            if binary_age else 'age')
 
     # Note: marital_status directly implies sex. i.e. 'div/dep/mar' => 'female'
@@ -161,9 +162,10 @@ def fetch_german(data_home=None, binary_age=True, usecols=[], dropcols=[],
     df = df.join(personal_status.astype('category'))
     df.sex = df.sex.cat.as_ordered()  # 'female' < 'male'
 
-    return standardize_dataset(df, prot_attr=['sex', age], target='credit-risk',
-                               usecols=usecols, dropcols=dropcols,
-                               numeric_only=numeric_only, dropna=dropna)
+    return standardize_dataset(df, prot_attr=['sex', age, 'foreign_worker'],
+                               target='credit-risk', usecols=usecols,
+                               dropcols=dropcols, numeric_only=numeric_only,
+                               dropna=dropna)
 
 def fetch_bank(data_home=None, percent10=False, usecols=[], dropcols='duration',
                numeric_only=False, dropna=False):
