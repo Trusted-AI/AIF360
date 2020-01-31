@@ -28,17 +28,17 @@ class PostProcessingMeta(BaseEstimator, MetaEstimatorMixin):
     Attributes:
         estimator_: Fitted estimator.
         postprocessor_: Fitted postprocessor.
-        use_proba_ (bool): Determined depending on the postprocessor type if
-            `use_proba` is None.
+        needs_proba_ (bool): Determined depending on the postprocessor type if
+            `needs_proba` is None.
     """
 
     def __init__(self, estimator, postprocessor=CalibratedEqualizedOdds(),
-                 use_proba=None, val_size=0.25, **options):
+                 needs_proba=None, val_size=0.25, **options):
         """
         Args:
             estimator (sklearn.BaseEstimator): Original estimator.
             postprocessor: Post-processing algorithm.
-            use_proba (bool): Use ``self.estimator_.predict_proba()`` instead of
+            needs_proba (bool): Use ``self.estimator_.predict_proba()`` instead of
                 ``self.estimator_.predict()`` as input to postprocessor. If
                 ``None``, defaults to ``True`` if the postprocessor supports it.
             val_size (int or float): Size of validation set used to fit the
@@ -53,7 +53,7 @@ class PostProcessingMeta(BaseEstimator, MetaEstimatorMixin):
         """
         self.estimator = estimator
         self.postprocessor = postprocessor
-        self.use_proba = use_proba
+        self.needs_proba = needs_proba
         self.val_size = val_size
         self.options = options
 
@@ -79,9 +79,9 @@ class PostProcessingMeta(BaseEstimator, MetaEstimatorMixin):
         Returns:
             self
         """
-        self.use_proba_ = (self.use_proba if self.use_proba is not None else
+        self.needs_proba_ = (self.needs_proba if self.needs_proba is not None else
                 isinstance(self.postprocessor, CalibratedEqualizedOdds))
-        if self.use_proba_ and not hasattr(self.estimator, 'predict_proba'):
+        if self.needs_proba_ and not hasattr(self.estimator, 'predict_proba'):
             raise TypeError("`estimator` (type: {}) does not implement method "
                             "`predict_proba()`.".format(type(self.estimator)))
 
@@ -103,7 +103,7 @@ class PostProcessingMeta(BaseEstimator, MetaEstimatorMixin):
             X_est, X_post, y_est, y_post = train_test_split(X, y, **options_)
             self.estimator_.fit(X_est, y_est)
 
-        y_pred = (self.estimator_.predict(X_post) if not self.use_proba_ else
+        y_pred = (self.estimator_.predict(X_post) if not self.needs_proba_ else
                   self.estimator_.predict_proba(X_post))
         # fit_params = fit_params.copy().update(labels=self.estimator_.classes_)
         self.postprocessor_.fit(y_pred, y_post, sample_weight=sw_post
@@ -116,7 +116,7 @@ class PostProcessingMeta(BaseEstimator, MetaEstimatorMixin):
         """Predict class labels for the given samples.
 
         First, runs ``self.estimator_.predict()`` (or ``predict_proba()`` if
-        ``self.use_proba_`` is ``True``) then returns the post-processed output
+        ``self.needs_proba_`` is ``True``) then returns the post-processed output
         from those predictions.
 
         Args:
@@ -125,7 +125,7 @@ class PostProcessingMeta(BaseEstimator, MetaEstimatorMixin):
         Returns:
             numpy.ndarray: Predicted class label per sample.
         """
-        y_pred = (self.estimator_.predict(X) if not self.use_proba_ else
+        y_pred = (self.estimator_.predict(X) if not self.needs_proba_ else
                   self.estimator_.predict_proba(X))
         y_pred = pd.DataFrame(y_pred, index=X.index).squeeze('columns')
         return self.postprocessor_.predict(y_pred)
@@ -135,7 +135,7 @@ class PostProcessingMeta(BaseEstimator, MetaEstimatorMixin):
         """Probability estimates.
 
         First, runs ``self.estimator_.predict()`` (or ``predict_proba()`` if
-        ``self.use_proba_`` is ``True``) then returns the post-processed output
+        ``self.needs_proba_`` is ``True``) then returns the post-processed output
         from those predictions.
 
         The returned estimates for all classes are ordered by the label of
@@ -149,7 +149,7 @@ class PostProcessingMeta(BaseEstimator, MetaEstimatorMixin):
             in the model, where classes are ordered as they are in
             ``self.classes_``.
         """
-        y_pred = (self.estimator_.predict(X) if not self.use_proba_ else
+        y_pred = (self.estimator_.predict(X) if not self.needs_proba_ else
                   self.estimator_.predict_proba(X))
         y_pred = pd.DataFrame(y_pred, index=X.index).squeeze('columns')
         return self.postprocessor_.predict_proba(y_pred)
@@ -159,7 +159,7 @@ class PostProcessingMeta(BaseEstimator, MetaEstimatorMixin):
         """Log of probability estimates.
 
         First, runs ``self.estimator_.predict()`` (or ``predict_proba()`` if
-        ``self.use_proba_`` is ``True``) then returns the post-processed output
+        ``self.needs_proba_`` is ``True``) then returns the post-processed output
         from those predictions.
 
         The returned estimates for all classes are ordered by the label of
@@ -173,7 +173,7 @@ class PostProcessingMeta(BaseEstimator, MetaEstimatorMixin):
             the model, where classes are ordered as they are in
             ``self.classes_``.
         """
-        y_pred = (self.estimator_.predict(X) if not self.use_proba_ else
+        y_pred = (self.estimator_.predict(X) if not self.needs_proba_ else
                   self.estimator_.predict_proba(X))
         y_pred = pd.DataFrame(y_pred, index=X.index).squeeze('columns')
         return self.postprocessor_.predict_log_proba(y_pred)
@@ -184,7 +184,7 @@ class PostProcessingMeta(BaseEstimator, MetaEstimatorMixin):
         given test data and labels.
 
         First, runs ``self.estimator_.predict()`` (or ``predict_proba()`` if
-        ``self.use_proba_`` is ``True``) then gets the post-processed output
+        ``self.needs_proba_`` is ``True``) then gets the post-processed output
         from those predictions and scores it.
 
         Args:
@@ -195,7 +195,7 @@ class PostProcessingMeta(BaseEstimator, MetaEstimatorMixin):
         Returns:
             float: Score value.
         """
-        y_pred = (self.estimator_.predict(X) if not self.use_proba_ else
+        y_pred = (self.estimator_.predict(X) if not self.needs_proba_ else
                   self.estimator_.predict_proba(X))
         y_pred = pd.DataFrame(y_pred, index=X.index).squeeze('columns')
         return self.postprocessor_.score(y_pred, y, sample_weight=sample_weight)
