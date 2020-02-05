@@ -64,7 +64,8 @@ class CalibratedEqualizedOdds(BaseEstimator, ClassifierMixin):
         self.cost_constraint = cost_constraint
         self.random_state = random_state
 
-    def _weighted_cost(self, y_true, probas_pred, pos_label, sample_weight):
+    def _weighted_cost(self, y_true, probas_pred, pos_label=1,
+                       sample_weight=None):
         """Evaluates the cost function specified by ``self.cost_constraint``."""
         fpr = generalized_fpr(y_true, probas_pred, pos_label, sample_weight)
         fnr = generalized_fnr(y_true, probas_pred, pos_label, sample_weight)
@@ -178,7 +179,7 @@ class CalibratedEqualizedOdds(BaseEstimator, ClassifierMixin):
             numpy.ndarray: Predicted class label per sample.
         """
         scores = self.predict_proba(y_pred)
-        return self.classes[scores.argmax(axis=1)]
+        return self.classes_[scores.argmax(axis=1)]
 
     def score(self, y_pred, y_true, sample_weight=None):
         """Score the predictions according to the cost constraint specified.
@@ -201,4 +202,4 @@ class CalibratedEqualizedOdds(BaseEstimator, ClassifierMixin):
 
         return abs(difference(self._weighted_cost, y_true, probas_pred,
                 prot_attr=self.prot_attr_, priv_group=self.groups_[1],
-                sample_weight=sample_weight))
+                pos_label=self.pos_label_, sample_weight=sample_weight))
