@@ -65,14 +65,14 @@ def test_fetch_german():
     german = fetch_german()
     assert len(german) == 2
     assert german.X.shape == (1000, 21)
-    assert fetch_german(numeric_only=True).X.shape == (1000, 8)
+    assert fetch_german(numeric_only=True).X.shape == (1000, 9)
 
 def test_fetch_bank():
     bank = fetch_bank()
     assert len(bank) == 2
     assert bank.X.shape == (45211, 15)
     assert fetch_bank(dropcols=[]).X.shape == (45211, 16)
-    assert fetch_bank(numeric_only=True).X.shape == (45211, 6)
+    assert fetch_bank(numeric_only=True).X.shape == (45211, 7)
 
 @pytest.mark.filterwarnings('error', category=ColumnAlreadyDroppedWarning)
 def test_fetch_compas():
