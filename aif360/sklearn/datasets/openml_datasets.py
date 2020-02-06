@@ -162,6 +162,9 @@ def fetch_german(data_home=None, binary_age=True, usecols=[], dropcols=[],
     df = df.join(personal_status.astype('category'))
     df.sex = df.sex.cat.as_ordered()  # 'female' < 'male'
 
+    # 'no' < 'yes'
+    df.foreign_worker = df.foreign_worker.astype('category').cat.as_ordered()
+
     return standardize_dataset(df, prot_attr=['sex', age, 'foreign_worker'],
                                target='credit-risk', usecols=usecols,
                                dropcols=dropcols, numeric_only=numeric_only,
@@ -215,6 +218,9 @@ def fetch_bank(data_home=None, percent10=False, usecols=[], dropcols='duration',
     # replace 'unknown' marker with NaN
     df.apply(lambda s: s.cat.remove_categories('unknown', inplace=True)
              if hasattr(s, 'cat') and 'unknown' in s.cat.categories else s)
+    # 'primary' < 'secondary' < 'tertiary'
+    df.education = df.education.astype('category').cat.as_ordered()
+
     return standardize_dataset(df, prot_attr='age', target='deposit',
                                usecols=usecols, dropcols=dropcols,
                                numeric_only=numeric_only, dropna=dropna)
