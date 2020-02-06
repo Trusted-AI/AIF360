@@ -2,6 +2,7 @@ import warnings
 
 import numpy as np
 from sklearn.metrics import make_scorer, recall_score
+from sklearn.metrics import multilabel_confusion_matrix
 from sklearn.neighbors import NearestNeighbors
 from sklearn.utils import check_X_y
 from sklearn.exceptions import UndefinedMetricWarning
@@ -26,7 +27,8 @@ __all__ = [
     'between_group_generalized_entropy_error', 'theil_index',
     'coefficient_of_variation', 'consistency_score',
     # aliases
-    'sensitivity_score', 'mean_difference',
+    'sensitivity_score', 'mean_difference', 'false_negative_rate_error',
+    'false_positive_rate_error'
 ]
 
 # ============================= META-METRICS ===================================
@@ -155,19 +157,24 @@ def make_ratio_scorer(ratio_func):
 
 
 # ================================ HELPERS =====================================
-# TODO: make this more general
-def specificity_score(y_true, y_pred, neg_label=0, sample_weight=None):
+def specificity_score(y_true, y_pred, pos_label=1, sample_weight=None):
     """Compute the specificity or true negative rate.
 
     Args:
         y_true (array-like): Ground truth (correct) target values.
         y_pred (array-like): Estimated targets as returned by a classifier.
-        neg_label (scalar, optional): The label of the negative class. Note:
-            the data should be binary.
+        pos_label (scalar, optional): The label of the positive class.
         sample_weight (array-like, optional): Sample weights.
     """
-    return recall_score(y_true, y_pred, pos_label=neg_label,
-                        sample_weight=sample_weight)
+    MCM = multilabel_confusion_matrix(y_true, y_pred, labels=[pos_label],
+                                      sample_weight=sample_weight)
+    tn, fp, fn, tp = MCM.ravel()
+    negs = tn + fp
+    if negs == 0:
+        warnings.warn('specificity_score is ill-defined and being set to 0.0 '
+                      'due to no negative samples.', UndefinedMetricWarning)
+        return 0.
+    return tn / negs
 
 def base_rate(y_true, y_pred=None, pos_label=1, sample_weight=None):
     r"""Compute the base rate, :math:`Pr(Y = \text{pos_label}) = \frac{P}{P+N}`.
@@ -339,7 +346,7 @@ def equal_opportunity_difference(y_true, y_pred, prot_attr=None, priv_group=1,
                       sample_weight=sample_weight)
 
 def average_odds_difference(y_true, y_pred, prot_attr=None, priv_group=1,
-                            pos_label=1, neg_label=0, sample_weight=None):
+                            pos_label=1, sample_weight=None):
     r"""A relaxed version of equality of odds.
 
     Returns the average of the difference in FPR and TPR for the unprivileged
@@ -366,14 +373,14 @@ def average_odds_difference(y_true, y_pred, prot_attr=None, priv_group=1,
     """
     fpr_diff = -difference(specificity_score, y_true, y_pred,
                            prot_attr=prot_attr, priv_group=priv_group,
-                           neg_label=neg_label, sample_weight=sample_weight)
+                           pos_label=pos_label, sample_weight=sample_weight)
     tpr_diff = difference(recall_score, y_true, y_pred, prot_attr=prot_attr,
                           priv_group=priv_group, pos_label=pos_label,
                           sample_weight=sample_weight)
     return (tpr_diff + fpr_diff) / 2
 
-def average_odds_error(y_true, y_pred, prot_attr=None, priv_group=1,
-                       pos_label=1, neg_label=0, sample_weight=None):
+def average_odds_error(y_true, y_pred, prot_attr=None, pos_label=1,
+                       sample_weight=None):
     r"""A relaxed version of equality of odds.
 
     Returns the average of the absolute difference in FPR and TPR for the
@@ -398,9 +405,10 @@ def average_odds_error(y_true, y_pred, prot_attr=None, priv_group=1,
     Returns:
         float: Average odds error.
     """
+    priv_group = check_groups(y_true, prot_attr=prot_attr)[0][0]
     fpr_diff = -difference(specificity_score, y_true, y_pred,
                            prot_attr=prot_attr, priv_group=priv_group,
-                           neg_label=neg_label, sample_weight=sample_weight)
+                           pos_label=pos_label, sample_weight=sample_weight)
     tpr_diff = difference(recall_score, y_true, y_pred, prot_attr=prot_attr,
                           priv_group=priv_group, pos_label=pos_label,
                           sample_weight=sample_weight)
@@ -561,13 +569,13 @@ def sensitivity_score(y_true, y_pred, pos_label=1, sample_weight=None):
     return recall_score(y_true, y_pred, pos_label=pos_label,
                         sample_weight=sample_weight)
 
-# def false_negative_rate_error(y_true, y_pred, pos_label=1, sample_weight=None):
-#     return 1 - recall_score(y_true, y_pred, pos_label=pos_label,
-#                             sample_weight=sample_weight)
+def false_negative_rate_error(y_true, y_pred, pos_label=1, sample_weight=None):
+    return 1 - recall_score(y_true, y_pred, pos_label=pos_label,
+                            sample_weight=sample_weight)
 
-# def false_positive_rate_error(y_true, y_pred, neg_label=0, sample_weight=None):
-#     return 1 - specificity_score(y_true, y_pred, neg_label=neg_label,
-#                                  sample_weight=sample_weight)
+def false_positive_rate_error(y_true, y_pred, pos_label=1, sample_weight=None):
+    return 1 - specificity_score(y_true, y_pred, pos_label=pos_label,
+                                 sample_weight=sample_weight)
 
 def mean_difference(*y, prot_attr=None, priv_group=1, pos_label=1,
                     sample_weight=None):
