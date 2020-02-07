@@ -16,7 +16,7 @@ The *target/nifi-aif360-nar-1.0-SNAPSHOT.nar* needs to be copied to $NIFI_HOME/l
 
 Alternatively, the nifi-aif360-nar-1.0-SNAPSHOT.nar can be pulled from the [here](generic-processor/nifi-aif360-nar/target).
 
-Currently, the Generic Processor expected the flowfile in headerless CSV format, separated by comma. Other configurations can be supported without problem in future releases.
+Currently, the Generic Processor expects the flowfile in headerless CSV format, separated by comma. Other configurations can be supported without problem in future releases.
 
 <img src="images/processor_configuration.png" width="600">
 
