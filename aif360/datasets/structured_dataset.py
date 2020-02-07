@@ -151,32 +151,22 @@ class StructuredDataset(Dataset):
 
         
     def subset(self, indexes):
-        """ Subset of dataset based on instance names
+        """ Subset of dataset based on position
         Args:
-            indexes: iterable which contains instance names 
+            indexes: iterable which contains row indexes 
 
         Returns:
             `StructuredDataset`: subset of dataset based on indexes
         """
-
-
         # convert each element of indexes to string
         indexes_str = list(map(str, indexes))
-        # check if indexes is a subset of instance_names
-        if not set(indexes_str).issubset(set(self.instance_names)):
-            raise ValueError("indexes must be a subset of instance_names.")
-
-        pos = []
-        for i in indexes_str:
-            pos.append(self.instance_names.index(i)) 
-
         subset = self.copy()
         subset.instance_names = indexes_str
-        subset.features = self.features[pos]
-        subset.labels = self.labels[pos]
-        subset.instance_weights = self.instance_weights[pos]
-        subset.protected_attributes = self.protected_attributes[pos]
-        subset.scores = self.scores[pos]
+        subset.features = self.features[indexes]
+        subset.labels = self.labels[indexes]
+        subset.instance_weights = self.instance_weights[indexes]
+        subset.protected_attributes = self.protected_attributes[indexes]
+        subset.scores = self.scores[indexes]
         return subset
 
 
