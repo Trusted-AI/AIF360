@@ -1,4 +1,0 @@
--------------------------------------------------------------------------------
-Test set: com.ibm.aif360.processors.generic.MyProcessorTest
--------------------------------------------------------------------------------
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.132 s - in com.ibm.aif360.processors.generic.MyProcessorTest
