@@ -46,7 +46,7 @@ def calc_disp(predictions, X, group_labels, X_prime, group):
     g_size_0 = np.sum(group_0) * 1.0 / n
     FP = [predictions[i] for i, c in enumerate(group_labels) if c == 0]
     FP = np.mean(FP)
-    group_members = g.predict(X_prime)
+    group_members = group.predict(X_prime)
     fp_g = [
         predictions[i] for i, c in enumerate(group_labels)
         if group_members[i] == 1 and c == 0
