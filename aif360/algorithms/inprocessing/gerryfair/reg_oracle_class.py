@@ -10,7 +10,7 @@
 # specific language governing permissions and limitations under the License.
 
 import numpy as np
-
+import pdb
 
 class RegOracle:
     """Class using regression oracle to solve CSC problem."""
@@ -24,6 +24,7 @@ class RegOracle:
         reg1 = self.b1
         n = X.shape[0]
         y = []
+        pdb.set_trace()
         for i in range(n):
             x_i = X.iloc[i, :]
             x_i = x_i.values.reshape(1, -1)

@@ -28,15 +28,9 @@ from aif360.algorithms.inprocessing.gerryfair.learner import Learner
 from aif360.algorithms.inprocessing.gerryfair.auditor import Auditor
 from aif360.algorithms.inprocessing.gerryfair.classifier_history import ClassifierHistory
 from aif360.algorithms import Transformer
-import matplotlib
-
-try:
-    matplotlib.use('TkAgg')
-except:
-    print("Matplotlib Error, comment out matplotlib.use('TkAgg')")
 
 
-class Model(Transformer):
+class GerryFairClassifier(Transformer):
     """Model is an algorithm for learning classifiers that are fair with respect to rich subgroups.
 
        Rich subgroups are defined by [linear] functions over the sensitive attributes, and fairness notions are statistical: false
@@ -70,10 +64,12 @@ class Model(Transformer):
             :param max_iters: Time Horizon for the fictitious play dynamic.
             :param gamma: Fairness Approximation Paramater
             :param fairness_def: Fairness notion, FP, FN, SP.
+            :param errors: see fit()
+            :param fairness_violations: see fit()
             :param predictor: Hypothesis class for the Learner. Supports LR, SVM, KR, Trees.
         """
 
-        super(Model, self).__init__()
+        super(GerryFairClassifier, self).__init__()
         self.C = C
         self.printflag = printflag
         self.heatmapflag = heatmapflag
@@ -84,12 +80,14 @@ class Model(Transformer):
         self.fairness_def = fairness_def
         self.predictor = predictor
         self.classifiers = None
+        self.errors = None
+        self.fairness_violations = None
         if self.fairness_def not in ['FP', 'FN']:
             raise Exception(
                 'This metric is not yet supported for learning. Metric specified: {}.'
                 .format(self.fairness_def))
 
-    def fit(self, dataset, early_termination=True, return_values=False):
+    def fit(self, dataset, early_termination=True):
         """Run Fictitious play to compute the approximately fair classifier.
 
         Args:
@@ -151,8 +149,9 @@ class Model(Transformer):
                 iteration = self.max_iters
 
         self.classifiers = history.classifiers
-        if return_values:
-            return errors, fairness_violations
+        self.errors = errors
+        self.fairness_violations = fairness_violations
+        return self
 
     def predict(self, dataset, threshold=.5):
         """Return dataset object where labels are the predictions returned by the fitted model.
@@ -172,8 +171,7 @@ class Model(Transformer):
         num_classifiers = len(self.classifiers)
         y_hat = None
         for hyp in self.classifiers:
-            new_predictions = np.multiply(1.0 / num_classifiers,
-                                          hyp.predict(data))
+            new_predictions = hyp.predict(data)/num_classifiers
             if y_hat is None:
                 y_hat = new_predictions
             else:
@@ -184,12 +182,6 @@ class Model(Transformer):
         else:
             dataset_new.labels = tuple([y for y in y_hat])
         return dataset_new
-
-    def fit_transform(self, dataset):
-        """Not implemented.
-        """
-        raise NotImplementedError(
-            "'transform' is not supported for this class. ")
 
     def print_outputs(self, iteration, error, group):
         """Helper function to print outputs at each iteration of fit.

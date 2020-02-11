@@ -57,9 +57,9 @@ class Learner:
             :return error: the error of the average classifier found thus far (incorporating q)
         """
 
-        new_preds = np.multiply(1.0 / iteration, q.predict(self.X))
-        ds = np.multiply((iteration - 1.0) / iteration, predictions)
-        ds = np.add(ds, new_preds)
+        new_preds = q.predict(self.X)/iteration
+        ds = (iteration - 1.0)*predictions/iteration
+        ds += new_preds
         error = np.mean(
             [np.abs(ds[k] - self.y[k]) for k in range(len(self.y))])
         ds = tuple(ds)
