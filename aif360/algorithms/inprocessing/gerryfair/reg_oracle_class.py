@@ -10,7 +10,6 @@
 # specific language governing permissions and limitations under the License.
 
 import numpy as np
-import pdb
 
 class RegOracle:
     """Class using regression oracle to solve CSC problem."""
@@ -20,18 +19,9 @@ class RegOracle:
 
     def predict(self, X):
         """Predict labels on data set X."""
-        reg0 = self.b0
-        reg1 = self.b1
-        n = X.shape[0]
-        y = []
-        pdb.set_trace()
-        for i in range(n):
-            x_i = X.iloc[i, :]
-            x_i = x_i.values.reshape(1, -1)
-            c_0 = reg0.predict(x_i)
-            c_1 = reg1.predict(x_i)
-            y_i = int(c_1 < c_0)
-            y.append(y_i)
+        c_0 = self.b0.predict(X)
+        c_1 = self.b1.predict(X)
+        y = (c_1 < c_0).astype('int')
         return y
 
 

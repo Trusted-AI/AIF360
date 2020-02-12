@@ -6,7 +6,7 @@ from aif360.algorithms.preprocessing.optim_preproc_helpers.data_preproc_function
 
 # load data set
 data_set = load_preproc_data_adult(sub_samp=1000, balance=True)
-max_iterations = 500
+max_iterations = 10
 C = 100
 print_flag = True
 gamma = .005
