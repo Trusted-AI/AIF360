@@ -175,10 +175,12 @@ class GerryFairClassifier(Transformer):
             else:
                 y_hat = np.add(y_hat, new_predictions)
         if threshold:
-            dataset_new.labels = tuple(
+            dataset_new.labels = np.asarray(
                 [1 if y >= threshold else 0 for y in y_hat])
         else:
-            dataset_new.labels = tuple([y for y in y_hat])
+            dataset_new.labels = np.asarray([y for y in y_hat])
+        # ensure ndarray is formatted correctly
+        dataset_new.labels.resize(dataset.labels.shape, refcheck=True)
         return dataset_new
 
     def print_outputs(self, iteration, error, group):
@@ -284,31 +286,3 @@ class GerryFairClassifier(Transformer):
             all_fn_violations.append(fn_violation)
 
         return all_errors, all_fp_violations, all_fn_violations
-
-    def set_options(self,
-                    C=None,
-                    printflag=None,
-                    heatmapflag=None,
-                    heatmap_iter=None,
-                    heatmap_path=None,
-                    max_iters=None,
-                    gamma=None,
-                    fairness_def=None):
-        """A method to switch the options before training. See __init__ for param documentation."""
-
-        if C:
-            self.C = C
-        if printflag:
-            self.printflag = printflag
-        if heatmapflag:
-            self.heatmapflag = heatmapflag
-        if heatmap_iter:
-            self.heatmap_iter = heatmap_iter
-        if heatmap_path:
-            self.heatmap_path = heatmap_path
-        if max_iters:
-            self.max_iters = max_iters
-        if gamma:
-            self.gamma = gamma
-        if fairness_def:
-            self.fairness_def = fairness_def
