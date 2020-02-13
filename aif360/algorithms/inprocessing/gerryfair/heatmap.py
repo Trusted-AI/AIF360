@@ -24,6 +24,7 @@ except:
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib import cm
+from mpl_toolkits.mplot3d import Axes3D
 from aif360.algorithms.inprocessing.gerryfair.reg_oracle_class import *
 
 

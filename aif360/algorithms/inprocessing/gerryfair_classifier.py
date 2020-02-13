@@ -8,7 +8,7 @@
 # under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
-"""Class Model implementing the 'FairFictPlay' Algorithm of [KRNW18].
+"""Class GerryFairClassifier implementing the 'FairFictPlay' Algorithm of [KRNW18].
 
 This module contains functionality to instantiate, fit, and predict
 using the FairFictPlay algorithm of:
@@ -94,8 +94,6 @@ class GerryFairClassifier(Transformer):
             dataset: dataset object with its own class definition in datasets folder inherits
                     from class StandardDataset.
             early_termination: Terminate Early if Auditor can't find fairness violation of more than gamma.
-            return_values: flag to return errors and fairness violations lists.
-
         Returns:
             A list (errors, fairness violations)
         """
@@ -277,9 +275,8 @@ class GerryFairClassifier(Transformer):
         auditor = Auditor(dataset, 'FN')
         for g in gamma_list:
             self.gamma = g
-            errors, fairness_violations = self.fit(dataset,
-                                                   early_termination=True,
-                                                   return_values=True)
+            fitted_model = self.fit(dataset, early_termination=True)
+            errors, fairness_violations = fitted_model.errors, fitted_model.fairness_violations
             predictions = (self.predict(dataset)).labels
             _, fn_violation = auditor.audit(predictions)
             all_errors.append(errors[-1])
