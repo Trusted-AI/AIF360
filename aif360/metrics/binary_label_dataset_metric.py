@@ -1,6 +1,6 @@
 import numpy as np
 from sklearn.neighbors import NearestNeighbors
-from aif360.algorithms.inprocessing.gerryfair.auditor import *
+from aif360.algorithms.inprocessing.gerryfair.auditor import Auditor
 from aif360.datasets import BinaryLabelDataset
 from aif360.metrics import DatasetMetric, utils
 from aif360.algorithms.inprocessing.gerryfair.clean import *
