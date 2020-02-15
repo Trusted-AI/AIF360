@@ -159,7 +159,7 @@ class StructuredDataset(Dataset):
             `StructuredDataset`: subset of dataset based on indexes
         """
         # convert each element of indexes to string
-        indexes_str = list(map(str, indexes))
+        indexes_str = [self.instance_names[i] for i in indexes]
         subset = self.copy()
         subset.instance_names = indexes_str
         subset.features = self.features[indexes]
