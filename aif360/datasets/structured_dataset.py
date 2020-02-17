@@ -149,6 +149,27 @@ class StructuredDataset(Dataset):
             privileged_protected_attributes=privileged_protected_attributes,
             metadata=metadata)
 
+        
+    def subset(self, indexes):
+        """ Subset of dataset based on position
+        Args:
+            indexes: iterable which contains row indexes 
+
+        Returns:
+            `StructuredDataset`: subset of dataset based on indexes
+        """
+        # convert each element of indexes to string
+        indexes_str = [self.instance_names[i] for i in indexes]
+        subset = self.copy()
+        subset.instance_names = indexes_str
+        subset.features = self.features[indexes]
+        subset.labels = self.labels[indexes]
+        subset.instance_weights = self.instance_weights[indexes]
+        subset.protected_attributes = self.protected_attributes[indexes]
+        subset.scores = self.scores[indexes]
+        return subset
+
+
     def __eq__(self, other):
         """Equality comparison for StructuredDatasets.
 
