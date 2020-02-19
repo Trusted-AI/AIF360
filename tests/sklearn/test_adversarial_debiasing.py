@@ -15,6 +15,7 @@ adult = AdultDataset(instance_weights_name='fnlwgt', categorical_features=[],
                           'hours-per-week'], features_to_drop=[])
 
 def test_adv_debias_old_reproduce():
+    """Test that the old AdversarialDebiasing is reproducible."""
     sess = tf.Session()
     old_adv_deb = OldAdversarialDebiasing(unprivileged_groups=[{'sex': 0}],
                                           privileged_groups=[{'sex': 1}],
@@ -34,6 +35,8 @@ def test_adv_debias_old_reproduce():
     assert np.allclose(old_preds.labels, old_preds2.labels)
 
 def test_adv_debias_old():
+    """Test that the predictions of the old and new AdversarialDebiasing match.
+    """
     tf.reset_default_graph()
     sess = tf.Session()
     old_adv_deb = OldAdversarialDebiasing(unprivileged_groups=[{'sex': 0}],
@@ -48,6 +51,7 @@ def test_adv_debias_old():
     assert np.allclose(old_preds.labels.flatten(), new_preds)
 
 def test_adv_debias_reproduce():
+    """Test that the new AdversarialDebiasing is reproducible."""
     adv_deb = AdversarialDebiasing('sex', num_epochs=5, random_state=123)
     new_preds = adv_deb.fit(X, y).predict(X)
     adv_deb.sess_.close()
@@ -60,12 +64,16 @@ def test_adv_debias_reproduce():
     assert new_acc == accuracy_score(y, new_preds)
 
 def test_adv_debias_intersection():
+    """Test that the new AdversarialDebiasing runs with >2 protected groups."""
     adv_deb = AdversarialDebiasing(scope_name='intersect', num_epochs=5)
     adv_deb.fit(X, y)
     adv_deb.sess_.close()
     assert adv_deb.adversary_logits_.shape[1] == 4
 
 def test_adv_debias_grid():
+    """Test that the new AdversarialDebiasing works in a grid search (and that
+    debiasing results in reduced accuracy).
+    """
     adv_deb = AdversarialDebiasing('sex', num_epochs=10, random_state=123)
 
     params = {'debias': [True, False]}
