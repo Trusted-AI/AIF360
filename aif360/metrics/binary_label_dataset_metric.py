@@ -242,7 +242,7 @@ class BinaryLabelDatasetMetric(DatasetMetric):
         metric_baseline = auditor.get_baseline(y, predictions)
 
         # return the group with the largest disparity
-        group = auditor.get_group(y, metric_baseline)
+        group = auditor.get_group(predictions, metric_baseline)
 
         return group.weighted_disparity
 
