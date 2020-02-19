@@ -17,6 +17,9 @@ class Reweighing(BaseEstimator):
         This breaks the scikit-learn API by returning new sample weights from
         ``fit_transform()``. See :class:`ReweighingMeta` for a workaround.
 
+    See also:
+        :class:`ReweighingMeta`
+
     References:
         .. [#kamiran12] `F. Kamiran and T. Calders,  "Data Preprocessing
            Techniques for Classification without Discrimination," Knowledge and

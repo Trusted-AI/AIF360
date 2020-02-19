@@ -210,8 +210,8 @@ def generalized_fpr(y_true, probas_pred, pos_label=1, sample_weight=None):
     r"""Return the ratio of generalized false positives to negative examples in
     the dataset, :math:`GFPR = \tfrac{GFP}{N}`.
 
-    The generalized confusion matrix is calculated by summing the probabilities
-    of the positive class instead of the hard predictions.
+    Generalized confusion matrix measures such as this are calculated by summing
+    the probabilities of the positive class instead of the hard predictions.
 
     Args:
         y_true (array-like): Ground-truth (correct) target values.
@@ -237,8 +237,8 @@ def generalized_fnr(y_true, probas_pred, pos_label=1, sample_weight=None):
     r"""Return the ratio of generalized false negatives to positive examples in
     the dataset, :math:`GFNR = \tfrac{GFN}{P}`.
 
-    The generalized confusion matrix is calculated by summing the probabilities
-    of the positive class instead of the hard predictions.
+    Generalized confusion matrix measures such as this are calculated by summing
+    the probabilities of the positive class instead of the hard predictions.
 
     Args:
         y_true (array-like): Ground-truth (correct) target values.
@@ -272,7 +272,8 @@ def statistical_parity_difference(*y, prot_attr=None, priv_group=1, pos_label=1,
 
     Note:
         If only y_true is provided, this will return the difference in base
-        rates (statistical parity difference of the original dataset).
+        rates (statistical parity difference of the original dataset). If both
+        y_true and y_pred are provided, only y_pred is used.
 
     Args:
         y_true (pandas.Series): Ground truth (correct) target values. If y_pred
@@ -287,6 +288,9 @@ def statistical_parity_difference(*y, prot_attr=None, priv_group=1, pos_label=1,
 
     Returns:
         float: Statistical parity difference.
+
+    See also:
+        :func:`selection_rate`, :func:`base_rate`
     """
     rate = base_rate if len(y) == 1 or y[1] is None else selection_rate
     return difference(rate, *y, prot_attr=prot_attr, priv_group=priv_group,
@@ -302,7 +306,8 @@ def disparate_impact_ratio(*y, prot_attr=None, priv_group=1, pos_label=1,
 
     Note:
         If only y_true is provided, this will return the ratio of base rates
-        (disparate impact of the original dataset).
+        (disparate impact of the original dataset). If both y_true and y_pred
+        are provided, only y_pred is used.
 
     Args:
         y_true (pandas.Series): Ground truth (correct) target values. If y_pred
@@ -317,6 +322,9 @@ def disparate_impact_ratio(*y, prot_attr=None, priv_group=1, pos_label=1,
 
     Returns:
         float: Disparate impact.
+
+    See also:
+        :func:`selection_rate`, :func:`base_rate`
     """
     rate = base_rate if len(y) == 1 or y[1] is None else selection_rate
     return ratio(rate, *y, prot_attr=prot_attr, priv_group=priv_group,
@@ -340,6 +348,9 @@ def equal_opportunity_difference(y_true, y_pred, prot_attr=None, priv_group=1,
 
     Returns:
         float: Equal opportunity difference.
+
+    See also:
+        :func:`~sklearn.metrics.recall_score`
     """
     return difference(recall_score, y_true, y_pred, prot_attr=prot_attr,
                       priv_group=priv_group, pos_label=pos_label,
@@ -461,6 +472,9 @@ def generalized_entropy_error(y_true, y_pred, alpha=2, pos_label=1):
             index, and 2 is half the squared coefficient of variation.
         pos_label (scalar, optional): The label of the positive class.
 
+    See also:
+        :func:`generalized_entropy_index`
+
     References:
         .. [#speicher18] `T. Speicher, H. Heidari, N. Grgic-Hlaca,
            K. P. Gummadi, A. Singla, A. Weller, and M. B. Zafar, "A Unified
@@ -495,6 +509,9 @@ def between_group_generalized_entropy_error(y_true, y_pred, prot_attr=None,
             index, and 2 is half the squared coefficient of variation.
         pos_label (scalar, optional): The label of the positive class.
 
+    See also:
+        :func:`generalized_entropy_index`
+
     References:
         .. [#speicher18] `T. Speicher, H. Heidari, N. Grgic-Hlaca,
            K. P. Gummadi, A. Singla, A. Weller, and M. B. Zafar, "A Unified
@@ -518,6 +535,9 @@ def theil_index(b):
 
     Args:
         b (array-like): Parameter over which to calculate the entropy index.
+
+    See also:
+        :func:`generalized_entropy_index`
     """
     return generalized_entropy_index(b, alpha=1)
 
@@ -527,6 +547,9 @@ def coefficient_of_variation(b):
 
     Args:
         b (array-like): Parameter over which to calculate the entropy index.
+
+    See also:
+        :func:`generalized_entropy_index`
     """
     return 2 * np.sqrt(generalized_entropy_index(b, alpha=2))
 

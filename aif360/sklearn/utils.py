@@ -14,9 +14,20 @@ def check_inputs(X, y, sample_weight=None, ensure_2d=True):
     Args:
         X (array-like): Input data.
         y (array-like, shape = (n_samples,)): Target values.
-        sample_weight (array-like): Sample weights.
+        sample_weight (array-like, optional): Sample weights.
         ensure_2d (bool, optional): Whether to raise a ValueError if X is not
             2D.
+
+    Returns:
+        tuple:
+
+            * **X** (`array-like`) -- Validated X. Unchanged.
+
+            * **y** (`array-like`) -- Validated y. Possibly converted to 1D if
+              not a :class:`pandas.Series`.
+            * **sample_weight** (`array-like`) -- Validated sample_weight. If no
+              sample_weight is provided, returns a consistent-length array of
+              ones.
     """
     if ensure_2d and X.ndim != 2:
         raise ValueError("Expected X to be 2D, got ndim == {} instead.".format(
@@ -39,8 +50,8 @@ def check_groups(arr, prot_attr, ensure_binary=False):
     provided protected attributes are in the index.
 
     Args:
-        arr (`pandas.Series` or `pandas.DataFrame`): A Pandas object containing
-            protected attribute information in the index.
+        arr (:class:`pandas.Series` or :class:`pandas.DataFrame`): A Pandas
+            object containing protected attribute information in the index.
         prot_attr (single label or list-like): Protected attribute(s). If
             ``None``, all protected attributes in arr are used.
         ensure_binary (bool): Raise an error if the resultant groups are not
@@ -49,11 +60,11 @@ def check_groups(arr, prot_attr, ensure_binary=False):
     Returns:
         tuple:
 
-            * **groups** (`pandas.Index`) -- Label (or tuple of labels) of
-              protected attribute for each sample in arr.
-            * **prot_attr** (list-like) -- Modified input. If input is a single
-              label, returns single-item list. If input is ``None`` returns list
-              of all protected attributes.
+            * **groups** (:class:`pandas.Index`) -- Label (or tuple of labels)
+              of protected attribute for each sample in arr.
+            * **prot_attr** (`list-like`) -- Modified input. If input is a
+              single label, returns single-item list. If input is ``None``
+              returns list of all protected attributes.
     """
     if not hasattr(arr, 'index'):
         raise TypeError(
