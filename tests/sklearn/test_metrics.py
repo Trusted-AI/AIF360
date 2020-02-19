@@ -29,61 +29,75 @@ cm = ClassificationMetric(adult, adult_pred,
                           privileged_groups=[{'sex': 1}])
 
 def test_dataset_equality():
+    """Tests that the old and new datasets match exactly."""
     assert (adult.features == X.values).all()
     assert (adult.labels.ravel() == y).all()
 
 def test_consistency():
+    """Tests that the old and new consistency_score matches exactly."""
     assert np.isclose(consistency_score(X, y), cm.consistency())
 
 def test_specificity():
+    """Tests that the old and new specificity_score matches exactly."""
     spec = specificity_score(y, y_pred, sample_weight=sample_weight)
     assert spec == cm.specificity()
 
 def test_base_rate():
+    """Tests that the old and new base_rate matches exactly."""
     base = base_rate(y, y_pred, sample_weight=sample_weight)
     assert base == cm.base_rate()
 
 def test_selection_rate():
+    """Tests that the old and new selection_rate matches exactly."""
     select = selection_rate(y, y_pred, sample_weight=sample_weight)
     assert select == cm.selection_rate()
 
 def test_generalized_fpr():
+    """Tests that the old and new generalized_fpr matches exactly."""
     gfpr = generalized_fpr(y, y_proba, sample_weight=sample_weight)
     assert np.isclose(gfpr, cm.generalized_false_positive_rate())
 
 def test_generalized_fnr():
+    """Tests that the old and new generalized_fnr matches exactly."""
     gfnr = generalized_fnr(y, y_proba, sample_weight=sample_weight)
     assert np.isclose(gfnr, cm.generalized_false_negative_rate())
 
 def test_disparate_impact():
+    """Tests that the old and new disparate_impact matches exactly."""
     di = disparate_impact_ratio(y, y_pred, prot_attr='sex',
                                 sample_weight=sample_weight)
     assert di == cm.disparate_impact()
 
 def test_statistical_parity():
+    """Tests that the old and new statistical_parity matches exactly."""
     stat = statistical_parity_difference(y, y_pred, prot_attr='sex',
                                          sample_weight=sample_weight)
     assert stat == cm.statistical_parity_difference()
 
 def test_equal_opportunity():
+    """Tests that the old and new equal_opportunity matches exactly."""
     eopp = equal_opportunity_difference(y, y_pred, prot_attr='sex',
                                         sample_weight=sample_weight)
     assert eopp == cm.equal_opportunity_difference()
 
 def test_average_odds_difference():
+    """Tests that the old and new average_odds_difference matches exactly."""
     aod = average_odds_difference(y, y_pred, prot_attr='sex',
                                   sample_weight=sample_weight)
     assert np.isclose(aod, cm.average_odds_difference())
 
 def test_average_odds_error():
+    """Tests that the old and new average_odds_error matches exactly."""
     aoe = average_odds_error(y, y_pred, prot_attr='sex',
                              sample_weight=sample_weight)
     assert np.isclose(aoe, cm.average_abs_odds_difference())
 
 def test_generalized_entropy_index():
+    """Tests that the old and new generalized_entropy_index matches exactly."""
     gei = generalized_entropy_error(y, y_pred)
     assert np.isclose(gei, cm.generalized_entropy_index())
 
 def test_between_group_generalized_entropy_index():
+    """Tests that the old and new between_group_GEI matches exactly."""
     bggei = between_group_generalized_entropy_error(y, y_pred, prot_attr='sex')
     assert bggei == cm.between_group_generalized_entropy_index()

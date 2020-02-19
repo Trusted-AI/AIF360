@@ -14,6 +14,9 @@ adult = AdultDataset(instance_weights_name='fnlwgt', categorical_features=[],
                           'hours-per-week'], features_to_drop=[])
 
 def test_calib_eq_odds_sex_weighted():
+    """Test that the old and new CalibratedEqualizedOdds produce the same mix
+    rates.
+    """
     logreg = LogisticRegression(solver='lbfgs', max_iter=500)
     y_pred = logreg.fit(X, y, sample_weight=sample_weight).predict_proba(X)
     adult_pred = adult.copy()
@@ -28,6 +31,12 @@ def test_calib_eq_odds_sex_weighted():
     assert np.isclose(orig_cal_eq_odds.unpriv_mix_rate, cal_eq_odds.mix_rates_[0])
 
 def test_postprocessingmeta_fnr():
+    """Test that the old and new CalibratedEqualizedOdds produce the same
+    probability predictions.
+
+    This tests the whole "pipeline": splitting the data the same way, training a
+    LogisticRegression classifier, and training the post-processor the same way.
+    """
     adult_train, adult_test = adult.split([0.9], shuffle=False)
     X_tr, X_te, y_tr, _, sw_tr, _ = train_test_split(X, y, sample_weight,
                 train_size=0.9, shuffle=False)
@@ -52,7 +61,8 @@ def test_postprocessingmeta_fnr():
     orig_cal_eq_odds.fit(adult_post, adult_pred)
 
     cal_eq_odds = PostProcessingMeta(estimator=logreg,
-            postprocessor=CalibratedEqualizedOdds('sex', cost_constraint='fnr', random_state=0),
+            postprocessor=CalibratedEqualizedOdds('sex', cost_constraint='fnr',
+                                                  random_state=0),
             shuffle=False)
     cal_eq_odds.fit(X_tr, y_tr, sample_weight=sw_tr)
 
