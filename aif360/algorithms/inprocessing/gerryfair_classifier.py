@@ -8,7 +8,7 @@
 # under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
-"""Class Model implementing the 'FairFictPlay' Algorithm of [KRNW18].
+"""Class GerryFairClassifier implementing the 'FairFictPlay' Algorithm of [KRNW18].
 
 This module contains functionality to instantiate, fit, and predict
 using the FairFictPlay algorithm of:
@@ -19,24 +19,16 @@ over the sensitive attributes. This iteration of the codebase supports hyperplan
 kernel methods, and support vector machines. For usage examples refer to examples/gerry_plots.ipynb
 """
 
-import numpy as np
+
 import copy
-from sklearn import linear_model
-import aif360.algorithms.inprocessing.gerryfair.clean as clean
 import aif360.algorithms.inprocessing.gerryfair.heatmap as heatmap
 from aif360.algorithms.inprocessing.gerryfair.learner import Learner
-from aif360.algorithms.inprocessing.gerryfair.auditor import Auditor
+from aif360.algorithms.inprocessing.gerryfair.auditor import *
 from aif360.algorithms.inprocessing.gerryfair.classifier_history import ClassifierHistory
 from aif360.algorithms import Transformer
-import matplotlib
-
-try:
-    matplotlib.use('TkAgg')
-except:
-    print("Matplotlib Error, comment out matplotlib.use('TkAgg')")
 
 
-class Model(Transformer):
+class GerryFairClassifier(Transformer):
     """Model is an algorithm for learning classifiers that are fair with respect to rich subgroups.
 
        Rich subgroups are defined by [linear] functions over the sensitive attributes, and fairness notions are statistical: false
@@ -70,10 +62,12 @@ class Model(Transformer):
             :param max_iters: Time Horizon for the fictitious play dynamic.
             :param gamma: Fairness Approximation Paramater
             :param fairness_def: Fairness notion, FP, FN, SP.
+            :param errors: see fit()
+            :param fairness_violations: see fit()
             :param predictor: Hypothesis class for the Learner. Supports LR, SVM, KR, Trees.
         """
 
-        super(Model, self).__init__()
+        super(GerryFairClassifier, self).__init__()
         self.C = C
         self.printflag = printflag
         self.heatmapflag = heatmapflag
@@ -84,20 +78,20 @@ class Model(Transformer):
         self.fairness_def = fairness_def
         self.predictor = predictor
         self.classifiers = None
+        self.errors = None
+        self.fairness_violations = None
         if self.fairness_def not in ['FP', 'FN']:
             raise Exception(
                 'This metric is not yet supported for learning. Metric specified: {}.'
                 .format(self.fairness_def))
 
-    def fit(self, dataset, early_termination=True, return_values=False):
+    def fit(self, dataset, early_termination=True):
         """Run Fictitious play to compute the approximately fair classifier.
 
         Args:
             dataset: dataset object with its own class definition in datasets folder inherits
                     from class StandardDataset.
             early_termination: Terminate Early if Auditor can't find fairness violation of more than gamma.
-            return_values: flag to return errors and fairness violations lists.
-
         Returns:
             A list (errors, fairness violations)
         """
@@ -151,8 +145,9 @@ class Model(Transformer):
                 iteration = self.max_iters
 
         self.classifiers = history.classifiers
-        if return_values:
-            return errors, fairness_violations
+        self.errors = errors
+        self.fairness_violations = fairness_violations
+        return self
 
     def predict(self, dataset, threshold=.5):
         """Return dataset object where labels are the predictions returned by the fitted model.
@@ -172,24 +167,19 @@ class Model(Transformer):
         num_classifiers = len(self.classifiers)
         y_hat = None
         for hyp in self.classifiers:
-            new_predictions = np.multiply(1.0 / num_classifiers,
-                                          hyp.predict(data))
+            new_predictions = hyp.predict(data)/num_classifiers
             if y_hat is None:
                 y_hat = new_predictions
             else:
                 y_hat = np.add(y_hat, new_predictions)
         if threshold:
-            dataset_new.labels = tuple(
+            dataset_new.labels = np.asarray(
                 [1 if y >= threshold else 0 for y in y_hat])
         else:
-            dataset_new.labels = tuple([y for y in y_hat])
+            dataset_new.labels = np.asarray([y for y in y_hat])
+        # ensure ndarray is formatted correctly
+        dataset_new.labels.resize(dataset.labels.shape, refcheck=True)
         return dataset_new
-
-    def fit_transform(self, dataset):
-        """Not implemented.
-        """
-        raise NotImplementedError(
-            "'transform' is not supported for this class. ")
 
     def print_outputs(self, iteration, error, group):
         """Helper function to print outputs at each iteration of fit.
@@ -285,9 +275,8 @@ class Model(Transformer):
         auditor = Auditor(dataset, 'FN')
         for g in gamma_list:
             self.gamma = g
-            errors, fairness_violations = self.fit(dataset,
-                                                   early_termination=True,
-                                                   return_values=True)
+            fitted_model = self.fit(dataset, early_termination=True)
+            errors, fairness_violations = fitted_model.errors, fitted_model.fairness_violations
             predictions = (self.predict(dataset)).labels
             _, fn_violation = auditor.audit(predictions)
             all_errors.append(errors[-1])
@@ -295,31 +284,3 @@ class Model(Transformer):
             all_fn_violations.append(fn_violation)
 
         return all_errors, all_fp_violations, all_fn_violations
-
-    def set_options(self,
-                    C=None,
-                    printflag=None,
-                    heatmapflag=None,
-                    heatmap_iter=None,
-                    heatmap_path=None,
-                    max_iters=None,
-                    gamma=None,
-                    fairness_def=None):
-        """A method to switch the options before training. See __init__ for param documentation."""
-
-        if C:
-            self.C = C
-        if printflag:
-            self.printflag = printflag
-        if heatmapflag:
-            self.heatmapflag = heatmapflag
-        if heatmap_iter:
-            self.heatmap_iter = heatmap_iter
-        if heatmap_path:
-            self.heatmap_path = heatmap_path
-        if max_iters:
-            self.max_iters = max_iters
-        if gamma:
-            self.gamma = gamma
-        if fairness_def:
-            self.fairness_def = fairness_def
