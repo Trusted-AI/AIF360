@@ -16,15 +16,18 @@ class CalibratedEqualizedOdds(BaseEstimator, ClassifierMixin):
     change output labels with an equalized odds objective [#pleiss17]_.
 
     Note:
-        This breaks the sckit-learn API by requiring fit params y_true, y_pred,
-        and pos_label and predict param y_pred. See :class:`PostProcessingMeta`
-        for a workaround.
+        A :class:`~sklearn.pipeline.Pipeline` expects a single estimation step
+        but this class requires an estimator's predictions as input. See
+        :class:`PostProcessingMeta` for a workaround.
+
+    See also:
+        :class:`PostProcessingMeta`
 
     References:
         .. [#pleiss17] `G. Pleiss, M. Raghavan, F. Wu, J. Kleinberg, and
            K. Q. Weinberger, "On Fairness and Calibration," Conference on Neural
            Information Processing Systems, 2017.
-           <https://arxiv.org/pdf/1709.02012.pdf>`_
+           <http://papers.nips.cc/paper/7151-on-fairness-and-calibration.pdf>`_
 
     Adapted from:
     https://github.com/gpleiss/equalized_odds_and_calibration/blob/master/calib_eq_odds.py
@@ -58,7 +61,7 @@ class CalibratedEqualizedOdds(BaseEstimator, ClassifierMixin):
                 generalized false negative rate ('fnr'), or a weighted
                 combination of both ('weighted').
             random_state (int or numpy.RandomState, optional): Seed of pseudo-
-                random number generator for shuffling data.
+                random number generator for sampling from the mix rates.
         """
         self.prot_attr = prot_attr
         self.cost_constraint = cost_constraint
@@ -80,27 +83,26 @@ class CalibratedEqualizedOdds(BaseEstimator, ClassifierMixin):
             raise ValueError("`cost_constraint` must be one of: 'fpr', 'fnr', "
                              "or 'weighted'")
 
-    def fit(self, y_pred, y_true, labels=None, pos_label=1, sample_weight=None):
+    def fit(self, X, y, labels=None, pos_label=1, sample_weight=None):
         """Compute the mixing rates required to satisfy the cost constraint.
 
         Args:
-            y_pred (array-like): Probability estimates of the targets as
-                returned by a ``predict_proba()`` call or equivalent.
-            y_true (pandas.Series): Ground-truth (correct) target values.
+            X (array-like): Probability estimates of the targets as returned by
+                a ``predict_proba()`` call or equivalent.
+            y (pandas.Series): Ground-truth (correct) target values.
             labels (list, optional): The ordered set of labels values. Must
-                match the order of columns in y_pred if provided. By default,
-                all labels in y_true are used in sorted order.
+                match the order of columns in X if provided. By default,
+                all labels in y are used in sorted order.
             pos_label (scalar, optional): The label of the positive class.
             sample_weight (array-like, optional): Sample weights.
 
         Returns:
             self
         """
-        y_pred, y_true, sample_weight = check_inputs(y_pred, y_true,
-                                                     sample_weight)
-        groups, self.prot_attr_ = check_groups(y_true, self.prot_attr,
+        X, y, sample_weight = check_inputs(X, y, sample_weight)
+        groups, self.prot_attr_ = check_groups(y, self.prot_attr,
                                                ensure_binary=True)
-        self.classes_ = labels if labels is not None else np.unique(y_true)
+        self.classes_ = labels if labels is not None else np.unique(y)
         self.groups_ = np.unique(groups)
         self.pos_label_ = pos_label
 
@@ -111,14 +113,13 @@ class CalibratedEqualizedOdds(BaseEstimator, ClassifierMixin):
             raise ValueError('pos_label={} is not in the set of labels. The '
                     'valid values are:\n{}'.format(pos_label, self.classes_))
 
-        y_pred = y_pred[:, np.nonzero(self.classes_ == self.pos_label_)[0][0]]
+        X = X[:, np.nonzero(self.classes_ == self.pos_label_)[0][0]]
 
         # local function to return corresponding args for metric evaluation
         def _args(grp_idx, triv=False):
             idx = (groups == self.groups_[grp_idx])
-            pred = (np.full_like(y_pred, self.base_rates_[grp_idx]) if triv else
-                    y_pred)
-            return [y_true[idx], pred[idx], pos_label, sample_weight[idx]]
+            pred = np.full_like(X, self.base_rates_[grp_idx]) if triv else X
+            return [y[idx], pred[idx], pos_label, sample_weight[idx]]
 
         self.base_rates_ = [base_rate(*_args(i)) for i in range(2)]
 
@@ -131,12 +132,12 @@ class CalibratedEqualizedOdds(BaseEstimator, ClassifierMixin):
 
         return self
 
-    def predict_proba(self, y_pred):
+    def predict_proba(self, X):
         """The returned estimates for all classes are ordered by the label of
         classes.
 
         Args:
-            y_pred (pandas.DataFrame): Probability estimates of the targets as
+            X (pandas.DataFrame): Probability estimates of the targets as
                 returned by a ``predict_proba()`` call or equivalent. Note: must
                 include protected attributes in the index.
 
@@ -148,47 +149,47 @@ class CalibratedEqualizedOdds(BaseEstimator, ClassifierMixin):
         check_is_fitted(self, 'mix_rates_')
         rng = check_random_state(self.random_state)
 
-        groups, _ = check_groups(y_pred, self.prot_attr_)
+        groups, _ = check_groups(X, self.prot_attr_)
         if not set(np.unique(groups)) <= set(self.groups_):
-            raise ValueError('The protected groups from y_pred:\n{}\ndo not '
+            raise ValueError('The protected groups from X:\n{}\ndo not '
                              'match those from the training set:\n{}'.format(
                                      np.unique(groups), self.groups_))
 
         pos_idx = np.nonzero(self.classes_ == self.pos_label_)[0][0]
-        y_pred = y_pred.iloc[:, pos_idx]
+        X = X.iloc[:, pos_idx]
 
-        yt = np.empty_like(y_pred)
+        yt = np.empty_like(X)
         for grp_idx in range(2):
             i = (groups == self.groups_[grp_idx])
             to_replace = (rng.rand(sum(i)) < self.mix_rates_[grp_idx])
-            new_preds = y_pred[i].copy()
+            new_preds = X[i].copy()
             new_preds[to_replace] = self.base_rates_[grp_idx]
             yt[i] = new_preds
 
         return np.c_[1 - yt, yt] if pos_idx == 1 else np.c_[yt, 1 - yt]
 
-    def predict(self, y_pred):
+    def predict(self, X):
         """Predict class labels for the given scores.
 
         Args:
-            y_pred (pandas.DataFrame): Probability estimates of the targets as
+            X (pandas.DataFrame): Probability estimates of the targets as
                 returned by a ``predict_proba()`` call or equivalent. Note: must
                 include protected attributes in the index.
 
         Returns:
             numpy.ndarray: Predicted class label per sample.
         """
-        scores = self.predict_proba(y_pred)
+        scores = self.predict_proba(X)
         return self.classes_[scores.argmax(axis=1)]
 
-    def score(self, y_pred, y_true, sample_weight=None):
+    def score(self, X, y, sample_weight=None):
         """Score the predictions according to the cost constraint specified.
 
         Args:
-            y_pred (pandas.DataFrame): Probability estimates of the targets as
+            X (pandas.DataFrame): Probability estimates of the targets as
                 returned by a ``predict_proba()`` call or equivalent. Note: must
                 include protected attributes in the index.
-            y_true (array-like): Ground-truth (correct) target values.
+            y (array-like): Ground-truth (correct) target values.
             sample_weight (array-like, optional): Sample weights.
 
         Returns:
@@ -198,8 +199,8 @@ class CalibratedEqualizedOdds(BaseEstimator, ClassifierMixin):
         """
         check_is_fitted(self, ['classes_', 'pos_label_'])
         pos_idx = np.nonzero(self.classes_ == self.pos_label_)[0][0]
-        probas_pred = self.predict_proba(y_pred)[:, pos_idx]
+        probas_pred = self.predict_proba(X)[:, pos_idx]
 
-        return abs(difference(self._weighted_cost, y_true, probas_pred,
+        return abs(difference(self._weighted_cost, y, probas_pred,
                 prot_attr=self.prot_attr_, priv_group=self.groups_[1],
                 pos_label=self.pos_label_, sample_weight=sample_weight))

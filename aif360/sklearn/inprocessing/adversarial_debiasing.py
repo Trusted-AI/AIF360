@@ -67,7 +67,7 @@ class AdversarialDebiasing(BaseEstimator, ClassifierMixin):
                 adversary.
             verbose (bool, optional): If ``True``, print losses every 200 steps.
             random_state (int or numpy.RandomState, optional): Seed of pseudo-
-                random number generator for shuffling data.
+                random number generator for shuffling data and seeding weights.
         """
 
         self.prot_attr = prot_attr

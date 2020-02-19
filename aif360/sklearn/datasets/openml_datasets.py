@@ -41,6 +41,10 @@ def fetch_adult(subset='all', data_home=None, binary_race=True, usecols=[],
     unprivileged). The outcome variable is 'annual-income': '>50K' (favorable)
     or '<=50K' (unfavorable).
 
+    Note:
+        By default, the data is downloaded from OpenML. See the `adult
+        <https://www.openml.org/d/1590>`_ page for details.
+
     Args:
         subset ({'train', 'test', or 'all'}, optional): Select the dataset to
             load: 'train' for the training set, 'test' for the test set, 'all'
@@ -59,6 +63,9 @@ def fetch_adult(subset='all', data_home=None, binary_race=True, usecols=[],
     Returns:
         namedtuple: Tuple containing X, y, and sample_weights for the Adult
         dataset accessible by index or name.
+
+    See also:
+        :func:`sklearn.datasets.fetch_openml`
 
     Examples:
         >>> adult = fetch_adult()
@@ -103,11 +110,9 @@ def fetch_german(data_home=None, binary_age=True, usecols=[], dropcols=[],
     unprivileged; see the binary_age flag to keep this continuous). The outcome
     variable is 'credit-risk': 'good' (favorable) or 'bad' (unfavorable).
 
-    References:
-        .. [#kamiran09] `F. Kamiran and T. Calders, "Classifying without
-           discriminating," 2nd International Conference on Computer,
-           Control and Communication, 2009.
-           <https://ieeexplore.ieee.org/abstract/document/4909197>`_
+    Note:
+        By default, the data is downloaded from OpenML. See the `credit-g
+        <https://www.openml.org/d/31>`_ page for details.
 
     Args:
         data_home (string, optional): Specify another download and cache folder
@@ -126,6 +131,15 @@ def fetch_german(data_home=None, binary_age=True, usecols=[], dropcols=[],
         namedtuple: Tuple containing X and y for the German dataset accessible
         by index or name.
 
+    See also:
+        :func:`sklearn.datasets.fetch_openml`
+
+    References:
+        .. [#kamiran09] `F. Kamiran and T. Calders, "Classifying without
+           discriminating," 2nd International Conference on Computer,
+           Control and Communication, 2009.
+           <https://ieeexplore.ieee.org/abstract/document/4909197>`_
+
     Examples:
         >>> german = fetch_german()
         >>> german.X.shape
@@ -142,7 +156,6 @@ def fetch_german(data_home=None, binary_age=True, usecols=[], dropcols=[],
         >>> disparate_impact_ratio(y, y_pred, prot_attr='age', priv_group=True,
         ... pos_label='good')
         0.9483094846144106
-
     """
     df = to_dataframe(fetch_openml(data_id=31, target_column=None,
                                    data_home=data_home or DATA_HOME_DEFAULT))
@@ -175,7 +188,11 @@ def fetch_bank(data_home=None, percent10=False, usecols=[], dropcols='duration',
     """Load the Bank Marketing Dataset.
 
     The protected attribute is 'age' (left as continuous). The outcome variable
-    is 'deposit': ``True`` or ``False``.
+    is 'deposit': 'yes' or 'no'.
+
+    Note:
+        By default, the data is downloaded from OpenML. See the `bank-marketing
+        <https://www.openml.org/d/1461>`_ page for details.
 
     Args:
         data_home (string, optional): Specify another download and cache folder
@@ -192,6 +209,9 @@ def fetch_bank(data_home=None, percent10=False, usecols=[], dropcols='duration',
     Returns:
         namedtuple: Tuple containing X and y for the Bank dataset accessible by
         index or name.
+
+    See also:
+        :func:`sklearn.datasets.fetch_openml`
 
     Examples:
         >>> bank = fetch_bank()
@@ -214,7 +234,8 @@ def fetch_bank(data_home=None, percent10=False, usecols=[], dropcols='duration',
                   'housing', 'loan', 'contact', 'day', 'month', 'duration',
                   'campaign', 'pdays', 'previous', 'poutcome', 'deposit']
     # remap target
-    df.deposit = df.deposit.map({'1': False, '2': True}).astype('bool')
+    df.deposit = df.deposit.map({'1': 'no', '2': 'yes'}).astype('category')
+    df.deposit = df.deposit.cat.as_ordered()  # 'no' < 'yes'
     # replace 'unknown' marker with NaN
     df.apply(lambda s: s.cat.remove_categories('unknown', inplace=True)
              if hasattr(s, 'cat') and 'unknown' in s.cat.categories else s)
