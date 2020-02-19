@@ -22,6 +22,7 @@ kernel methods, and support vector machines. For usage examples refer to example
 
 import copy
 import aif360.algorithms.inprocessing.gerryfair.heatmap as heatmap
+from aif360.algorithms.inprocessing.gerryfair.clean import array_to_tuple
 from aif360.algorithms.inprocessing.gerryfair.learner import Learner
 from aif360.algorithms.inprocessing.gerryfair.auditor import *
 from aif360.algorithms.inprocessing.gerryfair.classifier_history import ClassifierHistory
@@ -277,7 +278,7 @@ class GerryFairClassifier(Transformer):
             self.gamma = g
             fitted_model = self.fit(dataset, early_termination=True)
             errors, fairness_violations = fitted_model.errors, fitted_model.fairness_violations
-            predictions = (self.predict(dataset)).labels
+            predictions = array_to_tuple((self.predict(dataset)).labels)
             _, fn_violation = auditor.audit(predictions)
             all_errors.append(errors[-1])
             all_fp_violations.append(fairness_violations[-1])
