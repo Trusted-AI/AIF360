@@ -24,7 +24,6 @@ import numpy as np
 import pandas as pd
 from sklearn import linear_model
 from aif360.algorithms.inprocessing.gerryfair.reg_oracle_class import RegOracle
-from aif360.metrics.metric import Metric
 import aif360.algorithms.inprocessing.gerryfair.clean as clean
 
 
@@ -56,7 +55,7 @@ class Group(object):
         ]
 
 
-class Auditor(Metric):
+class Auditor:
     """This is the Auditor class. It is used in the training algorithm to repeatedly find subgroups that break the
     fairness disparity constraint. You can also use it independently as a stand alone auditor."""
     def __init__(self, dataset, fairness_def):
@@ -66,7 +65,6 @@ class Auditor(Metric):
             :param dataset: dataset object subclassing StandardDataset.
             :param fairness_def: 'FP' or 'FN'
         """
-        super(Auditor, self).__init__(dataset)
         X, X_prime, y = clean.extract_df_from_ds(dataset)
         self.X_prime = X_prime
         self.y_input = y

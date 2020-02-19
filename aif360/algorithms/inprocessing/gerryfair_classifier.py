@@ -19,13 +19,11 @@ over the sensitive attributes. This iteration of the codebase supports hyperplan
 kernel methods, and support vector machines. For usage examples refer to examples/gerry_plots.ipynb
 """
 
-import numpy as np
+
 import copy
-from sklearn import linear_model
-import aif360.algorithms.inprocessing.gerryfair.clean as clean
 import aif360.algorithms.inprocessing.gerryfair.heatmap as heatmap
 from aif360.algorithms.inprocessing.gerryfair.learner import Learner
-from aif360.algorithms.inprocessing.gerryfair.auditor import Auditor
+from aif360.algorithms.inprocessing.gerryfair.auditor import *
 from aif360.algorithms.inprocessing.gerryfair.classifier_history import ClassifierHistory
 from aif360.algorithms import Transformer
 
