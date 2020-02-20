@@ -2,6 +2,7 @@ from collections import namedtuple
 import warnings
 
 import numpy as np
+import pandas as pd
 from pandas.core.dtypes.common import is_list_like
 
 
@@ -104,7 +105,7 @@ def standardize_dataset(df, prot_attr, target, sample_weight=None, usecols=[],
     target = check_already_dropped(target, nonnumeric, 'target')
     if len(target) == 0:
         raise ValueError("At least one target must be present.")
-    y = df.pop(target if len(target) > 1 else target[0])  # maybe return Series
+    y = pd.concat([df.pop(t) for t in target], axis=1).squeeze()  # maybe Series
 
     # Column-wise drops
     orig_cols = df.columns

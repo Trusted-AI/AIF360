@@ -28,6 +28,14 @@ def test_standardize_dataset_basic():
     assert X.index.equals(y.index)
     assert X.shape == (3, 3)
 
+def test_multilabel_basic():
+    """Tests returning a multilabel target on a toy example."""
+    multilabel = basic(target=['X2', 'y'])
+    assert isinstance(multilabel.y, pd.DataFrame)
+    assert isinstance(multilabel.X, pd.DataFrame)
+    assert multilabel.y.shape == (3, 2)
+    assert multilabel.X.shape == (3, 2)
+
 def test_sample_weight_basic():
     """Tests returning sample_weight on a toy example."""
     with_weights = basic(sample_weight='X2')
