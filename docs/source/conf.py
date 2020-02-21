@@ -57,10 +57,10 @@ templates_path = ['templates']
 # generate autosummary even if no references
 autosummary_generate = True
 
-autodoc_default_options = {
-    'members': True,
-    # 'inherited-members': True
-}
+autodoc_default_flags = [
+    'members',
+    # 'inherited-members'
+]
 
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a list of string:
