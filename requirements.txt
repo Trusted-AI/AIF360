@@ -7,7 +7,7 @@ tensorflow>=1.13.1,<2
 cvxpy>=1.0
 
 # notebooks
-notebook
+jupyter
 tqdm
 
 # tests
