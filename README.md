@@ -50,6 +50,7 @@ Get in touch with us on [Slack](https://aif360.slack.com) (invitation
 * Comprehensive set of group fairness metrics derived from selection rates and error rates
 * Comprehensive set of sample distortion metrics
 * Generalized Entropy Index ([Speicher et al., 2018](https://doi.org/10.1145/3219819.3220046))
+* Differential Fairness and Bias Amplification ([Foulds et al., 2018](https://arxiv.org/pdf/1807.08362))
 
 
 ## Setup
