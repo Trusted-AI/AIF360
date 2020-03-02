@@ -1,7 +1,6 @@
 from aif360.datasets import AdultDataset, GermanDataset, CompasDataset
 import pandas as pd
 import numpy as np
-import pdb
 
 def load_preproc_data_adult(protected_attributes=None, sub_samp=False, balance=False):
     def custom_preprocessing(df):
