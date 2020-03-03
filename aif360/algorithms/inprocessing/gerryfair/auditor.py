@@ -24,7 +24,7 @@ import numpy as np
 import pandas as pd
 from sklearn import linear_model
 from aif360.algorithms.inprocessing.gerryfair.reg_oracle_class import RegOracle
-import aif360.algorithms.inprocessing.gerryfair.clean as clean
+from aif360.algorithms.inprocessing.gerryfair import clean
 
 
 class Group(object):

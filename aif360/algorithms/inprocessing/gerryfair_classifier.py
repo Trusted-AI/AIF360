@@ -21,7 +21,7 @@ kernel methods, and support vector machines. For usage examples refer to example
 
 
 import copy
-import aif360.algorithms.inprocessing.gerryfair.heatmap as heatmap
+from aif360.algorithms.inprocessing.gerryfair import heatmap
 from aif360.algorithms.inprocessing.gerryfair.clean import array_to_tuple
 from aif360.algorithms.inprocessing.gerryfair.learner import Learner
 from aif360.algorithms.inprocessing.gerryfair.auditor import *
