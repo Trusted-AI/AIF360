@@ -171,9 +171,10 @@ public class MyProcessor extends AbstractProcessor {
                         System.out.println("Here is the standard output of the command:\n");
                         while ((s = stdInput.readLine()) != null) {
                             System.out.println(s);
+                            returnValue[0] = s;
                         }
 
-                        returnValue[0] = s;
+                        
 
                         // read any errors from the attempted command
                         System.out.println("Here is the standard error of the command (if any):\n");
@@ -189,6 +190,8 @@ public class MyProcessor extends AbstractProcessor {
                 }
             });
 
+            System.out.println("result");
+            System.out.println(returnValue[0]);
             flowFile = session.putAttribute(flowFile, "aif360.result", returnValue[0]);
             session.transfer(flowFile, SUCCESS_RELATIONSHIP);
         } catch (ProcessException e) {
