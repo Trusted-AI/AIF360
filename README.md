@@ -4,35 +4,25 @@
 [![Documentation](https://readthedocs.org/projects/aif360/badge/?version=latest)](http://aif360.readthedocs.io/en/latest/?badge=latest)
 [![PyPI version](https://badge.fury.io/py/aif360.svg)](https://badge.fury.io/py/aif360)
 
-The AI Fairness 360 toolkit is an extensible open-source library containg techniques developed by the
-research community to help detect and mitigate bias in machine learning models throughout the AI application lifecycle.
-The AI Fairness 360 Python package includes
-1) a comprehensive set of metrics for datasets and models to test for biases,
-2) explanations for these metrics, and
-3) algorithms to mitigate bias in datasets and models.
-It is designed to translate algorithmic research from the lab into the actual practice of domains as wide-ranging
-as finance, human capital management, healthcare, and education. We invite you to use it and improve it.
+The AI Fairness 360 toolkit is an extensible open-source library containing techniques developed by the research community to help detect and mitigate bias in machine learning models throughout the AI application life-cycle.
 
-The [AI Fairness 360 interactive experience](http://aif360.mybluemix.net/data)
-provides a gentle introduction to the concepts and capabilities. The [tutorials
-and other notebooks](./examples) offer a deeper, data scientist-oriented
-introduction. The complete API is also available.
+The AI Fairness 360 Python package includes:
+1) comprehensive metrics for datasets and models to test for biases
+2) text-based explanations for these metrics
+3) algorithms to mitigate bias in datasets and models
 
-Being a comprehensive set of capabilities, it may be confusing to figure out
-which metrics and algorithms are most appropriate for a given use case. To
-help, we have created some [guidance
-material](http://aif360.mybluemix.net/resources#guidance) that can be
-consulted.
+The AI Fairness 360 toolkit is designed to translate algorithmic research from the lab into the actual practice of domains as wide-ranging as finance, human capital management, health care, and education. We invite you to use it and improve it.
 
-We have developed the package with extensibility in mind. This library is still
-in development. We encourage the contribution of your metrics, explainers, and
-debiasing algorithms.
+The [AI Fairness 360 interactive experience](http://aif360.mybluemix.net/data) provides a general introduction. For Data Scientists, our [tutorials and other notebooks](./examples) offer a deeper introduction. The complete API is also available.
 
-Get in touch with us on [Slack](https://aif360.slack.com) (invitation
-[here](https://join.slack.com/t/aif360/shared_invite/enQtNDI5Nzg2NTk0MTMyLTU4N2UwODVmMTYxZWMwZmEzZmZkODdjMTk5NWUwZDNhNDhlMzNkZDNhOTYwZDNlODc1MTdjYzY5OTU2OWQ1ZmY))!
+To help with selecting metrics and algorithms for a given use case, we have created some [guidance material](http://aif360.mybluemix.net/resources#guidance).
+
+We have developed the package with extensibility in mind. This library is still in development. We encourage the contribution of your metrics, explainers, and de-biasing algorithms.
+
+Get in touch with us on [Slack](https://aif360.slack.com) (invitation [here](https://join.slack.com/t/aif360/shared_invite/enQtNDI5Nzg2NTk0MTMyLTU4N2UwODVmMTYxZWMwZmEzZmZkODdjMTk5NWUwZDNhNDhlMzNkZDNhOTYwZDNlODc1MTdjYzY5OTU2OWQ1ZmY))!
 
 
-## Supported bias mitigation algorithms
+## Supported Bias Mitigation Algorithms
 
 * Optimized Preprocessing ([Calmon et al., 2017](http://papers.nips.cc/paper/6988-optimized-pre-processing-for-discrimination-prevention))
 * Disparate Impact Remover ([Feldman et al., 2015](https://doi.org/10.1145/2783258.2783311))
@@ -45,12 +35,11 @@ Get in touch with us on [Slack](https://aif360.slack.com) (invitation
 * Adversarial Debiasing ([Zhang et al., 2018](https://arxiv.org/abs/1801.07593))
 * Meta-Algorithm for Fair Classification ([Celis et al.. 2018](https://arxiv.org/abs/1806.06055))
 
-## Supported fairness metrics
+## Supported Fairness Metrics
 
 * Comprehensive set of group fairness metrics derived from selection rates and error rates
 * Comprehensive set of sample distortion metrics
 * Generalized Entropy Index ([Speicher et al., 2018](https://doi.org/10.1145/3219819.3220046))
-
 
 ## Setup
 
@@ -58,29 +47,23 @@ Supported Configurations:
 
 | OS      | Python version |
 | ------- | -------------- |
-| macOS   | 3.5, 3.6, 3.7  |
+| MacOS   | 3.5, 3.6, 3.7  |
 | Ubuntu  | 3.5, 3.6, 3.7  |
 | Windows | 3.5, 3.6, 3.7  |
 
-NOTE: Python 2.7 support has been **deprecated** in this version. This message
-will be removed in the next release.
+NOTE: Python 2.7 support has been **deprecated** in this version. This message will be removed in the next release.
 
 See the [Troubleshooting](#troubleshooting) section if you have issues.
 
-### (Optional) Create a virtual environment
+### (Optional) Create a Virtual Environment
 
-AIF360 requires specific versions of many Python packages which may conflict
-with other projects on your system. A virtual environment manager is strongly
-recommended to ensure dependencies may be installed safely. If you have trouble
-installing AIF360, try this first.
+AIF360 requires specific versions of many Python packages which may conflict with other projects on your system. A virtual environment manager is strongly recommended to ensure dependencies may be installed safely. If you have trouble installing AIF360, try this first.
 
 #### Conda
 
-Conda is recommended for all configurations though Virtualenv is generally
-interchangeable for our purposes ([CVXPY](#cvxpy) may require conda in some
+Conda is recommended for all configurations though Virtualenv is generally interchangeable for our purposes ([CVXPY](#cvxpy) may require conda in some
 cases). Miniconda is sufficient (see [the difference between Anaconda and
-Miniconda](https://conda.io/docs/user-guide/install/download.html#anaconda-or-miniconda)
-if you are curious) and can be installed from
+Miniconda](https://conda.io/docs/user-guide/install/download.html#anaconda-or-miniconda) if you are curious) and can be installed from
 [here](https://conda.io/miniconda.html) if you do not already have it.
 
 Then, to create a new Python 3.5 environment, run:
@@ -101,7 +84,7 @@ The prompt will return to `$ `.
 Note: Older versions of conda may use `source activate aif360` and `source
 deactivate` (`activate aif360` and `deactivate` on Windows).
 
-### Install with minimal dependencies
+### Install with Minimal Dependencies
 
 To install the latest stable version from PyPI, run:
 
@@ -109,10 +92,9 @@ To install the latest stable version from PyPI, run:
 pip install aif360
 ```
 
-Some algorithms require additional dependencies not included in the minimal
-installation. To use these, we recommend a full installation.
+Some algorithms require additional dependencies not included in the minimal installation. To use these, we recommend a full installation.
 
-### Full installation
+### Full Installation
 
 Clone the latest version of this repository:
 
@@ -120,9 +102,7 @@ Clone the latest version of this repository:
 git clone https://github.com/IBM/AIF360
 ```
 
-If you'd like to run the examples, download the datasets now and place them in
-their respective folders as described in
-[aif360/data/README.md](aif360/data/README.md).
+To run the examples, download the datasets now and place them in their respective folders as described in [aif360/data/README.md](aif360/data/README.md).
 
 Then, navigate to the root directory of the project and run:
 
@@ -132,16 +112,13 @@ pip install -e .
 
 #### Run the Examples
 
-To run the example notebooks, complete the full installation steps above. Then,
-install the additional requirements as follows:
+To run the example notebooks, first complete the full installation steps above. Then, install the additional requirements as follows:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-Then, follow the [Getting Started](https://pytorch.org) instructions from
-PyTorch to download and install the latest version for your machine. With conda,
-this is simple:
+Follow the [Getting Started](https://pytorch.org) instructions from PyTorch to download and install the latest version for your machine. With conda, this is simple:
 
 ```bash
 # LINUX/WINDOWS
@@ -150,7 +127,7 @@ conda install pytorch-cpu torchvision-cpu -c pytorch
 conda install pytorch torchvision -c pytorch
 ```
 
-For CUDA support or alternative installation, see the instructions.
+For CUDA support or other alternative installations, see the instructions.
 
 Finally, if you did not already, download the datasets as described in
 [aif360/data/README.md](aif360/data/README.md).
@@ -162,7 +139,7 @@ issue here and try the solutions.
 
 #### TensorFlow
 
-In some cases, the URL is required for installation:
+In some cases, the URL is required for Tensorflow installation:
 
 ```bat
 # WINDOWS
@@ -180,33 +157,29 @@ TensorFlow is only required for use with the
 
 #### CVXPY
 
-On MacOS, you may first have to install the Xcode Command Line Tools if you
-never have previously:
+On MacOS, you may need to install the Xcode Command Line Tools:
 
 ```sh
 xcode-select --install
 ```
 
-And then, re-run:
+Then, re-run:
 
 ```sh
 pip install -r requirements.txt
 ```
 
-On Windows, you may need to download the appropriate [Visual Studio C++
-compiler for Python](https://wiki.python.org/moin/WindowsCompilers#Microsoft_Visual_C.2B-.2B-_14.0_standalone:_Build_Tools_for_Visual_Studio_2017_.28x86.2C_x64.2C_ARM.2C_ARM64.29). Then,
-re-run:
+On Windows, you may need to download the appropriate [Visual Studio C++ compiler for Python](https://wiki.python.org/moin/WindowsCompilers#Microsoft_Visual_C.2B-.2B-_14.0_standalone:_Build_Tools_for_Visual_Studio_2017_.28x86.2C_x64.2C_ARM.2C_ARM64.29). 
+
+Then,re-run:
 
 ```bat
 pip install -r requirements.txt
 ```
 
-See the [CVXPY Installation
-Instructions](https://www.cvxpy.org/install/index.html#windows)
-for an alternate installation procedure using conda.
+See the [CVXPY Installation Instructions](https://www.cvxpy.org/install/index.html#windows) for an alternate installation procedure using conda.
 
-CVXPY is only required for use with the
-`aif360.algorithms.preprocessing.OptimPreproc` class.
+CVXPY is only required for use with the `aif360.algorithms.preprocessing.OptimPreproc` class.
 
 ## Using AIF360
 
@@ -214,13 +187,11 @@ The `examples` directory contains a diverse collection of jupyter notebooks
 that use AI Fairness 360 in various ways. Both tutorials and demos illustrate
 working code using AIF360. Tutorials provide additional discussion that walks
 the user through the various steps of the notebook. See the details about
-[tutorials and demos here](examples/README.md)
+[tutorials and demos here](examples/README.md).
 
 ## Citing AIF360
 
-A technical description of AI Fairness 360 is available in this
-[paper](https://arxiv.org/abs/1810.01943). Below is the bibtex entry for this
-paper.
+A technical description of AI Fairness 360 is available in this [paper](https://arxiv.org/abs/1810.01943). Below is the bibtex entry for this paper.
 
 ```
 @misc{aif360-oct-2018,
@@ -239,5 +210,4 @@ paper.
 
 ## AIF360 Videos
 
-* Introductory [video](https://www.youtube.com/watch?v=X1NsrcaRQTE) to AI
-  Fairness 360 by Kush Varshney, September 20, 2018 (32 mins)
+* Introductory [video](https://www.youtube.com/watch?v=X1NsrcaRQTE) to AI Fairness 360 by Kush Varshney, September 20, 2018 (32 mins)
