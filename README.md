@@ -44,10 +44,11 @@ Get in touch with us on [Slack](https://aif360.slack.com) (invitation
 * Learning Fair Representations ([Zemel et al., 2013](http://proceedings.mlr.press/v28/zemel13.html))
 * Adversarial Debiasing ([Zhang et al., 2018](https://arxiv.org/abs/1801.07593))
 * Meta-Algorithm for Fair Classification ([Celis et al.. 2018](https://arxiv.org/abs/1806.06055))
+* Rich Subgroup Fairness ([Kearns, Neel, Roth, Wu, 2018](https://arxiv.org/abs/1711.05144))
 
 ## Supported fairness metrics
 
-* Comprehensive set of group fairness metrics derived from selection rates and error rates
+* Comprehensive set of group fairness metrics derived from selection rates and error rates including rich subgroup fairness
 * Comprehensive set of sample distortion metrics
 * Generalized Entropy Index ([Speicher et al., 2018](https://doi.org/10.1145/3219819.3220046))
 
@@ -241,3 +242,6 @@ paper.
 
 * Introductory [video](https://www.youtube.com/watch?v=X1NsrcaRQTE) to AI
   Fairness 360 by Kush Varshney, September 20, 2018 (32 mins)
+  
+## Contributing
+The development fork for Rich Subgroup Fairness (`inprocessing/gerryfair_classifier.py`) is [here](https://github.com/sethneel/aif360). Contributions are welcome and a list of potential contributions from the authors can be found [here](https://trello.com/b/0OwPcbVr/gerryfair-development).

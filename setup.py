@@ -28,6 +28,7 @@ setup(name='aif360',
           'scipy',
           'pandas>=0.24.0',
           'scikit-learn',
+          'matplotlib'
       ],
       package_data={'aif360': ['data/*', 'data/*/*', 'data/*/*/*']},
       include_package_data=True,
