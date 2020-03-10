@@ -149,11 +149,11 @@ class StructuredDataset(Dataset):
             privileged_protected_attributes=privileged_protected_attributes,
             metadata=metadata)
 
-        
+
     def subset(self, indexes):
         """ Subset of dataset based on position
         Args:
-            indexes: iterable which contains row indexes 
+            indexes: iterable which contains row indexes
 
         Returns:
             `StructuredDataset`: subset of dataset based on indexes
@@ -363,6 +363,8 @@ class StructuredDataset(Dataset):
                 this dataset contains mappings for label and/or protected
                 attribute values to strings in the `metadata`, this method will
                 convert those as well.
+            sep (char): Separator between the prefix in the dummy indicators and
+                the dummy-coded categorical levels.
             set_category (bool): Set the de-dummy coded features to categorical
                 type.
 
