@@ -7,7 +7,6 @@ The maintainers are listed in alphabetical order.
 - Sam Hoffman ([hoffmansc](https://github.com/hoffmansc))
 - Karthi Natesan Ramamurthy ([nrkarthikeyan](https://github.com/nrkarthikeyan))
 - Prasanna Sattigeri ([pronics2004](https://github.com/pronics2004))
-- Moninder Singh ([monindersingh](https://github.com/monindersingh))
 - Animesh Singh ([animeshsingh](https://github.com/animeshsingh))
 - Kush Varshney ([krvarshney](https://github.com/krvarshney))
 
