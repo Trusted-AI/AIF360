@@ -2,10 +2,11 @@ from aif360.datasets import AdultDataset, GermanDataset, CompasDataset
 import pandas as pd
 import numpy as np
 
-def load_preproc_data_adult(protected_attributes=None):
+def load_preproc_data_adult(protected_attributes=None, sub_samp=False, balance=False):
     def custom_preprocessing(df):
         """The custom pre-processing function is adapted from
             https://github.com/fair-preprocessing/nips2017/blob/master/Adult/code/Generate_Adult_Data.ipynb
+            If sub_samp != False, then return smaller version of dataset truncated to tiny_test data points.
         """
 
         # Group age by decade
@@ -42,11 +43,21 @@ def load_preproc_data_adult(protected_attributes=None):
 
         # Rename income variable
         df['Income Binary'] = df['income-per-year']
+        df['Income Binary'] = df['Income Binary'].replace(to_replace='>50K.', value='>50K', regex=True)
+        df['Income Binary'] = df['Income Binary'].replace(to_replace='<=50K.', value='<=50K', regex=True)
 
         # Recode sex and race
         df['sex'] = df['sex'].replace({'Female': 0.0, 'Male': 1.0})
         df['race'] = df['race'].apply(lambda x: group_race(x))
 
+        if sub_samp and not balance:
+            df = df.sample(sub_samp)
+        if sub_samp and balance:
+            df_0 = df[df['Income Binary'] == '<=50K']
+            df_1 = df[df['Income Binary'] == '>50K']
+            df_0 = df_0.sample(int(sub_samp/2))
+            df_1 = df_1.sample(int(sub_samp/2))
+            df = pd.concat([df_0, df_1])
         return df
 
     XD_features = ['Age (decade)', 'Education Years', 'sex', 'race']

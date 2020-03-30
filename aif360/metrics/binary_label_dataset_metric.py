@@ -1,8 +1,9 @@
 import numpy as np
 from sklearn.neighbors import NearestNeighbors
-
+from aif360.algorithms.inprocessing.gerryfair.auditor import Auditor
 from aif360.datasets import BinaryLabelDataset
 from aif360.metrics import DatasetMetric, utils
+from aif360.algorithms.inprocessing.gerryfair.clean import *
 
 
 class BinaryLabelDatasetMetric(DatasetMetric):
@@ -218,3 +219,30 @@ class BinaryLabelDatasetMetric(DatasetMetric):
     def mean_difference(self):
         """Alias of :meth:`statistical_parity_difference`."""
         return self.statistical_parity_difference()
+
+
+    def rich_subgroup(self, predictions, fairness_def='FP'):
+        """Audit dataset with respect to rich subgroups defined by linear thresholds of sensitive attributes
+
+            Args: fairness_def is 'FP' or 'FN' for rich subgroup wrt to false positive or false negative rate.
+                  predictions is a hashable tuple of predictions. Typically the labels attribute of a GerryFairClassifier
+
+            Returns: the gamma disparity with respect to the fairness_def.
+
+            Examples: see examples/gerry_plots.ipynb
+        """
+
+        auditor = Auditor(self.dataset, fairness_def)
+
+        # make hashable type
+        y = array_to_tuple(self.dataset.labels)
+        predictions = array_to_tuple(predictions)
+
+        # returns mean(predictions | y = 0) if 'FP' 1-mean(predictions | y = 1) if FN
+        metric_baseline = auditor.get_baseline(y, predictions)
+
+        # return the group with the largest disparity
+        group = auditor.get_group(predictions, metric_baseline)
+
+        return group.weighted_disparity
+

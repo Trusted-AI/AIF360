@@ -77,7 +77,8 @@ class Reweighing(Transformer):
         Args:
             dataset (BinaryLabelDataset): Dataset that needs to be transformed.
         Returns:
-            dataset (BinaryLabelDataset): Transformed dataset.
+            dataset (BinaryLabelDataset): Dataset with transformed
+                instance_weights attribute.
         """
 
         dataset_transformed = dataset.copy(deepcopy=True)
