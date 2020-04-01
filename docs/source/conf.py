@@ -57,10 +57,10 @@ templates_path = ['templates']
 # generate autosummary even if no references
 autosummary_generate = True
 
-autodoc_default_options = {
-    'members': True,
-    # 'inherited-members': True
-}
+autodoc_default_flags = [
+    'members',
+    # 'inherited-members'
+]
 
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a list of string:
@@ -73,7 +73,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'aif360'
-copyright = u'2018 - 2019, IBM Corporation'
+copyright = u'2018 - 2020, IBM Corporation'
 author = u'aif360 developers'
 
 # The version info for the project you're documenting, acts as replacement for
