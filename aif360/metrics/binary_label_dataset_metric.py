@@ -2,6 +2,7 @@ import numpy as np
 from sklearn.neighbors import NearestNeighbors
 from aif360.algorithms.inprocessing.gerryfair.auditor import Auditor
 from aif360.datasets import BinaryLabelDataset
+from aif360.datasets.multiclass_label_dataset import MulticlassLabelDataset
 from aif360.metrics import DatasetMetric, utils
 from aif360.algorithms.inprocessing.gerryfair.clean import *
 
@@ -26,8 +27,8 @@ class BinaryLabelDatasetMetric(DatasetMetric):
             TypeError: `dataset` must be a
                 :obj:`~aif360.datasets.BinaryLabelDataset` type.
         """
-        if not isinstance(dataset, BinaryLabelDataset):
-            raise TypeError("'dataset' should be a BinaryLabelDataset")
+        if not isinstance(dataset, BinaryLabelDataset) and not isinstance(dataset, MulticlassLabelDataset) :
+            raise TypeError("'dataset' should be a BinaryLabelDataset or a MulticlassLabelDataset")
 
         # sets self.dataset, self.unprivileged_groups, self.privileged_groups
         super(BinaryLabelDatasetMetric, self).__init__(dataset,
