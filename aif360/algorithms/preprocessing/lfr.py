@@ -97,12 +97,14 @@ class LFR(Transformer):
             else:
                 bnd.append((0, 1))
 
-        self.learned_model = optim.fmin_l_bfgs_b(lfr_helpers.LFR_optim_obj, x0=model_inits, epsilon=1e-5,
+        self.learned_model, _, d = optim.fmin_l_bfgs_b(lfr_helpers.LFR_optim_obj, x0=model_inits, epsilon=1e-5,
                                   args=(training_sensitive, training_nonsensitive,
                                         ytrain_sensitive[:, 0], ytrain_nonsensitive[:, 0], self.k, self.Ax,
                                         self.Ay, self.Az, 0, self.print_interval),
                                   bounds=bnd, approx_grad=True, maxfun=5000,
-                                  maxiter=5000, disp=self.verbose)[0]
+                                  maxiter=5000, disp=self.verbose)#[0]
+        print(d['nit'])
+        print(d['funcalls'])
         return self
 
     def transform(self, dataset, threshold=0.5, **kwargs):
@@ -135,7 +137,7 @@ class LFR(Transformer):
         alphaoptim0 = self.learned_model[:P]
         alphaoptim1 = self.learned_model[P: 2 * P]
         woptim = self.learned_model[2 * P: (2 * P) + self.k]
-        voptim = np.matrix(self.learned_model[(2 * P) + self.k:]).reshape((self.k, P))
+        voptim = np.array(self.learned_model[(2 * P) + self.k:]).reshape((self.k, P))
 
         # compute distances on the test dataset using train model params
         dist_sensitive = lfr_helpers.distances(testing_sensitive, voptim, alphaoptim1, Ns, P, self.k)

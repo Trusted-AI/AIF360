@@ -101,6 +101,11 @@ The prompt will return to `$ `.
 Note: Older versions of conda may use `source activate aif360` and `source
 deactivate` (`activate aif360` and `deactivate` on Windows).
 
+<!-- ```bash
+conda install -c powerai aif360
+pip install cvxpy numba tensorflow BlackBoxAuditing lime adversarial-robustness-toolbox
+``` -->
+
 ### Install with minimal dependencies
 
 To install the latest stable version from PyPI, run:

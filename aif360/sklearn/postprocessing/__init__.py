@@ -12,6 +12,7 @@ from sklearn.utils.metaestimators import if_delegate_has_method
 from sklearn.utils.validation import check_is_fitted
 
 from aif360.sklearn.postprocessing.calibrated_equalized_odds import CalibratedEqualizedOdds
+from aif360.sklearn.postprocessing.reject_option_classification import RejectOptionClassifier, RejectOptionClassifierCV
 
 
 class PostProcessingMeta(BaseEstimator, MetaEstimatorMixin):
@@ -82,8 +83,9 @@ class PostProcessingMeta(BaseEstimator, MetaEstimatorMixin):
         Returns:
             self
         """
-        self.needs_proba_ = (self.needs_proba if self.needs_proba is not None
-                else isinstance(self.postprocessor, CalibratedEqualizedOdds))
+        self.needs_proba_ = True if self.needs_proba is None else self.needs_proba
+        # self.needs_proba_ = (self.needs_proba if self.needs_proba is not None
+        #         else isinstance(self.postprocessor, CalibratedEqualizedOdds))
         if self.needs_proba_ and not hasattr(self.estimator, 'predict_proba'):
             raise TypeError("`estimator` (type: {}) does not implement method "
                             "`predict_proba()`.".format(type(self.estimator)))
@@ -122,6 +124,7 @@ class PostProcessingMeta(BaseEstimator, MetaEstimatorMixin):
 
         y_score = (self.estimator_.predict(X_post) if not self.needs_proba_ else
                   self.estimator_.predict_proba(X_post))
+        y_score = pd.DataFrame(y_score, index=X_post.index).squeeze('columns')
         fit_params = fit_params.copy()
         fit_params.update(labels=self.estimator_.classes_)
         self.postprocessor_.fit(y_score, y_post, sample_weight=sw_post

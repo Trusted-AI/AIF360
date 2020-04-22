@@ -120,7 +120,7 @@ def ratio(func, y, *args, prot_attr=None, priv_group=1, sample_weight=None,
 
 
 # =========================== SCORER FACTORIES =================================
-def make_difference_scorer(diff_func):
+def make_difference_scorer(diff_func, **kwargs):
     """Make a scorer from a 'difference' metric (e.g.
     :func:`statistical_parity_difference`).
 
@@ -135,9 +135,9 @@ def make_difference_scorer(diff_func):
             ``diff_func(y, y_pred, **kwargs)``.
     """
     return make_scorer(lambda y, y_pred, **kw: abs(diff_func(y, y_pred, **kw)),
-                       greater_is_better=False)
+                       greater_is_better=False, **kwargs)
 
-def make_ratio_scorer(ratio_func):
+def make_ratio_scorer(ratio_func, **kwargs):
     """Make a scorer from a 'ratio' metric (e.g. :func:`disparate_impact_ratio`)
 
     Since the optimal value of a ratio metric is 1, this function takes the
@@ -150,10 +150,12 @@ def make_ratio_scorer(ratio_func):
         ratio_func (callable): A ratio metric with signature
             `ratio_func(y, y_pred, **kwargs)``.
     """
-    def score_fn(y, y_pred, **kwargs):
-        ratio = ratio_func(y, y_pred, **kwargs)
+    def score_fn(y, y_pred, **kw):
+        ratio = ratio_func(y, y_pred, **kw)
+        if ratio == 0:
+            return 0
         return min(ratio, 1/ratio)
-    return make_scorer(score_fn)
+    return make_scorer(score_fn, **kwargs)
 
 
 # ================================ HELPERS =====================================

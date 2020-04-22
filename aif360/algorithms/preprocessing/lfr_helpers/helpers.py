@@ -50,27 +50,28 @@ def x_n_hat(X, M_nk, v, N, P, k):
 @jit
 def yhat(M_nk, y, w, N, k):
     yhat = np.zeros(N)
-    L_y = 0.0
+    L_y = np.array([0.0])
     for i in range(N):
         for j in range(k):
             yhat[i] += M_nk[i, j] * w[j]
         yhat[i] = 1e-6 if yhat[i] <= 0 else yhat[i]
         yhat[i] = 0.999 if yhat[i] >= 1 else yhat[i]
         L_y += -1 * y[i] * np.log(yhat[i]) - (1.0 - y[i]) * np.log(1.0 - yhat[i])
-    return yhat, L_y
+    return yhat, L_y[0]
 
 @jit
 def LFR_optim_obj(params, data_sensitive, data_nonsensitive, y_sensitive,
-                  y_nonsensitive, k=10, A_x = 0.01, A_y = 0.1, A_z = 0.5, results=0, print_inteval=250):
+                  y_nonsensitive, k=10, A_x=0.01, A_y=0.1, A_z=0.5, results=0,
+                  print_interval=250):
 
-    LFR_optim_obj.iters += 1
+    # LFR_optim_obj.iters += 1
     Ns, P = data_sensitive.shape
     Nns, _ = data_nonsensitive.shape
 
     alpha0 = params[:P]
     alpha1 = params[P : 2 * P]
     w = params[2 * P : (2 * P) + k]
-    v = np.matrix(params[(2 * P) + k:]).reshape((k, P))
+    v = params[(2 * P) + k:].reshape((k, P))
 
     dists_sensitive = distances(data_sensitive, v, alpha1, Ns, P, k)
     dists_nonsensitive = distances(data_nonsensitive, v, alpha0, Nns, P, k)
@@ -95,11 +96,11 @@ def LFR_optim_obj(params, data_sensitive, data_nonsensitive, y_sensitive,
 
     criterion = A_x * L_x + A_y * L_y + A_z * L_z
 
-    if LFR_optim_obj.iters % print_inteval == 0:
-        print(LFR_optim_obj.iters, criterion)
+    # if LFR_optim_obj.iters % print_interval == 0:
+    #     print(LFR_optim_obj.iters, criterion)
 
-    if results:
-        return yhat_sensitive, yhat_nonsensitive, M_nk_sensitive, M_nk_nonsensitive
-    else:
-        return criterion
-LFR_optim_obj.iters = 0
+    # if results:
+    #     return yhat_sensitive, yhat_nonsensitive, M_nk_sensitive, M_nk_nonsensitive
+    # else:
+    return criterion
+# LFR_optim_obj.iters = 0
