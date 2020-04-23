@@ -47,6 +47,21 @@ class ClassificationMetric(BinaryLabelDatasetMetric):
             raise TypeError("'classified_dataset' should be a "
                             "BinaryLabelDataset or a MulticlassLabelDataset.")
 
+        if isinstance(self.classified_dataset, MulticlassLabelDataset):
+            fav_label_value = 1.
+            unfav_label_value = 0.
+            #Iterate the labels values in the dataframe and check whether the label value is 
+            # in the favorable list, if it is true then assign the favorable label value as 1
+            # otherwise 0 for unfavourable values
+            for index in range(0,len(self.classified_dataset.labels)):
+                if self.classified_dataset.labels[index] in self.classified_dataset.favorable_label:
+                    self.classified_dataset.labels[index] = float(fav_label_value)
+                elif self.classified_dataset.labels[index] in self.classified_dataset.unfavorable_label:
+                    self.classified_dataset.labels[index] = float(unfav_label_value)
+            
+            self.classified_dataset.favorable_label = float(fav_label_value)
+            self.classified_dataset.unfavorable_label = float(unfav_label_value)
+        
         # Verify if everything except the predictions and metadata are the same
         # for the two datasets
         with self.dataset.temporarily_ignore('labels', 'scores'):

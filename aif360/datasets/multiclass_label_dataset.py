@@ -20,22 +20,7 @@ class MulticlassLabelDataset(StructuredDataset):
         self.unfavorable_label = unfavorable_label
 
         super(MulticlassLabelDataset, self).__init__(**kwargs)
-
-        fav_label_value = 1.
-        unfav_label_value = 0.
-        #Iterate the labels values in the dataframe and check whether the label value is 
-        # in the favorable list, if it is true then assign the favorable label value as 1
-        # otherwise 0 for unfavourable values
-        for index in range(0,len(self.labels)):
-            if self.labels[index] in self.favorable_label:
-                self.labels[index] = float(fav_label_value)
-            elif self.labels[index] in self.unfavorable_label:
-                self.labels[index] = float(unfav_label_value)
         
-        self.favorable_label = float(fav_label_value)
-        self.unfavorable_label = float(unfav_label_value)
-
-       
 
     def validate_dataset(self):
         """Error checking and type validation.

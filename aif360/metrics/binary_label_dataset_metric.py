@@ -34,6 +34,21 @@ class BinaryLabelDatasetMetric(DatasetMetric):
         super(BinaryLabelDatasetMetric, self).__init__(dataset,
             unprivileged_groups=unprivileged_groups,
             privileged_groups=privileged_groups)
+        
+        if isinstance(dataset, MulticlassLabelDataset):
+            fav_label_value = 1.
+            unfav_label_value = 0.
+            #Iterate the labels values in the dataframe and check whether the label value is 
+            # in the favorable list, if it is true then assign the favorable label value as 1
+            # otherwise 0 for unfavourable values
+            for index in range(0,len(self.dataset.labels)):
+                if self.dataset.labels[index] in self.dataset.favorable_label:
+                    self.dataset.labels[index] = float(fav_label_value)
+                elif self.dataset.labels[index] in self.dataset.unfavorable_label:
+                    self.dataset.labels[index] = float(unfav_label_value)
+            
+            self.dataset.favorable_label = float(fav_label_value)
+            self.dataset.unfavorable_label = float(unfav_label_value)
 
     def num_positives(self, privileged=None):
         r"""Compute the number of positives,
