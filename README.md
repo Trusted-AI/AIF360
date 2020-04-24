@@ -56,7 +56,9 @@ Get in touch with us on [Slack](https://aif360.slack.com) (invitation
 
 ## Setup
 
-Supported Configurations:
+AIF360 is available for both Python and R. For R setup, please refer to instructions [here](aif360/aif360-r/README.md).
+
+Supported Python Configurations:
 
 | OS      | Python version |
 | ------- | -------------- |
