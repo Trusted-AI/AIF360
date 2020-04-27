@@ -29,7 +29,7 @@ in development. We encourage the contribution of your metrics, explainers, and
 debiasing algorithms.
 
 Get in touch with us on [Slack](https://aif360.slack.com) (invitation
-[here](https://join.slack.com/t/aif360/shared_invite/enQtNDI5Nzg2NTk0MTMyLTU4N2UwODVmMTYxZWMwZmEzZmZkODdjMTk5NWUwZDNhNDhlMzNkZDNhOTYwZDNlODc1MTdjYzY5OTU2OWQ1ZmY))!
+[here](https://join.slack.com/t/aif360/shared_invite/zt-5hfvuafo-X0~g6tgJQ~7tIAT~S294TQ))!
 
 
 ## Supported bias mitigation algorithms
@@ -232,6 +232,6 @@ paper.
 
 * Introductory [video](https://www.youtube.com/watch?v=X1NsrcaRQTE) to AI
   Fairness 360 by Kush Varshney, September 20, 2018 (32 mins)
-  
+
 ## Contributing
 The development fork for Rich Subgroup Fairness (`inprocessing/gerryfair_classifier.py`) is [here](https://github.com/sethneel/aif360). Contributions are welcome and a list of potential contributions from the authors can be found [here](https://trello.com/b/0OwPcbVr/gerryfair-development).
