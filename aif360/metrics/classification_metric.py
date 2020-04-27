@@ -50,14 +50,12 @@ class ClassificationMetric(BinaryLabelDatasetMetric):
         if isinstance(self.classified_dataset, MulticlassLabelDataset):
             fav_label_value = 1.
             unfav_label_value = 0.
-            #Iterate the labels values in the dataframe and check whether the label value is 
-            # in the favorable list, if it is true then assign the favorable label value as 1
-            # otherwise 0 for unfavourable values
-            for index in range(0,len(self.classified_dataset.labels)):
-                if self.classified_dataset.labels[index] in self.classified_dataset.favorable_label:
-                    self.classified_dataset.labels[index] = float(fav_label_value)
-                elif self.classified_dataset.labels[index] in self.classified_dataset.unfavorable_label:
-                    self.classified_dataset.labels[index] = float(unfav_label_value)
+
+            self.classified_dataset = self.classified_dataset.copy()
+            # Find all the labels which match any of the favorable labels
+            fav_idx = np.logical_or.reduce(np.equal.outer(self.classified_dataset.favorable_label, self.classified_dataset.labels))
+            # Replace labels with corresponding values
+            self.classified_dataset.labels = np.where(fav_idx, fav_label_value, unfav_label_value)
             
             self.classified_dataset.favorable_label = float(fav_label_value)
             self.classified_dataset.unfavorable_label = float(unfav_label_value)

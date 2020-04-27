@@ -130,13 +130,20 @@ def test_multiclass_confusion_matrix():
 
     favorable_values = [0,1]
     unfavorable_values = [2]
-    bld = MulticlassLabelDataset(favorable_label = favorable_values, unfavorable_label = unfavorable_values , df = df , label_names=['label'],
+    mcld = MulticlassLabelDataset(favorable_label = favorable_values, unfavorable_label = unfavorable_values , df = df , label_names=['label'],
         protected_attribute_names=['feat'])
-    bld2 = MulticlassLabelDataset(favorable_label = favorable_values, unfavorable_label = unfavorable_values , df=df2, label_names=['label'],
+    mcld2 = MulticlassLabelDataset(favorable_label = favorable_values, unfavorable_label = unfavorable_values , df=df2, label_names=['label'],
         protected_attribute_names=['feat'])
-    cm = ClassificationMetric(bld, bld2, unprivileged_groups=[{'feat': 2}],
+    cm = ClassificationMetric(mcld, mcld2, unprivileged_groups=[{'feat': 2}],
         privileged_groups=[{'feat': 0},{'feat': 1}])
     confusion_matrix = cm.binary_confusion_matrix()
+    
+    actual_labels_df = df[['label']].values
+    actual_labels_df2 = df2[['label']].values
+   
+    assert np.all(actual_labels_df == mcld.labels)
+    assert np.all(actual_labels_df2 == mcld2.labels)
+   
     assert confusion_matrix == {'TP': 7.0, 'FN': 1.0, 'TN': 2.0, 'FP': 0.0}
 
     fnr = cm.false_negative_rate_difference()
@@ -170,14 +177,14 @@ def test_generalized_binary_confusion_matrix():
     favorable_values = [0,1]
     unfavorable_values = [2]
     
-    bld = MulticlassLabelDataset(df=df, label_names=['label'],
+    mcld = MulticlassLabelDataset(df=df, label_names=['label'],
         protected_attribute_names=['feat'],favorable_label = favorable_values, unfavorable_label = unfavorable_values)
     
-    bld2 = MulticlassLabelDataset(df=df2, label_names=['label'], scores_names=['score'],
+    mcld2 = MulticlassLabelDataset(df=df2, label_names=['label'], scores_names=['score'],
         protected_attribute_names=['feat'],favorable_label = favorable_values, unfavorable_label = unfavorable_values)
     
     
-    cm = ClassificationMetric(bld, bld2, unprivileged_groups=[{'feat': 0}],
+    cm = ClassificationMetric(mcld, mcld2, unprivileged_groups=[{'feat': 0}],
         privileged_groups=[{'feat': 1}])
 
     gen_confusion_matrix = cm.generalized_binary_confusion_matrix()

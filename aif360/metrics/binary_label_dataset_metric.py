@@ -38,14 +38,12 @@ class BinaryLabelDatasetMetric(DatasetMetric):
         if isinstance(dataset, MulticlassLabelDataset):
             fav_label_value = 1.
             unfav_label_value = 0.
-            #Iterate the labels values in the dataframe and check whether the label value is 
-            # in the favorable list, if it is true then assign the favorable label value as 1
-            # otherwise 0 for unfavourable values
-            for index in range(0,len(self.dataset.labels)):
-                if self.dataset.labels[index] in self.dataset.favorable_label:
-                    self.dataset.labels[index] = float(fav_label_value)
-                elif self.dataset.labels[index] in self.dataset.unfavorable_label:
-                    self.dataset.labels[index] = float(unfav_label_value)
+           
+            self.dataset = self.dataset.copy()
+            # Find all labels which match any of the favorable labels
+            fav_idx = np.logical_or.reduce(np.equal.outer(self.dataset.favorable_label, self.dataset.labels))
+            # Replace labels with corresponding values
+            self.dataset.labels = np.where(fav_idx, fav_label_value, unfav_label_value)
             
             self.dataset.favorable_label = float(fav_label_value)
             self.dataset.unfavorable_label = float(unfav_label_value)
