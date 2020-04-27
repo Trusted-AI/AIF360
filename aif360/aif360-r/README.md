@@ -25,7 +25,7 @@ You can install the development version from
 
 ``` r
 # install.packages("devtools")
-devtools::install_github("IBM/AIF360/aif360-r") 
+devtools::install_github("IBM/AIF360/aif360/aif360-r") 
 ```
 
 Then, use the install\_aif360() function to install AIF360:
