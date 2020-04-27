@@ -6,6 +6,7 @@
 #' @usage
 #' binary_label_dataset_metric(data, privileged_groups, unprivileged_groups)
 #' @examples
+#' \dontrun{
 #' load_aif360_lib()
 #' # Load the adult dataset
 #' adult_dataset <- adult_dataset()
@@ -21,6 +22,7 @@
 #'
 #' # Difference in mean outcomes between unprivileged and privileged groups
 #' bm$mean_difference()
+#' }
 #' @seealso
 #' \href{https://aif360.readthedocs.io/en/latest/modules/metrics.html#aif360.metrics.BinaryLabelDatasetMetric}{Explore available binary label dataset metrics here}
 #'

@@ -8,6 +8,7 @@
 #' @usage
 #' dataset_metric(data, privileged_groups, unprivileged_groups)
 #' @examples
+#' \dontrun{
 #' load_aif360_lib()
 #' data <- data.frame("feat" = c(0,0,1,1,1,1,0,1,1,0), "label" = c(1,0,0,1,0,0,1,0,1,1))
 #' # Create aif compatible dataset
@@ -20,6 +21,7 @@
 #' dm <- dataset_metric(dd, list('feat', 1), list('feat',2))
 #' # Access metric functions
 #' dm$num_instances()
+#' }
 #' @seealso
 #' \href{https://aif360.readthedocs.io/en/latest/modules/metrics.html#dataset-metric}{Explore available dataset metrics here}
 #'
