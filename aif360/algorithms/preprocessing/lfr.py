@@ -2,7 +2,12 @@ import numpy as np
 import scipy.optimize as optim
 
 from aif360.algorithms import Transformer
-from aif360.algorithms.preprocessing.lfr_helpers import helpers as lfr_helpers
+try:
+    from aif360.algorithms.preprocessing.lfr_helpers import helpers as lfr_helpers
+except ImportError as error:
+    from logging import warning
+    warning("{}: LFR will be unavailable. To install, run:\n"
+            "pip install 'aif360[LFR]'".format(error))
 
 
 class LFR(Transformer):
