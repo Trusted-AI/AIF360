@@ -1,3 +1,7 @@
+language: python
+
+python: "3.6"
+
 language: R
 before_install:
   - cd aif360/aif360-r
