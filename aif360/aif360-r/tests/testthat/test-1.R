@@ -1,3 +1,3 @@
 # load aif library
-install_aif360(python_version=3.7)
+install_aif360(method='conda')
 load_aif360_lib()
