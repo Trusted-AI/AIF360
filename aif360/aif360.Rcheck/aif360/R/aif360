@@ -1,0 +1,614 @@
+.packageName <- "aif360"
+#line 1 "/Users/saishruthi.tn@ibm.com/Desktop/r-aif/AIF360/aif360/aif360.Rcheck/00_pkg_src/aif360/R/binary_label_dataset_metric.R"
+#' Binary Label Dataset Metric
+#' @description Class for computing metrics on an aif360 compatible dataset with binary labels.
+#' @param data A aif360 compatible dataset.
+#' @param privileged_groups Privileged groups. List containing privileged protected attribute name and value of the privileged protected attribute.
+#' @param unprivileged_groups Unprivileged groups. List containing unprivileged protected attribute name and value of the unprivileged protected attribute.
+#' @usage
+#' binary_label_dataset_metric(data, privileged_groups, unprivileged_groups)
+#' @examples
+#' load_aif360_lib()
+#' # Load the adult dataset
+#' adult_dataset <- adult_dataset()
+#'
+#' # Define the groups
+#' privileged_groups <- list("race", 1)
+#' unprivileged_groups <- list("race", 0)
+#'
+#' # Metric for Binary Label Dataset
+#' bm <- binary_label_dataset_metric(data = adult_dataset,
+#'                                   privileged_groups = privileged_groups,
+#'                                   unprivileged_groups = unprivileged_groups)
+#'
+#' # Difference in mean outcomes between unprivileged and privileged groups
+#' bm$mean_difference()
+#' @seealso
+#' \href{https://aif360.readthedocs.io/en/latest/modules/metrics.html#aif360.metrics.BinaryLabelDatasetMetric}{Explore available binary label dataset metrics here}
+#'
+#' Available metrics are: base_rate, consistency, disparate_impact, mean_difference, num_negatives, num_positives and statistical_parity_difference.
+#' @export
+#' @importFrom reticulate py_suppress_warnings py_to_r
+#'
+binary_label_dataset_metric <- function(data,
+                                        privileged_groups,
+                                        unprivileged_groups){
+
+   p_dict <- dict_fn(privileged_groups)
+   u_dict <- dict_fn(unprivileged_groups)
+
+   return(metrics$BinaryLabelDatasetMetric(data,
+                                           privileged_groups = p_dict,
+                                           unprivileged_groups = u_dict))
+}
+#line 1 "/Users/saishruthi.tn@ibm.com/Desktop/r-aif/AIF360/aif360/aif360.Rcheck/00_pkg_src/aif360/R/classification_metric.R"
+#' Classification Metric
+#' @description
+#' Class for computing metrics based on two BinaryLabelDatasets. The first dataset is the original one and the second is the output of the classification transformer (or similar)
+#' @param dataset (BinaryLabelDataset) Dataset containing ground-truth labels
+#' @param classified_dataset (BinaryLabelDataset) Dataset containing predictions
+#' @param privileged_groups Privileged groups. List containing privileged protected attribute name and value of the privileged protected attribute.
+#' @param unprivileged_groups Unprivileged groups. List containing unprivileged protected attribute name and value of the unprivileged protected attribute.
+#' @usage
+#' classification_metric(dataset, classified_dataset, unprivileged_groups, privileged_groups)
+#' @examples
+#' \dontrun{
+#' load_aif360_lib()
+#' # Input dataset
+#' data <- data.frame("feat" = c(0,0,1,1,1,1,0,1,1,0), "label" = c(1,0,0,1,0,0,1,0,1,1))
+#' # Create aif compatible input dataset
+#' act <- aif360::aif_dataset(data_path = data,  favor_label=0, unfavor_label=1,
+#'                             unprivileged_protected_attribute=0,
+#'                             privileged_protected_attribute=1,
+#'                             target_column="label", protected_attribute="feat")
+#' # Classified dataset
+#' pred_data <- data.frame("feat" = c(0,0,1,1,1,1,0,1,1,0), "label" = c(1,0,1,1,1,0,1,0,0,1))
+#' # Create aif compatible classified dataset
+#' pred <- aif360::aif_dataset(data_path = pred_data,  favor_label=0, unfavor_label=1,
+#'                              unprivileged_protected_attribute=0,
+#'                              privileged_protected_attribute=1,
+#'                              target_column="label", protected_attribute="feat")
+#' # Create an instance of classification metric
+#' cm <- classification_metric(act, pred, list('feat', 1), list('feat', 0))
+#' # Access metric functions
+#' cm$accuracy()
+#' }
+#' @seealso
+#' \href{https://aif360.readthedocs.io/en/latest/modules/metrics.html#classification-metric}{Explore available classification metrics explanations here}
+#'
+#' Available metrics:
+#' \itemize{
+#'   \item accuracy
+#'   \item average_abs_odds_difference
+#'   \item average_odds_difference
+#'   \item between_all_groups_coefficient_of_variation
+#'   \item between_all_groups_generalized_entropy_index
+#'   \item between_all_groups_theil_index
+#'   \item between_group_coefficient_of_variation
+#'   \item between_group_generalized_entropy_index
+#'   \item between_group_theil_index
+#'   \item binary_confusion_matrix
+#'   \item coefficient_of_variation
+#'   \item disparate_impact
+#'   \item equal_opportunity_difference
+#'   \item error_rate
+#'   \item error_rate_difference
+#'   \item error_rate_ratio
+#'   \item false_discovery_rate
+#'   \item false_discovery_rate_difference
+#'   \item false_discovery_rate_ratio
+#'   \item false_negative_rate
+#'   \item false_negative_rate_difference
+#'   \item false_negative_rate_ratio
+#'   \item false_omission_rate
+#'   \item false_omission_rate_difference
+#'   \item false_omission_rate_ratio
+#'   \item false_positive_rate
+#'   \item false_positive_rate_difference
+#'   \item false_positive_rate_ratio
+#'   \item generalized_binary_confusion_matrix
+#'   \item generalized_entropy_index
+#'   \item generalized_false_negative_rate
+#'   \item generalized_false_positive_rate
+#'   \item generalized_true_negative_rate
+#'   \item generalized_true_positive_rate
+#'   \item negative_predictive_value
+#'   \item num_false_negatives
+#'   \item num_false_positives
+#'   \item num_generalized_false_negatives
+#'   \item num_generalized_false_positives
+#'   \item num_generalized_true_negatives
+#'   \item num_generalized_true_positives
+#'   \item num_pred_negatives
+#'   \item num_pred_positives
+#'   \item num_true_negatives
+#'   \item num_true_positives
+#'   \item performance_measures
+#'   \item positive_predictive_value
+#'   \item power
+#'   \item precision
+#'   \item recall
+#'   \item selection_rate
+#'   \item sensitivity
+#'   \item specificity
+#'   \item statistical_parity_difference
+#'   \item theil_index
+#'   \item true_negative_rate
+#'   \item true_positive_rate
+#'   \item true_positive_rate_difference
+#'
+#' }
+#' @export
+#' @importFrom reticulate py_suppress_warnings
+#'
+classification_metric <- function(dataset,
+                                  classified_dataset,
+                                  unprivileged_groups,
+                                  privileged_groups){
+
+  u_dict <- dict_fn(unprivileged_groups)
+
+  p_dict <- dict_fn(privileged_groups)
+
+
+  return(metrics$ClassificationMetric(dataset,
+                                      classified_dataset,
+                                      unprivileged_groups = u_dict,
+                                      privileged_groups = p_dict))
+}
+#line 1 "/Users/saishruthi.tn@ibm.com/Desktop/r-aif/AIF360/aif360/aif360.Rcheck/00_pkg_src/aif360/R/dataset.R"
+#' AIF360 dataset
+#' @description
+#' Function to create AIF compatible dataset.
+#' @param data_path Path to the input CSV file or a R dataframe.
+#' @param favor_label Label value which is considered favorable (i.e. “positive”).
+#' @param unfavor_label Label value which is considered unfavorable (i.e. “negative”).
+#' @param unprivileged_protected_attribute A unprotected attribute value which is considered privileged from a fairness perspective.
+#' @param privileged_protected_attribute A protected attribute value which is considered privileged from a fairness perspective.
+#' @param target_column Name describing the label.
+#' @param protected_attribute A feature for which fairness is desired.
+#' @usage
+#' aif_dataset(data_path,  favor_label, unfavor_label,
+#'                      unprivileged_protected_attribute,
+#'                      privileged_protected_attribute,
+#'                      target_column, protected_attribute)
+#' @examples
+#' load_aif360_lib()
+#' # Input dataset
+#' data <- data.frame("feat" = c(0,0,1,1,1,1,0,1,1,0), "label" = c(1,0,0,1,0,0,1,0,1,1))
+#' # Create aif compatible input dataset
+#' act <- aif360::aif_dataset(data_path = data,  favor_label=0, unfavor_label=1,
+#'                             unprivileged_protected_attribute=0,
+#'                             privileged_protected_attribute=1,
+#'                             target_column="label", protected_attribute="feat")
+#' @seealso
+#' \href{https://aif360.readthedocs.io/en/latest/modules/datasets.html#binary-label-dataset}{More about AIF binary dataset.}
+#' @export
+#' @importFrom reticulate py_suppress_warnings py_dict r_to_py
+#' @importFrom utils file_test
+#'
+aif_dataset <- function(data_path, favor_label,
+                        unfavor_label, unprivileged_protected_attribute,
+                        privileged_protected_attribute,
+                        target_column, protected_attribute) {
+
+  if (is.data.frame(data_path)) {
+    dataframe <- r_to_py(data_path)
+  } else if (file_test("-f", data_path) == TRUE) {
+    dataframe = input_data(data_path)
+  }
+  unprivileged_protected_list <- list_of_list(unprivileged_protected_attribute)
+  privileged_protected_list <- list_of_list(privileged_protected_attribute)
+  target_column_list <- list_fn(target_column)
+  protected_attribute_list <- list_fn(protected_attribute)
+
+  return(datasets$BinaryLabelDataset(df = dataframe,
+                                     favorable_label = favor_label,
+                                     unfavorable_label = unfavor_label,
+                                     unprivileged_protected_attributes = unprivileged_protected_list,
+                                     privileged_protected_attributes = privileged_protected_list,
+                                     label_names = target_column_list,
+                                     protected_attribute_names = protected_attribute_list))
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#line 1 "/Users/saishruthi.tn@ibm.com/Desktop/r-aif/AIF360/aif360/aif360.Rcheck/00_pkg_src/aif360/R/dataset_metric.R"
+#' Dataset Metric
+#' @description
+#' Class to provide access to functions for computing metrics on an aif360 compatible dataset
+#'
+#' @param data A aif360 compatible dataset
+#' @param privileged_groups  Privileged groups. List containing privileged protected attribute name and value of the privileged protected attribute.
+#' @param unprivileged_groups  Unprivileged groups. List containing unprivileged protected attribute name and value of the unprivileged protected attribute.
+#' @usage
+#' dataset_metric(data, privileged_groups, unprivileged_groups)
+#' @examples
+#' load_aif360_lib()
+#' data <- data.frame("feat" = c(0,0,1,1,1,1,0,1,1,0), "label" = c(1,0,0,1,0,0,1,0,1,1))
+#' # Create aif compatible dataset
+#' dd <- aif360::aif_dataset(data_path = data,
+#'                            favor_label=0, unfavor_label=1,
+#'                             unprivileged_protected_attribute=0,
+#'                             privileged_protected_attribute=1,
+#'                             target_column="label", protected_attribute="feat")
+#' # Create an instance of dataset metric
+#' dm <- dataset_metric(dd, list('feat', 1), list('feat',2))
+#' # Access metric functions
+#' dm$num_instances()
+#' @seealso
+#' \href{https://aif360.readthedocs.io/en/latest/modules/metrics.html#dataset-metric}{Explore available dataset metrics here}
+#'
+#' Available metric: num_instances
+#' @noRd
+#' @importFrom reticulate py_suppress_warnings import
+#'
+dataset_metric <- function(data,
+                           privileged_groups,
+                           unprivileged_groups){
+
+   p_dict <- dict_fn(privileged_groups)
+   u_dict <- dict_fn(unprivileged_groups)
+
+   return(metrics$DatasetMetric(data,
+                                privileged_groups = p_dict,
+                                unprivileged_groups = u_dict))
+}
+#line 1 "/Users/saishruthi.tn@ibm.com/Desktop/r-aif/AIF360/aif360/aif360.Rcheck/00_pkg_src/aif360/R/import.R"
+#' load functions
+#' @export
+#'
+load_aif360_lib <- function() {
+  e <- globalenv()
+  e$datasets <- import("aif360.datasets")
+  e$metrics <- import("aif360.metrics")
+  e$pre_algo <- import("aif360.algorithms.preprocessing")
+  e$in_algo <- import("aif360.algorithms.inprocessing")
+  e$post_algo <- import("aif360.algorithms.postprocessing")
+  e$tf <- import("tensorflow")
+  lockBinding("datasets", e)
+  lockBinding("metrics", e)
+  lockBinding("pre_algo", e)
+  lockBinding("in_algo", e)
+  lockBinding("post_algo", e)
+  lockBinding("tf", e)
+}
+#line 1 "/Users/saishruthi.tn@ibm.com/Desktop/r-aif/AIF360/aif360/aif360.Rcheck/00_pkg_src/aif360/R/inprocessing_adversarial_debiasing.R"
+#' Adversarial Debiasing
+#' @description Adversarial debiasing is an in-processing technique that learns a classifier to maximize prediction accuracy and simultaneously reduce an adversary's ability to determine the protected attribute from the predictions
+#' @param unprivileged_groups a list with two values: the column of the protected class and the value indicating representation for unprivileged group
+#' @param privileged_groups a list with two values: the column of the protected class and the value indicating representation for privileged group
+#' @param scope_name scope name for the tensorflow variables
+#' @param sess tensorflow session
+#' @param seed seed to make `predict` repeatable.
+#' @param adversary_loss_weight hyperparameter that chooses the strength of the adversarial loss.
+#' @param num_epochs number of training epochs.
+#' @param batch_size batch size.
+#' @param classifier_num_hidden_units number of hidden units in the classifier model.
+#' @param debias learn a classifier with or without debiasing.
+#' @examples
+#' \dontrun{
+#' load_aif360_lib()
+#' ad <- adult_dataset()
+#' p <- list("race", 1)
+#' u <- list("race", 0)
+#'
+#' sess = tf$compat$v1$Session()
+#'
+#' plain_model = adversarial_debiasing(privileged_groups = p,
+#'                                     unprivileged_groups = u,
+#'                                     scope_name='plain_classifier',
+#'                                     debias=FALSE,
+#'                                     sess=sess)
+#'
+#' plain_model$fit(ad)
+#' ad_nodebiasing <- plain_model$predict(ad)
+#' }
+#' @export
+#'
+adversarial_debiasing <- function(unprivileged_groups, privileged_groups, scope_name='current', sess=tf$compat$v1$Session(),
+                                  seed=NULL, adversary_loss_weight=0.1, num_epochs=50, batch_size=128,
+                                  classifier_num_hidden_units=200, debias=TRUE) {
+  unprivileged_dict <- dict_fn(unprivileged_groups)
+  privileged_dict <- dict_fn(privileged_groups)
+  ad <- in_algo$AdversarialDebiasing(unprivileged_dict, privileged_dict, scope_name=scope_name, sess=sess)
+  return (ad)
+}
+#line 1 "/Users/saishruthi.tn@ibm.com/Desktop/r-aif/AIF360/aif360/aif360.Rcheck/00_pkg_src/aif360/R/inprocessing_prejudice_remover.R"
+#' Prejudice Remover
+#' @description Prejudice remover is an in-processing technique that adds a discrimination-aware regularization term to the learning objective
+#' @param eta fairness penalty parameter
+#' @param sensitive_attr name of protected attribute
+#' @param class_attr label name
+#' @usage prejudice_remover(eta=1.0, sensitive_attr='',class_attr='')
+#' @examples
+#' \dontrun{
+#' # An example using the Adult Dataset
+#' load_aif360_lib()
+#' ad <- adult_dataset()
+#' model <- prejudice_remover(class_attr = "income-per-year", sensitive_attr = "race")
+#' model$fit(ad)
+#' ad_pred <- model$predict(ad)
+#'}
+#' @export
+#'
+prejudice_remover <- function(eta=1.0,
+                              sensitive_attr='',
+                              class_attr=''){
+
+  pr <- in_algo$PrejudiceRemover(eta,
+                                 sensitive_attr,
+                                 class_attr)
+  return(pr)
+}
+#line 1 "/Users/saishruthi.tn@ibm.com/Desktop/r-aif/AIF360/aif360/aif360.Rcheck/00_pkg_src/aif360/R/postprocessing_reject_option_classification.R"
+#' Reject option classification
+#'
+#' @description Reject option classification  is a postprocessing technique that gives
+#' favorable outcomes to unpriviliged groups and unfavorable outcomes to
+#' priviliged groups in a confidence band around the decision boundary with
+#' the highest uncertainty.
+#' @param unprivileged_groups A list epresentation for unprivileged group.
+#' @param privileged_groups A list representation for privileged group.
+#' @param low_class_thresh Smallest classification threshold to use in the optimization. Should be between 0. and 1.
+#' @param high_class_thresh Highest classification threshold to use in the optimization. Should be between 0. and 1.
+#' @param num_class_thresh Number of classification thresholds between low_class_thresh and high_class_thresh for the optimization search. Should be > 0.
+#' @param num_ROC_margin Number of relevant ROC margins to be used in the optimization search. Should be > 0.
+#' @param metric_name Name of the metric to use for the optimization. Allowed options are "Statistical parity difference", "Average odds difference", "Equal opportunity difference".
+#' @param metric_ub Upper bound of constraint on the metric value
+#' @param metric_lb Lower bound of constraint on the metric value
+#' @examples
+#' \dontrun{
+#' # Example with Adult Dataset
+#' load_aif360_lib()
+#' ad <- adult_dataset()
+#' p <- list("race",1)
+#' u <- list("race", 0)
+#'
+#' col_names <- c(ad$feature_names, "label")
+#' ad_df <- data.frame(ad$features, ad$labels)
+#' colnames(ad_df) <- col_names
+#'
+#' lr <- glm(label ~ ., data=ad_df, family=binomial)
+#'
+#' ad_prob <- predict(lr, ad_df)
+#' ad_pred <- factor(ifelse(ad_prob> 0.5,1,0))
+#'
+#' ad_df_pred <- data.frame(ad_df)
+#' ad_df_pred$label <- as.character(ad_pred)
+#' colnames(ad_df_pred) <- c(ad$feature_names, 'label')
+#'
+#' ad_ds <- aif_dataset(ad_df, target_column='label', favor_label = 1,
+#'                      unfavor_label = 0, unprivileged_protected_attribute = 0,
+#'                      privileged_protected_attribute = 1, protected_attribute='race')
+#'
+#' ad_ds_pred <- aif_dataset(ad_df_pred, target_column='label', favor_label = 1,
+#'                unfavor_label = 0, unprivileged_protected_attribute = 0,
+#'                privileged_protected_attribute = 1, protected_attribute='race')
+#'
+#' roc <- reject_option_classification(unprivileged_groups = u,
+#'                                    privileged_groups = p,
+#'                                    low_class_thresh = 0.01,
+#'                                    high_class_thresh = 0.99,
+#'                                    num_class_thresh = as.integer(100),
+#'                                    num_ROC_margin = as.integer(50),
+#'                                    metric_name = "Statistical parity difference",
+#'                                    metric_ub = 0.05,
+#'                                    metric_lb = -0.05)
+#'
+#' roc <- roc$fit(ad_ds, ad_ds_pred)
+#'
+#' ds_transformed_pred <- roc$predict(ad_ds_pred)
+#' }
+#' @export
+#'
+reject_option_classification <- function(unprivileged_groups,
+                                         privileged_groups,
+                                         low_class_thresh=0.01,
+                                         high_class_thresh=0.99,
+                                         num_class_thresh=as.integer(100),
+                                         num_ROC_margin=as.integer(50),
+                                         metric_name='Statistical parity difference',
+                                         metric_ub=0.05,
+                                         metric_lb=-0.05){
+
+  u_dict <- dict_fn(unprivileged_groups)
+  p_dict <- dict_fn(privileged_groups)
+
+  return(post_algo$RejectOptionClassification(u_dict,
+                                              p_dict,
+                                              low_class_thresh,
+                                              high_class_thresh,
+                                              num_class_thresh,
+                                              num_ROC_margin,
+                                              metric_name,
+                                              metric_ub,
+                                              metric_lb))
+}
+
+
+#line 1 "/Users/saishruthi.tn@ibm.com/Desktop/r-aif/AIF360/aif360/aif360.Rcheck/00_pkg_src/aif360/R/preprocessing_disparate_impact_remover.R"
+#' Disparate Impact Remover
+#' @description Disparate impact remover is a preprocessing technique that edits feature values increase group fairness while preserving rank-ordering within groups
+#' @param repair_level Repair amount. 0.0 is no repair while 1.0 is full repair.
+#' @param sensitive_attribute Single protected attribute with which to do repair.
+#' @usage disparate_impact_remover(repair_level, sensitive_attribute)
+#' @examples
+#' \dontrun{
+#' # An example using the Adult Dataset
+#' load_aif360_lib()
+#' ad <- adult_dataset()
+#' p <- list("race", 1)
+#' u <- list("race", 0)
+#'
+#' di <- disparate_impact_remover(repair_level = 1.0, sensitive_attribute = "race")
+#' rp <- di$fit_transform(ad)
+#'
+#' di_2 <- disparate_impact_remover(repair_level = 0.8, sensitive_attribute = "race")
+#' rp_2 <- di_2$fit_transform(ad)
+#' }
+#' @export
+#'
+disparate_impact_remover <- function(repair_level, sensitive_attribute) {
+  dr <- pre_algo$DisparateImpactRemover(repair_level, sensitive_attribute)
+  return (dr)
+}
+
+
+#line 1 "/Users/saishruthi.tn@ibm.com/Desktop/r-aif/AIF360/aif360/aif360.Rcheck/00_pkg_src/aif360/R/preprocessing_reweighing.R"
+#' Reweighing
+#' @description  Reweighing is a preprocessing technique that weights the examples in each (group, label) combination differently to ensure fairness before classification
+#' @param unprivileged_groups a list with two values: the column of the protected class and the value indicating representation for unprivileged group
+#' @param privileged_groups  a list with two values: the column of the protected class and the value indicating representation for privileged group
+#' @usage reweighing(unprivileged_groups, privileged_groups)
+#' @examples
+#' \dontrun{
+#' # An example using the Adult Dataset
+#' load_aif360_lib()
+#' ad <- adult_dataset()
+#' p <- list("race", 1)
+#' u <- list("race", 0)
+#' rw <- reweighing(u,p)
+#' rw$fit(ad)
+#' ad_transformed <- rw$transform(ad)
+#' ad_fit_transformed <- rw$fit_transform(ad)
+#' }
+#' @export
+#'
+reweighing <- function(unprivileged_groups, privileged_groups) {
+  unprivileged_dict <- dict_fn(unprivileged_groups)
+  privileged_dict <- dict_fn(privileged_groups)
+  rw <- pre_algo$Reweighing(unprivileged_dict, privileged_dict)
+  return (rw)
+}
+#line 1 "/Users/saishruthi.tn@ibm.com/Desktop/r-aif/AIF360/aif360/aif360.Rcheck/00_pkg_src/aif360/R/standard_datasets.R"
+#' Adult Census Income Dataset
+#' @export
+adult_dataset <- function(){
+  return (datasets$AdultDataset())
+}
+
+#' Bank Dataset
+#' @export
+bank_dataset <- function(){
+  return (datasets$BankDataset())
+}
+
+#' Compas Dataset
+#' @export
+compas_dataset <- function(){
+  return (datasets$CompasDataset())
+}
+
+#' German Dataset
+#' @export
+german_dataset <- function(){
+    return (datasets$GermanDataset())
+}
+#line 1 "/Users/saishruthi.tn@ibm.com/Desktop/r-aif/AIF360/aif360/aif360.Rcheck/00_pkg_src/aif360/R/utils.R"
+#' Install aif360 and its dependencies
+#'
+#' @inheritParams reticulate::conda_list
+#'
+#' @param method Installation method. By default, "auto" automatically finds a
+#'   method that will work in the local environment. Change the default to force
+#'   a specific installation method. Note that the "virtualenv" method is not
+#'   available on Windows. Note also
+#'   that since this command runs without privilege the "system" method is
+#'   available only on Windows.
+#'
+#' @param version AIF360 version to install. Specify "default" to install
+#'  the latest release.
+#'
+#' @param envname Name of Python environment to install within
+#'
+#' @param extra_packages Additional Python packages to install.
+#'
+#' @param restart_session Restart R session after installing (note this will
+#'   only occur within RStudio).
+#'
+#' @param conda_python_version the python version installed in the created conda
+#'   environment. Python 3.6 is installed by default.
+#'
+#' @param ... other arguments passed to [reticulate::conda_install()] or
+#'   [reticulate::virtualenv_install()].
+#'
+#'
+#' @export
+install_aif360 <- function(method = c("auto", "virtualenv", "conda"),
+                               conda = "auto",
+                               version = "default",
+                               envname = NULL,
+                               extra_packages = NULL,
+                               restart_session = TRUE,
+                               conda_python_version = "3.7",
+                               ...) {
+
+  method <- match.arg(method)
+
+  reticulate::py_install(
+    packages       = c("aif360", "numba", "BlackBoxAuditing", "tensorflow==1.15", "pandas"),
+    envname        = envname,
+    method         = method,
+    conda          = conda,
+    python_version = conda_python_version,
+    pip            = TRUE,
+    ...
+  )
+
+  cat("\nInstallation complete.\n\n")
+
+  if (restart_session && rstudioapi::hasFun("restartSession"))
+    rstudioapi::restartSession()
+
+  invisible(NULL)
+}
+
+#' Read CSV file
+#' @param inp data file
+#' @noRd
+#' @importFrom utils read.csv
+#'
+input_data <- function(inp){
+  read.csv(inp)
+}
+#' create a list
+#' @param i input for function
+#' @noRd
+#'
+list_fn <- function(i){
+  list(i)
+}
+#' create a list of list
+#' @param i input for function
+#' @noRd
+#'
+list_of_list <- function(i){
+  list(list(i))
+}
+#' Create dictionary
+#' @param values input
+#' @noRd
+#' @importFrom reticulate py_dict
+#'
+dict_fn <- function(values){
+  c(py_dict(c(values[[1]]),c(values[[2]]), convert = FALSE))
+}
+#line 1 "/Users/saishruthi.tn@ibm.com/Desktop/r-aif/AIF360/aif360/aif360.Rcheck/00_pkg_src/aif360/R/zzz.R"
+## quiets concerns of R CMD check re: the .'s that appear in pipelines
+if(getRversion() >= "2.15.1")
+    utils::globalVariables(c("datasets", "metrics", "tf", "pre_algo", "in_algo", "post_algo"))
+Globals <- list()

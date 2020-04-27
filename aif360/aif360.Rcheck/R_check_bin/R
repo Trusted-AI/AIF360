@@ -1,0 +1,2 @@
+echo "'R' should not be used without a path -- see par. 1.6 of the manual"
+exit 1
