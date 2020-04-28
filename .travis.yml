@@ -1,5 +1,7 @@
 language: R
-install:
-  - sudo apt-get install -y python3.7
+addons:
+  apt:
+    packages:
+    - python3.7
 before_install:
   - cd aif360/aif360-r
