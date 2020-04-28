@@ -2,6 +2,7 @@ import numpy as np
 from sklearn.neighbors import NearestNeighbors
 from aif360.algorithms.inprocessing.gerryfair.auditor import Auditor
 from aif360.datasets import BinaryLabelDataset
+from aif360.datasets.multiclass_label_dataset import MulticlassLabelDataset
 from aif360.metrics import DatasetMetric, utils
 from aif360.algorithms.inprocessing.gerryfair.clean import *
 
@@ -26,13 +27,26 @@ class BinaryLabelDatasetMetric(DatasetMetric):
             TypeError: `dataset` must be a
                 :obj:`~aif360.datasets.BinaryLabelDataset` type.
         """
-        if not isinstance(dataset, BinaryLabelDataset):
-            raise TypeError("'dataset' should be a BinaryLabelDataset")
+        if not isinstance(dataset, BinaryLabelDataset) and not isinstance(dataset, MulticlassLabelDataset) :
+            raise TypeError("'dataset' should be a BinaryLabelDataset or a MulticlassLabelDataset")
 
         # sets self.dataset, self.unprivileged_groups, self.privileged_groups
         super(BinaryLabelDatasetMetric, self).__init__(dataset,
             unprivileged_groups=unprivileged_groups,
             privileged_groups=privileged_groups)
+        
+        if isinstance(dataset, MulticlassLabelDataset):
+            fav_label_value = 1.
+            unfav_label_value = 0.
+           
+            self.dataset = self.dataset.copy()
+            # Find all labels which match any of the favorable labels
+            fav_idx = np.logical_or.reduce(np.equal.outer(self.dataset.favorable_label, self.dataset.labels))
+            # Replace labels with corresponding values
+            self.dataset.labels = np.where(fav_idx, fav_label_value, unfav_label_value)
+            
+            self.dataset.favorable_label = float(fav_label_value)
+            self.dataset.unfavorable_label = float(unfav_label_value)
 
     def num_positives(self, privileged=None):
         r"""Compute the number of positives,
