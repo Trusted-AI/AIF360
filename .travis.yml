@@ -3,5 +3,6 @@ addons:
   apt:
     packages:
       - python3-pip
+      - python3-venv
 before_install:
   - cd aif360/aif360-r
