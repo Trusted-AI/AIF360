@@ -1,8 +1,10 @@
 language: R
-addons:
-  apt:
-    packages:
-      - python3-pip
-      - python3-venv
 before_install:
   - cd aif360/aif360-r
+before_script:
+  - sudo apt-get update
+  - sudo apt-get install -y python3
+  - pip install --upgrade --ignore-installed --user travis virtualenv
+  - R CMD INSTALL .
+  - R -e "aif360::install_aif360()"
+
