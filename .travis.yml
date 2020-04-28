@@ -1,7 +1,8 @@
 language: R
-addons:
-  apt:
-    packages:
-    - python3.7
+install:
+  - sudo apt-get install software-properties-common
+  - sudo add-apt-repository ppa:deadsnakes/ppa
+  - sudo apt-get update
+  - sudo apt-get install python3.7
 before_install:
   - cd aif360/aif360-r
