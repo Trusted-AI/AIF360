@@ -1,10 +1,13 @@
 language: R
+cache:
+  - packages
+  - ccache
 before_install:
   - cd aif360/aif360-r
-before_script:
   - sudo apt-get update
   - sudo apt-get install -y python3
   - pip install --upgrade --ignore-installed --user travis virtualenv
-  - R CMD INSTALL .
+  - R -q -e "devtools::install_github('SSaishruthi/AIF360/aif360/aif360-r', ref='raif')"
+install:
   - R -e "aif360::install_aif360()"
 
