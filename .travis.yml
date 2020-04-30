@@ -3,6 +3,8 @@
 language: R
 cache: packages
 warnings_are_errors: false
+before_install:
+  - cd aif360/aif360-r
 install:
   - wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
   - bash miniconda.sh -b -p $HOME/miniconda
@@ -22,5 +24,4 @@ install:
   - pip install tensorflow==1.15.0 -q
   - pip install pandas -q
 before_script:
-  - cd aif360/aif360-r
   - R CMD INSTALL .
