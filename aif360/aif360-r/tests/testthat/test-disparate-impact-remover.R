@@ -13,7 +13,6 @@ test_that("running dataset test", {
 
   expect_equal(dd$favorable_label, 0)
   expect_equal(dd$unfavorable_label, 1)
-  expect_equal(class(dd$labels), "matrix")
 
   bm <- binary_label_dataset_metric(dd, list('sex', 1), list('sex',0))
   expect_equal(bm$disparate_impact(), 1.28, tolerance=0.00296)
