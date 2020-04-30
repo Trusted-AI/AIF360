@@ -4,11 +4,17 @@
 \alias{reject_option_classification}
 \title{Reject option classification}
 \usage{
-reject_option_classification(unprivileged_groups, privileged_groups,
-  low_class_thresh = 0.01, high_class_thresh = 0.99,
-  num_class_thresh = as.integer(100), num_ROC_margin = as.integer(50),
-  metric_name = "Statistical parity difference", metric_ub = 0.05,
-  metric_lb = -0.05)
+reject_option_classification(
+  unprivileged_groups,
+  privileged_groups,
+  low_class_thresh = 0.01,
+  high_class_thresh = 0.99,
+  num_class_thresh = as.integer(100),
+  num_ROC_margin = as.integer(50),
+  metric_name = "Statistical parity difference",
+  metric_ub = 0.05,
+  metric_lb = -0.05
+)
 }
 \arguments{
 \item{unprivileged_groups}{A list epresentation for unprivileged group.}

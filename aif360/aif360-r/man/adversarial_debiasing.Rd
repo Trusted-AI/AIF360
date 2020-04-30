@@ -4,10 +4,18 @@
 \alias{adversarial_debiasing}
 \title{Adversarial Debiasing}
 \usage{
-adversarial_debiasing(unprivileged_groups, privileged_groups,
-  scope_name = "current", sess = tf$compat$v1$Session(), seed = NULL,
-  adversary_loss_weight = 0.1, num_epochs = 50, batch_size = 128,
-  classifier_num_hidden_units = 200, debias = TRUE)
+adversarial_debiasing(
+  unprivileged_groups,
+  privileged_groups,
+  scope_name = "current",
+  sess = tf$compat$v1$Session(),
+  seed = NULL,
+  adversary_loss_weight = 0.1,
+  num_epochs = 50,
+  batch_size = 128,
+  classifier_num_hidden_units = 200,
+  debias = TRUE
+)
 }
 \arguments{
 \item{unprivileged_groups}{a list with two values: the column of the protected class and the value indicating representation for unprivileged group}
