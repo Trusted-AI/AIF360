@@ -24,5 +24,4 @@ install:
   - pip install tensorflow==1.15.0 -q
   - pip install pandas -q
 before_script:
-  - R -q -e "setwd('aif360-r')"
   - R CMD INSTALL .
