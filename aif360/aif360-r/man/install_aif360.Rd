@@ -4,10 +4,16 @@
 \alias{install_aif360}
 \title{Install aif360 and its dependencies}
 \usage{
-install_aif360(method = c("auto", "virtualenv", "conda"),
-  conda = "auto", version = "default", envname = NULL,
-  extra_packages = NULL, restart_session = TRUE,
-  conda_python_version = "3.7", ...)
+install_aif360(
+  method = c("auto", "virtualenv", "conda"),
+  conda = "auto",
+  version = "default",
+  envname = NULL,
+  extra_packages = NULL,
+  restart_session = TRUE,
+  conda_python_version = "3.7",
+  ...
+)
 }
 \arguments{
 \item{method}{Installation method. By default, "auto" automatically finds a

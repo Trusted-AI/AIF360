@@ -11,3 +11,8 @@ Encoding: UTF-8
 
 RnwWeave: Sweave
 LaTeX: pdfLaTeX
+
+BuildType: Package
+PackageUseDevtools: Yes
+PackagePath: aif360/aif360-r
+PackageInstallArgs: --no-multiarch --with-keep.source
