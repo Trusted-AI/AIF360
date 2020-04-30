@@ -1,13 +1,25 @@
-language: R
-cache:
-  - packages
-  - ccache
-before_install:
-  - cd aif360/aif360-r
-  - sudo apt-get update
-  - sudo apt-get install -y python3
-  - pip install --upgrade --ignore-installed --user travis virtualenv
-  - R -q -e "devtools::install_github('SSaishruthi/AIF360/aif360/aif360-r', ref='raif')"
-install:
-  - R -e "aif360::install_aif360()"
+# R for travis: see documentation at https://docs.travis-ci.com/user/languages/r
 
+language: R
+cache: packages
+warnings_are_errors: false
+install:
+  - wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
+  - bash miniconda.sh -b -p $HOME/miniconda
+  - export PATH="$HOME/miniconda/bin:$PATH"
+  - hash -r
+  - conda config --set always_yes yes --set changeps1 no
+  - conda update -q conda
+  - conda info -a
+  - conda create -q -n test-env python=3.7
+  - source activate test-env
+  - R -q -e "install.packages('reticulate')"
+  - R -q -e "install.packages('rstudioapi')"
+  - R -q -e "install.packages('testthat')"
+  - pip install aif360 -q
+  - pip install numba -q
+  - pip install BlackBoxAuditing -q
+  - pip install tensorflow==1.15.0 -q
+  - pip install pandas -q
+before_script:
+  - R CMD INSTALL .
