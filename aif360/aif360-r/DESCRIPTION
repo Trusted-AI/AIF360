@@ -14,6 +14,8 @@ Description: The AI Fairness 360 toolkit is an open-source library to help detec
 License: Apache License (>= 2.0)
 Encoding: UTF-8
 LazyData: true
+URL: https://github.com/IBM/AIF360
+BugReports: https://github.com/IBM/AIF360/issues
 Imports: 
     reticulate,
     rstudioapi
