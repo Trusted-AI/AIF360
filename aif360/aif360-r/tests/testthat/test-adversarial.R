@@ -1,4 +1,4 @@
-context("Comphrehensive Test for Inprocessing Adversarial DebiasingAlgorithm")
+context("Comprehensive Test for Inprocessing Adversarial DebiasingAlgorithm")
 
 
 test_that("running dataset test", {
