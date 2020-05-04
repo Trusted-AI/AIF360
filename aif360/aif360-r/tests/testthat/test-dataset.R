@@ -1,4 +1,4 @@
-context("Comphrehensive Test for Binary Dataset Creation")
+context("Comprehensive Test for Binary Dataset Creation")
 
 
 test_that("running dataset test", {

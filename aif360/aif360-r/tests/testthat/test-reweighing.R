@@ -1,4 +1,4 @@
-context("Comphrehensive Test for Preprocessing Reweighing Algorithm")
+context("Comprehensive Test for Preprocessing Reweighing Algorithm")
 
 
 test_that("running dataset test", {
