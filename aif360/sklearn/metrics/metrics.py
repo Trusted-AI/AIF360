@@ -120,7 +120,7 @@ def ratio(func, y, *args, prot_attr=None, priv_group=1, sample_weight=None,
 
 
 # =========================== SCORER FACTORY =================================
-def make_scorer(score_func, ratio, **kwargs):
+def make_scorer(score_func, is_ratio=False, **kwargs):
     """Make a scorer from a 'difference' or 'ratio' metric (e.g.
     :func:`statistical_parity_difference`).
 

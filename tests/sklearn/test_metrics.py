@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
+from numpy.testing import assert_almost_equal
 from sklearn.linear_model import LogisticRegression
-from sklearn.utils.testing import assert_almost_equal
 
 from aif360.datasets import AdultDataset
 from aif360.sklearn.datasets import fetch_adult
@@ -114,7 +114,14 @@ def test_between_group_generalized_entropy_index():
     ],
 )
 def test_make_scorer(func, is_ratio):
-    actual = func(y, y_pred, prot_attr="sex")
-    scorer = make_scorer(func, ratio=is_ratio, prot_attr="sex")
+    actual = func(y, y_pred, prot_attr="sex", priv_group=1)
+    actual_fliped = func(y, y_pred, prot_attr="sex", priv_group=0)
+    scorer = make_scorer(func, is_ratio=is_ratio, prot_attr="sex", priv_group=1)
     expected = scorer(lr, X, y)
-    assert_almost_equal(actual, expected, 3)
+    if is_ratio:
+        ret = min(actual, actual_fliped)
+        assert_almost_equal(ret, expected, 3)
+    else:
+        # The lower the better
+        assert_almost_equal(-abs(actual), expected, 3)
+        assert_almost_equal(-abs(actual_fliped), expected, 3)

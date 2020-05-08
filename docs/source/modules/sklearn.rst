@@ -76,8 +76,7 @@ Scorers
    :toctree: generated/
    :template: base.rst
 
-   metrics.make_difference_scorer
-   metrics.make_ratio_scorer
+   metrics.make_scorer
 
 Generic metrics
 ---------------
