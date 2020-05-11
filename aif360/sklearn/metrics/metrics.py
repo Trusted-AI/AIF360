@@ -1,7 +1,7 @@
 import warnings
 
 import numpy as np
-from sklearn.metrics import make_scorer, recall_score
+from sklearn.metrics import make_scorer as _make_scorer, recall_score
 from sklearn.metrics import multilabel_confusion_matrix
 from sklearn.neighbors import NearestNeighbors
 from sklearn.utils import check_X_y
@@ -13,8 +13,8 @@ from aif360.sklearn.utils import check_groups
 __all__ = [
     # meta-metrics
     'difference', 'ratio',
-    # scorer factories
-    'make_difference_scorer', 'make_ratio_scorer',
+    # scorer factory
+    'make_scorer', 
     # helpers
     'specificity_score', 'base_rate', 'selection_rate', 'generalized_fpr',
     'generalized_fnr',
@@ -119,42 +119,34 @@ def ratio(func, y, *args, prot_attr=None, priv_group=1, sample_weight=None,
     return numerator / denominator
 
 
-# =========================== SCORER FACTORIES =================================
-def make_difference_scorer(diff_func):
-    """Make a scorer from a 'difference' metric (e.g.
+# =========================== SCORER FACTORY =================================
+def make_scorer(score_func, is_ratio=False, **kwargs):
+    """Make a scorer from a 'difference' or 'ratio' metric (e.g.
     :func:`statistical_parity_difference`).
 
-    Since the optimal value of a difference metric is 0, this function takes the
-    absolute value and sets greater_is_better to ``False``.
-
-    See also:
-        :func:`~sklearn.metrics.make_scorer`
-
     Args:
-        diff_func (callable): A difference metric with signature
-            ``diff_func(y, y_pred, **kwargs)``.
+        score_func (callable): A ratio/difference metric with signature
+            ``score_func(y, y_pred, **kwargs)``.
+        ratio (boolean, optional): Indicates if the metric is ratio or
+        difference based.
     """
-    return make_scorer(lambda y, y_pred, **kw: abs(diff_func(y, y_pred, **kw)),
-                       greater_is_better=False)
+    if ratio:
 
-def make_ratio_scorer(ratio_func):
-    """Make a scorer from a 'ratio' metric (e.g. :func:`disparate_impact_ratio`)
+        def score(y, y_pred, **kwargs):
+            ratio = score_func(y, y_pred, **kwargs)
+            eps = np.finfo(float).eps
+            ratio_inverse = 1 / ratio if ratio > eps else eps
+            return min(ratio, ratio_inverse)
 
-    Since the optimal value of a ratio metric is 1, this function takes the
-    minimum of the ratio and its inverse.
+        scorer = _make_scorer(score, **kwargs)
+    else:
 
-    See also:
-        :func:`~sklearn.metrics.make_scorer`
+        def score(y, y_pred, **kwargs):
+            diff = score_func(y, y_pred, **kwargs)
+            return abs(diff)
 
-    Args:
-        ratio_func (callable): A ratio metric with signature
-            `ratio_func(y, y_pred, **kwargs)``.
-    """
-    def score_fn(y, y_pred, **kwargs):
-        ratio = ratio_func(y, y_pred, **kwargs)
-        return min(ratio, 1/ratio)
-    return make_scorer(score_fn)
-
+        scorer = _make_scorer(score, greater_is_better=False, **kwargs)
+    return scorer
 
 # ================================ HELPERS =====================================
 def specificity_score(y_true, y_pred, pos_label=1, sample_weight=None):
