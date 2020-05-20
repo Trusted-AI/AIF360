@@ -30,42 +30,41 @@ from aif360.algorithms import Transformer
 
 
 class GerryFairClassifier(Transformer):
-    """Model is an algorithm for learning classifiers that are fair with respect to rich subgroups.
+    """Model is an algorithm for learning classifiers that are fair with respect
+    to rich subgroups.
 
-       Rich subgroups are defined by [linear] functions over the sensitive attributes, and fairness notions are statistical: false
-       positive, false negative, and statistical parity rates. This implementation uses a max of two regressions
-       as a cost-sensitive classification oracle, and supports linear regression, support vector machines, decision trees,
-       and kernel regression. For details see:
+    Rich subgroups are defined by (linear) functions over the sensitive
+    attributes, and fairness notions are statistical: false positive, false
+    negative, and statistical parity rates. This implementation uses a max of
+    two regressions as a cost-sensitive classification oracle, and supports
+    linear regression, support vector machines, decision trees, and kernel
+    regression. For details see:
 
-       References:
-        .. [1] "Preventing Fairness Gerrymandering: Auditing and Learning for Subgroup Fairness." Michale Kearns,
-        Seth Neel, Aaron Roth, Steven Wu. ICML 18'.
-        .. [2] "An Empirical Study of Rich Subgroup Fairness for Machine Learning". Michael Kearns,
-        Seth Neel, Aaron Roth, Steven Wu. FAT '19.
+    References:
+        .. [1] "Preventing Fairness Gerrymandering: Auditing and Learning for
+           Subgroup Fairness." Michale Kearns, Seth Neel, Aaron Roth, Steven Wu.
+           ICML '18.
+        .. [2] "An Empirical Study of Rich Subgroup Fairness for Machine
+           Learning". Michael Kearns, Seth Neel, Aaron Roth, Steven Wu. FAT '19.
     """
-    def __init__(self,
-                 C=10,
-                 printflag=False,
-                 heatmapflag=False,
-                 heatmap_iter=10,
-                 heatmap_path='.',
-                 max_iters=10,
-                 gamma=0.01,
-                 fairness_def='FP',
-                 predictor=linear_model.LinearRegression()):
+    def __init__(self, C=10, printflag=False, heatmapflag=False,
+                 heatmap_iter=10, heatmap_path='.', max_iters=10, gamma=0.01,
+                 fairness_def='FP', predictor=linear_model.LinearRegression()):
         """Initialize Model Object and set hyperparameters.
+
         Args:
-            :param C: Maximum L1 Norm for the Dual Variables (hyperparameter)
-            :param printflag: Print Output Flag
-            :param heatmapflag: Save Heatmaps every heatmap_iter Flag
-            :param heatmap_iter: Save Heatmaps every heatmap_iter
-            :param heatmap_path: Save Heatmaps path
-            :param max_iters: Time Horizon for the fictitious play dynamic.
-            :param gamma: Fairness Approximation Paramater
-            :param fairness_def: Fairness notion, FP, FN, SP.
-            :param errors: see fit()
-            :param fairness_violations: see fit()
-            :param predictor: Hypothesis class for the Learner. Supports LR, SVM, KR, Trees.
+            C: Maximum L1 Norm for the Dual Variables (hyperparameter)
+            printflag: Print Output Flag
+            heatmapflag: Save Heatmaps every heatmap_iter Flag
+            heatmap_iter: Save Heatmaps every heatmap_iter
+            heatmap_path: Save Heatmaps path
+            max_iters: Time Horizon for the fictitious play dynamic.
+            gamma: Fairness Approximation Paramater
+            fairness_def: Fairness notion, FP, FN, SP.
+            errors: see fit()
+            fairness_violations: see fit()
+            predictor: Hypothesis class for the Learner. Supports LR, SVM, KR,
+                Trees.
         """
 
         super(GerryFairClassifier, self).__init__()
@@ -90,11 +89,12 @@ class GerryFairClassifier(Transformer):
         """Run Fictitious play to compute the approximately fair classifier.
 
         Args:
-            dataset: dataset object with its own class definition in datasets folder inherits
-                    from class StandardDataset.
-            early_termination: Terminate Early if Auditor can't find fairness violation of more than gamma.
+            dataset: dataset object with its own class definition in datasets
+                folder inherits from class StandardDataset.
+            early_termination: Terminate Early if Auditor can't find fairness
+                violation of more than gamma.
         Returns:
-            A list (errors, fairness violations)
+            Self
         """
 
         # defining variables and data structures for algorithm
@@ -151,15 +151,17 @@ class GerryFairClassifier(Transformer):
         return self
 
     def predict(self, dataset, threshold=.5):
-        """Return dataset object where labels are the predictions returned by the fitted model.
+        """Return dataset object where labels are the predictions returned by
+        the fitted model.
 
         Args:
-            :param dataset: dataset object with its own class definition in datasets folder inherits
-                    from class StandardDataset.
-            :param threshold: The positive prediction cutoff for the soft-classifier.
+            dataset: dataset object with its own class definition in datasets
+                folder inherits from class StandardDataset.
+            threshold: The positive prediction cutoff for the soft-classifier.
 
         Returns:
-            dataset_new: modified dataset object where the labels attribute are the predictions returned by the self model
+            dataset_new: modified dataset object where the labels attribute are
+            the predictions returned by the self model
         """
 
         # Generates predictions.
@@ -184,11 +186,11 @@ class GerryFairClassifier(Transformer):
 
     def print_outputs(self, iteration, error, group):
         """Helper function to print outputs at each iteration of fit.
+
         Args:
-            :param iteration: current iter
-            :param error: most recent error
-            :param group: most recent group found by the auditor
-            :return: n/a
+            iteration: current iter
+            error: most recent error
+            group: most recent group found by the auditor
         """
 
         if self.printflag:
@@ -201,12 +203,15 @@ class GerryFairClassifier(Transformer):
         """Helper Function to save the heatmap.
 
         Args:
-            :param iteration: current iteration
-            :param dataset: dataset object with its own class definition in datasets folder inherits
-                    from class StandardDataset.
-            :param predictions: predictions of the model self on dataset.
-            :param vmin: see documentation of heatmap.py heat_map function
-            :param vmax: see documentation of heatmap.py heat_map function
+            iteration: current iteration
+            dataset: dataset object with its own class definition in datasets
+                folder inherits from class StandardDataset.
+            predictions: predictions of the model self on dataset.
+            vmin: see documentation of heatmap.py heat_map function
+            vmax: see documentation of heatmap.py heat_map function
+
+        Returns:
+            (vmin, vmax)
         """
 
         X, X_prime, y = clean.extract_df_from_ds(dataset)
@@ -234,12 +239,12 @@ class GerryFairClassifier(Transformer):
         """Helper Function to generate the heatmap at the current time.
 
         Args:
-            :param iteration:current iteration
-            :param dataset: dataset object with its own class definition in datasets folder inherits
-                        from class StandardDataset.
-            :param predictions: predictions of the model self on dataset.
-            :param vmin: see documentation of heatmap.py heat_map function
-            :param vmax: see documentation of heatmap.py heat_map function
+            iteration:current iteration
+            dataset: dataset object with its own class definition in datasets
+                folder inherits from class StandardDataset.
+            predictions: predictions of the model self on dataset.
+            vmin: see documentation of heatmap.py heat_map function
+            vmax: see documentation of heatmap.py heat_map function
         """
 
         X, X_prime, y = clean.extract_df_from_ds(dataset)
@@ -249,16 +254,17 @@ class GerryFairClassifier(Transformer):
                                   self.heatmap_path, vmin, vmax)
 
     def pareto(self, dataset, gamma_list):
-        """Assumes Model has FP specified for metric. Trains for each value of gamma,
-        returns error, FP (via training), and FN (via auditing) values.
+        """Assumes Model has FP specified for metric. Trains for each value of
+        gamma, returns error, FP (via training), and FN (via auditing) values.
 
         Args:
-            :param dataset: dataset object with its own class definition in datasets folder inherits
-                            from class StandardDataset.
-            :param gamma_list: the list of gamma values to generate the pareto curve
+            dataset: dataset object with its own class definition in datasets
+                folder inherits from class StandardDataset.
+            gamma_list: the list of gamma values to generate the pareto curve
 
         Returns:
-            :return: list of errors, list of fp violations of those models, list of fn violations of those models
+            list of errors, list of fp violations of those models, list of fn
+            violations of those models
         """
 
         C = self.C

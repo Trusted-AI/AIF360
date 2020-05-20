@@ -17,10 +17,6 @@ low dimensions, rather than relying on the Auditor. See [KRNW18] for details.
 """
 
 import matplotlib
-try:
-    matplotlib.use('TkAgg')
-except:
-    print("Matplotlib Error, comment out matplotlib.use('TkAgg')")
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib import cm
