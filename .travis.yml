@@ -1,30 +1,52 @@
-language: python
-
-python: "3.6"
+# R for travis: see documentation at https://docs.travis-ci.com/user/languages/r
 
 env:
   global:
     - UCI_HTTPS_URL="https://archive.ics.uci.edu/ml/machine-learning-databases"
 
-branches:
-  only:
-    - master
-
-install:
-  - pip install -r requirements.txt
-  - pip install flake8
-  - if ! wget ${UCI_HTTPS_URL}/adult/adult.data -P aif360/data/raw/adult/ ; then wget ${UCI_HTTPS_URL}/adult/adult.data --no-check-certificate -P aif360/data/raw/adult/ ; fi
-  - if ! wget ${UCI_HTTPS_URL}/adult/adult.test -P aif360/data/raw/adult/ ; then wget ${UCI_HTTPS_URL}/adult/adult.test --no-check-certificate -P aif360/data/raw/adult/; fi
-  - if ! wget ${UCI_HTTPS_URL}/adult/adult.names -P aif360/data/raw/adult/ ; then wget ${UCI_HTTPS_URL}/adult/adult.names --no-check-certificate -P aif360/data/raw/adult/; fi
-  - if ! wget ${UCI_HTTPS_URL}/statlog/german/german.data -P aif360/data/raw/german/ ; then wget ${UCI_HTTPS_URL}/statlog/german/german.data --no-check-certificate -P aif360/data/raw/german/; fi
-  - if ! wget ${UCI_HTTPS_URL}/statlog/german/german.doc -P aif360/data/raw/german/ ; then wget ${UCI_HTTPS_URL}/statlog/german/german.doc --no-check-certificate -P aif360/data/raw/german/; fi
-  - wget https://raw.githubusercontent.com/propublica/compas-analysis/master/compas-scores-two-years.csv -P aif360/data/raw/compas/
-
-before_script:
-  # exit-zero treats all errors as warnings.  The GitHub editor is 127 chars wide
-  - flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-
-script:
-  # stop the build if there are Python syntax errors or undefined names
-  - flake8 . --count --select=E901,E999,F821,F822,F823 --show-source --statistics
-  - travis_wait pytest tests
+matrix:
+  include:
+    - language: python
+      python: "3.6"
+      install:
+          - pip install -r requirements.txt
+          - pip install flake8
+          - if ! wget ${UCI_HTTPS_URL}/adult/adult.data -P aif360/data/raw/adult/ ; then wget ${UCI_HTTPS_URL}/adult/adult.data --no-check-certificate -P aif360/data/raw/adult/ ; fi
+          - if ! wget ${UCI_HTTPS_URL}/adult/adult.test -P aif360/data/raw/adult/ ; then wget ${UCI_HTTPS_URL}/adult/adult.test --no-check-certificate -P aif360/data/raw/adult/; fi
+          - if ! wget ${UCI_HTTPS_URL}/adult/adult.names -P aif360/data/raw/adult/ ; then wget ${UCI_HTTPS_URL}/adult/adult.names --no-check-certificate -P aif360/data/raw/adult/; fi
+          - if ! wget ${UCI_HTTPS_URL}/statlog/german/german.data -P aif360/data/raw/german/ ; then wget ${UCI_HTTPS_URL}/statlog/german/german.data --no-check-certificate -P aif360/data/raw/german/; fi
+          - if ! wget ${UCI_HTTPS_URL}/statlog/german/german.doc -P aif360/data/raw/german/ ; then wget ${UCI_HTTPS_URL}/statlog/german/german.doc --no-check-certificate -P aif360/data/raw/german/; fi
+          - wget https://raw.githubusercontent.com/propublica/compas-analysis/master/compas-scores-two-years.csv -P aif360/data/raw/compas/
+      before_script:
+          # exit-zero treats all errors as warnings.  The GitHub editor is 127 chars wide
+          - flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+      script:
+          # stop the build if there are Python syntax errors or undefined names
+          - flake8 . --count --select=E901,E999,F821,F822,F823 --show-source --statistics
+          - travis_wait pytest tests
+        
+    - language: R
+      cache: packages
+      warnings_are_errors: false
+      before_install:
+          - cd aif360/aif360-r
+      install:
+          - wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
+          - bash miniconda.sh -b -p $HOME/miniconda
+          - export PATH="$HOME/miniconda/bin:$PATH"
+          - hash -r
+          - conda config --set always_yes yes --set changeps1 no
+          - conda update -q conda
+          - conda info -a
+          - conda create -q -n test-env python=3.7
+          - source activate test-env
+          - R -q -e "install.packages('reticulate')"
+          - R -q -e "install.packages('rstudioapi')"
+          - R -q -e "install.packages('testthat')"
+          - pip install aif360 -q
+          - pip install numba -q
+          - pip install BlackBoxAuditing -q
+          - pip install tensorflow==1.15.0 -q
+          - pip install pandas -q
+      before_script:
+          - R CMD INSTALL .

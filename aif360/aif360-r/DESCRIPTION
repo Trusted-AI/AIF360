@@ -1,0 +1,24 @@
+Package: aif360
+Type: Package
+Title: Help Detect and Mitigate Bias in Machine Learning Models
+Version: 0.1.0
+Authors@R: c(
+    person("Gabriela", "de Queiroz", email = "gdq@ibm.com", role = "aut"),
+    person("Stacey", "Ronaghan", email = "ronaghan@us.ibm.com", role = "aut"),
+    person("Saishruthi", "Swaminathan", email = "saishruthi.tn@ibm.com", 
+    role = c("aut", "cre")))
+Description: The AI Fairness 360 toolkit is an open-source library to help detect 
+    and mitigate bias in machine learning models. The AI Fairness 360 R package includes 
+    a comprehensive set of metrics for datasets and models to test for biases, 
+    explanations for these metrics, and algorithms to mitigate bias in datasets and models.
+License: Apache License (>= 2.0)
+Encoding: UTF-8
+LazyData: true
+URL: https://github.com/IBM/AIF360
+BugReports: https://github.com/IBM/AIF360/issues
+Imports: 
+    reticulate,
+    rstudioapi
+RoxygenNote: 7.1.0
+Suggests: 
+    testthat
