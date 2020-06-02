@@ -127,10 +127,10 @@ def make_scorer(score_func, is_ratio=False, **kwargs):
     Args:
         score_func (callable): A ratio/difference metric with signature
             ``score_func(y, y_pred, **kwargs)``.
-        ratio (boolean, optional): Indicates if the metric is ratio or
+        is_ratio (boolean, optional): Indicates if the metric is ratio or
         difference based.
     """
-    if ratio:
+    if is_ratio:
 
         def score(y, y_pred, **kwargs):
             ratio = score_func(y, y_pred, **kwargs)
