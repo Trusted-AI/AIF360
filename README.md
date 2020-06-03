@@ -1,4 +1,4 @@
-# AI Fairness 360 (AIF360 v0.2.2)
+# AI Fairness 360 (AIF360)
 
 [![Build Status](https://travis-ci.org/IBM/AIF360.svg?branch=master)](https://travis-ci.org/IBM/AIF360)
 [![Documentation](https://readthedocs.org/projects/aif360/badge/?version=latest)](http://aif360.readthedocs.io/en/latest/?badge=latest)
@@ -29,7 +29,7 @@ in development. We encourage the contribution of your metrics, explainers, and
 debiasing algorithms.
 
 Get in touch with us on [Slack](https://aif360.slack.com) (invitation
-[here](https://join.slack.com/t/aif360/shared_invite/enQtNDI5Nzg2NTk0MTMyLTU4N2UwODVmMTYxZWMwZmEzZmZkODdjMTk5NWUwZDNhNDhlMzNkZDNhOTYwZDNlODc1MTdjYzY5OTU2OWQ1ZmY))!
+[here](https://join.slack.com/t/aif360/shared_invite/zt-5hfvuafo-X0~g6tgJQ~7tIAT~S294TQ))!
 
 
 ## Supported bias mitigation algorithms
@@ -44,28 +44,27 @@ Get in touch with us on [Slack](https://aif360.slack.com) (invitation
 * Learning Fair Representations ([Zemel et al., 2013](http://proceedings.mlr.press/v28/zemel13.html))
 * Adversarial Debiasing ([Zhang et al., 2018](https://arxiv.org/abs/1801.07593))
 * Meta-Algorithm for Fair Classification ([Celis et al.. 2018](https://arxiv.org/abs/1806.06055))
+* Rich Subgroup Fairness ([Kearns, Neel, Roth, Wu, 2018](https://arxiv.org/abs/1711.05144))
 
 ## Supported fairness metrics
 
-* Comprehensive set of group fairness metrics derived from selection rates and error rates
+* Comprehensive set of group fairness metrics derived from selection rates and error rates including rich subgroup fairness
 * Comprehensive set of sample distortion metrics
 * Generalized Entropy Index ([Speicher et al., 2018](https://doi.org/10.1145/3219819.3220046))
+* Differential Fairness and Bias Amplification ([Foulds et al., 2018](https://arxiv.org/pdf/1807.08362))
 
 
 ## Setup
 
-Supported Configurations:
+AIF360 is available for both Python and R. For R setup, please refer to instructions [here](aif360/aif360-r/README.md).
+
+Supported Python Configurations:
 
 | OS      | Python version |
 | ------- | -------------- |
 | macOS   | 3.5, 3.6, 3.7  |
 | Ubuntu  | 3.5, 3.6, 3.7  |
 | Windows | 3.5, 3.6, 3.7  |
-
-NOTE: Python 2.7 support has been **deprecated** in this version. This message
-will be removed in the next release.
-
-See the [Troubleshooting](#troubleshooting) section if you have issues.
 
 ### (Optional) Create a virtual environment
 
@@ -77,16 +76,15 @@ installing AIF360, try this first.
 #### Conda
 
 Conda is recommended for all configurations though Virtualenv is generally
-interchangeable for our purposes ([CVXPY](#cvxpy) may require conda in some
-cases). Miniconda is sufficient (see [the difference between Anaconda and
+interchangeable for our purposes. [Miniconda](https://conda.io/miniconda.html)
+is sufficient (see [the difference between Anaconda and
 Miniconda](https://conda.io/docs/user-guide/install/download.html#anaconda-or-miniconda)
-if you are curious) and can be installed from
-[here](https://conda.io/miniconda.html) if you do not already have it.
+if you are curious) if you do not already have conda installed.
 
-Then, to create a new Python 3.5 environment, run:
+Then, to create a new Python 3.6 environment, run:
 
 ```bash
-conda create --name aif360 python=3.5
+conda create --name aif360 python=3.6
 conda activate aif360
 ```
 
@@ -101,7 +99,7 @@ The prompt will return to `$ `.
 Note: Older versions of conda may use `source activate aif360` and `source
 deactivate` (`activate aif360` and `deactivate` on Windows).
 
-### Install with minimal dependencies
+### Install with `pip`
 
 To install the latest stable version from PyPI, run:
 
@@ -109,10 +107,26 @@ To install the latest stable version from PyPI, run:
 pip install aif360
 ```
 
-Some algorithms require additional dependencies not included in the minimal
-installation. To use these, we recommend a full installation.
+Note: Some algorithms require additional dependencies (although the metrics will
+all work out-of-the-box). To install with certain algorithm dependencies
+included, run, e.g.:
 
-### Full installation
+```bash
+pip install 'aif360[LFR,OptimPreproc]'
+```
+
+or, for complete functionality, run:
+
+```bash
+pip install 'aif360[all]'
+```
+
+The options for available extras are: `OptimPreproc, LFR, AdversarialDebiasing,
+DisparateImpactRemover, LIME, ART, notebooks, tests, docs, all`
+
+If you encounter any errors, try the [Troubleshooting](#troubleshooting) steps.
+
+### Manual installation
 
 Clone the latest version of this repository:
 
@@ -127,30 +141,18 @@ their respective folders as described in
 Then, navigate to the root directory of the project and run:
 
 ```bash
-pip install -e .
+pip install --editable '.[all]'
 ```
 
 #### Run the Examples
 
-To run the example notebooks, complete the full installation steps above. Then,
-install the additional requirements as follows:
+To run the example notebooks, complete the manual installation steps above.
+Then, if you did not use the `[all]` option, install the additional requirements
+as follows:
 
 ```bash
-pip install -r requirements.txt
+pip install -e '.[notebooks]'
 ```
-
-Then, follow the [Getting Started](https://pytorch.org) instructions from
-PyTorch to download and install the latest version for your machine. With conda,
-this is simple:
-
-```bash
-# LINUX/WINDOWS
-conda install pytorch-cpu torchvision-cpu -c pytorch
-# MACOS
-conda install pytorch torchvision -c pytorch
-```
-
-For CUDA support or alternative installation, see the instructions.
 
 Finally, if you did not already, download the datasets as described in
 [aif360/data/README.md](aif360/data/README.md).
@@ -162,17 +164,15 @@ issue here and try the solutions.
 
 #### TensorFlow
 
-In some cases, the URL is required for installation:
+See the [Install TensorFlow with pip](https://www.tensorflow.org/install/pip?lang=python3#older-versions-of-tensorflow)
+page for detailed instructions.
 
-```bat
-# WINDOWS
-pip install --upgrade https://storage.googleapis.com/tensorflow/windows/cpu/tensorflow-1.14.0-cp36-cp36m-win_amd64.whl
+Note: we require `'tensorflow >= 1.13.1, < 2'`.
 
-# MACOS
-pip install --upgrade https://storage.googleapis.com/tensorflow/mac/cpu/tensorflow-1.14.0-py3-none-any.whl
+Once tensorflow is installed, try re-running:
 
-# LINUX
-pip install --upgrade https://storage.googleapis.com/tensorflow/linux/cpu/tensorflow-1.14.0-cp36-cp36m-linux_x86_64.whl
+```bash
+pip install 'aif360[AdversarialDebiasing]'
 ```
 
 TensorFlow is only required for use with the
@@ -187,23 +187,16 @@ never have previously:
 xcode-select --install
 ```
 
-And then, re-run:
+On Windows, you may need to download the [Microsoft C++ Build Tools for Visual
+Studio 2019](https://visualstudio.microsoft.com/thank-you-downloading-visual-studio/?sku=BuildTools&rel=16).
+See the [CVXPY Install](https://www.cvxpy.org/install/index.html#mac-os-x-windows-and-linux)
+page for up-to-date instructions.
 
-```sh
-pip install -r requirements.txt
+Then, try reinstalling via:
+
+```bash
+pip install 'aif360[OptimPreproc]'
 ```
-
-On Windows, you may need to download the appropriate [Visual Studio C++
-compiler for Python](https://wiki.python.org/moin/WindowsCompilers#Microsoft_Visual_C.2B-.2B-_14.0_standalone:_Build_Tools_for_Visual_Studio_2017_.28x86.2C_x64.2C_ARM.2C_ARM64.29). Then,
-re-run:
-
-```bat
-pip install -r requirements.txt
-```
-
-See the [CVXPY Installation
-Instructions](https://www.cvxpy.org/install/index.html#windows)
-for an alternate installation procedure using conda.
 
 CVXPY is only required for use with the
 `aif360.algorithms.preprocessing.OptimPreproc` class.
@@ -241,3 +234,6 @@ paper.
 
 * Introductory [video](https://www.youtube.com/watch?v=X1NsrcaRQTE) to AI
   Fairness 360 by Kush Varshney, September 20, 2018 (32 mins)
+
+## Contributing
+The development fork for Rich Subgroup Fairness (`inprocessing/gerryfair_classifier.py`) is [here](https://github.com/sethneel/aif360). Contributions are welcome and a list of potential contributions from the authors can be found [here](https://trello.com/b/0OwPcbVr/gerryfair-development).

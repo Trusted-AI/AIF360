@@ -13,3 +13,7 @@ Samples:
 
 <img src="https://www.kubeflow.org/images/logo.svg" width="100">
 
+[Nifi](nifi/)
+
+<img src="https://nifi.apache.org/assets/images/apache-nifi-logo.svg" width="100">
+

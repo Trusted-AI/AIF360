@@ -35,6 +35,7 @@ Algorithms
 
    algorithms.inprocessing.AdversarialDebiasing
    algorithms.inprocessing.ARTClassifier
+   algorithms.inprocessing.GerryFairClassifier
    algorithms.inprocessing.MetaFairClassifier
    algorithms.inprocessing.PrejudiceRemover
 

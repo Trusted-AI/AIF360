@@ -1,0 +1,12 @@
+^.*\.Rproj$         # Automatically added by RStudio,
+^\.Rproj\.user$     # used for temporary files.
+^README\.Rmd$       # An Rmarkdown file used to generate README.md
+^NEWS\.md$          # A news file written in Markdown
+^\.travis\.yml$     # Used for continuous integration testing with travis
+^LICENSE\.md$
+^raif360\.Rproj$
+^README\.Rmd$
+^CONDUCT\.md$
+^CONTRIBUTING\.md$
+^CODEOFCONDUCT\.md$
+^cran-comments\.md$
