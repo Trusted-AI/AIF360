@@ -14,12 +14,10 @@ class LFR(Transformer):
     """Learning fair representations is a pre-processing technique that finds a
     latent representation which encodes the data well but obfuscates information
     about protected attributes [2]_.
-
     References:
         .. [2] R. Zemel, Y. Wu, K. Swersky, T. Pitassi, and C. Dwork,  "Learning
            Fair Representations." International Conference on Machine Learning,
            2013.
-
     Based on code from https://github.com/zjelveh/learning-fair-representations
     """
 
@@ -71,9 +69,8 @@ class LFR(Transformer):
 
         self.learned_model = None
 
-    def fit(self, dataset, **kwargs):
+    def fit(self, dataset, maxiter=5000, maxfun=5000, **kwargs):
         """Compute the transformation parameters that leads to fair representations.
-
         Args:
             dataset (BinaryLabelDataset): Dataset containing true labels.
         Returns:
@@ -106,13 +103,12 @@ class LFR(Transformer):
                                   args=(training_sensitive, training_nonsensitive,
                                         ytrain_sensitive[:, 0], ytrain_nonsensitive[:, 0], self.k, self.Ax,
                                         self.Ay, self.Az, 0, self.print_interval),
-                                  bounds=bnd, approx_grad=True, maxfun=5000,
-                                  maxiter=5000, disp=self.verbose)[0]
+                                  bounds=bnd, approx_grad=True, maxfun=maxfun,
+                                  maxiter=maxiter, disp=self.verbose)[0]
         return self
 
     def transform(self, dataset, threshold=0.5, **kwargs):
         """Transform the dataset using learned model parameters.
-
         Args:
             dataset (BinaryLabelDataset): Dataset containing labels that needs to be transformed.
             threshold(float, optional): threshold parameter used for binary label prediction.
@@ -170,14 +166,15 @@ class LFR(Transformer):
             [-1, 1])
         transformed_labels[nonsensitive_idx] = np.reshape(y_hat_nonsensitive,
             [-1, 1])
-        transformed_labels = (np.array(transformed_labels) > threshold).astype(np.float64)
+        transformed_bin_labels = (np.array(transformed_labels) > threshold).astype(np.float64)
 
         # Mutated, fairer dataset with new labels
         dataset_new = dataset.copy(deepcopy=True)
         dataset_new.features = transformed_features
-        dataset_new.labels = transformed_labels
+        dataset_new.labels = transformed_bin_labels
+        dataset_new.scores = np.array(transformed_labels)
 
-        return dataset_new
+        return dataset_new    
 
     def fit_transform(self, dataset, seed=None):
         """fit and transform methods sequentially"""
