@@ -1,5 +1,9 @@
 # Based on code from https://github.com/zjelveh/learning-fair-representations
-from numba.decorators import jit
+import numba
+if (numba.__version__ < '0.49.0'):
+    from numba.decorators import jit
+else:
+    from numba.core.decorators import jit
 import numpy as np
 
 @jit
