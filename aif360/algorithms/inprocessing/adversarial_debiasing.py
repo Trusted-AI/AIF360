@@ -3,7 +3,9 @@ import numpy as np
 try:
     import tensorflow as tf
 except ImportError as error:
-    print("Import error: %s" % (error))
+    from logging import warning
+    warning("{}: AdversarialDebiasing will be unavailable. To install, run:\n"
+            "pip install 'aif360[AdversarialDebiasing]'".format(error))
 
 from aif360.algorithms import Transformer
 
@@ -226,6 +228,7 @@ class AdversarialDebiasing(Transformer):
         Returns:
             dataset (BinaryLabelDataset): Transformed dataset.
         """
+
         if self.seed is not None:
             np.random.seed(self.seed)
 
@@ -254,7 +257,9 @@ class AdversarialDebiasing(Transformer):
 
         # Mutated, fairer dataset with new labels
         dataset_new = dataset.copy(deepcopy = True)
+        dataset_new.scores = np.array(pred_labels, dtype=np.float64).reshape(-1, 1)
         dataset_new.labels = (np.array(pred_labels)>0.5).astype(np.float64).reshape(-1,1)
+
 
         # Map the dataset labels to back to their original values.
         temp_labels = dataset_new.labels.copy()

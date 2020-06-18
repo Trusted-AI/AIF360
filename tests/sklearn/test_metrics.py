@@ -1,4 +1,6 @@
 import numpy as np
+import pytest
+from numpy.testing import assert_almost_equal
 from sklearn.linear_model import LogisticRegression
 
 from aif360.datasets import AdultDataset
@@ -10,7 +12,7 @@ from aif360.sklearn.metrics import (
         disparate_impact_ratio, statistical_parity_difference,
         equal_opportunity_difference, average_odds_difference,
         average_odds_error, generalized_entropy_error,
-        between_group_generalized_entropy_error)
+        between_group_generalized_entropy_error, make_scorer)
 
 
 X, y, sample_weight = fetch_adult(numeric_only=True)
@@ -101,3 +103,25 @@ def test_between_group_generalized_entropy_index():
     """Tests that the old and new between_group_GEI matches exactly."""
     bggei = between_group_generalized_entropy_error(y, y_pred, prot_attr='sex')
     assert bggei == cm.between_group_generalized_entropy_index()
+
+@pytest.mark.parametrize(
+    "func, is_ratio",
+    [
+        (statistical_parity_difference, False),
+        (disparate_impact_ratio, True),
+        (equal_opportunity_difference, False),
+        (average_odds_difference, False),
+    ],
+)
+def test_make_scorer(func, is_ratio):
+    actual = func(y, y_pred, prot_attr="sex", priv_group=1)
+    actual_fliped = func(y, y_pred, prot_attr="sex", priv_group=0)
+    scorer = make_scorer(func, is_ratio=is_ratio, prot_attr="sex", priv_group=1)
+    expected = scorer(lr, X, y)
+    if is_ratio:
+        ret = min(actual, actual_fliped)
+        assert_almost_equal(ret, expected, 3)
+    else:
+        # The lower the better
+        assert_almost_equal(-abs(actual), expected, 3)
+        assert_almost_equal(-abs(actual_fliped), expected, 3)

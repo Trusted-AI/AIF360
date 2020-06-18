@@ -85,8 +85,8 @@ class EqOddsPostprocessing(Transformer):
             privileged_groups=self.privileged_groups)
 
         # compute basic statistics
-        sbr = metric.num_instances(privileged=True) / metric.num_instances()
-        obr = metric.num_instances(privileged=False) / metric.num_instances()
+        sbr = metric.base_rate(privileged=True)
+        obr = metric.base_rate(privileged=False)
 
         fpr0 = metric.false_positive_rate(privileged=True)
         fpr1 = metric.false_positive_rate(privileged=False)

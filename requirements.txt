@@ -1,21 +1,14 @@
-nbformat
-nbconvert
-jupyter_client
-ipykernel
-ipython
-ipywidgets
-tqdm
-numpy>=1.16
-matplotlib
-pandas>=0.24
-pytest>=3.5.0
-scipy>=1.2.0
-scikit-learn
-cvxpy>=1.0
-scs==2.1.0
-numba==0.42.0
-tensorflow>=1.13.1,<2
-networkx==1.11
-BlackBoxAuditing
+# algorithms
+numba>=0.42.0
 lime
 adversarial-robustness-toolbox>=1.0.0
+BlackBoxAuditing
+tensorflow>=1.13.1,<2
+cvxpy>=1.0
+
+# notebooks
+jupyter
+tqdm
+
+# tests
+pytest>=3.5.0

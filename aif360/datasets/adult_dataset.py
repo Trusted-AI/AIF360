@@ -66,9 +66,12 @@ class AdultDataset(StandardDataset):
             >>> label_map = {1.0: '>50K', 0.0: '<=50K'}
             >>> protected_attribute_maps = [{1.0: 'Male', 0.0: 'Female'}]
             >>> ad = AdultDataset(protected_attribute_names=['sex'],
+            ... categorical_features=['workclass', 'education', 'marital-status',
+            ... 'occupation', 'relationship', 'native-country', 'race'],
             ... privileged_classes=[['Male']], metadata={'label_map': label_map,
             ... 'protected_attribute_maps': protected_attribute_maps})
 
+            Note that we are now adding `race` as a `categorical_features`.
             Now this information will stay attached to the dataset and can be
             used for more descriptive visualizations.
         """
