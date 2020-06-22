@@ -69,6 +69,7 @@ class LFR(Transformer):
 
         self.w = None
         self.prototypes = None
+        self.learned_model = None
 
     def fit(self, dataset, maxiter=5000, maxfun=5000, **kwargs):
         """Compute the transformation parameters that leads to fair representations.
@@ -102,14 +103,14 @@ class LFR(Transformer):
                 bnd.append((0, 1))
         lfr_helpers.LFR_optim_objective.steps = 0
 
-        learned_parameters = optim.fmin_l_bfgs_b(lfr_helpers.LFR_optim_objective, x0=parameters_initialization, epsilon=1e-5,
+        self.learned_model = optim.fmin_l_bfgs_b(lfr_helpers.LFR_optim_objective, x0=parameters_initialization, epsilon=1e-5,
                                                       args=(features_unpriveleged, features_priveleged,
                                         labels_unpriveleged[:, 0], labels_priveleged[:, 0], self.k, self.Ax,
                                         self.Ay, self.Az, self.print_interval),
                                                       bounds=bnd, approx_grad=True, maxfun=maxfun,
                                                       maxiter=maxiter, disp=self.verbose)[0]
-        self.w = learned_parameters[:self.k]
-        self.prototypes = learned_parameters[self.k:].reshape((self.k, self.features_dim))
+        self.w = self.learned_model[:self.k]
+        self.prototypes = self.learned_model[self.k:].reshape((self.k, self.features_dim))
 
         return self
 
