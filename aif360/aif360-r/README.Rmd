@@ -17,6 +17,7 @@ library(aif360)
 # AI Fairness 360 (AIF360) R Package 
 
 <!-- badges: start -->
+[![CRAN_Status_Badge](http://www.r-pkg.org/badges/version/aif360)](https://cran.r-project.org/package=aif360)
 <!-- badges: end -->
 
 ## Overview
@@ -26,9 +27,13 @@ The AI Fairness 360 R package includes a comprehensive set of metrics for datase
 
 ## Installation
 
-This package is currently under [CRAN](https://CRAN.R-project.org) review.
+Install the CRAN version:
 
-You can install the development version from [GitHub](https://github.com/) with:
+```r
+install.packages("aif360")
+```
+
+Or install the development version from GitHub:
 
 ``` r
 # install.packages("devtools")
