@@ -5,6 +5,7 @@
 
 <!-- badges: start -->
 
+[![CRAN\_Status\_Badge](http://www.r-pkg.org/badges/version/aif360)](https://cran.r-project.org/package=aif360)
 <!-- badges: end -->
 
 ## Overview
