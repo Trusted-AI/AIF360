@@ -71,10 +71,12 @@ class LFR(Transformer):
         self.prototypes = None
         self.learned_model = None
 
-    def fit(self, dataset, maxiter=5000, maxfun=5000, **kwargs):
+    def fit(self, dataset, maxiter=5000, maxfun=5000):
         """Compute the transformation parameters that leads to fair representations.
         Args:
             dataset (BinaryLabelDataset): Dataset containing true labels.
+            maxiter (int): Maximum number of iterations.
+            maxfun (int): Maxinum number of function evaluations.
         Returns:
             LFR: Returns self.
         """
@@ -88,10 +90,10 @@ class LFR(Transformer):
             [-1, 1])
         unprivileged_sample_ids = np.array(np.where(protected_attributes == self.unprivileged_group_protected_attribute_value))[0].flatten()
         privileged_sample_ids = np.array(np.where(protected_attributes == self.privileged_group_protected_attribute_value))[0].flatten()
-        features_unpriveleged = dataset.features[unprivileged_sample_ids]
-        features_priveleged = dataset.features[privileged_sample_ids]
-        labels_unpriveleged = dataset.labels[unprivileged_sample_ids]
-        labels_priveleged = dataset.labels[privileged_sample_ids]
+        features_unprivileged = dataset.features[unprivileged_sample_ids]
+        features_privileged = dataset.features[privileged_sample_ids]
+        labels_unprivileged = dataset.labels[unprivileged_sample_ids]
+        labels_privileged = dataset.labels[privileged_sample_ids]
 
         # Initialize the LFR optim objective parameters
         parameters_initialization = np.random.uniform(size=self.k + self.features_dim * self.k)
@@ -104,9 +106,9 @@ class LFR(Transformer):
         lfr_helpers.LFR_optim_objective.steps = 0
 
         self.learned_model = optim.fmin_l_bfgs_b(lfr_helpers.LFR_optim_objective, x0=parameters_initialization, epsilon=1e-5,
-                                                      args=(features_unpriveleged, features_priveleged,
-                                        labels_unpriveleged[:, 0], labels_priveleged[:, 0], self.k, self.Ax,
-                                        self.Ay, self.Az, self.print_interval),
+                                                      args=(features_unprivileged, features_privileged,
+                                        labels_unprivileged[:, 0], labels_privileged[:, 0], self.k, self.Ax,
+                                        self.Ay, self.Az, self.print_interval, self.verbose),
                                                       bounds=bnd, approx_grad=True, maxfun=maxfun,
                                                       maxiter=maxiter, disp=self.verbose)[0]
         self.w = self.learned_model[:self.k]
@@ -114,7 +116,7 @@ class LFR(Transformer):
 
         return self
 
-    def transform(self, dataset, threshold=0.5, **kwargs):
+    def transform(self, dataset, threshold=0.5):
         """Transform the dataset using learned model parameters.
         Args:
             dataset (BinaryLabelDataset): Dataset containing labels that needs to be transformed.
@@ -132,21 +134,19 @@ class LFR(Transformer):
         np.array(np.where(protected_attributes == self.unprivileged_group_protected_attribute_value))[0].flatten()
         privileged_sample_ids = \
         np.array(np.where(protected_attributes == self.privileged_group_protected_attribute_value))[0].flatten()
-        features_unpriveleged = dataset.features[unprivileged_sample_ids]
-        features_priveleged = dataset.features[privileged_sample_ids]
-        labels_unpriveleged = dataset.labels[unprivileged_sample_ids]
-        labels_priveleged = dataset.labels[privileged_sample_ids]
+        features_unprivileged = dataset.features[unprivileged_sample_ids]
+        features_privileged = dataset.features[privileged_sample_ids]
 
-        _, features_hat_unpriveleged, labels_hat_unpriveleged = lfr_helpers.get_xhat_y_hat(self.prototypes, self.w, features_unpriveleged)
+        _, features_hat_unprivileged, labels_hat_unprivileged = lfr_helpers.get_xhat_y_hat(self.prototypes, self.w, features_unprivileged)
 
-        _, features_hat_priveleged, labels_hat_priveleged = lfr_helpers.get_xhat_y_hat(self.prototypes, self.w, features_priveleged)
+        _, features_hat_privileged, labels_hat_privileged = lfr_helpers.get_xhat_y_hat(self.prototypes, self.w, features_privileged)
 
         transformed_features = np.zeros(shape=np.shape(dataset.features))
         transformed_labels = np.zeros(shape=np.shape(dataset.labels))
-        transformed_features[unprivileged_sample_ids] = features_hat_unpriveleged
-        transformed_features[privileged_sample_ids] = features_hat_priveleged
-        transformed_labels[unprivileged_sample_ids] = np.reshape(labels_hat_unpriveleged, [-1, 1])
-        transformed_labels[privileged_sample_ids] = np.reshape(labels_hat_priveleged,[-1, 1])
+        transformed_features[unprivileged_sample_ids] = features_hat_unprivileged
+        transformed_features[privileged_sample_ids] = features_hat_privileged
+        transformed_labels[unprivileged_sample_ids] = np.reshape(labels_hat_unprivileged, [-1, 1])
+        transformed_labels[privileged_sample_ids] = np.reshape(labels_hat_privileged,[-1, 1])
         transformed_bin_labels = (np.array(transformed_labels) > threshold).astype(np.float64)
 
         # Mutated, fairer dataset with new labels
@@ -157,45 +157,16 @@ class LFR(Transformer):
 
         return dataset_new    
 
-    def fit_transform(self, dataset, seed=None):
-        """fit and transform methods sequentially"""
+    def fit_transform(self, dataset, maxiter=5000, maxfun=5000, threshold=0.5):
+        """Fit and transform methods sequentially.
 
-        return self.fit(dataset, seed=seed).transform(dataset)
+        Args:
+            dataset (BinaryLabelDataset): Dataset containing labels that needs to be transformed.
+            maxiter (int): Maximum number of iterations.
+            maxfun (int): Maxinum number of function evaluations.
+            threshold(float, optional): threshold parameter used for binary label prediction.
+        Returns:
+            dataset (BinaryLabelDataset): Transformed Dataset.
+        """
 
-
-if __name__ == "__main__":
-
-    import sys
-    sys.path.append("../")
-
-    from aif360.metrics import BinaryLabelDatasetMetric
-    from aif360.algorithms.preprocessing.optim_preproc_helpers.data_preproc_functions import load_preproc_data_adult
-
-    from sklearn.metrics import classification_report
-
-    dataset_orig = load_preproc_data_adult()
-    dataset_orig_train, dataset_orig_test = dataset_orig.split([0.7], shuffle=True)
-
-    privileged_groups = [{'sex': 1}]
-    unprivileged_groups = [{'sex': 0}]
-
-    TR = LFR(unprivileged_groups=unprivileged_groups, privileged_groups=privileged_groups, Ax=0.01, Ay=10.0, Az=1.0)
-    TR = TR.fit(dataset_orig_train, maxiter=5000)
-
-    metric_orig_train = BinaryLabelDatasetMetric(dataset_orig_train,
-                                                 unprivileged_groups=unprivileged_groups,
-                                                 privileged_groups=privileged_groups)
-    thresholds = [0.2, 0.4, 0.5, 0.6, 0.8]
-    for threshold in thresholds:
-        # Transform training data and align features
-        dataset_transf_train = TR.transform(dataset_orig_train, threshold=threshold)
-
-        metric_transf_train = BinaryLabelDatasetMetric(dataset_transf_train,
-                                                       unprivileged_groups=unprivileged_groups,
-                                                       privileged_groups=privileged_groups)
-        print("Classification threshold = %f" % threshold)
-        print(classification_report(dataset_orig_train.labels, dataset_transf_train.labels))
-        print(
-            "Difference in mean outcomes between unprivileged and privileged groups = %f" % metric_transf_train.mean_difference())
-        print("Consistency of labels in transformed training dataset= %f" % metric_transf_train.consistency())
-        print("Consistency of labels in original training dataset= %f" % metric_orig_train.consistency())
+        return self.fit(dataset, maxiter=maxiter, maxfun=maxfun).transform(dataset, threshold=threshold)
