@@ -97,12 +97,7 @@ class LFR(Transformer):
 
         # Initialize the LFR optim objective parameters
         parameters_initialization = np.random.uniform(size=self.k + self.features_dim * self.k)
-        bnd = []
-        for i, _ in enumerate(parameters_initialization):
-            if i < self.features_dim * 2 or i >= self.features_dim * 2 + self.k:
-                bnd.append((None, None))
-            else:
-                bnd.append((0, 1))
+        bnd = [(0, 1)]*self.k + [(None, None)]*self.features_dim*self.k
         lfr_helpers.LFR_optim_objective.steps = 0
 
         self.learned_model = optim.fmin_l_bfgs_b(lfr_helpers.LFR_optim_objective, x0=parameters_initialization, epsilon=1e-5,

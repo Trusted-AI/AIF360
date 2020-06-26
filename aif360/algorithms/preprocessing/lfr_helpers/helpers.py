@@ -38,7 +38,6 @@ def LFR_optim_objective(parameters, x_unprivileged, x_privileged, y_unprivileged
 def get_xhat_y_hat(prototypes, w, x):
     M = softmax(-cdist(x, prototypes), axis=1)
     x_hat = np.matmul(M, prototypes)
-    w = np.clip(w, np.finfo(float).eps, 1.0 - np.finfo(float).eps)
     y_hat = np.clip(
         np.matmul(M, w.reshape((-1, 1))),
         np.finfo(float).eps,
