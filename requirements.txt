@@ -1,5 +1,4 @@
 # algorithms
-numba>=0.42.0
 lime
 adversarial-robustness-toolbox>=1.0.0
 BlackBoxAuditing

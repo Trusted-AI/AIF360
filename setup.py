@@ -15,7 +15,6 @@ with open("aif360/version.py", 'w') as f:
 
 extras = {
     'OptimPreproc': ['cvxpy>=1.0'],
-    'LFR': ['numba>=0.42.0'],
     'AdversarialDebiasing': ['tensorflow>=1.13.1,<2'],
     'DisparateImpactRemover': ['BlackBoxAuditing'],
     'LIME': ['lime'],

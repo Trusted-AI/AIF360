@@ -2,12 +2,7 @@ import numpy as np
 import scipy.optimize as optim
 
 from aif360.algorithms import Transformer
-try:
-    from aif360.algorithms.preprocessing.lfr_helpers import helpers as lfr_helpers
-except ImportError as error:
-    from logging import warning
-    warning("{}: LFR will be unavailable. To install, run:\n"
-            "pip install 'aif360[LFR]'".format(error))
+from aif360.algorithms.preprocessing.lfr_helpers import helpers as lfr_helpers
 
 
 class LFR(Transformer):
@@ -29,7 +24,7 @@ class LFR(Transformer):
                  Ay=1.0,
                  Az=50.0,
                  print_interval=250,
-                 verbose=1,
+                 verbose=0,
                  seed=None):
         """
         Args:
@@ -67,12 +62,16 @@ class LFR(Transformer):
         self.print_interval = print_interval
         self.verbose = verbose
 
+        self.w = None
+        self.prototypes = None
         self.learned_model = None
 
-    def fit(self, dataset, maxiter=5000, maxfun=5000, **kwargs):
+    def fit(self, dataset, maxiter=5000, maxfun=5000):
         """Compute the transformation parameters that leads to fair representations.
         Args:
             dataset (BinaryLabelDataset): Dataset containing true labels.
+            maxiter (int): Maximum number of iterations.
+            maxfun (int): Maxinum number of function evaluations.
         Returns:
             LFR: Returns self.
         """
@@ -81,33 +80,33 @@ class LFR(Transformer):
 
         num_train_samples, self.features_dim = np.shape(dataset.features)
 
-        d = np.reshape(
+        protected_attributes = np.reshape(
             dataset.protected_attributes[:, dataset.protected_attribute_names.index(self.protected_attribute_name)],
             [-1, 1])
-        sensitive_idx = np.array(np.where(d == self.unprivileged_group_protected_attribute_value))[0].flatten()
-        nonsensitive_idx = np.array(np.where(d == self.privileged_group_protected_attribute_value))[0].flatten()
-        training_sensitive = dataset.features[sensitive_idx]
-        training_nonsensitive = dataset.features[nonsensitive_idx]
-        ytrain_sensitive = dataset.labels[sensitive_idx]
-        ytrain_nonsensitive = dataset.labels[nonsensitive_idx]
+        unprivileged_sample_ids = np.array(np.where(protected_attributes == self.unprivileged_group_protected_attribute_value))[0].flatten()
+        privileged_sample_ids = np.array(np.where(protected_attributes == self.privileged_group_protected_attribute_value))[0].flatten()
+        features_unprivileged = dataset.features[unprivileged_sample_ids]
+        features_privileged = dataset.features[privileged_sample_ids]
+        labels_unprivileged = dataset.labels[unprivileged_sample_ids]
+        labels_privileged = dataset.labels[privileged_sample_ids]
 
-        model_inits = np.random.uniform(size=self.features_dim * 2 + self.k + self.features_dim * self.k)
-        bnd = []
-        for i, _ in enumerate(model_inits):
-            if i < self.features_dim * 2 or i >= self.features_dim * 2 + self.k:
-                bnd.append((None, None))
-            else:
-                bnd.append((0, 1))
+        # Initialize the LFR optim objective parameters
+        parameters_initialization = np.random.uniform(size=self.k + self.features_dim * self.k)
+        bnd = [(0, 1)]*self.k + [(None, None)]*self.features_dim*self.k
+        lfr_helpers.LFR_optim_objective.steps = 0
 
-        self.learned_model = optim.fmin_l_bfgs_b(lfr_helpers.LFR_optim_obj, x0=model_inits, epsilon=1e-5,
-                                  args=(training_sensitive, training_nonsensitive,
-                                        ytrain_sensitive[:, 0], ytrain_nonsensitive[:, 0], self.k, self.Ax,
-                                        self.Ay, self.Az, 0, self.print_interval),
-                                  bounds=bnd, approx_grad=True, maxfun=maxfun,
-                                  maxiter=maxiter, disp=self.verbose)[0]
+        self.learned_model = optim.fmin_l_bfgs_b(lfr_helpers.LFR_optim_objective, x0=parameters_initialization, epsilon=1e-5,
+                                                      args=(features_unprivileged, features_privileged,
+                                        labels_unprivileged[:, 0], labels_privileged[:, 0], self.k, self.Ax,
+                                        self.Ay, self.Az, self.print_interval, self.verbose),
+                                                      bounds=bnd, approx_grad=True, maxfun=maxfun,
+                                                      maxiter=maxiter, disp=self.verbose)[0]
+        self.w = self.learned_model[:self.k]
+        self.prototypes = self.learned_model[self.k:].reshape((self.k, self.features_dim))
+
         return self
 
-    def transform(self, dataset, threshold=0.5, **kwargs):
+    def transform(self, dataset, threshold=0.5):
         """Transform the dataset using learned model parameters.
         Args:
             dataset (BinaryLabelDataset): Dataset containing labels that needs to be transformed.
@@ -118,54 +117,26 @@ class LFR(Transformer):
         if self.seed is not None:
             np.random.seed(self.seed)
 
-        num_test_samples, _ = np.shape(dataset.features)
-
-        d = np.reshape(
+        protected_attributes = np.reshape(
             dataset.protected_attributes[:, dataset.protected_attribute_names.index(self.protected_attribute_name)],
             [-1, 1])
-        sensitive_idx = np.array(np.where(d == self.unprivileged_group_protected_attribute_value))[0].flatten()
-        nonsensitive_idx = np.array(np.where(d == self.privileged_group_protected_attribute_value))[0].flatten()
-        testing_sensitive = dataset.features[sensitive_idx]
-        testing_nonsensitive = dataset.features[nonsensitive_idx]
-        ytest_sensitive = dataset.labels[sensitive_idx]
-        ytest_nonsensitive = dataset.labels[nonsensitive_idx]
+        unprivileged_sample_ids = \
+        np.array(np.where(protected_attributes == self.unprivileged_group_protected_attribute_value))[0].flatten()
+        privileged_sample_ids = \
+        np.array(np.where(protected_attributes == self.privileged_group_protected_attribute_value))[0].flatten()
+        features_unprivileged = dataset.features[unprivileged_sample_ids]
+        features_privileged = dataset.features[privileged_sample_ids]
 
-        # extract training model parameters
-        Ns, P = testing_sensitive.shape
-        N, _ = testing_nonsensitive.shape
-        alphaoptim0 = self.learned_model[:P]
-        alphaoptim1 = self.learned_model[P: 2 * P]
-        woptim = self.learned_model[2 * P: (2 * P) + self.k]
-        voptim = np.matrix(self.learned_model[(2 * P) + self.k:]).reshape((self.k, P))
+        _, features_hat_unprivileged, labels_hat_unprivileged = lfr_helpers.get_xhat_y_hat(self.prototypes, self.w, features_unprivileged)
 
-        # compute distances on the test dataset using train model params
-        dist_sensitive = lfr_helpers.distances(testing_sensitive, voptim, alphaoptim1, Ns, P, self.k)
-        dist_nonsensitive = lfr_helpers.distances(testing_nonsensitive, voptim, alphaoptim0, N, P, self.k)
-
-        # compute cluster probabilities for test instances
-        M_nk_sensitive = lfr_helpers.M_nk(dist_sensitive, Ns, self.k)
-        M_nk_nonsensitive = lfr_helpers.M_nk(dist_nonsensitive, N, self.k)
-
-        # learned mappings for test instances
-        res_sensitive = lfr_helpers.x_n_hat(testing_sensitive, M_nk_sensitive, voptim, Ns, P, self.k)
-        x_n_hat_sensitive = res_sensitive[0]
-        res_nonsensitive = lfr_helpers.x_n_hat(testing_nonsensitive, M_nk_nonsensitive, voptim, N, P, self.k)
-        x_n_hat_nonsensitive = res_nonsensitive[0]
-
-        # compute predictions for test instances
-        res_sensitive = lfr_helpers.yhat(M_nk_sensitive, ytest_sensitive, woptim, Ns, self.k)
-        y_hat_sensitive = res_sensitive[0]
-        res_nonsensitive = lfr_helpers.yhat(M_nk_nonsensitive, ytest_nonsensitive, woptim, N, self.k)
-        y_hat_nonsensitive = res_nonsensitive[0]
+        _, features_hat_privileged, labels_hat_privileged = lfr_helpers.get_xhat_y_hat(self.prototypes, self.w, features_privileged)
 
         transformed_features = np.zeros(shape=np.shape(dataset.features))
         transformed_labels = np.zeros(shape=np.shape(dataset.labels))
-        transformed_features[sensitive_idx] = x_n_hat_sensitive
-        transformed_features[nonsensitive_idx] = x_n_hat_nonsensitive
-        transformed_labels[sensitive_idx] = np.reshape(y_hat_sensitive,
-            [-1, 1])
-        transformed_labels[nonsensitive_idx] = np.reshape(y_hat_nonsensitive,
-            [-1, 1])
+        transformed_features[unprivileged_sample_ids] = features_hat_unprivileged
+        transformed_features[privileged_sample_ids] = features_hat_privileged
+        transformed_labels[unprivileged_sample_ids] = np.reshape(labels_hat_unprivileged, [-1, 1])
+        transformed_labels[privileged_sample_ids] = np.reshape(labels_hat_privileged,[-1, 1])
         transformed_bin_labels = (np.array(transformed_labels) > threshold).astype(np.float64)
 
         # Mutated, fairer dataset with new labels
@@ -176,7 +147,16 @@ class LFR(Transformer):
 
         return dataset_new    
 
-    def fit_transform(self, dataset, seed=None):
-        """fit and transform methods sequentially"""
+    def fit_transform(self, dataset, maxiter=5000, maxfun=5000, threshold=0.5):
+        """Fit and transform methods sequentially.
 
-        return self.fit(dataset, seed=seed).transform(dataset)
+        Args:
+            dataset (BinaryLabelDataset): Dataset containing labels that needs to be transformed.
+            maxiter (int): Maximum number of iterations.
+            maxfun (int): Maxinum number of function evaluations.
+            threshold(float, optional): threshold parameter used for binary label prediction.
+        Returns:
+            dataset (BinaryLabelDataset): Transformed Dataset.
+        """
+
+        return self.fit(dataset, maxiter=maxiter, maxfun=maxfun).transform(dataset, threshold=threshold)
