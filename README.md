@@ -13,6 +13,8 @@ The AI Fairness 360 Python package includes
 It is designed to translate algorithmic research from the lab into the actual practice of domains as wide-ranging
 as finance, human capital management, healthcare, and education. We invite you to use it and improve it.
 
+AIF360 is also available in R. For R setup, please refer to instructions [here](aif360/aif360-r/README.md).
+
 The [AI Fairness 360 interactive experience](http://aif360.mybluemix.net/data)
 provides a gentle introduction to the concepts and capabilities. The [tutorials
 and other notebooks](./examples) offer a deeper, data scientist-oriented
@@ -55,8 +57,6 @@ Get in touch with us on [Slack](https://aif360.slack.com) (invitation
 
 
 ## Setup
-
-AIF360 is available for both Python and R. For R setup, please refer to instructions [here](aif360/aif360-r/README.md).
 
 Supported Python Configurations:
 

@@ -6,9 +6,12 @@ The maintainers are listed in alphabetical order.
 - Michael Hind ([michaelhind](https://github.com/michaelhind))
 - Sam Hoffman ([hoffmansc](https://github.com/hoffmansc))
 - Karthi Natesan Ramamurthy ([nrkarthikeyan](https://github.com/nrkarthikeyan))
+- Stacey Ronaghan ([srnghn](https://github.com/srnghn))
 - Prasanna Sattigeri ([pronics2004](https://github.com/pronics2004))
 - Animesh Singh ([animeshsingh](https://github.com/animeshsingh))
+- Saishruthi Swaminathan ([SSaishruthi](https://github.com/SSaishruthi))
 - Kush Varshney ([krvarshney](https://github.com/krvarshney))
+- Gabriela de Queiroz ([gdequeiroz](https://github.com/gdequeiroz))
 
 ## Methodology
 
