@@ -58,6 +58,14 @@ Get in touch with us on [Slack](https://aif360.slack.com) (invitation
 
 ## Setup
 
+### R
+
+``` r
+install.packages("aif360")
+```
+
+For more details regarding the R setup, please refer to instructions [here](aif360/aif360-r/README.md).
+
 ### Python
 
 Supported Python Configurations:
@@ -67,14 +75,6 @@ Supported Python Configurations:
 | macOS   | 3.5, 3.6, 3.7  |
 | Ubuntu  | 3.5, 3.6, 3.7  |
 | Windows | 3.5, 3.6, 3.7  |
-
-### R
-
-``` r
-install.packages("aif360")
-```
-
-For more details regarding the R setup, please refer to instructions [here](aif360/aif360-r/README.md).
 
 ### (Optional) Create a virtual environment
 
