@@ -3,10 +3,12 @@
 [![Build Status](https://travis-ci.org/IBM/AIF360.svg?branch=master)](https://travis-ci.org/IBM/AIF360)
 [![Documentation](https://readthedocs.org/projects/aif360/badge/?version=latest)](http://aif360.readthedocs.io/en/latest/?badge=latest)
 [![PyPI version](https://badge.fury.io/py/aif360.svg)](https://badge.fury.io/py/aif360)
+[![CRAN\_Status\_Badge](http://www.r-pkg.org/badges/version/aif360)](https://cran.r-project.org/package=aif360)
 
 The AI Fairness 360 toolkit is an extensible open-source library containg techniques developed by the
-research community to help detect and mitigate bias in machine learning models throughout the AI application lifecycle.
-The AI Fairness 360 Python package includes
+research community to help detect and mitigate bias in machine learning models throughout the AI application lifecycle. AI Fairness 360 package is available in both Python and R.
+
+The AI Fairness 360 package includes
 1) a comprehensive set of metrics for datasets and models to test for biases,
 2) explanations for these metrics, and
 3) algorithms to mitigate bias in datasets and models.
@@ -56,7 +58,15 @@ Get in touch with us on [Slack](https://aif360.slack.com) (invitation
 
 ## Setup
 
-AIF360 is available for both Python and R. For R setup, please refer to instructions [here](aif360/aif360-r/README.md).
+### R
+
+``` r
+install.packages("aif360")
+```
+
+For more details regarding the R setup, please refer to instructions [here](aif360/aif360-r/README.md).
+
+### Python
 
 Supported Python Configurations:
 
