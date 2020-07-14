@@ -17,7 +17,7 @@ class ARTClassifier(Transformer):
                 object from the `adversarial-robustness-toolbox`_.
 
         .. _adversarial-robustness-toolbox:
-           https://github.com/IBM/adversarial-robustness-toolbox
+           https://github.com/Trusted-AI/adversarial-robustness-toolbox
         """
         super(ARTClassifier, self).__init__(art_classifier=art_classifier)
         self._art_classifier = art_classifier

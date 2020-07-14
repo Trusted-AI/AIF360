@@ -141,7 +141,7 @@ If you encounter any errors, try the [Troubleshooting](#troubleshooting) steps.
 Clone the latest version of this repository:
 
 ```bash
-git clone https://github.com/IBM/AIF360
+git clone https://github.com/Trusted-AI/AIF360
 ```
 
 If you'd like to run the examples, download the datasets now and place them in

@@ -6,11 +6,11 @@ This is the class and function reference for the `scikit-learn`-compatible
 version of the AIF360 API. It is functionally equivalent to the normal API but
 it uses scikit-learn paradigms (where possible) and :class:`pandas.DataFrame` for
 datasets. Not all functionality from AIF360 is supported yet. See
-`Getting Started <https://github.com/IBM/AIF360/examples/sklearn/demo_new_features.ipynb>`_
+`Getting Started <https://github.com/Trusted-AI/AIF360/examples/sklearn/demo_new_features.ipynb>`_
 for a demo of the capabilities.
 
 Note: This is under active development. Visit our
-`GitHub page <https://github.com/IBM/AIF360>`_ if you'd like to contribute!
+`GitHub page <https://github.com/Trusted-AI/AIF360>`_ if you'd like to contribute!
 
 
 :mod:`aif360.sklearn.datasets`: Dataset loading functions
