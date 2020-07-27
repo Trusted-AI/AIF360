@@ -36,6 +36,30 @@ def test_multilabel_basic():
     assert multilabel.y.shape == (3, 2)
     assert multilabel.X.shape == (3, 2)
 
+def test_series_input_basic():
+    prot_attr = pd.Series(['c', 'b', 'a'], name='Z2')
+    custom = basic(prot_attr=prot_attr)
+    assert (custom.X.index.droplevel() == prot_attr).all()
+
+    custom2 = basic(prot_attr=[prot_attr, 'Z'])
+    ix = pd.DataFrame([['c', 'a'], ['b', 'b'], ['a', 'c']], columns=['Z2', 'Z'])
+    assert (custom2.X.index.droplevel().to_frame() == ix.to_numpy()).all(None)
+
+    with pytest.raises(TypeError):
+        basic(prot_attr=[prot_attr.to_numpy()])  # list of arrays is not allowed
+
+    with pytest.raises(KeyError):
+        basic(prot_attr=prot_attr.to_numpy())  # ['c', 'b', 'a'] are not labels
+
+def test_series_target_basic():
+    target = pd.Series([3, 4, 5], name='y2')
+    custom = basic(target=target)
+    assert (custom.y.to_numpy() == target).all()
+
+    Y = pd.DataFrame([[3, 3], [4, 7], [5, 11]], columns=['y2', 'y'])
+    custom2 = basic(target=[target, 'y'])
+    assert (custom2.y.to_numpy() == Y).all(None)
+
 def test_sample_weight_basic():
     """Tests returning sample_weight on a toy example."""
     with_weights = basic(sample_weight='X2')
