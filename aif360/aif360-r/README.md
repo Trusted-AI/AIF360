@@ -5,6 +5,7 @@
 
 <!-- badges: start -->
 
+[![CRAN\_Status\_Badge](http://www.r-pkg.org/badges/version/aif360)](https://cran.r-project.org/package=aif360)
 <!-- badges: end -->
 
 ## Overview
@@ -17,11 +18,13 @@ bias in datasets and models.
 
 ## Installation
 
-This package is currently under [CRAN](https://CRAN.R-project.org)
-review.
+Install the CRAN version:
 
-You can install the development version from
-[GitHub](https://github.com/) with:
+``` r
+install.packages("aif360")
+```
+
+Or install the development version from GitHub:
 
 ``` r
 # install.packages("devtools")
