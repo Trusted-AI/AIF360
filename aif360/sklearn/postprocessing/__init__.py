@@ -83,12 +83,15 @@ class PostProcessingMeta(BaseEstimator, MetaEstimatorMixin):
         Returns:
             self
         """
-        self.needs_proba_ = True if self.needs_proba is None else self.needs_proba
-        # self.needs_proba_ = (self.needs_proba if self.needs_proba is not None
-        #         else isinstance(self.postprocessor, CalibratedEqualizedOdds))
-        if self.needs_proba_ and not hasattr(self.estimator, 'predict_proba'):
+        if (hasattr(self.estimator, 'predict_proba')
+                and self.needs_proba is not False):
+            # use proba if possible and not explicitly prohibited
+            self.needs_proba_ = True
+        elif self.needs_proba is True:
             raise TypeError("`estimator` (type: {}) does not implement method "
                             "`predict_proba()`.".format(type(self.estimator)))
+        else:
+            self.needs_proba_ = False
 
         if self.prefit:
             if len(self.options):
