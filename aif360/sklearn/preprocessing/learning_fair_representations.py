@@ -1,19 +1,21 @@
 import warnings
 
 import numpy as np
+import pandas as pd
 import scipy.optimize as optim
 from scipy.spatial.distance import cdist
 from scipy.special import softmax
-from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.base import BaseEstimator, ClassifierMixin, TransformerMixin
 from sklearn.exceptions import ConvergenceWarning
-from sklearn.metrics import log_loss
 from sklearn.preprocessing import LabelEncoder
 from sklearn.utils import check_random_state
+import torch
+import torch.nn.functional as F
 
 from aif360.sklearn.utils import check_inputs, check_groups
 
 
-class LearnedFairRepresentation(BaseEstimator, TransformerMixin):
+class LearnedFairRepresentation(BaseEstimator, ClassifierMixin, TransformerMixin):
     """Learned Fair Representation.
 
     Learning fair representations is a pre-processing technique that finds a
@@ -34,11 +36,19 @@ class LearnedFairRepresentation(BaseEstimator, TransformerMixin):
             transformer.
         classes_ (array, shape (n_classes,)): A list of class labels known to
             the transformer.
+        priv_group_ (scalar): The label of the privileged group.
+        coef_ (array, shape (n_prototypes, 1) or (n_prototypes, n_classes)):
+            Coefficient of the intermediate representation for classification.
+        prototypes_ (array, shape (n_prototypes, n_features)): The prototype set
+            used to form a probabilistic mapping to the intermediate
+            representation. These act as clusters and are in the same space as
+            the samples.
+        n_iter_ (int): Actual number of iterations.
     """
 
-    def __init__(self, prot_attr=None, n_prototypes=5,
-                 reconstruction_weight=0.01, fairness_weight=50., epsilon=1e-8,
-                 max_iter=200, max_fun=15000, verbose=0, random_state=None):
+    def __init__(self, prot_attr=None, n_prototypes=5, reconstruct_weight=0.01,
+                 target_weight=1., fairness_weight=50., tol=1e-4, max_iter=200,
+                 verbose=0, random_state=None):
         """
         Args:
             prot_attr (single label or list-like, optional): Protected
@@ -46,14 +56,28 @@ class LearnedFairRepresentation(BaseEstimator, TransformerMixin):
                 attribute, all combinations of values (intersections) are
                 considered. Default is ``None`` meaning all protected attributes
                 from the dataset are used.
+            n_prototypes (int, optional): Size of the set of "prototypes," Z.
+            reconstruct_weight (float, optional): Weight coefficient on the L_x
+                loss term, A_x.
+            target_weight (float, optional): Weight coefficient on the L_y loss
+                term, A_y.
+            fairness_weight (float, optional): Weight coefficient on the L_z
+                loss term, A_z.
+            tol (float, optional): Tolerance for stopping criteria.
+            max_iter (int, optional): Maximum number of iterations taken for the
+                solver to converge.
+            verbose (int, optional): Verbosity. 0 = silent, 1 = final loss only,
+                2 = print loss every 50 iterations.
+            random_state (int or numpy.RandomState, optional): Seed of pseudo-
+                random number generator for shuffling data and seeding weights.
         """
         self.prot_attr = prot_attr
         self.n_prototypes = n_prototypes
-        self.reconstruction_weight = reconstruction_weight
+        self.reconstruct_weight = reconstruct_weight
+        self.target_weight = target_weight
         self.fairness_weight = fairness_weight
-        self.epsilon = epsilon
+        self.tol = tol
         self.max_iter = max_iter
-        self.max_fun = max_fun
         self.verbose = verbose
         self.random_state = random_state
 
@@ -70,7 +94,6 @@ class LearnedFairRepresentation(BaseEstimator, TransformerMixin):
         Returns:
             self
         """
-        # TODO: incorporate sample weight?
         X, y, sample_weight = check_inputs(X, y, sample_weight)
         rng = check_random_state(self.random_state)
 
@@ -78,6 +101,7 @@ class LearnedFairRepresentation(BaseEstimator, TransformerMixin):
         priv = (groups == priv_group)
         self.priv_group_ = priv_group
         self.groups_ = np.unique(groups)
+
         le = LabelEncoder()
         y = le.fit_transform(y)
         self.classes_ = le.classes_
@@ -86,64 +110,58 @@ class LearnedFairRepresentation(BaseEstimator, TransformerMixin):
             n_classes = 1  # XXX
 
         n_prototypes = self.n_prototypes
-
         n_feat = X.shape[1]
-        x0 = rng.random(n_prototypes*(n_classes + n_feat))
-        bounds = ([(0, 1)]*n_prototypes*n_classes
-                + [(None, None)]*n_prototypes*n_feat)
 
-        step = 0
-        def LFR_optim_objective(x, X_plus, X_minus, y_plus, y_minus):
-            nonlocal step
-            w = x[:n_prototypes*n_classes].reshape(-1, n_classes)
-            v = x[n_prototypes*n_classes:].reshape(-1, n_feat)
-            M_plus = softmax(-cdist(X_plus, v), axis=1)
-            M_minus = softmax(-cdist(X_minus, v), axis=1)
-            yhat = np.concatenate((M_plus.dot(w), M_minus.dot(w)), axis=0)
-            if n_classes > 1:
-                yhat = softmax(yhat, axis=1)
-            y = np.concatenate((y_plus, y_minus), axis=0).reshape(-1, 1)
+        w_size = n_prototypes*n_classes
+        x0 = rng.random(w_size + n_prototypes*n_feat)
+        bounds = [(0, 1)]*w_size + [(None, None)]*n_prototypes*n_feat
+        i = 0
+        eps = np.finfo(np.float64).eps
 
-            L_x = np.mean((X_plus - M_plus.dot(v))**2) \
-                + np.mean((X_minus - M_minus.dot(v))**2)
-            L_y = log_loss(y, yhat, eps=np.finfo(w.dtype).eps)
-            L_z = np.mean(np.abs(M_plus.mean(axis=0) - M_minus.mean(axis=0)))
-            L = self.reconstruction_weight*L_x + L_y + self.fairness_weight*L_z
+        def LFR_optim_objective(x, X, y, priv):
+            nonlocal i
+            x = torch.as_tensor(x).requires_grad_()
+            w = x[:w_size].view(-1, n_classes)
+            v = x[w_size:].view(-1, n_feat)
 
-            if self.verbose > 0 and step % self.verbose == 0:
-                print("step: {:{}d}, loss: {:10.3f}, Ax*Lx: {:10.3f}, Ly: {:10.3f}, Az*Lz: {:10.3f}".format(
-                      step, int(np.log10(self.max_fun)+1), L, self.reconstruction_weight*L_x, L_y, self.fairness_weight*L_z))
-            step += 1
-            return L
+            M = torch.softmax(-torch.cdist(X, v), dim=1)
+            y_pred = M.matmul(w).squeeze(1)
 
-        # res = optim.minimize(LFR_optim_objective, x0=x0,
-        #         args=(X[priv].to_numpy(), X[~priv].to_numpy(), y[priv], y[~priv]),
-        #         method='L-BFGS-B', bounds=bounds, options={'gtol': tol, 'maxiter': self.max_iter}))
-        #         dict(eps=self.epsilon, maxiter=self.max_iter,
-        #         maxfun=self.max_fun, disp=50 if self.verbose else 0))
-        # self.n_iter_ = res.nit  # d['nit']
-        # self.n_fun_ = res.nfev  # d['funcalls']
+            L_x = F.mse_loss(M.matmul(v), X)
+            L_y = F.cross_entropy(y_pred, y) if n_classes > 1 else \
+                  F.binary_cross_entropy(y_pred.clamp(eps, 1-eps), y.type_as(w))
+            L_z = F.l1_loss(torch.mean(M[priv], 0), torch.mean(M[~priv], 0))
+            loss = (self.reconstruct_weight * L_x + self.target_weight * L_y
+                  + self.fairness_weight * L_z)
 
-        x_min, _, d = optim.fmin_l_bfgs_b(
-                LFR_optim_objective, x0=x0, epsilon=self.epsilon,
-                args=(X[priv].to_numpy(), X[~priv].to_numpy(), y[priv], y[~priv]),
-                bounds=bounds, approx_grad=True, maxfun=self.max_fun,
-                maxiter=self.max_iter)
-        self.coef_ = x_min[:n_prototypes*n_classes].reshape(-1, n_classes)
-        self.prototypes_ = x_min[n_prototypes*n_classes:].reshape(-1, n_feat)
-        self.n_iter_ = d['nit']
-        self.n_fun_ = d['funcalls']
-        if d['warnflag'] == 0 and self.verbose:
-            print("Converged!")
-        elif d['warnflag'] == 1 and self.n_fun_ >= self.max_fun:
-            warnings.warn("lbfgs failed to converge. Increase the number of function evaluations.",
-                          ConvergenceWarning)
-        elif d['warnflag'] == 1 and self.n_iter_ >= self.max_iter:
-            warnings.warn("lbfgs failed to converge. Increase the number of iterations.",
-                          ConvergenceWarning)
-        else:
-            warnings.warn("lbfgs failed to converge: {}".format(d['task'].decode()), ConvergenceWarning)
+            loss.backward()
+            if self.verbose > 1 and i % 50 == 0:
+                print("iter: {:{}d}, loss: {:7.3f}, A_x*L_x: {:7.3f}, A_y*L_y: "
+                      "{:7.3f}, A_z*L_z: {:7.3f}".format(i,
+                        int(np.log10(self.max_iter)+1), loss,
+                        self.reconstruct_weight*L_x, self.target_weight*L_y,
+                        self.fairness_weight*L_z))
+            i += 1
+            return loss.item(), x.grad.numpy()
 
+        X_ = torch.tensor(X.to_numpy())
+        y_ = torch.as_tensor(y)
+        res = optim.minimize(LFR_optim_objective, x0=x0, method='L-BFGS-B',
+                args=(X_, y_, priv), jac=True, bounds=bounds,
+                options={'gtol': self.tol, 'maxiter': self.max_iter})
+
+        self.coef_ = res.x[:n_prototypes*n_classes].reshape(-1, n_classes)
+        self.prototypes_ = res.x[n_prototypes*n_classes:].reshape(-1, n_feat)
+        self.n_iter_ = res.nit
+
+        if res.status == 0 and self.verbose:
+            print("Converged! iter: {}, loss: {:.3f}".format(res.nit, res.fun))
+        elif res.status == 1:
+            warnings.warn('lbfgs failed to converge. Increase the number of '
+                          'iterations.', ConvergenceWarning)
+        elif res.status == 2:
+            warnings.warn('lbfgs failed to converge: {}'.format(
+                          res.message.decode()), ConvergenceWarning)
         return self
 
     def transform(self, X):
@@ -155,17 +173,9 @@ class LearnedFairRepresentation(BaseEstimator, TransformerMixin):
         Returns:
             pandas.DataFrame: Transformed samples.
         """
-        groups, _ = check_groups(X, self.prot_attr_)
-        priv = (groups == self.priv_group_)
-
-        M_plus = softmax(-cdist(X[priv].to_numpy(), self.prototypes_), axis=1)
-        M_minus = softmax(-cdist(X[~priv].to_numpy(), self.prototypes_), axis=1)
-
-        Xt = X.copy()  # TODO: avoid copy
-        Xt[priv] = M_plus.dot(self.prototypes_)
-        Xt[~priv] = M_minus.dot(self.prototypes_)
-
-        return Xt
+        M = softmax(-cdist(X, self.prototypes_), axis=1)
+        Xt = M.dot(self.prototypes_)
+        return pd.DataFrame(Xt, columns=X.columns, index=X.index)
 
     def predict_proba(self, X):
         """Transform the targets using the learned model parameters.
@@ -178,15 +188,8 @@ class LearnedFairRepresentation(BaseEstimator, TransformerMixin):
             sample for each class in the model, where classes are ordered as
             they are in ``self.classes_``.
         """
-        groups, _ = check_groups(X, self.prot_attr_)
-        priv = (groups == self.priv_group_)
-
-        M_plus = softmax(-cdist(X[priv].to_numpy(), self.prototypes_), axis=1)
-        M_minus = softmax(-cdist(X[~priv].to_numpy(), self.prototypes_), axis=1)
-
-        yt = np.empty((X.shape[0], self.coef_.shape[1]))  # TODO: dtype?
-        yt[priv] = M_plus.dot(self.coef_)
-        yt[~priv] = M_minus.dot(self.coef_)
+        M = softmax(-cdist(X, self.prototypes_), axis=1)
+        yt = M.dot(self.coef_)
         if yt.shape[1] == 1:
             yt = np.c_[1-yt, yt]
         else:
@@ -204,5 +207,3 @@ class LearnedFairRepresentation(BaseEstimator, TransformerMixin):
         """
         probas = self.predict_proba(X)
         return self.classes_[probas.argmax(axis=1)]
-
-    # TODO: fit_transform_predict()??
