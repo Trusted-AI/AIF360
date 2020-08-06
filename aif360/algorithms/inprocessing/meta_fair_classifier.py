@@ -3,8 +3,8 @@
 import numpy as np
 
 from aif360.algorithms import Transformer
-from aif360.algorithms.inprocessing.celisMeta.FalseDiscovery import FalseDiscovery
-from aif360.algorithms.inprocessing.celisMeta.StatisticalRate import StatisticalRate
+from aif360.algorithms.inprocessing.celisMeta import FalseDiscovery
+from aif360.algorithms.inprocessing.celisMeta import StatisticalRate
 
 class MetaFairClassifier(Transformer):
     """The meta algorithm here takes the fairness metric as part of the input
@@ -17,7 +17,7 @@ class MetaFairClassifier(Transformer):
 
     """
 
-    def __init__(self, tau=0.8, sensitive_attr="", type="fdr"):
+    def __init__(self, tau=0.8, sensitive_attr="", type="fdr", seed=None):
         """
         Args:
             tau (double, optional): Fairness penalty parameter.
@@ -27,9 +27,10 @@ class MetaFairClassifier(Transformer):
                 (statistical rate/disparate impact) are supported. To use
                 another type, the corresponding optimization class has to be
                 implemented.
+            seed (int, optional): Random seed.
         """
         super(MetaFairClassifier, self).__init__(tau=tau,
-            sensitive_attr=sensitive_attr)
+            sensitive_attr=sensitive_attr, type=type, seed=seed)
 
         self.tau = tau
         self.sensitive_attr = sensitive_attr
@@ -37,6 +38,9 @@ class MetaFairClassifier(Transformer):
             self.obj = FalseDiscovery()
         elif type == "sr":
             self.obj = StatisticalRate()
+        else:
+            raise NotImplementedError("Only 'fdr' and 'sr' are supported yet.")
+        self.seed = seed
 
     def fit(self, dataset):
         """Learns the fair classifier.
@@ -49,15 +53,18 @@ class MetaFairClassifier(Transformer):
         """
         if not self.sensitive_attr:
             self.sensitive_attr = dataset.protected_attribute_names[0]
-        sens_index = dataset.feature_names.index(self.sensitive_attr)
+        sens_idx = dataset.protected_attribute_names.index(self.sensitive_attr)
 
         x_train = dataset.features
-        y_train = np.array([1 if y == [dataset.favorable_label] else
-                           -1 for y in dataset.labels])
-        x_control_train = x_train[:, sens_index].copy()
+        y_train = np.where(dataset.labels.flatten() == dataset.favorable_label,
+                           1, -1)
+        x_control_train = np.where(
+                np.isin(dataset.protected_attributes[:, sens_idx],
+                        dataset.privileged_protected_attributes[sens_idx]),
+                1, 0)
 
         self.model = self.obj.getModel(self.tau, x_train, y_train,
-            x_control_train)
+            x_control_train, self.seed)
 
         return self
 
@@ -72,14 +79,10 @@ class MetaFairClassifier(Transformer):
         Returns:
             BinaryLabelDataset: Transformed dataset.
         """
-        predictions, scores = [], []
-        for x in dataset.features:
-            t = self.model(x)
-            predictions.append(int(t > 0))
-            scores.append((t+1)/2)
+        t = self.model(dataset.features)
 
         pred_dataset = dataset.copy()
-        pred_dataset.labels = np.array([predictions]).T
-        pred_dataset.scores = np.array([scores]).T
+        pred_dataset.labels = (t > 0).astype(int).reshape((-1, 1))
+        pred_dataset.scores = ((t + 1) / 2).reshape((-1, 1))
 
         return pred_dataset
