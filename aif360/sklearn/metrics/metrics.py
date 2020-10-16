@@ -554,8 +554,8 @@ def consistency_score(X, y, n_neighbors=5):
     labels are for similar instances.
 
     .. math::
-        1 - \frac{1}{n\cdot\text{n_neighbors}}\sum_{i=1}^n |\hat{y}_i -
-        \sum_{j\in\mathcal{N}_{\text{n_neighbors}}(x_i)} \hat{y}_j|
+        1 - \frac{1}{n}\sum_{i=1}^n |\hat{y}_i -
+        \frac{1}{\text{n_neighbors}} \sum_{j\in\mathcal{N}_{\text{n_neighbors}}(x_i)} \hat{y}_j|
 
     Args:
         X (array-like): Sample features.
