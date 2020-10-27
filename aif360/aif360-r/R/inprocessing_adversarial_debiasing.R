@@ -21,8 +21,8 @@
 #'
 #' plain_model = adversarial_debiasing(privileged_groups = p,
 #'                                     unprivileged_groups = u,
-#'                                     scope_name='plain_classifier',
-#'                                     debias=FALSE,
+#'                                     scope_name='debiased_classifier',
+#'                                     debias=TRUE,
 #'                                     sess=sess)
 #'
 #' plain_model$fit(ad)
