@@ -9,3 +9,5 @@ from aif360.datasets.german_dataset import GermanDataset
 from aif360.datasets.meps_dataset_panel19_fy2015 import MEPSDataset19
 from aif360.datasets.meps_dataset_panel20_fy2015 import MEPSDataset20
 from aif360.datasets.meps_dataset_panel21_fy2016 import MEPSDataset21
+from aif360.datasets.regression_dataset import RegressionDataset
+from aif360.datasets.law_school_gpa_dataset import LawSchoolGPADataset 
