@@ -42,7 +42,6 @@ setup(name='aif360',
           'pandas>=0.24.0',
           'scikit-learn>=0.21',
           'matplotlib',
-          'numba==0.48.0',
           'fairlearn==0.4.6',
           'tempeh',
           'xport'
