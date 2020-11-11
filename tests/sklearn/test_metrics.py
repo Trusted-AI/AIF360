@@ -94,13 +94,13 @@ def test_average_odds_error():
                              sample_weight=sample_weight)
     assert np.isclose(aoe, cm.average_abs_odds_difference())
 
-# New generalized_entropy_index uses sample_weights, generalized_entropy_error does not making this test obsolete
+# generalized_entropy_index uses sample_weights but generalized_entropy_error does not making this test obsolete
 #def test_generalized_entropy_index():
 #    """Tests that the old and new generalized_entropy_index matches exactly."""
 #    gei = generalized_entropy_error(y, y_pred)
 #    assert np.isclose(gei, cm.generalized_entropy_index())
 
-# between_group_generalized_entropy_index uses sample_weights, between_group_generalized_entropy_error does not making this test obsolete
+# between_group_generalized_entropy_index uses sample_weights but between_group_generalized_entropy_error does not making this test obsolete
 #def test_between_group_generalized_entropy_index():
 #    """Tests that the old and new between_group_GEI matches exactly."""
 #    bggei = between_group_generalized_entropy_error(y, y_pred, prot_attr='sex')

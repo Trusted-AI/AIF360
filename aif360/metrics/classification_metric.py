@@ -763,31 +763,29 @@ class ClassificationMetric(BinaryLabelDatasetMetric):
                "A Unified Approach to Quantifying Algorithmic Unfairness: Measuring Individual and Group Unfairness via Inequality Indices,"
                ACM SIGKDD International Conference on Knowledge Discovery and Data Mining, 2018.
         """
-        b = np.zeros(self.dataset.labels.size, dtype=np.float64)
-
+        b = []
         for group in groups:
-            classified_group = utils.compute_boolean_conditioning_vector(
-                self.classified_dataset.protected_attributes,
-                self.classified_dataset.protected_attribute_names,
-                condition=group)
-            true_group = utils.compute_boolean_conditioning_vector(
+            boolean_conditioning_vector = utils.compute_boolean_conditioning_vector(
                 self.dataset.protected_attributes,
                 self.dataset.protected_attribute_names,
                 condition=group)
             # ignore if there are no members of this group present
-            if not np.any(true_group):
+            if not np.any(boolean_conditioning_vector):
                 continue
             confusion_matrix = utils.compute_num_TF_PN(
-                self.dataset.protected_attributes[true_group],
-                self.dataset.labels[true_group],
-                self.classified_dataset.labels[classified_group],
-                self.dataset.instance_weights[true_group],
+                self.dataset.protected_attributes[boolean_conditioning_vector],
+                self.dataset.labels[boolean_conditioning_vector],
+                self.classified_dataset.labels[boolean_conditioning_vector],
+                self.dataset.instance_weights[boolean_conditioning_vector],
                 self.dataset.protected_attribute_names,
                 self.dataset.favorable_label, self.dataset.unfavorable_label,
                 condition=group)
-            b[true_group] = np.mean(self._get_benefits(confusion_matrix, benefit_function))
+            group_benefits = self._get_benefits(confusion_matrix, benefit_function)
+            group_mean_benefit = np.mean(group_benefits)
+            new_b = len(group_benefits)*[group_mean_benefit]
+            b = b + new_b
 
-        return self._generalized_entropy_index(b, alpha)
+        return self._generalized_entropy_index(np.array(b), alpha)
 
     def between_all_groups_generalized_entropy_index(self, alpha=2, benefit_function=None):
         """Between-group generalized entropy index that uses all combinations of
