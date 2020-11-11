@@ -739,15 +739,7 @@ class ClassificationMetric(BinaryLabelDatasetMetric):
                "A Unified Approach to Quantifying Algorithmic Unfairness: Measuring Individual and Group Unfairness via Inequality Indices,"
                ACM SIGKDD International Conference on Knowledge Discovery and Data Mining, 2018.
         """
-        if benefit_function:
-            b = self._get_benefits(self.binary_confusion_matrix(), benefit_function)
-        else:
-            y_pred = self.classified_dataset.labels.ravel()
-            y_true = self.dataset.labels.ravel()
-            y_pred = (y_pred == self.classified_dataset.favorable_label).astype(
-                np.float64)
-            y_true = (y_true == self.dataset.favorable_label).astype(np.float64)
-            b = 1 + y_pred - y_true
+        b = self._get_benefits(self.binary_confusion_matrix(), benefit_function)
         return self._generalized_entropy_index(b, alpha)
 
     def _between_group_generalized_entropy_index(self, groups, alpha=2, benefit_function=None):
@@ -785,22 +777,15 @@ class ClassificationMetric(BinaryLabelDatasetMetric):
             # ignore if there are no members of this group present
             if not np.any(true_group):
                 continue
-            if benefit_function:
-                confusion_matrix = utils.compute_num_TF_PN(
-                    self.dataset.protected_attributes[true_group],
-                    self.dataset.labels[true_group],
-                    self.classified_dataset.labels[classified_group],
-                    self.dataset.instance_weights[true_group],
-                    self.dataset.protected_attribute_names,
-                    self.dataset.favorable_label, self.dataset.unfavorable_label,
-                    condition=group)
-                b[true_group] = np.mean(self._get_benefits(confusion_matrix, benefit_function))
-            else:
-                y_pred = self.classified_dataset.labels[classified_group].ravel()
-                y_true = self.dataset.labels[true_group].ravel()
-                y_pred = (y_pred == self.classified_dataset.favorable_label).astype(np.float64)
-                y_true = (y_true == self.dataset.favorable_label).astype(np.float64)
-                b[true_group] = np.mean(1 + y_pred - y_true)
+            confusion_matrix = utils.compute_num_TF_PN(
+                self.dataset.protected_attributes[true_group],
+                self.dataset.labels[true_group],
+                self.classified_dataset.labels[classified_group],
+                self.dataset.instance_weights[true_group],
+                self.dataset.protected_attribute_names,
+                self.dataset.favorable_label, self.dataset.unfavorable_label,
+                condition=group)
+            b[true_group] = np.mean(self._get_benefits(confusion_matrix, benefit_function))
 
         return self._generalized_entropy_index(b, alpha)
 
