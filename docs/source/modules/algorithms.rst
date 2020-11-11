@@ -40,6 +40,7 @@ Algorithms
    algorithms.inprocessing.PrejudiceRemover
    algorithms.inprocessing.AdversarialDebiasing
    algorithms.inprocessing.ExponentiatedGradientReduction
+   algorithms.inprocessing.GridSearchReduction
 
 :mod:`aif360.algorithms.postprocessing`
 =======================================
