@@ -21,7 +21,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [3.5, 3.6, 3.7]
+        python-version: [3.6, 3.7]
         
     env:
       UCI_DB: "https://archive.ics.uci.edu/ml/machine-learning-databases"
@@ -70,7 +70,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [3.5, 3.6, 3.7]
+        python-version: [3.6, 3.7]
     
     steps:
       - name: Check out repo
@@ -89,7 +89,9 @@ jobs:
         shell: Rscript {0}
       
       - name: Install Python dependencies
-        run: pip install 'aif360[all]'
+        run: |
+          python -m pip install --upgrade pip setuptools wheel
+          pip install '.[all]'
           
       - name: Install R package
         run: R CMD INSTALL aif360/aif360-r
