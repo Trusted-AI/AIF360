@@ -45,5 +45,5 @@ def test_gridsearch():
 
     params = {'estimator__C': [1, 10], 'reweigher__prot_attr': ['sex']}
 
-    clf = GridSearchCV(rew, params, scoring=scoring, cv=5, iid=False)
+    clf = GridSearchCV(rew, params, scoring=scoring, cv=5)
     clf.fit(X, y, **{'sample_weight': sample_weight})
