@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from collections import Hashable
+from collections.abc import Hashable
 from functools import wraps
 
 from aif360.datasets import Dataset

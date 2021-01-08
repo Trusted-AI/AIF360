@@ -14,7 +14,7 @@ __all__ = [
     # meta-metrics
     'difference', 'ratio',
     # scorer factory
-    'make_scorer', 
+    'make_scorer',
     # helpers
     'specificity_score', 'base_rate', 'selection_rate', 'generalized_fpr',
     'generalized_fnr',
@@ -571,7 +571,8 @@ def consistency_score(X, y, n_neighbors=5):
     # cast as ndarrays
     X, y = check_X_y(X, y)
     # learn a KNN on the features
-    nbrs = NearestNeighbors(n_neighbors, algorithm='ball_tree').fit(X)
+    nbrs = NearestNeighbors(n_neighbors=n_neighbors, algorithm='ball_tree')
+    nbrs.fit(X)
     indices = nbrs.kneighbors(X, return_distance=False)
 
     # compute consistency score
