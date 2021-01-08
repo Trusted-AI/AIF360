@@ -31,7 +31,7 @@ jobs:
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - name: Check out repo
-      - uses: actions/checkout@v2
+        uses: actions/checkout@v2
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v2
@@ -74,10 +74,10 @@ jobs:
     
     steps:
       - name: Check out repo
-      - uses: actions/checkout@v2
+        uses: actions/checkout@v2
       
       - name: Set up R
-      - uses: r-lib/actions/setup-r@v1
+        uses: r-lib/actions/setup-r@v1
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v2
