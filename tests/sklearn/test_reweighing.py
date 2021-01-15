@@ -9,6 +9,7 @@ from aif360.algorithms.preprocessing import Reweighing as OrigReweighing
 from aif360.sklearn.preprocessing import Reweighing, ReweighingMeta
 
 
+# TODO: fixture-ize
 X, y, sample_weight = fetch_adult(numeric_only=True)
 adult = AdultDataset(instance_weights_name='fnlwgt', categorical_features=[],
         features_to_keep=['age', 'education-num', 'capital-gain', 'capital-loss',
@@ -35,7 +36,7 @@ def test_reweighing_intersection():
 
 def test_gridsearch():
     """Test that ReweighingMeta works in a grid search."""
-    rew = ReweighingMeta(estimator=LogisticRegression(solver='liblinear'))
+    rew = ReweighingMeta(LogisticRegression(solver='liblinear'), Reweighing())
 
     # UGLY workaround for sklearn issue: https://stackoverflow.com/a/49598597
     def score_func(y_true, y_pred, sample_weight):
@@ -46,4 +47,4 @@ def test_gridsearch():
     params = {'estimator__C': [1, 10], 'reweigher__prot_attr': ['sex']}
 
     clf = GridSearchCV(rew, params, scoring=scoring, cv=5, iid=False)
-    clf.fit(X, y, **{'sample_weight': sample_weight})
+    clf.fit(X, y, sample_weight=sample_weight)

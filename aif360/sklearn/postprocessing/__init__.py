@@ -33,12 +33,13 @@ class PostProcessingMeta(BaseEstimator, MetaEstimatorMixin):
             `needs_proba` is None.
     """
 
-    def __init__(self, estimator, postprocessor=CalibratedEqualizedOdds(),
-                 needs_proba=None, prefit=False, val_size=0.25, **options):
+    def __init__(self, estimator, postprocessor=None, needs_proba=None,
+                 prefit=False, val_size=0.25, **options):
         """
         Args:
             estimator (sklearn.BaseEstimator): Original estimator.
-            postprocessor: Post-processing algorithm.
+            postprocessor: Post-processing algorithm. If ``None``, defaults to
+                :class:`~aif360.sklearn.postprocessing.CalibratedEqualizedOdds`.
             needs_proba (bool): Use ``self.estimator_.predict_proba()`` instead
                 of ``self.estimator_.predict()`` as input to postprocessor. If
                 ``None``, defaults to ``True`` if the postprocessor supports it.
@@ -93,15 +94,20 @@ class PostProcessingMeta(BaseEstimator, MetaEstimatorMixin):
         else:
             self.needs_proba_ = False
 
+        if self.postprocessor is None:
+            self.postprocessor_ = CalibratedEqualizedOdds()
+        else:
+            self.postprocessor_ = clone(self.postprocessor)
+        self.estimator_ = clone(self.estimator)
+
         if self.prefit:
             if len(self.options):
                 warning("Splitting options were passed but prefit is True so "
                         "these are ignored.")
-            self.postprocessor_ = clone(self.postprocessor)
             y_score = (self.estimator.predict(X) if not self.needs_proba_ else
                        self.estimator.predict_proba(X))
             fit_params = fit_params.copy()
-            fit_params.update(labels=self.estimator_.classes_)
+            fit_params.update(labels=self.estimator.classes_)
             self.postprocessor_.fit(y_score, y, sample_weight=sample_weight,
                                     **fit_params)
             return self
@@ -114,9 +120,6 @@ class PostProcessingMeta(BaseEstimator, MetaEstimatorMixin):
         if 'train_size' in options_:
             del options_['train_size']
 
-        self.estimator_ = clone(self.estimator)
-        self.postprocessor_ = clone(self.postprocessor)
-
         if sample_weight is not None:
             X_est, X_post, y_est, y_post, sw_est, sw_post = train_test_split(
                     X, y, sample_weight, **options_)
@@ -126,7 +129,7 @@ class PostProcessingMeta(BaseEstimator, MetaEstimatorMixin):
             self.estimator_.fit(X_est, y_est)
 
         y_score = (self.estimator_.predict(X_post) if not self.needs_proba_ else
-                  self.estimator_.predict_proba(X_post))
+                   self.estimator_.predict_proba(X_post))
         y_score = pd.DataFrame(y_score, index=X_post.index).squeeze('columns')
         fit_params = fit_params.copy()
         fit_params.update(labels=self.estimator_.classes_)

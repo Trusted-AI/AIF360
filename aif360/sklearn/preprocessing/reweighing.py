@@ -137,11 +137,9 @@ class ReweighingMeta(BaseEstimator, MetaEstimatorMixin):
                             " `sample_weight`.".format(type(self.estimator)))
 
         if self.reweigher is None:
-            reweigher = Reweighing()
+            self.reweigher_ = Reweighing()
         else:
-            reweigher = self.reweigher
-
-        self.reweigher_ = clone(reweigher)
+            self.reweigher_ = clone(self.reweigher)
         self.estimator_ = clone(self.estimator)
 
         X, sample_weight = self.reweigher_.fit_transform(X, y,
