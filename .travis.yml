@@ -9,7 +9,7 @@ matrix:
     - language: python
       python: "3.6"
       install:
-          - pip install -r requirements.txt
+          - pip install -e '.[all]'
           - pip install flake8
           - if ! wget ${UCI_HTTPS_URL}/adult/adult.data -P aif360/data/raw/adult/ ; then wget ${UCI_HTTPS_URL}/adult/adult.data --no-check-certificate -P aif360/data/raw/adult/ ; fi
           - if ! wget ${UCI_HTTPS_URL}/adult/adult.test -P aif360/data/raw/adult/ ; then wget ${UCI_HTTPS_URL}/adult/adult.test --no-check-certificate -P aif360/data/raw/adult/; fi

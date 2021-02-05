@@ -38,6 +38,8 @@ Algorithms
    algorithms.inprocessing.GerryFairClassifier
    algorithms.inprocessing.MetaFairClassifier
    algorithms.inprocessing.PrejudiceRemover
+   algorithms.inprocessing.ExponentiatedGradientReduction
+   algorithms.inprocessing.GridSearchReduction
 
 :mod:`aif360.algorithms.postprocessing`
 =======================================
