@@ -73,7 +73,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'aif360'
-copyright = u'2018 - 2020, IBM Corporation'
+copyright = u'2018 - 2021, The AI Fairness 360 (AIF360) Authors.'
 author = u'aif360 developers'
 
 # The version info for the project you're documenting, acts as replacement for

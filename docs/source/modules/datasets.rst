@@ -22,6 +22,7 @@ Base classes
    datasets.StructuredDataset
    datasets.BinaryLabelDataset
    datasets.StandardDataset
+   datasets.RegressionDataset
 
 Common datasets
 ---------------
@@ -36,3 +37,4 @@ Common datasets
    datasets.BankDataset
    datasets.CompasDataset
    datasets.GermanDataset
+   datasets.LawSchoolGPADataset

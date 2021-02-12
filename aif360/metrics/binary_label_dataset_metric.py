@@ -34,17 +34,17 @@ class BinaryLabelDatasetMetric(DatasetMetric):
         super(BinaryLabelDatasetMetric, self).__init__(dataset,
             unprivileged_groups=unprivileged_groups,
             privileged_groups=privileged_groups)
-        
+
         if isinstance(dataset, MulticlassLabelDataset):
             fav_label_value = 1.
             unfav_label_value = 0.
-           
+
             self.dataset = self.dataset.copy()
             # Find all labels which match any of the favorable labels
             fav_idx = np.logical_or.reduce(np.equal.outer(self.dataset.favorable_label, self.dataset.labels))
             # Replace labels with corresponding values
             self.dataset.labels = np.where(fav_idx, fav_label_value, unfav_label_value)
-            
+
             self.dataset.favorable_label = float(fav_label_value)
             self.dataset.unfavorable_label = float(unfav_label_value)
 
@@ -126,8 +126,8 @@ class BinaryLabelDatasetMetric(DatasetMetric):
         labels are for similar instances.
 
         .. math::
-           1 - \frac{1}{n\cdot\text{n_neighbors}}\sum_{i=1}^n |\hat{y}_i -
-           \sum_{j\in\mathcal{N}_{\text{n_neighbors}}(x_i)} \hat{y}_j|
+           1 - \frac{1}{n}\sum_{i=1}^n |\hat{y}_i -
+           \frac{1}{\text{n_neighbors}} \sum_{j\in\mathcal{N}_{\text{n_neighbors}}(x_i)} \hat{y}_j|
 
         Args:
             n_neighbors (int, optional): Number of neighbors for the knn
@@ -144,7 +144,8 @@ class BinaryLabelDatasetMetric(DatasetMetric):
         y = self.dataset.labels
 
         # learn a KNN on the features
-        nbrs = NearestNeighbors(n_neighbors, algorithm='ball_tree').fit(X)
+        nbrs = NearestNeighbors(n_neighbors=n_neighbors, algorithm='ball_tree')
+        nbrs.fit(X)
         _, indices = nbrs.kneighbors(X)
 
         # compute consistency score
@@ -196,7 +197,7 @@ class BinaryLabelDatasetMetric(DatasetMetric):
         Examples:
             To use with non-binary protected attributes, the column must be
             converted to ordinal:
-            
+
             >>> mapping = {'Black': 0, 'White': 1, 'Asian-Pac-Islander': 2,
             ... 'Amer-Indian-Eskimo': 3, 'Other': 4}
             >>> def map_race(df):

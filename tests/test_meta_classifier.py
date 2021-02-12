@@ -1,11 +1,13 @@
 import numpy as np
 import pandas as pd
+import pytest
 
 from aif360.datasets import AdultDataset
 from aif360.metrics import ClassificationMetric
 from aif360.algorithms.inprocessing import MetaFairClassifier
 from aif360.algorithms.inprocessing.celisMeta.utils import getStats
 
+@pytest.mark.skip('Too slow')
 def test_adult():
     np.random.seed(1)
     # np.random.seed(9876)

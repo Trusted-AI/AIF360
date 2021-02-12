@@ -30,7 +30,7 @@ class BinaryLabelDataset(StructuredDataset):
         """
         # fix scores before validating
         if np.all(self.scores == self.labels):
-            self.scores = np.float64(self.scores == self.favorable_label)
+            self.scores = (self.scores == self.favorable_label).astype(np.float64)
 
         super(BinaryLabelDataset, self).validate_dataset()
 

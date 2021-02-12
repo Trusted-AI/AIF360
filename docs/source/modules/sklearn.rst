@@ -49,6 +49,7 @@ Loaders
    datasets.fetch_german
    datasets.fetch_bank
    datasets.fetch_compas
+   datasets.fetch_lawschool_gpa
 
 :mod:`aif360.sklearn.metrics`: Fairness metrics
 ===============================================
@@ -166,6 +167,8 @@ In-processors
    :template: class.rst
 
    inprocessing.AdversarialDebiasing
+   inprocessing.ExponentiatedGradientReduction
+   inprocessing.GridSearchReduction
 
 :mod:`aif360.sklearn.postprocessing`: Post-processing algorithms
 ================================================================

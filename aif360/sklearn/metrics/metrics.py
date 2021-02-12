@@ -14,7 +14,7 @@ __all__ = [
     # meta-metrics
     'difference', 'ratio',
     # scorer factory
-    'make_scorer', 
+    'make_scorer',
     # helpers
     'specificity_score', 'base_rate', 'selection_rate', 'generalized_fpr',
     'generalized_fnr',
@@ -554,8 +554,8 @@ def consistency_score(X, y, n_neighbors=5):
     labels are for similar instances.
 
     .. math::
-        1 - \frac{1}{n\cdot\text{n_neighbors}}\sum_{i=1}^n |\hat{y}_i -
-        \sum_{j\in\mathcal{N}_{\text{n_neighbors}}(x_i)} \hat{y}_j|
+        1 - \frac{1}{n}\sum_{i=1}^n |\hat{y}_i -
+        \frac{1}{\text{n_neighbors}} \sum_{j\in\mathcal{N}_{\text{n_neighbors}}(x_i)} \hat{y}_j|
 
     Args:
         X (array-like): Sample features.
@@ -571,7 +571,8 @@ def consistency_score(X, y, n_neighbors=5):
     # cast as ndarrays
     X, y = check_X_y(X, y)
     # learn a KNN on the features
-    nbrs = NearestNeighbors(n_neighbors, algorithm='ball_tree').fit(X)
+    nbrs = NearestNeighbors(n_neighbors=n_neighbors, algorithm='ball_tree')
+    nbrs.fit(X)
     indices = nbrs.kneighbors(X, return_distance=False)
 
     # compute consistency score
