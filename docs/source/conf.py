@@ -266,5 +266,5 @@ def linkcode_resolve(domain, info):
 
     fn = relpath(fn, start=dirname(aif360.__file__))
 
-    return "https://github.com/IBM/AIF360/blob/master/aif360/%s%s" % (
+    return "https://github.com/Trusted-AI/AIF360/blob/master/aif360/%s%s" % (
            fn, linespec)
