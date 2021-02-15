@@ -2,7 +2,7 @@ import os
 import pandas as pd
 from sklearn.datasets import fetch_openml
 from aif360.sklearn.datasets.utils import standardize_dataset
-import tempeh.configurations as tc 
+import tempeh.configurations as tc
 
 def fetch_lawschool_gpa(subset="all", usecols=[],
 				dropcols=[], numeric_only=False, dropna=False):
@@ -27,7 +27,7 @@ def fetch_lawschool_gpa(subset="all", usecols=[],
 	if subset not in {'train', 'test', 'all'}:
 		raise ValueError("subset must be either 'train', 'test', or 'all'; "
 						 "cannot be {}".format(subset))
-	
+
 	dataset = tc.datasets["lawschool_gpa"]()
 	X_train,X_test = dataset.get_X(format=pd.DataFrame)
 	y_train, y_test = dataset.get_y(format=pd.Series)
@@ -35,9 +35,9 @@ def fetch_lawschool_gpa(subset="all", usecols=[],
 	all_train = pd.concat([X_train, y_train, A_train], axis=1)
 	all_test = pd.concat([X_test, y_test, A_test], axis=1)
 
-	if subset is "train":
+	if subset == "train":
 		df = all_train
-	elif subset is "test":
+	elif subset == "test":
 		df = all_test
 	else:
 		df = pd.concat([all_train, all_test], axis=0)
@@ -48,7 +48,7 @@ def fetch_lawschool_gpa(subset="all", usecols=[],
 							  numeric_only=numeric_only, dropna=dropna)
 
 
-	
+
 
 
 
