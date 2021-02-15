@@ -1,1 +1,2 @@
 recursive-include aif360/data/ *
+include LICENSE

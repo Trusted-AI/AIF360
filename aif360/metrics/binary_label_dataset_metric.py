@@ -34,17 +34,17 @@ class BinaryLabelDatasetMetric(DatasetMetric):
         super(BinaryLabelDatasetMetric, self).__init__(dataset,
             unprivileged_groups=unprivileged_groups,
             privileged_groups=privileged_groups)
-        
+
         if isinstance(dataset, MulticlassLabelDataset):
             fav_label_value = 1.
             unfav_label_value = 0.
-           
+
             self.dataset = self.dataset.copy()
             # Find all labels which match any of the favorable labels
             fav_idx = np.logical_or.reduce(np.equal.outer(self.dataset.favorable_label, self.dataset.labels))
             # Replace labels with corresponding values
             self.dataset.labels = np.where(fav_idx, fav_label_value, unfav_label_value)
-            
+
             self.dataset.favorable_label = float(fav_label_value)
             self.dataset.unfavorable_label = float(unfav_label_value)
 
@@ -144,7 +144,8 @@ class BinaryLabelDatasetMetric(DatasetMetric):
         y = self.dataset.labels
 
         # learn a KNN on the features
-        nbrs = NearestNeighbors(n_neighbors, algorithm='ball_tree').fit(X)
+        nbrs = NearestNeighbors(n_neighbors=n_neighbors, algorithm='ball_tree')
+        nbrs.fit(X)
         _, indices = nbrs.kneighbors(X)
 
         # compute consistency score
@@ -196,7 +197,7 @@ class BinaryLabelDatasetMetric(DatasetMetric):
         Examples:
             To use with non-binary protected attributes, the column must be
             converted to ordinal:
-            
+
             >>> mapping = {'Black': 0, 'White': 1, 'Asian-Pac-Islander': 2,
             ... 'Amer-Indian-Eskimo': 3, 'Other': 4}
             >>> def map_race(df):

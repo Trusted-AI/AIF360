@@ -80,7 +80,8 @@ def fetch_adult(subset='all', data_home=None, binary_race=True, usecols=[],
         raise ValueError("subset must be either 'train', 'test', or 'all'; "
                          "cannot be {}".format(subset))
     df = to_dataframe(fetch_openml(data_id=1590, target_column=None,
-                                   data_home=data_home or DATA_HOME_DEFAULT))
+                                   data_home=data_home or DATA_HOME_DEFAULT,
+                                   as_frame=False))
     if subset == 'train':
         df = df.iloc[16281:]
     elif subset == 'test':
@@ -158,7 +159,8 @@ def fetch_german(data_home=None, binary_age=True, usecols=[], dropcols=[],
         0.9483094846144106
     """
     df = to_dataframe(fetch_openml(data_id=31, target_column=None,
-                                   data_home=data_home or DATA_HOME_DEFAULT))
+                                   data_home=data_home or DATA_HOME_DEFAULT,
+                                   as_frame=False))
 
     df = df.rename(columns={'class': 'credit-risk'})  # more descriptive name
     df['credit-risk'] = df['credit-risk'].cat.as_ordered()  # 'bad' < 'good'
@@ -229,7 +231,7 @@ def fetch_bank(data_home=None, percent10=False, usecols=[], dropcols='duration',
     # TODO: this seems to be an old version
     df = to_dataframe(fetch_openml(data_id=1558 if percent10 else 1461,
                                    data_home=data_home or DATA_HOME_DEFAULT,
-                                   target_column=None))
+                                   target_column=None, as_frame=False))
     df.columns = ['age', 'job', 'marital', 'education', 'default', 'balance',
                   'housing', 'loan', 'contact', 'day', 'month', 'duration',
                   'campaign', 'pdays', 'previous', 'poutcome', 'deposit']

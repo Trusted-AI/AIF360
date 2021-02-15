@@ -28,7 +28,7 @@ Or install the development version from GitHub:
 
 ``` r
 # install.packages("devtools")
-devtools::install_github("IBM/AIF360/aif360/aif360-r") 
+devtools::install_github("Trusted-AI/AIF360/aif360/aif360-r")
 ```
 
 Then, use the install\_aif360() function to install AIF360:
@@ -124,17 +124,17 @@ load_aif360_lib()
 
 ``` r
 # load a toy dataset
-data <- data.frame("feature1" = c(0,0,1,1,1,1,0,1,1,0), 
-                   "feature2" = c(0,1,0,1,1,0,0,0,0,1), 
-                   "label" = c(1,0,0,1,0,0,1,0,1,1))
+data <- data.frame("feature1" = c(0,0,1,1,1,1,0,1,1,0),
+                   "feature2" = c(0,1,0,1,1,0,0,0,0,1),
+                  "label" = c(1,0,0,1,0,0,1,0,1,1))
 
 # format the dataset
-formatted_dataset <- aif360::aif_dataset(data_path = data, 
-                                          favor_label = 0, 
-                                          unfavor_label = 1, 
-                                          unprivileged_protected_attribute = 0, 
-                                          privileged_protected_attribute = 1, 
-                                          target_column = "label", 
+formatted_dataset <- aif360::aif_dataset(data_path = data,
+                                          favor_label = 0,
+                                          unfavor_label = 1,
+                                          unprivileged_protected_attribute = 0,
+                                          privileged_protected_attribute = 1,
+                                          target_column = "label",
                                           protected_attribute = "feature1")
 ```
 
