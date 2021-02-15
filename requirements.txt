@@ -6,7 +6,6 @@ tensorflow>=1.13.1,<2
 cvxpy>=1.0
 fairlearn==0.4.6
 tempeh
-xport
 
 # notebooks
 jupyter
