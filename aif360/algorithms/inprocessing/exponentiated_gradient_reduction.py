@@ -6,7 +6,6 @@ licensed under the MIT Licencse, Copyright Microsoft Corporation
 """
 from logging import warning
 
-import numpy as np
 import pandas as pd
 
 from aif360.algorithms import Transformer

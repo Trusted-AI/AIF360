@@ -7,7 +7,6 @@ licensed under the MIT Licencse, Copyright Microsoft Corporation
 from logging import warning
 
 import fairlearn.reductions as red
-import numpy as np
 import pandas as pd
 
 from aif360.algorithms import Transformer
