@@ -176,10 +176,10 @@ issue here and try the solutions.
 
 #### TensorFlow
 
-See the [Install TensorFlow with pip](https://www.tensorflow.org/install/pip?lang=python3#older-versions-of-tensorflow)
+See the [Install TensorFlow with pip](https://www.tensorflow.org/install/pip)
 page for detailed instructions.
 
-Note: we require `'tensorflow >= 1.13.1, < 2'`.
+Note: we require `'tensorflow >= 1.13.1'`.
 
 Once tensorflow is installed, try re-running:
 

@@ -1,7 +1,7 @@
 import numpy as np
 
 try:
-    import tensorflow as tf
+    import tensorflow.compat.v1 as tf
 except ImportError as error:
     from logging import warning
     warning("{}: AdversarialDebiasing will be unavailable. To install, run:\n"
@@ -82,14 +82,14 @@ class AdversarialDebiasing(Transformer):
         """
         with tf.variable_scope("classifier_model"):
             W1 = tf.get_variable('W1', [features_dim, self.classifier_num_hidden_units],
-                                  initializer=tf.contrib.layers.xavier_initializer(seed=self.seed1))
+                                  initializer=tf.initializers.glorot_uniform(seed=self.seed1))
             b1 = tf.Variable(tf.zeros(shape=[self.classifier_num_hidden_units]), name='b1')
 
             h1 = tf.nn.relu(tf.matmul(features, W1) + b1)
             h1 = tf.nn.dropout(h1, keep_prob=keep_prob, seed=self.seed2)
 
             W2 = tf.get_variable('W2', [self.classifier_num_hidden_units, 1],
-                                 initializer=tf.contrib.layers.xavier_initializer(seed=self.seed3))
+                                 initializer=tf.initializers.glorot_uniform(seed=self.seed3))
             b2 = tf.Variable(tf.zeros(shape=[1]), name='b2')
 
             pred_logit = tf.matmul(h1, W2) + b2
@@ -105,7 +105,7 @@ class AdversarialDebiasing(Transformer):
             s = tf.sigmoid((1 + tf.abs(c)) * pred_logits)
 
             W2 = tf.get_variable('W2', [3, 1],
-                                 initializer=tf.contrib.layers.xavier_initializer(seed=self.seed4))
+                                 initializer=tf.initializers.glorot_uniform(seed=self.seed4))
             b2 = tf.Variable(tf.zeros(shape=[1]), name='b2')
 
             pred_protected_attribute_logit = tf.matmul(tf.concat([s, s * true_labels, s * (1.0 - true_labels)], axis=1), W2) + b2
@@ -123,6 +123,11 @@ class AdversarialDebiasing(Transformer):
         Returns:
             AdversarialDebiasing: Returns self.
         """
+        if tf.executing_eagerly():
+            raise RuntimeError("AdversarialDebiasing does not work in eager "
+                    "execution mode. To fix, add `tf.disable_eager_execution()`"
+                    " to the top of the calling script.")
+
         if self.seed is not None:
             np.random.seed(self.seed)
         ii32 = np.iinfo(np.int32)
