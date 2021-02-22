@@ -39,7 +39,7 @@ setup(name='aif360',
       python_requires='>=3.6',
       install_requires=[
           'numpy>=1.16',
-          'scipy>=1.2.0',
+          'scipy>=1.2.0,<1.6.0',
           'pandas>=0.24.0',
           'scikit-learn>=0.22.1',
           'matplotlib',
