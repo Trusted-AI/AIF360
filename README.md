@@ -1,6 +1,6 @@
 # AI Fairness 360 (AIF360)
 
-[![Build Status](https://travis-ci.com/Trusted-AI/AIF360.svg?branch=master)](https://travis-ci.com/Trusted-AI/AIF360)
+![Continuous Integration](https://github.com/Trusted-AI/AIF360/workflows/Continuous%20Integration/badge.svg)
 [![Documentation](https://readthedocs.org/projects/aif360/badge/?version=latest)](http://aif360.readthedocs.io/en/latest/?badge=latest)
 [![PyPI version](https://badge.fury.io/py/aif360.svg)](https://badge.fury.io/py/aif360)
 [![CRAN\_Status\_Badge](http://www.r-pkg.org/badges/version/aif360)](https://cran.r-project.org/package=aif360)

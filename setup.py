@@ -19,6 +19,7 @@ extras = {
     'DisparateImpactRemover': ['BlackBoxAuditing'],
     'LIME': ['lime'],
     'ART': ['adversarial-robustness-toolbox>=1.0.0'],
+    'Reductions': ['fairlearn==0.4.6'],
     'notebooks': ['jupyter', 'tqdm']
 }
 extras['tests'] = reduce(lambda l1, l2: l1+l2, extras.values(), ['pytest>=3.5'])
@@ -38,13 +39,11 @@ setup(name='aif360',
       python_requires='>=3.6',
       install_requires=[
           'numpy>=1.16',
-          'scipy>=1.2.0',
+          'scipy>=1.2.0,<1.6.0',
           'pandas>=0.24.0',
-          'scikit-learn>=0.22',
+          'scikit-learn>=0.22.1',
           'matplotlib',
-          'fairlearn==0.4.6',
           'tempeh',
-          'xport'
       ],
       extras_require=extras,
       package_data={'aif360': ['data/*', 'data/*/*', 'data/*/*/*']},

@@ -5,30 +5,36 @@ import pandas as pd
 
 from aif360.datasets import StructuredDataset
 
-from sklearn import preprocessing
+from sklearn.preprocessing import MinMaxScaler
 
 
 class RegressionDataset(StructuredDataset):
+    """Base class for regression datasets."""
 
-    def __init__(self, df, dep_var_name,
-                 protected_attribute_names, privileged_classes,
-                 instance_weights_name='',
-                 categorical_features=[], na_values=[], custom_preprocessing=None,
-                 metadata=None):
+    def __init__(self, df, dep_var_name, protected_attribute_names,
+                 privileged_classes, instance_weights_name='',
+                 categorical_features=[], na_values=[],
+                 custom_preprocessing=None, metadata=None):
         """
         Subclasses of RegressionDataset should perform the following before
         calling `super().__init__`:
+
             1. Load the dataframe from a raw file.
+
         Then, this class will go through a standard preprocessing routine which:
+
             2. (optional) Performs some dataset-specific preprocessing (e.g.
                renaming columns/values, handling missing data).
-            3. Drops unrequested columns (see `features_to_keep` and
-               `features_to_drop` for details).
-            4. Drops rows with NA values.
-            5. Creates a one-hot encoding of the categorical variables.
-            6. Maps protected attributes to binary privileged/unprivileged
+
+            3. Drops rows with NA values.
+
+            4. Creates a one-hot encoding of the categorical variables.
+
+            5. Maps protected attributes to binary privileged/unprivileged
                values (1/0).
-            7. Normalizes df values
+
+            6. Normalizes df values
+
         Args:
             df (pandas.DataFrame): DataFrame on which to perform standard
                 processing.
@@ -91,14 +97,14 @@ class RegressionDataset(StructuredDataset):
                 np.array(unprivileged_values, dtype=np.float64))
 
         # 6. Normalize df values
-        min_max_scaler = preprocessing.MinMaxScaler()
-        df = pd.DataFrame(min_max_scaler.fit_transform(df.values),columns=list(df),index=df.index)
+        df = pd.DataFrame(MinMaxScaler().fit_transform(df.values),
+                          columns=list(df), index=df.index)
 
-        super(RegressionDataset, self).__init__(df=df, label_names=[dep_var_name],
+        super(RegressionDataset, self).__init__(df=df,
+            label_names=[dep_var_name],
             protected_attribute_names=protected_attribute_names,
             privileged_protected_attributes=privileged_protected_attributes,
             unprivileged_protected_attributes=unprivileged_protected_attributes,
             instance_weights_name=instance_weights_name,
             scores_names=[],
             metadata=metadata)
-
