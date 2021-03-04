@@ -74,9 +74,9 @@ Supported Python Configurations:
 
 | OS      | Python version |
 | ------- | -------------- |
-| macOS   | 3.6, 3.7  |
-| Ubuntu  | 3.6, 3.7  |
-| Windows | 3.6, 3.7  |
+| macOS   | 3.6, 3.7, 3.8  |
+| Ubuntu  | 3.6, 3.7, 3.8  |
+| Windows | 3.6, 3.7, 3.8  |
 
 ### (Optional) Create a virtual environment
 
@@ -176,10 +176,10 @@ issue here and try the solutions.
 
 #### TensorFlow
 
-See the [Install TensorFlow with pip](https://www.tensorflow.org/install/pip?lang=python3#older-versions-of-tensorflow)
+See the [Install TensorFlow with pip](https://www.tensorflow.org/install/pip)
 page for detailed instructions.
 
-Note: we require `'tensorflow >= 1.13.1, < 2'`.
+Note: we require `'tensorflow >= 1.13.1'`.
 
 Once tensorflow is installed, try re-running:
 

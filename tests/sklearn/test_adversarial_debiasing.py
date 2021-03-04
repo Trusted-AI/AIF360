@@ -1,7 +1,8 @@
 import numpy as np
 from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import accuracy_score
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
+tf.disable_eager_execution()
 
 from aif360.datasets import AdultDataset
 from aif360.sklearn.datasets import fetch_adult
