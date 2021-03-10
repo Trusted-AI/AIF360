@@ -134,7 +134,7 @@ pip install 'aif360[all]'
 ```
 
 The options for available extras are: `OptimPreproc, LFR, AdversarialDebiasing,
-DisparateImpactRemover, LIME, ART, notebooks, tests, docs, all`
+DisparateImpactRemover, LIME, ART, Reductions, notebooks, tests, docs, all`
 
 If you encounter any errors, try the [Troubleshooting](#troubleshooting) steps.
 
