@@ -8,7 +8,7 @@ class ScoringFunction:
     def score(self, observed_sum: float, probs: np.array, penalty: float, q: float):
         raise NotImplementedError
 
-    def dscore(observed_sum: float, probs: np.array, q: float):
+    def dscore(self, observed_sum: float, probs: np.array, q: float):
         raise NotImplementedError
 
     def q_dscore(self, observed_sum: float, probs: np.array, q: float):

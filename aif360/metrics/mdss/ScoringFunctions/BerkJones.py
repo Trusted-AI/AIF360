@@ -67,10 +67,6 @@ class BerkJones(ScoringFunction):
         """
         assert 'alpha' in self.kwargs.keys(), "Warning: calling compute_qs bj without alpha"
         alpha = self.kwargs['alpha']
-        
-        direction = None
-        if 'direction' in self.kwargs:
-            direction = self.kwargs['direction']
 
         q_mle = self.qmle(observed_sum, probs)
 
