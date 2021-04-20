@@ -308,6 +308,6 @@ class MDSS(object):
                     print("Best score is now", best_score)
 
             elif verbose:
-                    print("Current score of", current_score, "does not beat best score of", best_score)
+                print("Current score of", current_score, "does not beat best score of", best_score)
             best_scores.append(best_score)
         return best_subset, best_score
