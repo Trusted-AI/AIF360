@@ -65,4 +65,4 @@ class MDSSClassificationMetric(ClassificationMetric):
         expected = pd.Series(self.classified_dataset.scores.flatten())
         outcomes = pd.Series(self.dataset.labels.flatten())
 
-        return self.scanner.bias_scan(coordinates, outcomes, expected, penalty, num_iters)
+        return self.scanner.scan(coordinates, outcomes, expected, penalty, num_iters)
