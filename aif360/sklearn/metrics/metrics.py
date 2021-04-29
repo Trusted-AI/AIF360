@@ -473,7 +473,7 @@ def mdss_bias_scan(y_true, y_pred, dataset=None, pos_label=1, privileged=True, n
     scoring_function = Bernoulli(direction=direction)
     scanner = MDSS(scoring_function)
 
-    return scanner.bias_scan(coordinates, outcomes, expected, penalty, num_iters)
+    return scanner.scan(coordinates, outcomes, expected, penalty, num_iters)
 
 
 # ========================== INDIVIDUAL FAIRNESS ===============================

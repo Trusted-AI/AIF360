@@ -196,7 +196,7 @@ class MDSS(object):
         penalized_score = scoring_function.score(observed_sum, probs, total_penalty, current_q_mle)
         return penalized_score
 
-    def bias_scan(self, coordinates: pd.DataFrame, outcomes: pd.Series, probs: pd.Series, penalty: float,
+    def scan(self, coordinates: pd.DataFrame, outcomes: pd.Series, probs: pd.Series, penalty: float,
                     num_iters: int, verbose: bool = False, seed: int = 0):
         """
         :param coordinates: data frame containing having as columns the covariates/features
