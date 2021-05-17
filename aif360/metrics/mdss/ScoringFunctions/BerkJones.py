@@ -51,7 +51,11 @@ class BerkJones(ScoringFunction):
         direction = None
         if 'direction' in self.kwargs:
             direction = self.kwargs['direction']
-        q = observed_sum/len(probs)
+
+        if len(probs) == 0:
+            return 0
+        else:
+            q = observed_sum/len(probs)
 
         if ((direction == 'positive') & (q < alpha)) | ((direction == 'negative') & (q > alpha)):
             return alpha
