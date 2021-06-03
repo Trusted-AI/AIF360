@@ -26,8 +26,14 @@ class MDSSClassificationMetric(ClassificationMetric):
     def score_groups(self, privileged=True, penalty = 0.0):
         """
         compute the bias score for a prespecified group of records.
-        :param privileged: flag for group to score - privileged group (True) or unprivileged group (False)
-        :param penalty: penalty term. Should be positive
+        
+        :param privileged: flag for group to score - privileged group (True) or unprivileged group (False).
+        This abstract the need to explicitly specify the direction of bias to scan for which depends on what the favourable label is.
+        :param penalty: penalty term. Should be positive. The penalty term as with any regularization parameter may need to be 
+        tuned for ones use case. The higher the penalty, the less complex (number of features and feature values) the highest scoring
+        subset that gets returned is.
+        
+        :returns: the score for the group
         """
         groups = self.privileged_groups if privileged else self.unprivileged_groups
         subset = defaultdict(list)
@@ -39,8 +45,6 @@ class MDSSClassificationMetric(ClassificationMetric):
             for k, v in g.items():
                 subset[k].append(v)
         
-        # print(subset, direction)
-        
         coordinates = pd.DataFrame(self.dataset.features, columns=self.dataset.feature_names)
         expected = pd.Series(self.classified_dataset.scores.flatten())
         outcomes = pd.Series(self.dataset.labels.flatten())
@@ -51,9 +55,15 @@ class MDSSClassificationMetric(ClassificationMetric):
     def bias_scan(self, privileged=True, num_iters = 10, penalty = 0.0):
         """
         scan to find the highest scoring subset of records
-        :param privileged: flag for group to scan for - privileged group (True) or unprivileged group (False)
-        :param num_iters: number of iterations
-        :param penalty: penalty term. Should be positive
+        
+        :param privileged: flag for group to scan for - privileged group (True) or unprivileged group (False). 
+        This abstract the need to explicitly specify the direction of bias to scan for which depends on what the favourable label is.
+        :param num_iters: number of iterations (random restarts)
+        :param penalty: penalty term. Should be positive. The penalty term as with any regularization parameter may need to be 
+        tuned for ones use case. The higher the penalty, the less complex (number of features and feature values) the highest scoring
+        subset that gets returned is.
+        
+        :returns: the highest scoring subset and the score
         """
 
         xor_op = privileged ^ bool(self.classified_dataset.favorable_label)

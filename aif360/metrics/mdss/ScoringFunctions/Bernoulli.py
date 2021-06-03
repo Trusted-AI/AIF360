@@ -6,6 +6,10 @@ import numpy as np
 class Bernoulli(ScoringFunction):
 
     def __init__(self, **kwargs):
+        """
+        Bernoulli scoring function. May be appropriate to use when the outcome of
+        interest is assumed to be Bernoulli distributed or Binary.
+        """
         
         super(Bernoulli, self).__init__()
         self.kwargs = kwargs
