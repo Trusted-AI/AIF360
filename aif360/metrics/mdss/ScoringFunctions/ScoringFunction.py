@@ -4,7 +4,7 @@ class ScoringFunction:
 
     def __init__(self, **kwargs):
         """
-        This is an abstract class for Scoring Functions (or Scan Statistics).
+        This is an abstract class for Scoring Functions (or expectation-based scan statistics).
         
         [1] introduces a property of many commonly used log-likelihood ratio scan statistics called 
         Additive linear-time subset scanning (ALTSS) that allows for exact of efficient maximization of these
@@ -18,19 +18,24 @@ class ScoringFunction:
 
     def score(self, observed_sum: float, probs: np.array, penalty: float, q: float):
         """
-        Computes the score for the given q. (for the given records)
+        Computes the score for the given q. (for the given records).
+        
+        The alternative hypothesis of MDSS assumes that there exists some constant multiplicative factor q > 1 
+        for the subset of records being scored by the scoring function. 
+        q is sometimes refered to as relative risk or severity. 
+        
         """
         raise NotImplementedError
 
     def dscore(self, observed_sum: float, probs: np.array, q: float):
         """
-        Computes the first derivative of the scoring function
+        Computes the first derivative of the score function
         """
         raise NotImplementedError
 
     def q_dscore(self, observed_sum: float, probs: np.array, q: float):
         """
-        Computes the first derivative of the scoring function multiplied by the given q
+        Computes the first derivative of the score function multiplied by the given q
         """
         raise NotImplementedError
 
@@ -42,8 +47,7 @@ class ScoringFunction:
 
     def compute_qs(self, observed_sum: float, probs: np.array, penalty: float):
         """
-        Computes roots (qmin and qmax) of the score function for given q
-        
+        Computes roots (qmin and qmax) of the score function (for the given records)
         """
         raise NotImplementedError
 

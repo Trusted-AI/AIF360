@@ -7,10 +7,14 @@ class Poisson(ScoringFunction):
 
     def __init__(self, **kwargs):
         """
-        Bernoulli scoring function. May be appropriate to use when the outcome of
+        Bernoulli score function. May be appropriate to use when the outcome of
         interest is assumed to be Poisson distributed or Binary.
+        
+        kwargs must contatin
+        'direction (str)' - - direction of the severity; could be higher than expected outcomes ('positive') or lower than expected ('negative')
         """
         super(Poisson, self).__init__()
+        assert 'direction' in kwargs.keys()
         self.kwargs = kwargs
 
     def score(self, observed_sum: float, probs: np.array, penalty: float, q: float):
@@ -40,7 +44,7 @@ class Poisson(ScoringFunction):
 
     def compute_qs(self, observed_sum: float, probs: np.array, penalty: float):
         """
-        Computes roots (qmin and qmax) of the score function for given q
+        Computes roots (qmin and qmax) of the score function
 
         :param observed_sum: sum of observed binary outcomes for all i
         :param probs: predicted probabilities p_i for each data element i

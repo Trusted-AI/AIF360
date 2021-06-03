@@ -7,15 +7,23 @@ class BerkJones(ScoringFunction):
 
     def __init__(self, **kwargs):
         """
-        Berk-Jones scoring function is a non parametric expectatation based
+        Berk-Jones score function is a non parametric expectatation based
         scan statistic that also satisfies the ALTSS property; Non-parametric scoring functions 
         do not make parametric assumptions about the model or outcome [1].
+        
+        kwargs must contatin
+        'direction (str)' - direction of the severity; could be higher than expected outcomes ('positive') or lower than expected ('negative')
+        'alpha (float)' - the alpha threshold that will be used to compute the score. 
+            In practice, it may be useful to search over a grid of alpha thresholds and select the one with the maximum score.
+        
         
         [1] Neill, D. B., & Lingwall, J. (2007). A nonparametric scan statistic for multivariate disease surveillance. Advances in
         Disease Surveillance, 4(106), 570
         """
 
         super(BerkJones, self).__init__()
+        assert 'direction' in kwargs.keys()
+        assert 'alpha' in kwargs.keys()
         self.kwargs = kwargs
 
     def score(self, observed_sum: float, probs: np.array, penalty: float, q: float):
@@ -71,7 +79,7 @@ class BerkJones(ScoringFunction):
 
     def compute_qs(self, observed_sum: float, probs: np.array, penalty: float):
         """
-        Computes roots (qmin and qmax) of the score function for given q
+        Computes roots (qmin and qmax) of the score function
 
         :param observed_sum: sum of observed binary outcomes for all i
         :param probs: predicted probabilities p_i for each data element i
