@@ -87,7 +87,9 @@ def bisection_q_max(score_function: ScoringFunction, observed_sum: float, probs:
     return (q_temp_min + q_temp_max) / 2
 
 def direction_assertions(direction: str, q_min: float, q_max: float):
-
+    """
+    Does some sanity checks to see if the q_mle exists for the given direction.
+    """
     exist = 1
     if direction == 'positive':
         if q_max < 1:
