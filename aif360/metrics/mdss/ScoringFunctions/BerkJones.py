@@ -6,6 +6,14 @@ import numpy as np
 class BerkJones(ScoringFunction):
 
     def __init__(self, **kwargs):
+        """
+        Berk-Jones scoring function is a non parametric expectatation based
+        scan statistic that also satisfies the ALTSS property; Non-parametric scoring functions 
+        do not make parametric assumptions about the model or outcome [1].
+        
+        [1] Neill, D. B., & Lingwall, J. (2007). A nonparametric scan statistic for multivariate disease surveillance. Advances in
+        Disease Surveillance, 4(106), 570
+        """
 
         super(BerkJones, self).__init__()
         self.kwargs = kwargs

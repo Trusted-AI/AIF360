@@ -6,7 +6,10 @@ import numpy as np
 class Poisson(ScoringFunction):
 
     def __init__(self, **kwargs):
-        
+        """
+        Bernoulli scoring function. May be appropriate to use when the outcome of
+        interest is assumed to be Poisson distributed or Binary.
+        """
         super(Poisson, self).__init__()
         self.kwargs = kwargs
 
