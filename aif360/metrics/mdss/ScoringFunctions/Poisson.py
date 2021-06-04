@@ -10,8 +10,8 @@ class Poisson(ScoringFunction):
         Bernoulli score function. May be appropriate to use when the outcome of
         interest is assumed to be Poisson distributed or Binary.
         
-        kwargs must contatin
-        'direction (str)' - - direction of the severity; could be higher than expected outcomes ('positive') or lower than expected ('negative')
+        kwargs must contain
+        'direction (str)' - direction of the severity; could be higher than expected outcomes ('positive') or lower than expected ('negative')
         """
         super(Poisson, self).__init__()
         assert 'direction' in kwargs.keys()

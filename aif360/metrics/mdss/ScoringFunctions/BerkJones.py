@@ -11,7 +11,7 @@ class BerkJones(ScoringFunction):
         scan statistic that also satisfies the ALTSS property; Non-parametric scoring functions 
         do not make parametric assumptions about the model or outcome [1].
         
-        kwargs must contatin
+        kwargs must contain
         'direction (str)' - direction of the severity; could be higher than expected outcomes ('positive') or lower than expected ('negative')
         'alpha (float)' - the alpha threshold that will be used to compute the score. 
             In practice, it may be useful to search over a grid of alpha thresholds and select the one with the maximum score.
