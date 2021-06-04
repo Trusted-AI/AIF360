@@ -1,6 +1,7 @@
 import warnings
 
 import numpy as np
+import pandas as pd
 from sklearn.metrics import make_scorer as _make_scorer, recall_score
 from sklearn.metrics import multilabel_confusion_matrix
 from sklearn.neighbors import NearestNeighbors
@@ -8,7 +9,8 @@ from sklearn.utils import check_X_y
 from sklearn.exceptions import UndefinedMetricWarning
 
 from aif360.sklearn.utils import check_groups
-
+from aif360.metrics.mdss.ScoringFunctions import Bernoulli
+from aif360.metrics.mdss.MDSS import MDSS
 
 __all__ = [
     # meta-metrics
@@ -21,7 +23,7 @@ __all__ = [
     # group fairness
     'statistical_parity_difference', 'disparate_impact_ratio',
     'equal_opportunity_difference', 'average_odds_difference',
-    'average_odds_error',
+    'average_odds_error', 'mdss_bias_scan', 'mdss_bias_score',
     # individual fairness
     'generalized_entropy_index', 'generalized_entropy_error',
     'between_group_generalized_entropy_error', 'theil_index',
@@ -416,6 +418,62 @@ def average_odds_error(y_true, y_pred, prot_attr=None, pos_label=1,
                           priv_group=priv_group, pos_label=pos_label,
                           sample_weight=sample_weight)
     return (abs(tpr_diff) + abs(fpr_diff)) / 2
+
+
+def mdss_bias_score(y_true, y_pred, pos_label=1, privileged=True, num_iters = 10):
+    """
+    compute the bias score for a prespecified group of records with each observation's likelihood
+        is assumed to Bernoulli distributed and independent.
+    :param y_true (array-like): ground truth (correct) target values
+    :param y_pred (array-like): estimated targets as returned by a classifier
+    :param pos_label (scalar, optional): label of the positive class
+    :param privileged (bool, optional): flag for group to score - privileged group (True) or unprivileged group (False)
+    :param num_iters (scalar, optional): number of iterations
+    """
+    xor_op = privileged ^ bool(pos_label)
+    direction = 'negative' if xor_op else 'positive'
+
+    dummy_subset = dict({'index': range(len(y_true))})
+    expected = pd.Series(y_pred)
+    outcomes = pd.Series(y_true)
+    coordinates = pd.DataFrame(dummy_subset, index=expected.index)
+
+    scoring_function = Bernoulli(direction=direction)
+    scanner = MDSS(scoring_function)
+
+    return scanner.score_current_subset(coordinates, expected, outcomes, dummy_subset, 1e-17)
+
+
+def mdss_bias_scan(y_true, y_pred, dataset=None, pos_label=1, privileged=True, num_iters = 10, penalty = 0.0):
+    """
+    scan to find the highest scoring subset of records. each observation's likelihood is
+        assumed to Bernoulli distributed and independent.
+    :param y_true (array-like): ground truth (correct) target values
+    :param y_pred (array-like): estimated targets as returned by a classifier
+    :param dataset (dataframe optional): the dataset (containing the features) the classifier was trained on. If not specified, the subset is returned as indices.
+    :param pos_label (scalar, optional): label of the positive class
+    :param privileged (bool, optional): flag for group to scan for - privileged group (True) or unprivileged group (False)
+    :param num_iters (scalar, optional): number of iterations
+    :param penalty: penalty coefficient. Should be positive
+    """
+
+    xor_op = privileged ^ bool(pos_label)
+    direction = 'negative' if xor_op else 'positive'
+
+    expected = pd.Series(y_pred)
+    outcomes = pd.Series(y_true)
+
+    if dataset is not None:
+        coordinates = dataset
+    else:
+        dummy_subset = dict({'index': range(len(y_true))})
+        coordinates = pd.DataFrame(dummy_subset, index=expected.index)
+
+
+    scoring_function = Bernoulli(direction=direction)
+    scanner = MDSS(scoring_function)
+
+    return scanner.scan(coordinates, outcomes, expected, penalty, num_iters)
 
 
 # ========================== INDIVIDUAL FAIRNESS ===============================
