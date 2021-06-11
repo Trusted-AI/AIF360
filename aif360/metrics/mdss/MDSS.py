@@ -196,12 +196,12 @@ class MDSS(object):
         penalized_score = scoring_function.score(observed_sum, probs, total_penalty, current_q_mle)
         return penalized_score
 
-    def scan(self, coordinates: pd.DataFrame, outcomes: pd.Series, probs: pd.Series, penalty: float,
+    def scan(self, coordinates: pd.DataFrame, probs: pd.Series, outcomes: pd.Series, penalty: float,
                     num_iters: int, verbose: bool = False, seed: int = 0):
         """
         :param coordinates: data frame containing having as columns the covariates/features
-        :param outcomes: data series containing the outcomes/observed outcomes
         :param probs: data series containing the probabilities/expected outcomes
+        :param outcomes: data series containing the outcomes/observed outcomes
         :param penalty: penalty coefficient
         :param num_iters: number of iteration
         :param verbose: logging flag

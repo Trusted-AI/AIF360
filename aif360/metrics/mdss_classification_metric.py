@@ -2,7 +2,7 @@ from collections import defaultdict
 from aif360.datasets import BinaryLabelDataset
 from aif360.metrics import ClassificationMetric
 
-from aif360.metrics.mdss.ScoringFunctions import Bernoulli
+from aif360.metrics.mdss.ScoringFunctions import Bernoulli, ScoringFunction
 from aif360.metrics.mdss.MDSS import MDSS
 
 import pandas as pd
@@ -15,15 +15,15 @@ class MDSSClassificationMetric(ClassificationMetric):
         .. [1] Zhang, Z., & Neill, D. B. (2016). Identifying significant predictive bias in classifiers. arXiv preprint arXiv:1611.08292.
     """
     def __init__(self, dataset: BinaryLabelDataset, classified_dataset: BinaryLabelDataset, 
-                scoring_function: Bernoulli, unprivileged_groups: dict = None, privileged_groups:dict = None):
+                scoring_function: ScoringFunction = Bernoulli(direction='positive'), unprivileged_groups: dict = None, privileged_groups:dict = None):
     
         super(MDSSClassificationMetric, self).__init__(dataset, classified_dataset,
                                                        unprivileged_groups=unprivileged_groups,
                                                        privileged_groups=privileged_groups)
-
+        
         self.scanner = MDSS(scoring_function)
     
-    def score_groups(self, privileged=True, penalty = 0.0):
+    def score_groups(self, privileged=True, penalty = 1e-17):
         """
         compute the bias score for a prespecified group of records.
         
@@ -36,14 +36,17 @@ class MDSSClassificationMetric(ClassificationMetric):
         :returns: the score for the group
         """
         groups = self.privileged_groups if privileged else self.unprivileged_groups
-        subset = defaultdict(list)
+        subset = dict()
         
         xor_op = privileged ^ bool(self.classified_dataset.favorable_label)
-        direction = 'negative' if xor_op else 'positive'
+        direction = 'positive' if xor_op else 'negative'
 
         for g in groups:
             for k, v in g.items():
-                subset[k].append(v)
+                if k in subset.keys():
+                    subset[k].append(v)
+                else:
+                    subset[k] = [v]
         
         coordinates = pd.DataFrame(self.dataset.features, columns=self.dataset.feature_names)
         expected = pd.Series(self.classified_dataset.scores.flatten())
@@ -52,7 +55,7 @@ class MDSSClassificationMetric(ClassificationMetric):
         self.scanner.scoring_function.kwargs['direction'] = direction
         return self.scanner.score_current_subset(coordinates, expected, outcomes, dict(subset), penalty)
     
-    def bias_scan(self, privileged=True, num_iters = 10, penalty = 0.0):
+    def bias_scan(self, privileged=True, num_iters = 10, penalty = 1e-17):
         """
         scan to find the highest scoring subset of records
         
@@ -67,12 +70,12 @@ class MDSSClassificationMetric(ClassificationMetric):
         """
 
         xor_op = privileged ^ bool(self.classified_dataset.favorable_label)
-        direction = 'negative' if xor_op else 'positive'
+        direction = 'positive' if xor_op else 'negative'
         self.scanner.scoring_function.kwargs['direction'] = direction
 
         coordinates = pd.DataFrame(self.classified_dataset.features, columns=self.classified_dataset.feature_names)
         
         expected = pd.Series(self.classified_dataset.scores.flatten())
         outcomes = pd.Series(self.dataset.labels.flatten())
-
-        return self.scanner.scan(coordinates, outcomes, expected, penalty, num_iters)
+        
+        return self.scanner.scan(coordinates, expected, outcomes, penalty, num_iters)
