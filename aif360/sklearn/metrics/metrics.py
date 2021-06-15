@@ -431,7 +431,7 @@ def mdss_bias_score(y_true, y_pred, pos_label=1, privileged=True, num_iters = 10
     :param num_iters (scalar, optional): number of iterations
     """
     xor_op = privileged ^ bool(pos_label)
-    direction = 'negative' if xor_op else 'positive'
+    direction = 'positive' if xor_op else 'negative'
 
     dummy_subset = dict({'index': range(len(y_true))})
     expected = pd.Series(y_pred)
@@ -458,7 +458,7 @@ def mdss_bias_scan(y_true, y_pred, dataset=None, pos_label=1, privileged=True, n
     """
 
     xor_op = privileged ^ bool(pos_label)
-    direction = 'negative' if xor_op else 'positive'
+    direction = 'positive' if xor_op else 'negative'
 
     expected = pd.Series(y_pred)
     outcomes = pd.Series(y_true)
@@ -473,7 +473,7 @@ def mdss_bias_scan(y_true, y_pred, dataset=None, pos_label=1, privileged=True, n
     scoring_function = Bernoulli(direction=direction)
     scanner = MDSS(scoring_function)
 
-    return scanner.scan(coordinates, outcomes, expected, penalty, num_iters)
+    return scanner.scan(coordinates, expected, outcomes, penalty, num_iters)
 
 
 # ========================== INDIVIDUAL FAIRNESS ===============================
