@@ -167,9 +167,9 @@ class AdversarialDebiasing(Transformer):
             if self.debias:
                 adversary_opt = tf.train.AdamOptimizer(learning_rate)
 
-            classifier_vars = [var for var in tf.trainable_variables() if 'classifier_model' in var.name]
+            classifier_vars = [var for var in tf.trainable_variables(scope=self.scope_name) if 'classifier_model' in var.name]
             if self.debias:
-                adversary_vars = [var for var in tf.trainable_variables() if 'adversary_model' in var.name]
+                adversary_vars = [var for var in tf.trainable_variables(scope=self.scope_name) if 'adversary_model' in var.name]
                 # Update classifier parameters
                 adversary_grads = {var: grad for (grad, var) in adversary_opt.compute_gradients(pred_protected_attributes_loss,
                                                                                       var_list=classifier_vars)}
