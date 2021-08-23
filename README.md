@@ -60,6 +60,14 @@ Get in touch with us on [Slack](https://aif360.slack.com) (invitation
 
 ## Setup
 
+### Running inside Docker
+
+* unzip sample dataset present at aif360/data/raw/meps/sample_dataset.zip using `unzip aif360/data/raw/meps/sample_dataset.zip`
+* Under `aif360` directory build the docker container image using supplied Dockerfile using `docker build -t aif360_docker .`
+* Start the container image using command `docker run -it -p 8888:8888 aif360_docker:latest bash` assuming port 8888 is free on your machine.
+* Inside the container start jupuyter lab using command `jupyter lab --allow-root --ip 0.0.0.0 --port 8888 --no-browser`
+* Access the sample tutorials on your machine using URL `localhost:8888`
+
 ### R
 
 ``` r
