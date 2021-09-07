@@ -144,6 +144,6 @@ class ExponentiatedGradientReduction(BaseEstimator, ClassifierMixin):
             ``self.classes_``.
         """
         if self.drop_prot_attr:
-            X = X.drop(self.prot_attr)
+            X = X.drop(self.prot_attr, axis=1)
 
         return self.model._pmf_predict(X)
