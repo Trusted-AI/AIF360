@@ -15,20 +15,20 @@ description: |
 metadata:
   annotations: {platform: 'OpenSource'}
 inputs:
-  - {name: model_id,                     description: 'Required. Training model ID', default: 'training-dummy'}
-  - {name: model_class_file,             description: 'Required. pytorch model class file', default: 'PyTorchModel.py'}
-  - {name: model_class_name,             description: 'Required. pytorch model class name', default: 'PyTorchModel'}
-  - {name: feature_testset_path,         description: 'Required. Feature test dataset path in the data bucket'}
-  - {name: label_testset_path,           description: 'Required. Label test dataset path in the data bucket'}
-  - {name: protected_label_testset_path, description: 'Required. Protected label test dataset path in the data bucket'}
-  - {name: favorable_label,              description: 'Required. Favorable label for this model predictions'}
-  - {name: unfavorable_label,            description: 'Required. Unfavorable label for this model predictions'}
-  - {name: privileged_groups,            description: 'Required. Privileged feature groups within this model'}
-  - {name: unprivileged_groups,          description: 'Required. Unprivileged feature groups within this model'}
-  - {name: data_bucket_name,             description: 'Optional. Bucket that has the processed data', default: 'training-data'}
-  - {name: result_bucket_name,           description: 'Optional. Bucket that has the training results', default: 'training-result'}
+  - {name: model_id, type: String,                     description: 'Required. Training model ID', default: 'training-dummy'}
+  - {name: model_class_file, type: String,             description: 'Required. pytorch model class file', default: 'PyTorchModel.py'}
+  - {name: model_class_name, type: String,             description: 'Required. pytorch model class name', default: 'PyTorchModel'}
+  - {name: feature_testset_path, type: String,         description: 'Required. Feature test dataset path in the data bucket'}
+  - {name: label_testset_path, type: String,           description: 'Required. Label test dataset path in the data bucket'}
+  - {name: protected_label_testset_path, type: String, description: 'Required. Protected label test dataset path in the data bucket'}
+  - {name: favorable_label, type: String,              description: 'Required. Favorable label for this model predictions'}
+  - {name: unfavorable_label, type: String,            description: 'Required. Unfavorable label for this model predictions'}
+  - {name: privileged_groups, type: String,            description: 'Required. Privileged feature groups within this model'}
+  - {name: unprivileged_groups, type: String,          description: 'Required. Unprivileged feature groups within this model'}
+  - {name: data_bucket_name, type: String,             description: 'Optional. Bucket that has the processed data', default: 'training-data'}
+  - {name: result_bucket_name, type: String,           description: 'Optional. Bucket that has the training results', default: 'training-result'}
 outputs:
-  - {name: metric_path,                  description: 'Path for fairness check output'}
+  - {name: metric_path, type: String,                  description: 'Path for fairness check output'}
 implementation:
   container:
     image: aipipeline/bias-detector:pytorch
