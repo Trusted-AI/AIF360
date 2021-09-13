@@ -8,8 +8,7 @@ WORKDIR /src
 #install dependencies    
 RUN pip install aif360 && \
     pip install 'aif360[LFR,OptimPreproc]' && \
-    pip install 'aif360[all]' && \
-    pip install aif360
+    pip install 'aif360[all]'
 
 #clone repo
 RUN git clone https://github.com/Trusted-AI/AIF360.git
