@@ -27,6 +27,7 @@ Changes made to fairness-comparison code:
         - kamfadm-2012ecmlpkdd/train_nb.py
     * fixed typo in kamfadm-2012ecmlpkdd/fadm/lr/pr.py:244 (typeError -> TypeError)
     * removed commands.py and instead use subprocess.getoutput
+    * added ndmin=2 to all np.loadtxt() functions in case single row
 
 Notes from fairness-comparison's KamishimaAlgorithm.py on changes made to
 original Kamishima code.
@@ -204,7 +205,7 @@ class PrejudiceRemover(Transformer):
                          '-o', output_name,
                          '--quiet'])
         os.unlink(test_name)
-        m = np.loadtxt(output_name)
+        m = np.loadtxt(output_name, ndmin=2)
         os.unlink(output_name)
 
         pred_dataset = dataset.copy()

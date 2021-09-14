@@ -111,7 +111,7 @@ def main(opt):
     clr_info = pickle.load(opt.model)
 
     # read data
-    D = np.loadtxt(opt.infile)
+    D = np.loadtxt(opt.infile, ndmin=2)
 
     # split data and process missing values
     y = np.array(D[:, -1])
