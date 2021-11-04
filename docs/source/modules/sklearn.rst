@@ -140,6 +140,7 @@ Pre-processors
    :template: class.rst
 
    preprocessing.Reweighing
+   preprocessing.FairAdapt
 
 Meta-Estimator
 --------------
