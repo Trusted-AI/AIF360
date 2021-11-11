@@ -1,5 +1,4 @@
 import numpy as np
-from math import sqrt
 import tensorflow as tf
 # try:
 #     import tensorflow.compat.v1 as tf
