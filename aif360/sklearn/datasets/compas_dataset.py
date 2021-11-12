@@ -14,7 +14,7 @@ def fetch_compas(data_home=None, binary_race=False,
                  usecols=['sex', 'age', 'age_cat', 'race', 'juv_fel_count',
                           'juv_misd_count', 'juv_other_count', 'priors_count',
                           'c_charge_degree', 'c_charge_desc'],
-                 dropcols=[], numeric_only=False, dropna=True):
+                 dropcols=None, numeric_only=False, dropna=True):
     """Load the COMPAS Recidivism Risk Scores dataset.
 
     Optionally binarizes 'race' to 'Caucasian' (privileged) or
