@@ -3,10 +3,11 @@ from functools import partial
 import numpy as np
 import pandas as pd
 import pytest
+from sklearn.compose import make_column_transformer
+from sklearn.preprocessing import OneHotEncoder
 
-from aif360.sklearn.datasets import fetch_adult, fetch_bank, fetch_german
 from aif360.sklearn.datasets import standardize_dataset
-from aif360.sklearn.datasets import fetch_compas, ColumnAlreadyDroppedWarning
+from aif360.sklearn.datasets import fetch_adult, fetch_bank, fetch_german, fetch_compas
 
 
 df = pd.DataFrame([[1, 2, 3, 'a'], [5, 6, 7, 'b'], [np.NaN, 10, 11, 'c']],
@@ -42,16 +43,33 @@ def test_sample_weight_basic():
     assert len(with_weights) == 3
     assert with_weights.X.shape == (3, 2)
 
+def test_array_args_basic():
+    """Tests passing explicit arrays instead of column labels for prot_attr,
+    target, and sample_weight.
+    """
+    # single array
+    pa_array = basic(prot_attr=pd.Index([1, 0, 1], name='ZZ'))
+    assert pa_array.X.columns.equals(pd.Index(['X1', 'X2', 'Z']))
+    assert pa_array.X.index.names == ['ZZ']
+    # mixed array and label
+    tar_array_mixed = basic(target=[np.array([4, 8, 12]), 'y'])
+    assert tar_array_mixed.y.shape == (3, 2)
+    assert tar_array_mixed.X.shape == (3, 3)
+    assert tar_array_mixed.y.index.equals(tar_array_mixed.X.index)
+    # sample weight
+    sw_array = basic(sample_weight=[0.5, 0.4, 2.1])
+    assert sw_array.sample_weight.index.equals(sw_array.X.index)
+
 def test_usecols_dropcols_basic():
     """Tests various combinations of usecols and dropcols on a toy example."""
-    assert basic(usecols='X1').X.columns.tolist() == ['X1']
+    assert basic(usecols=['X1']).X.columns.tolist() == ['X1']
     assert basic(usecols=['X1', 'Z']).X.columns.tolist() == ['X1', 'Z']
 
-    assert basic(dropcols='X1').X.columns.tolist() == ['X2', 'Z']
+    assert basic(dropcols=['X1']).X.columns.tolist() == ['X2', 'Z']
     assert basic(dropcols=['X1', 'Z']).X.columns.tolist() == ['X2']
 
-    assert basic(usecols='X1', dropcols=['X2']).X.columns.tolist() == ['X1']
-    assert isinstance(basic(usecols='X2', dropcols=['X1', 'X2'])[0],
+    assert basic(usecols=['X1'], dropcols=['X2']).X.columns.tolist() == ['X1']
+    assert isinstance(basic(usecols=['X2'], dropcols=['X1', 'X2'])[0],
                       pd.DataFrame)
 
 def test_dropna_basic():
@@ -59,21 +77,49 @@ def test_dropna_basic():
     basic_dropna = partial(standardize_dataset, df=df, prot_attr='Z',
                            target='y', dropna=True)
     assert basic_dropna().X.shape == (2, 3)
-    assert basic(dropcols='X1').X.shape == (3, 2)
+    assert basic(dropcols=['X1']).X.shape == (3, 2)
 
 def test_numeric_only_basic():
     """Tests numeric_only on a toy example."""
-    assert basic(prot_attr='X2', numeric_only=True).X.shape == (3, 2)
-    assert (basic(prot_attr='X2', dropcols='Z', numeric_only=True).X.shape
-            == (3, 2))
+    num_only = basic(numeric_only=True)
+    assert num_only.X.shape == (3, 2)
+    assert 'Z' in num_only.X.index.names
+    num_only_X2 = basic(prot_attr='X2', numeric_only=True)
+    num_only_X2_dropZ = basic(prot_attr='X2', dropcols=['Z'], numeric_only=True)
+    assert num_only_X2.X.equals(num_only_X2_dropZ.X)
+
+@pytest.mark.filterwarnings('error')
+def test_numeric_only_warnings():
+    with pytest.raises(UserWarning):
+        basic(numeric_only=True)  # prot_attr has non-numeric
+    with pytest.raises(UserWarning):
+        basic(numeric_only=True, prot_attr='y', target='Z')  # y has non-numeric
+
+def test_multiindex_cols():
+    """Tests DataFrame with MultiIndex columns."""
+    cols = pd.MultiIndex.from_arrays([['X', 'X', 'y', 'Z'], [1, 2, '', '']])
+    df = pd.DataFrame([[1, 2, 3, 'a'], [5, 6, 7, 'b'], [None, 10, 11, 'c']],
+                    columns=cols)
+    multiindex = standardize_dataset(df, prot_attr='Z', target='y')
+    assert multiindex.X.index.names == ['Z']
+    assert multiindex.y.name == 'y'
+    assert multiindex.X.columns.equals(cols.drop('y'))
 
 def test_fetch_adult():
     """Tests Adult Income dataset shapes with various options."""
     adult = fetch_adult()
     assert len(adult) == 3
     assert adult.X.shape == (45222, 13)
+    assert len(adult.X.index.get_level_values('race').categories) == 2
+    assert len(adult.X.race.cat.categories) > 2
     assert fetch_adult(dropna=False).X.shape == (48842, 13)
+    # race is kept since it's binary
     assert fetch_adult(numeric_only=True).X.shape == (48842, 7)
+    num_only_bin_race = fetch_adult(numeric_only=True, binary_race=False)
+    # race gets dropped since it's categorical
+    assert num_only_bin_race.X.shape == (48842, 6)
+    # still in index though
+    assert 'race' in num_only_bin_race.X.index.names
 
 def test_fetch_german():
     """Tests German Credit dataset shapes with various options."""
@@ -87,20 +133,24 @@ def test_fetch_bank():
     bank = fetch_bank()
     assert len(bank) == 2
     assert bank.X.shape == (45211, 15)
-    assert fetch_bank(dropcols=[]).X.shape == (45211, 16)
+    assert fetch_bank(dropcols=None).X.shape == (45211, 16)
     assert fetch_bank(numeric_only=True).X.shape == (45211, 7)
 
-@pytest.mark.filterwarnings('error', category=ColumnAlreadyDroppedWarning)
 def test_fetch_compas():
     """Tests COMPAS Recidivism dataset shapes with various options."""
     compas = fetch_compas()
     assert len(compas) == 2
     assert compas.X.shape == (6167, 10)
     assert fetch_compas(binary_race=True).X.shape == (5273, 10)
-    with pytest.raises(ColumnAlreadyDroppedWarning):
-        assert fetch_compas(numeric_only=True).X.shape == (6172, 6)
+    assert fetch_compas(numeric_only=True).X.shape == (6172, 6)
 
 def test_onehot_transformer():
     """Tests that categorical features can be correctly one-hot encoded."""
     X, y = fetch_german()
-    assert len(pd.get_dummies(X).columns) == 63
+    assert pd.get_dummies(X).shape[1] == 64
+    # XXX: 'purpose' col contains unused category 'vacation'
+    X.purpose.cat.remove_unused_categories(inplace=True)
+    assert pd.get_dummies(X).shape[1] == 63
+    assert make_column_transformer((OneHotEncoder(), X.dtypes == 'category'),
+        remainder='passthrough').fit_transform(X).shape[1] == 63
+
