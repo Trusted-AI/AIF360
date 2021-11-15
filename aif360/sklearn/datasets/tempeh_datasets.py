@@ -4,7 +4,7 @@ import tempeh.configurations as tc
 from aif360.sklearn.datasets.utils import standardize_dataset
 
 
-def fetch_lawschool_gpa(subset="all", usecols=[], dropcols=[],
+def fetch_lawschool_gpa(subset="all", usecols=None, dropcols=None,
                         numeric_only=False, dropna=False):
     """Load the Law School GPA dataset
 
@@ -46,6 +46,9 @@ def fetch_lawschool_gpa(subset="all", usecols=[], dropcols=[],
     else:
         df = pd.concat([all_train, all_test], axis=0)
 
-    return standardize_dataset(df, prot_attr=['race'], target='zfygpa',
-                              usecols=usecols, dropcols=dropcols,
-                              numeric_only=numeric_only, dropna=dropna)
+    df.race = df.race.astype('category').cat.set_categories(
+        ['black', 'white'], ordered=True)
+
+    return standardize_dataset(df, prot_attr='race', target='zfygpa',
+                               usecols=usecols, dropcols=dropcols,
+                               numeric_only=numeric_only, dropna=dropna)

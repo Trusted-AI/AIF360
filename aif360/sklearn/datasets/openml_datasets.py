@@ -1,6 +1,7 @@
 import os
 
 import pandas as pd
+from pandas.api.types import is_categorical_dtype
 from sklearn.datasets import fetch_openml
 
 from aif360.sklearn.datasets.utils import standardize_dataset
@@ -66,7 +67,7 @@ def fetch_adult(subset='all', data_home=None, binary_race=True, usecols=None,
         df = df.iloc[:16281]
 
     df = df.rename(columns={'class': 'annual-income'})  # more descriptive name
-    df['annual-income'] = df['annual-income'].cat.set_categories(
+    df['annual-income'] = df['annual-income'].cat.reorder_categories(
         ['<=50K', '>50K'], ordered=True)
 
     # binarize protected attributes
@@ -75,7 +76,7 @@ def fetch_adult(subset='all', data_home=None, binary_race=True, usecols=None,
     if numeric_only and binary_race:
         df.race = race
         race = 'race'
-    df.sex = df.sex.cat.as_ordered()  # 'Female' < 'Male'
+    df.sex = df.sex.cat.reorder_categories(['Female', 'Male'], ordered=True)
 
     return standardize_dataset(df, prot_attr=[race, 'sex'],
                                target='annual-income', sample_weight='fnlwgt',
@@ -143,7 +144,7 @@ def fetch_german(data_home=None, binary_age=True, usecols=None, dropcols=None,
                       as_frame=True).frame
 
     df = df.rename(columns={'class': 'credit-risk'})  # more descriptive name
-    df['credit-risk'] = df['credit-risk'].cat.set_categories(
+    df['credit-risk'] = df['credit-risk'].cat.reorder_categories(
         ['bad', 'good'], ordered=True)
 
     # binarize protected attribute (but not corresponding feature)
@@ -156,10 +157,10 @@ def fetch_german(data_home=None, binary_age=True, usecols=None, dropcols=None,
     personal_status = df.pop('personal_status').str.split(expand=True)
     personal_status.columns = ['sex', 'marital_status']
     df = df.join(personal_status.astype('category'))
-    df.sex = df.sex.cat.as_ordered()  # 'female' < 'male'
+    df.sex = df.sex.cat.reorder_categories(['female', 'male'], ordered=True)
 
-    # 'no' < 'yes'
-    df.foreign_worker = df.foreign_worker.astype('category').cat.as_ordered()
+    df.foreign_worker = df.foreign_worker.astype('category').cat.set_categories(
+        ['no', 'yes'], ordered=True)
 
     return standardize_dataset(df, prot_attr=['sex', age, 'foreign_worker'],
                                target='credit-risk', usecols=usecols,
@@ -220,10 +221,11 @@ def fetch_bank(data_home=None, percent10=False, usecols=None,
     df.deposit = df.deposit.cat.set_categories(['no', 'yes'], ordered=True)
 
     # replace 'unknown' marker with NaN
-    df.apply(lambda s: s.cat.remove_categories('unknown', inplace=True)
-             if hasattr(s, 'cat') and 'unknown' in s.cat.categories else s)
-    # 'primary' < 'secondary' < 'tertiary'
-    df.education = df.education.astype('category').cat.as_ordered()
+    df = df.apply(lambda s: s.cat.remove_categories('unknown')
+                  if is_categorical_dtype(s) and 'unknown' in s.cat.categories
+                  else s)
+    df.education = df.education.astype('category').cat.reorder_categories(
+        ['primary', 'secondary', 'tertiary'], ordered=True)
 
     return standardize_dataset(df, prot_attr='age', target='deposit',
                                usecols=usecols, dropcols=dropcols,

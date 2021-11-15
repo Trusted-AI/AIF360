@@ -9,6 +9,10 @@ from pandas.api.types import is_list_like, is_numeric_dtype
 Dataset = namedtuple('Dataset', ['X', 'y'])
 WeightedDataset = namedtuple('WeightedDataset', ['X', 'y', 'sample_weight'])
 
+class NumericConversionWarning(UserWarning):
+    """Warning used if protected attribute or target is unable to be converted
+    automatically to a numeric type."""
+
 def standardize_dataset(df, *, prot_attr, target, sample_weight=None,
         usecols=None, dropcols=None, numeric_only=False, dropna=True):
     """Separate data, targets, and possibly sample weights and populate
@@ -19,13 +23,17 @@ def standardize_dataset(df, *, prot_attr, target, sample_weight=None,
         prot_attr (label or array-like or list of labels/arrays): Label, array
             of the same length as `df`, or a list containing any combination of
             the two corresponding to protected attribute columns. Even if these
-            are dropped from the features, they remain in the index.
+            are dropped from the features, they remain in the index. Column(s)
+            indicated by label will be copied from `df`, not dropped. Column(s)
+            passed explicitly as arrays will not be added to features.
         target (label or array-like or list of labels/arrays): Label, array of
             the same length as `df`, or a list containing any combination of the
-            two corresponding to the target (outcome) variable.
+            two corresponding to the target (outcome) variable. Column(s)
+            indicated by label will be dropped from features.
         sample_weight (single label or array-like, optional): Name of the column
             containing sample weights or an array of sample weights of the same
-            length as `df`. Note: the index of a passed Series will be ignored.
+            length as `df`. If a label is passed, the column is dropped from
+            features. Note: the index of a passed Series will be ignored.
         usecols (list-like, optional): Column(s) to keep. All others are
             dropped.
         dropcols (list-like, optional): Column(s) to drop. Missing labels are
@@ -96,9 +104,11 @@ def standardize_dataset(df, *, prot_attr, target, sample_weight=None,
         df = df.select_dtypes(['number', 'bool'])
         # warn if nonnumeric prot_attr or target but proceed
         if any(not is_numeric_dtype(dt) for dt in pa.to_frame().dtypes):
-            warnings.warn(f"index contains non-numeric:\n{pa.to_frame().dtypes}")
+            warnings.warn(f"index contains non-numeric:\n{pa.to_frame().dtypes}",
+                          category=NumericConversionWarning)
         if any(not is_numeric_dtype(dt) for dt in y.to_frame().dtypes):
-            warnings.warn(f"y contains non-numeric column:\n{y.to_frame().dtypes}")
+            warnings.warn(f"y contains non-numeric column:\n{y.to_frame().dtypes}",
+                          category=NumericConversionWarning)
 
     # Index-wise drops
     if dropna:

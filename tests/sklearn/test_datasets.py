@@ -6,8 +6,9 @@ import pytest
 from sklearn.compose import make_column_transformer
 from sklearn.preprocessing import OneHotEncoder
 
-from aif360.sklearn.datasets import standardize_dataset
-from aif360.sklearn.datasets import fetch_adult, fetch_bank, fetch_german, fetch_compas
+from aif360.sklearn.datasets import (
+    standardize_dataset, NumericConversionWarning, fetch_adult, fetch_bank,
+    fetch_german, fetch_compas, fetch_lawschool_gpa)
 
 
 df = pd.DataFrame([[1, 2, 3, 'a'], [5, 6, 7, 'b'], [np.NaN, 10, 11, 'c']],
@@ -79,6 +80,7 @@ def test_dropna_basic():
     assert basic_dropna().X.shape == (2, 3)
     assert basic(dropcols=['X1']).X.shape == (3, 2)
 
+@pytest.mark.filterwarnings('ignore', category=NumericConversionWarning)
 def test_numeric_only_basic():
     """Tests numeric_only on a toy example."""
     num_only = basic(numeric_only=True)
@@ -88,7 +90,7 @@ def test_numeric_only_basic():
     num_only_X2_dropZ = basic(prot_attr='X2', dropcols=['Z'], numeric_only=True)
     assert num_only_X2.X.equals(num_only_X2_dropZ.X)
 
-@pytest.mark.filterwarnings('error')
+@pytest.mark.filterwarnings('error', category=NumericConversionWarning)
 def test_numeric_only_warnings():
     with pytest.raises(UserWarning):
         basic(numeric_only=True)  # prot_attr has non-numeric
@@ -103,8 +105,9 @@ def test_multiindex_cols():
     multiindex = standardize_dataset(df, prot_attr='Z', target='y')
     assert multiindex.X.index.names == ['Z']
     assert multiindex.y.name == 'y'
-    assert multiindex.X.columns.equals(cols.drop('y'))
+    assert multiindex.X.columns.equals(cols.drop('y', level=0))
 
+@pytest.mark.filterwarnings('ignore', category=NumericConversionWarning)
 def test_fetch_adult():
     """Tests Adult Income dataset shapes with various options."""
     adult = fetch_adult()
@@ -136,20 +139,30 @@ def test_fetch_bank():
     assert fetch_bank(dropcols=None).X.shape == (45211, 16)
     assert fetch_bank(numeric_only=True).X.shape == (45211, 7)
 
+@pytest.mark.filterwarnings('ignore', category=NumericConversionWarning)
 def test_fetch_compas():
     """Tests COMPAS Recidivism dataset shapes with various options."""
     compas = fetch_compas()
     assert len(compas) == 2
     assert compas.X.shape == (6167, 10)
     assert fetch_compas(binary_race=True).X.shape == (5273, 10)
-    assert fetch_compas(numeric_only=True).X.shape == (6172, 6)
+    assert fetch_compas(numeric_only=True).X.shape == (6172, 8)
+    assert fetch_compas(numeric_only=True, binary_race=True).X.shape == (5278, 9)
+
+def test_fetch_lawschool_gpa():
+    """Tests Law School GPA dataset shapes with various options."""
+    gpa = fetch_lawschool_gpa()
+    assert len(gpa) == 2
+    assert gpa.X.shape == (22342, 3)
+    assert gpa.y.nunique() > 2  # regression
+    assert fetch_lawschool_gpa(numeric_only=True, dropna=True).X.shape == (22342, 3)
 
 def test_onehot_transformer():
     """Tests that categorical features can be correctly one-hot encoded."""
     X, y = fetch_german()
     assert pd.get_dummies(X).shape[1] == 64
     # XXX: 'purpose' col contains unused category 'vacation'
-    X.purpose.cat.remove_unused_categories(inplace=True)
+    X.purpose = X.purpose.cat.remove_unused_categories()
     assert pd.get_dummies(X).shape[1] == 63
     assert make_column_transformer((OneHotEncoder(), X.dtypes == 'category'),
         remainder='passthrough').fit_transform(X).shape[1] == 63

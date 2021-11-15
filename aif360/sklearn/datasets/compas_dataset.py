@@ -63,6 +63,13 @@ def fetch_compas(data_home=None, binary_race=False,
     for col in ['sex', 'age_cat', 'race', 'c_charge_degree', 'c_charge_desc']:
         df[col] = df[col].astype('category')
 
+    # Misdemeanor < Felony
+    df.c_charge_degree = df.c_charge_degree.cat.reorder_categories(
+        ['M', 'F'], ordered=True)
+    # 'Less than 25' < '25 - 45' < 'Greater than 45'
+    df.age_cat = df.age_cat.cat.reorder_categories(
+        ['Less than 25', '25 - 45', 'Greater than 45'], ordered=True)
+
     # 'Survived' < 'Recidivated'
     cats = ['Survived', 'Recidivated']
     df.two_year_recid = df.two_year_recid.replace([0, 1], cats).astype('category')
