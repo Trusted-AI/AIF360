@@ -119,4 +119,7 @@ def standardize_dataset(df, *, prot_attr, target, sample_weight=None,
         df = df.loc[notna]
         y = y.loc[notna]
 
+    for col in df.select_dtypes('category'):
+        df[col] = df[col].cat.remove_unused_categories()
+
     return Dataset(df, y) if sample_weight is None else WeightedDataset(df, y, sw)
