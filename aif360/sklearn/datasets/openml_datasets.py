@@ -11,8 +11,8 @@ from aif360.sklearn.datasets.utils import standardize_dataset
 DATA_HOME_DEFAULT = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                                  '..', 'data', 'raw')
 
-def fetch_adult(subset='all', data_home=None, binary_race=True, usecols=None,
-                dropcols=None, numeric_only=False, dropna=True):
+def fetch_adult(subset='all', *, data_home=None, cache=True, binary_race=True,
+                usecols=None, dropcols=None, numeric_only=False, dropna=True):
     """Load the Adult Census Income Dataset.
 
     Binarizes 'race' to 'White' (privileged) or 'Non-white' (unprivileged). The
@@ -31,6 +31,7 @@ def fetch_adult(subset='all', data_home=None, binary_race=True, usecols=None,
         data_home (string, optional): Specify another download and cache folder
             for the datasets. By default all AIF360 datasets are stored in
             'aif360/sklearn/data/raw' subfolders.
+        cache (bool): Whether to cache downloaded datasets.
         binary_race (bool, optional): Group all non-white races together. Only
             the protected attribute is affected, not the feature column, unless
             numeric_only is ``True``.
@@ -60,7 +61,7 @@ def fetch_adult(subset='all', data_home=None, binary_race=True, usecols=None,
         raise ValueError("subset must be either 'train', 'test', or 'all'; "
                          "cannot be {}".format(subset))
     df = fetch_openml(data_id=1590, data_home=data_home or DATA_HOME_DEFAULT,
-                      as_frame=True).frame
+                      cache=cache, as_frame=True).frame
     if subset == 'train':
         df = df.iloc[16281:]
     elif subset == 'test':
@@ -83,8 +84,8 @@ def fetch_adult(subset='all', data_home=None, binary_race=True, usecols=None,
                                usecols=usecols, dropcols=dropcols,
                                numeric_only=numeric_only, dropna=dropna)
 
-def fetch_german(data_home=None, binary_age=True, usecols=None, dropcols=None,
-                 numeric_only=False, dropna=True):
+def fetch_german(*, data_home=None, cache=True, binary_age=True, usecols=None,
+                 dropcols=None, numeric_only=False, dropna=True):
     """Load the German Credit Dataset.
 
     Protected attributes are 'sex' ('male' is privileged and 'female' is
@@ -101,6 +102,7 @@ def fetch_german(data_home=None, binary_age=True, usecols=None, dropcols=None,
         data_home (string, optional): Specify another download and cache folder
             for the datasets. By default all AIF360 datasets are stored in
             'aif360/sklearn/data/raw' subfolders.
+        cache (bool): Whether to cache downloaded datasets.
         binary_age (bool, optional): If ``True``, split protected attribute,
             'age', into 'aged' (privileged) and 'youth' (unprivileged). The
             'age' feature remains continuous.
@@ -141,7 +143,7 @@ def fetch_german(data_home=None, binary_age=True, usecols=None, dropcols=None,
         0.9483094846144106
     """
     df = fetch_openml(data_id=31, data_home=data_home or DATA_HOME_DEFAULT,
-                      as_frame=True).frame
+                      cache=cache, as_frame=True).frame
 
     df = df.rename(columns={'class': 'credit-risk'})  # more descriptive name
     df['credit-risk'] = df['credit-risk'].cat.reorder_categories(
@@ -167,7 +169,7 @@ def fetch_german(data_home=None, binary_age=True, usecols=None, dropcols=None,
                                dropcols=dropcols, numeric_only=numeric_only,
                                dropna=dropna)
 
-def fetch_bank(data_home=None, percent10=False, usecols=None,
+def fetch_bank(*, data_home=None, cache=True, percent10=False, usecols=None,
                dropcols=['duration'], numeric_only=False, dropna=False):
     """Load the Bank Marketing Dataset.
 
@@ -182,6 +184,7 @@ def fetch_bank(data_home=None, percent10=False, usecols=None,
         data_home (string, optional): Specify another download and cache folder
             for the datasets. By default all AIF360 datasets are stored in
             'aif360/sklearn/data/raw' subfolders.
+        cache (bool): Whether to cache downloaded datasets.
         percent10 (bool, optional): Download the reduced version (10% of data).
         usecols (list-like, optional): Column name(s) to keep. All others are
             dropped.
@@ -212,7 +215,7 @@ def fetch_bank(data_home=None, percent10=False, usecols=None,
     """
     # TODO: this seems to be an old version
     df = fetch_openml(data_id=1558 if percent10 else 1461, data_home=data_home
-                      or DATA_HOME_DEFAULT, as_frame=True).frame
+                      or DATA_HOME_DEFAULT, cache=cache, as_frame=True).frame
     df.columns = ['age', 'job', 'marital', 'education', 'default', 'balance',
                   'housing', 'loan', 'contact', 'day', 'month', 'duration',
                   'campaign', 'pdays', 'previous', 'poutcome', 'deposit']
@@ -221,9 +224,9 @@ def fetch_bank(data_home=None, percent10=False, usecols=None,
     df.deposit = df.deposit.cat.set_categories(['no', 'yes'], ordered=True)
 
     # replace 'unknown' marker with NaN
-    df = df.apply(lambda s: s.cat.remove_categories('unknown')
-                  if is_categorical_dtype(s) and 'unknown' in s.cat.categories
-                  else s)
+    for col in df.select_dtypes('category'):
+        if 'unknown' in df[col].cat.categories:
+            df[col] = df[col].cat.remove_categories('unknown')
     df.education = df.education.astype('category').cat.reorder_categories(
         ['primary', 'secondary', 'tertiary'], ordered=True)
 
