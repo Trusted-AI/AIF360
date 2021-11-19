@@ -28,15 +28,13 @@ Utils
    :toctree: generated/
    :template: class.rst
 
-   datasets.ColumnAlreadyDroppedWarning
+   datasets.NumericConversionWarning
 
 .. autosummary::
    :toctree: generated/
    :template: base.rst
 
-   datasets.check_already_dropped
    datasets.standardize_dataset
-   datasets.to_dataframe
 
 Loaders
 -------
@@ -50,6 +48,7 @@ Loaders
    datasets.fetch_bank
    datasets.fetch_compas
    datasets.fetch_lawschool_gpa
+   datasets.fetch_meps
 
 :mod:`aif360.sklearn.metrics`: Fairness metrics
 ===============================================

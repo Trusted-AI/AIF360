@@ -140,7 +140,7 @@ if os.environ.get('READTHEDOCS') != 'True':
 html_static_path = ['static']
 
 def setup(app):
-    app.add_stylesheet('style.css')
+    app.add_css_file('style.css')
 
 # Custom sidebar templates, must be a dictionary that maps document names
 # to template names.
