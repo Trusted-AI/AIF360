@@ -4,8 +4,8 @@ import tempeh.configurations as tc
 from aif360.sklearn.datasets.utils import standardize_dataset
 
 
-def fetch_lawschool_gpa(subset="all", usecols=None, dropcols=None,
-                        numeric_only=False, dropna=False):
+def fetch_lawschool_gpa(subset="all", *, usecols=None, dropcols=None,
+                        numeric_only=False, dropna=True):
     """Load the Law School GPA dataset
 
     Note:
@@ -21,7 +21,7 @@ def fetch_lawschool_gpa(subset="all", usecols=None, dropcols=None,
         dropcols (single label or list-like, optional): Feature column(s) to
             drop.
         numeric_only (bool): Drop all non-numeric feature columns.
-        dropna (bool): Drop rows with NAs.
+        dropna (bool): Drop rows with NAs. FIXME: NAs already dropped by tempeh
 
     Returns:
         namedtuple: Tuple containing X, y, and sample_weights for the Law School
