@@ -6,9 +6,10 @@ import pytest
 from sklearn.compose import make_column_transformer
 from sklearn.preprocessing import OneHotEncoder
 
+from aif360.datasets import MEPSDataset19, MEPSDataset20, MEPSDataset21
 from aif360.sklearn.datasets import (
     standardize_dataset, NumericConversionWarning, fetch_adult, fetch_bank,
-    fetch_german, fetch_compas, fetch_lawschool_gpa)
+    fetch_german, fetch_compas, fetch_lawschool_gpa, fetch_meps)
 
 
 df = pd.DataFrame([[1, 2, 3, 'a'], [5, 6, 7, 'b'], [np.NaN, 10, 11, 'c']],
@@ -155,15 +156,26 @@ def test_fetch_lawschool_gpa():
     assert len(gpa) == 2
     assert gpa.X.shape == (22342, 3)
     assert gpa.y.nunique() > 2  # regression
-    assert fetch_lawschool_gpa(numeric_only=True, dropna=True).X.shape == (22342, 3)
+    assert fetch_lawschool_gpa(numeric_only=True, dropna=False).X.shape == (22342, 3)
+
+@pytest.mark.parametrize("panel, cls", [(19, MEPSDataset19), (20, MEPSDataset20), (21, MEPSDataset21)])
+def test_fetch_meps(panel, cls):
+    """Tests MEPS datasets shapes with various options."""
+    meps = fetch_meps(panel, cache=False, accept_terms=True)
+    assert len(meps) == 3
+    meps.X.RACE = meps.X.RACE.factorize(sort=True)[0]
+    MEPS = cls()
+    assert all(pd.get_dummies(meps.X) == MEPS.features)
+    assert all(meps.y.factorize(sort=True)[0] == MEPS.labels.ravel())
+
+    # assert fetch_meps(panel, dropna=False).X.shape == ()
 
 def test_onehot_transformer():
     """Tests that categorical features can be correctly one-hot encoded."""
     X, y = fetch_german()
-    assert pd.get_dummies(X).shape[1] == 64
-    # XXX: 'purpose' col contains unused category 'vacation'
-    X.purpose = X.purpose.cat.remove_unused_categories()
-    assert pd.get_dummies(X).shape[1] == 63
-    assert make_column_transformer((OneHotEncoder(), X.dtypes == 'category'),
-        remainder='passthrough').fit_transform(X).shape[1] == 63
-
+    ohe = make_column_transformer(
+        (OneHotEncoder(), X.dtypes == 'category'),
+        remainder='passthrough', verbose_feature_names_out=False)
+    dum = pd.get_dummies(X)
+    assert ohe.fit_transform(X).shape[1] == dum.shape[1] == 63
+    assert dum.columns.symmetric_difference(ohe.get_feature_names_out()).empty
