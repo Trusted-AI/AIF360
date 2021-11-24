@@ -56,7 +56,6 @@ def fetch_meps(panel, *, accept_terms=None, data_home=None, cache=True,
         raise ValueError("only panels 19, 20, and 21 are currently supported.")
 
     fname = 'h192' if panel == 21 else 'h181'
-    data_url = os.path.join(MEPS_URL, fname + 'ssp.zip')
     cache_path = os.path.join(data_home or DATA_HOME_DEFAULT, fname + '.csv')
     if cache and os.path.isfile(cache_path):
         df = pd.read_csv(cache_path)

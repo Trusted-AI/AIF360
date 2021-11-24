@@ -1,7 +1,6 @@
 import os
 
 import pandas as pd
-from pandas.api.types import is_categorical_dtype
 from sklearn.datasets import fetch_openml
 
 from aif360.sklearn.datasets.utils import standardize_dataset
