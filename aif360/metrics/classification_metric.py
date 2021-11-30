@@ -661,9 +661,62 @@ class ClassificationMetric(BinaryLabelDatasetMetric):
         """
         return self.difference(self.selection_rate)
 
-    def generalized_entropy_index(self, alpha=2):
+    def _get_benefits(self, confusion_matrix, benefit_function=None):
+        r"""Returns an array of benefits based on the numbers of true positives
+        (TN), true negatives (TN), false positives (FP) and false negatives (FN)
+        and corresponding benefits.
+
+        Args:
+            benefit_function (dict): Maps true positives (TN), true negatives (TN),
+                false positives (FP) and false negatives (FN) to corresponding
+                benefits. Keys must be a subset of {'TP', 'TN', 'FP' and 'FN'}.
+                All values must be non-negative.
+            confusion_matrix (dict): Maps true positives (TN), true negatives (TN),
+                false positives (FP) and false negatives (FN) to numbers of
+                occurences. Keys must be {'TP', 'TN', 'FP' and 'FN'}. All values
+                must be non-negative.
+        """
+        if benefit_function is None:
+            benefit_function = {'TP':1, 'TN':1, 'FP':2, 'FN':0}
+        def get_b(TF_PN):
+            r"""Returns an array of benefits corresponding to TP, TN, FP or FN
+            predictions.
+
+            Args:
+                TF_PN (string): Key in benefit_function, i.e. 'TP', 'TN', 'FP' or 'FN'.
+            """
+            if TF_PN in benefit_function:
+                if (benefit_function[TF_PN]<0):
+                    raise ValueError("All benefits must be non-negative.")
+                return int(confusion_matrix[TF_PN])*[benefit_function[TF_PN]]
+            return []
+        return np.array(get_b('TP') + get_b('TN') + get_b('FP') + get_b('FN'))
+
+    def _generalized_entropy_index(self, benefits, alpha=2):
+        r"""Returns the value of the generalised entropy index for the given array
+        of benefits.
+
+        Args:
+            benefits (numpy array): 
+            alpha (int): Parameter that regulates the weight given to distances
+                between values at different parts of the distribution.
+        """
+        if np.any(benefits<0):
+            raise ValueError("All benefits must be non-negative.")
+        if np.sum(benefits)==0:
+            return 0
+        if alpha == 1:
+            # moving the benefits inside the log allows for 0 values
+            return np.mean(np.log((benefits / np.mean(benefits))**benefits) / np.mean(benefits))
+        elif alpha == 0:
+            return -np.mean(np.log(benefits / np.mean(benefits)) / np.mean(benefits))
+        else:
+            return np.mean((benefits / np.mean(benefits))**alpha - 1) / (alpha * (alpha - 1))
+
+    def generalized_entropy_index(self, alpha=2, benefit_function=None):
         r"""Generalized entropy index is proposed as a unified individual and
-        group fairness measure in [3]_.  With :math:`b_i = \hat{y}_i - y_i + 1`:
+        group fairness measure in [3]_.  With the default benefit function
+        given by :math:`b_i = \hat{y}_i - y_i + 1`:
 
         .. math::
 
@@ -676,28 +729,20 @@ class ClassificationMetric(BinaryLabelDatasetMetric):
         Args:
             alpha (int): Parameter that regulates the weight given to distances
                 between values at different parts of the distribution.
+            benefit_function (dict): Maps true positives (TN), true negatives (TN),
+                false positives (FP) and false negatives (FN) to corresponding
+                benefits. Keys must be a subset of {'TP', 'TN', 'FP' and 'FN'}.
+                All values must be non-negative.
 
         References:
             .. [3] T. Speicher, H. Heidari, N. Grgic-Hlaca, K. P. Gummadi, A. Singla, A. Weller, and M. B. Zafar,
                "A Unified Approach to Quantifying Algorithmic Unfairness: Measuring Individual and Group Unfairness via Inequality Indices,"
                ACM SIGKDD International Conference on Knowledge Discovery and Data Mining, 2018.
         """
-        y_pred = self.classified_dataset.labels.ravel()
-        y_true = self.dataset.labels.ravel()
-        y_pred = (y_pred == self.classified_dataset.favorable_label).astype(
-            np.float64)
-        y_true = (y_true == self.dataset.favorable_label).astype(np.float64)
-        b = 1 + y_pred - y_true
+        b = self._get_benefits(self.binary_confusion_matrix(), benefit_function)
+        return self._generalized_entropy_index(b, alpha)
 
-        if alpha == 1:
-            # moving the b inside the log allows for 0 values
-            return np.mean(np.log((b / np.mean(b))**b) / np.mean(b))
-        elif alpha == 0:
-            return -np.mean(np.log(b / np.mean(b)) / np.mean(b))
-        else:
-            return np.mean((b / np.mean(b))**alpha - 1) / (alpha * (alpha - 1))
-
-    def _between_group_generalized_entropy_index(self, groups, alpha=2):
+    def _between_group_generalized_entropy_index(self, groups, alpha=2, benefit_function=None):
         r"""Between-group generalized entropy index is proposed as a group
         fairness measure in [2]_ and is one of two terms that the generalized
         entropy index decomposes to.
@@ -708,107 +753,151 @@ class ClassificationMetric(BinaryLabelDatasetMetric):
                 `privileged_groups` and `unprivileged_groups` as the only two
                 groups.
             alpha (int): See :meth:`generalized_entropy_index`.
+            benefit_function (dict): Maps true positives (TN), true negatives (TN),
+                false positives (FP) and false negatives (FN) to corresponding
+                benefits. Keys must be a subset of {'TP', 'TN', 'FP' and 'FN'}.
+                All values must be non-negative.
 
         References:
             .. [2] T. Speicher, H. Heidari, N. Grgic-Hlaca, K. P. Gummadi, A. Singla, A. Weller, and M. B. Zafar,
                "A Unified Approach to Quantifying Algorithmic Unfairness: Measuring Individual and Group Unfairness via Inequality Indices,"
                ACM SIGKDD International Conference on Knowledge Discovery and Data Mining, 2018.
         """
-        b = np.zeros(self.dataset.labels.size, dtype=np.float64)
-
+        b = []
         for group in groups:
-            classified_group = utils.compute_boolean_conditioning_vector(
-                self.classified_dataset.protected_attributes,
-                self.classified_dataset.protected_attribute_names,
-                condition=group)
-            true_group = utils.compute_boolean_conditioning_vector(
+            boolean_conditioning_vector = utils.compute_boolean_conditioning_vector(
                 self.dataset.protected_attributes,
                 self.dataset.protected_attribute_names,
                 condition=group)
             # ignore if there are no members of this group present
-            if not np.any(true_group):
+            if not np.any(boolean_conditioning_vector):
                 continue
-            y_pred = self.classified_dataset.labels[classified_group].ravel()
-            y_true = self.dataset.labels[true_group].ravel()
-            y_pred = (y_pred == self.classified_dataset.favorable_label).astype(
-                np.float64)
-            y_true = (y_true == self.dataset.favorable_label).astype(np.float64)
-            b[true_group] = np.mean(1 + y_pred - y_true)
+            confusion_matrix = utils.compute_num_TF_PN(
+                self.dataset.protected_attributes[boolean_conditioning_vector],
+                self.dataset.labels[boolean_conditioning_vector],
+                self.classified_dataset.labels[boolean_conditioning_vector],
+                self.dataset.instance_weights[boolean_conditioning_vector],
+                self.dataset.protected_attribute_names,
+                self.dataset.favorable_label, self.dataset.unfavorable_label,
+                condition=group)
+            group_benefits = self._get_benefits(confusion_matrix, benefit_function)
+            group_mean_benefit = np.mean(group_benefits)
+            new_b = len(group_benefits)*[group_mean_benefit]
+            b = b + new_b
 
-        if alpha == 1:
-            return np.mean(np.log((b / np.mean(b))**b) / np.mean(b))
-        elif alpha == 0:
-            return -np.mean(np.log(b / np.mean(b)) / np.mean(b))
-        else:
-            return np.mean((b / np.mean(b))**alpha - 1) / (alpha * (alpha - 1))
+        return self._generalized_entropy_index(np.array(b), alpha)
 
-    def between_all_groups_generalized_entropy_index(self, alpha=2):
+    def between_all_groups_generalized_entropy_index(self, alpha=2, benefit_function=None):
         """Between-group generalized entropy index that uses all combinations of
         groups based on `self.dataset.protected_attributes`. See
         :meth:`_between_group_generalized_entropy_index`.
 
         Args:
             alpha (int): See :meth:`generalized_entropy_index`.
+            benefit_function (dict): Maps true positives (TN), true negatives (TN),
+                false positives (FP) and false negatives (FN) to corresponding
+                benefits. Keys must be a subset of {'TP', 'TN', 'FP' and 'FN'}.
+                All values must be non-negative.
         """
-        all_values = list(map(np.concatenate, zip(
-            self.dataset.privileged_protected_attributes,
-            self.dataset.unprivileged_protected_attributes)))
-        groups = [[dict(zip(self.dataset.protected_attribute_names, vals))]
-                  for vals in product(*all_values)]
-        return self._between_group_generalized_entropy_index(groups=groups,
-            alpha=alpha)
+        all_values = list(map(np.concatenate, zip(self.dataset.privileged_protected_attributes,
+                                                  self.dataset.unprivileged_protected_attributes)))
+        groups = [[dict(zip(self.dataset.protected_attribute_names, vals))] for vals in product(*all_values)]
+        return self._between_group_generalized_entropy_index(groups=groups, alpha=alpha, benefit_function=benefit_function)
 
-    def between_group_generalized_entropy_index(self, alpha=2):
+    def between_group_generalized_entropy_index(self, alpha=2, benefit_function=None):
         """Between-group generalized entropy index that uses
         `self.privileged_groups` and `self.unprivileged_groups` as the only two
         groups. See :meth:`_between_group_generalized_entropy_index`.
 
         Args:
             alpha (int): See :meth:`generalized_entropy_index`.
+            benefit_function (dict): Maps true positives (TN), true negatives (TN),
+                false positives (FP) and false negatives (FN) to corresponding
+                benefits. Keys must be a subset of {'TP', 'TN', 'FP' and 'FN'}.
+                All values must be non-negative.
         """
         groups = [self._to_condition(False), self._to_condition(True)]
-        return self._between_group_generalized_entropy_index(groups=groups,
-            alpha=alpha)
+        return self._between_group_generalized_entropy_index(groups=groups, alpha=alpha, benefit_function=benefit_function)
 
-    def theil_index(self):
+    def theil_index(self, benefit_function=None):
         r"""The Theil index is the :meth:`generalized_entropy_index` with
         :math:`\alpha = 1`.
-        """
-        return self.generalized_entropy_index(alpha=1)
 
-    def coefficient_of_variation(self):
+        Args:
+            benefit_function (dict): Maps true positives (TN), true negatives (TN),
+                false positives (FP) and false negatives (FN) to corresponding
+                benefits. Keys must be a subset of {'TP', 'TN', 'FP' and 'FN'}.
+                All values must be non-negative.
+        """
+        return self.generalized_entropy_index(alpha=1, benefit_function=benefit_function)
+
+    def coefficient_of_variation(self, benefit_function=None):
         r"""The coefficient of variation is two times the square root of the
         :meth:`generalized_entropy_index` with :math:`\alpha = 2`.
-        """
-        return 2 * np.sqrt(self.generalized_entropy_index(alpha=2))
 
-    def between_group_theil_index(self):
+        Args:
+            benefit_function (dict): Maps true positives (TN), true negatives (TN),
+                false positives (FP) and false negatives (FN) to corresponding
+                benefits. Keys must be a subset of {'TP', 'TN', 'FP' and 'FN'}.
+                All values must be non-negative.
+        """
+        return 2 * np.sqrt(self.generalized_entropy_index(alpha=2,
+        benefit_function=benefit_function))
+
+    def between_group_theil_index(self, benefit_function=None):
         r"""The between-group Theil index is the
         :meth:`between_group_generalized_entropy_index` with :math:`\alpha = 1`.
-        """
-        return self.between_group_generalized_entropy_index(alpha=1)
 
-    def between_group_coefficient_of_variation(self):
+        Args:
+            benefit_function (dict): Maps true positives (TN), true negatives (TN),
+                false positives (FP) and false negatives (FN) to corresponding
+                benefits. Keys must be a subset of {'TP', 'TN', 'FP' and 'FN'}.
+                All values must be non-negative.
+        """
+        return self.between_group_generalized_entropy_index(alpha=1,
+        benefit_function=benefit_function)
+
+    def between_group_coefficient_of_variation(self, benefit_function=None):
         r"""The between-group coefficient of variation is two times the square
         root of the :meth:`between_group_generalized_entropy_index` with
         :math:`\alpha = 2`.
-        """
-        return 2*np.sqrt(self.between_group_generalized_entropy_index(alpha=2))
 
-    def between_all_groups_theil_index(self):
+        Args:
+            benefit_function (dict): Maps true positives (TN), true negatives (TN),
+                false positives (FP) and false negatives (FN) to corresponding
+                benefits. Keys must be a subset of {'TP', 'TN', 'FP' and 'FN'}.
+                All values must be non-negative.
+        """
+        return 2*np.sqrt(self.between_group_generalized_entropy_index(alpha=2,
+        benefit_function=benefit_function))
+
+    def between_all_groups_theil_index(self, benefit_function=None):
         r"""The between-group Theil index is the
         :meth:`between_all_groups_generalized_entropy_index` with
         :math:`\alpha = 1`.
-        """
-        return self.between_all_groups_generalized_entropy_index(alpha=1)
 
-    def between_all_groups_coefficient_of_variation(self):
+        Args:
+            benefit_function (dict): Maps true positives (TN), true negatives (TN),
+                false positives (FP) and false negatives (FN) to corresponding
+                benefits. Keys must be a subset of {'TP', 'TN', 'FP' and 'FN'}.
+                All values must be non-negative.
+        """
+        return self.between_all_groups_generalized_entropy_index(alpha=1,
+        benefit_function=benefit_function)
+
+    def between_all_groups_coefficient_of_variation(self, benefit_function=None):
         r"""The between-group coefficient of variation is two times the square
         root of the :meth:`between_all_groups_generalized_entropy_index` with
         :math:`\alpha = 2`.
+
+        Args:
+            benefit_function (dict): Maps true positives (TN), true negatives (TN),
+                false positives (FP) and false negatives (FN) to corresponding
+                benefits. Keys must be a subset of {'TP', 'TN', 'FP' and 'FN'}.
+                All values must be non-negative.
         """
         return 2 * np.sqrt(self.between_all_groups_generalized_entropy_index(
-            alpha=2))
+            alpha=2, benefit_function=benefit_function))
 
     def differential_fairness_bias_amplification(self, concentration=1.0):
         """Bias amplification is the difference in smoothed EDF between the

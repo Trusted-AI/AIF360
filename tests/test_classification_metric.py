@@ -7,6 +7,9 @@ from aif360.metrics import ClassificationMetric
 
 
 def test_generalized_entropy_index():
+    uni_bf = {'TP':1, 'TN':1, 'FP':2, 'FN':0}
+    acc_bf = {'TP':1, 'TN':1, 'FP':0, 'FN':0}
+    fpr_bf = {        'TN':1, 'FP':0        }
     data = np.array([[0, 1],
                      [0, 0],
                      [1, 0],
@@ -29,6 +32,9 @@ def test_generalized_entropy_index():
     cm = ClassificationMetric(bld, bld2)
 
     assert cm.generalized_entropy_index() == 0.2
+    assert cm.generalized_entropy_index(benefit_function=uni_bf) == 0.2
+    assert round(cm.generalized_entropy_index(benefit_function=acc_bf),15) == round(1/3,15)
+    assert round(cm.generalized_entropy_index(benefit_function=fpr_bf),15) == round(1/3,15)
 
     pred = data.copy()
     pred[:, -1] = np.array([0, 1, 1, 0, 0, 0, 0, 1, 1, 1])
@@ -38,8 +44,14 @@ def test_generalized_entropy_index():
     cm = ClassificationMetric(bld, bld2)
 
     assert cm.generalized_entropy_index() == 0.3
+    assert cm.generalized_entropy_index(benefit_function=uni_bf) == 0.3
+    assert cm.generalized_entropy_index(benefit_function=acc_bf) == 0.75
+    assert cm.generalized_entropy_index(benefit_function=fpr_bf) == 0.75
 
 def test_theil_index():
+    uni_bf = {'TP':1, 'TN':1, 'FP':2, 'FN':0}
+    acc_bf = {'TP':1, 'TN':1, 'FP':0, 'FN':0}
+    fpr_bf = {        'TN':1, 'FP':0        }
     data = np.array([[0, 1],
                      [0, 0],
                      [1, 0],
@@ -62,8 +74,14 @@ def test_theil_index():
     cm = ClassificationMetric(bld, bld2)
 
     assert cm.theil_index() == 4*np.log(2)/10
+    assert cm.theil_index(benefit_function=uni_bf) == 2*np.log(2)/5
+    assert cm.theil_index(benefit_function=acc_bf) == np.log(5/3)
+    assert cm.theil_index(benefit_function=fpr_bf) == np.log(5/3)
 
 def test_between_all_groups():
+    uni_bf = {'TP':1, 'TN':1, 'FP':2, 'FN':0}
+    acc_bf = {'TP':1, 'TN':1, 'FP':0, 'FN':0}
+    fpr_bf = {        'TN':1, 'FP':0        }
     data = np.array([[0, 1],
                      [0, 0],
                      [1, 0],
@@ -86,9 +104,17 @@ def test_between_all_groups():
     cm = ClassificationMetric(bld, bld2)
 
     b = np.array([1, 1, 1.25, 1.25, 1.25, 1.25, 0.75, 0.75, 0.75, 0.75])
-    assert cm.between_all_groups_generalized_entropy_index() == 1/20*np.sum(b**2 - 1)
+    assert cm.between_all_groups_generalized_entropy_index() == np.sum(b**2 - 1)/20
+    assert cm.between_all_groups_generalized_entropy_index(benefit_function=uni_bf) == np.sum(b**2 - 1)/20
+    b = np.array([1, 1, 0.25, 0.25, 0.25, 0.25, 0.75, 0.75, 0.75, 0.75])
+    assert cm.between_all_groups_generalized_entropy_index(benefit_function=acc_bf) == np.sum((b/0.6)**2 - 1)/20
+    b = np.array([3, 1, 1, 1, 3])/3
+    assert round(cm.between_all_groups_generalized_entropy_index(benefit_function=fpr_bf), 15) == round(np.sum((b/0.6)**2 - 1)/10, 15)
 
 def test_between_group():
+    uni_bf = {'TP':1, 'TN':1, 'FP':2, 'FN':0}
+    acc_bf = {'TP':1, 'TN':1, 'FP':0, 'FN':0}
+    fpr_bf = {        'TN':1, 'FP':0        }
     data = np.array([[0, 0, 1],
                      [0, 1, 0],
                      [1, 1, 0],
@@ -108,7 +134,12 @@ def test_between_group():
         privileged_groups=[{'feat': 1}])
 
     b = np.array([0.5, 0.5, 1.25, 1.25, 1.25, 1.25])
-    assert cm.between_group_generalized_entropy_index() == 1/12*np.sum(b**2 - 1)
+    assert cm.between_group_generalized_entropy_index() == np.sum(b**2 - 1)/12
+    assert cm.between_group_generalized_entropy_index(benefit_function=uni_bf) == np.sum(b**2 - 1)/12
+    b = np.array([0.5, 0.5, 0.25, 0.25, 0.25, 0.25])
+    assert cm.between_group_generalized_entropy_index(benefit_function=acc_bf) == np.sum((3*b)**2 - 1)/12
+    b = np.array([3, 1, 1, 1])/3
+    assert round(cm.between_group_generalized_entropy_index(benefit_function=fpr_bf), 15) == round(np.sum((2*b)**2 - 1)/8, 15)
     
 def test_multiclass_confusion_matrix():
     data = np.array([[0, 1],
