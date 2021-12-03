@@ -1,6 +1,7 @@
 from functools import partial
 
 import numpy as np
+from numpy.testing import assert_array_equal
 import pandas as pd
 from pandas.testing import assert_frame_equal
 import pytest
@@ -182,30 +183,35 @@ def test_fetch_lawschool_gpa():
     assert gpa.y.nunique() > 2  # regression
     assert fetch_lawschool_gpa(numeric_only=True, dropna=False).X.shape == (22342, 3)
 
-@pytest.mark.parametrize("panel, cls", [(19, MEPSDataset19), (20, MEPSDataset20), (21, MEPSDataset21)])
+@pytest.mark.parametrize("panel", [19, 20, 21])
+def test_cache_meps(panel):
+    """Tests if cached MEPS matches raw."""
+    meps_raw = fetch_meps(panel, cache=False, accept_terms=True)[0]
+    fetch_meps(panel, cache=True, accept_terms=True)
+    meps_cached = fetch_meps(panel, cache=True)[0]
+    assert_frame_equal(meps_raw, meps_cached, check_dtype=False)
+    assert_array_equal(meps_raw.to_numpy(), meps_cached.to_numpy())
+
+@pytest.mark.parametrize(
+    "panel, cls",
+    [(19, MEPSDataset19), (20, MEPSDataset20), (21, MEPSDataset21)])
 def test_meps_matches_old(panel, cls):
     """Tests MEPS datasets match original versions."""
-    meps = fetch_meps(panel, cache=False, accept_terms=True)
+    meps = fetch_meps(panel, accept_terms=True)
     assert len(meps) == 3
     meps.X.RACE = meps.X.RACE.factorize(sort=True)[0]
     MEPS = cls()
-    assert all(pd.get_dummies(meps.X) == MEPS.features)
-    assert all(meps.y.factorize(sort=True)[0] == MEPS.labels.ravel())
-
-def test_cache_meps():
-    """Tests if cached MEPS matches raw."""
-    meps_raw = fetch_meps(19, accept_terms=True)[0]
-    meps_cached = fetch_meps(19)[0]
-    assert_frame_equal(meps_raw, meps_cached)
+    assert_array_equal(pd.get_dummies(meps.X), MEPS.features)
+    assert_array_equal(meps.y.factorize(sort=True)[0], MEPS.labels.ravel())
 
 @pytest.mark.parametrize("panel", [19, 20, 21])
 def test_fetch_meps(panel):
     """Tests MEPS datasets shapes with various options."""
     # BUG: dropna does nothing currently
-    # meps = fetch_meps(panel)
+    # meps = fetch_meps(panel, accept_terms=True)
     # meps_dropna = fetch_meps(panel, dropna=False)
     # assert meps_dropna.shape[0] < meps.shape[0]
-    meps_numeric = fetch_meps(panel, numeric_only=True)
+    meps_numeric = fetch_meps(panel, accept_terms=True, numeric_only=True)
     assert meps_numeric.X.shape[1] == 5
 
 def test_onehot_transformer():
