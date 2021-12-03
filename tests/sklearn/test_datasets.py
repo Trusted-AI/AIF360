@@ -2,11 +2,13 @@ from functools import partial
 
 import numpy as np
 import pandas as pd
+from pandas.testing import assert_frame_equal
 import pytest
 from sklearn.compose import make_column_transformer
 from sklearn.preprocessing import OneHotEncoder
 
-from aif360.datasets import MEPSDataset19, MEPSDataset20, MEPSDataset21
+from aif360.datasets import (
+    AdultDataset, CompasDataset, MEPSDataset19, MEPSDataset20, MEPSDataset21)
 from aif360.sklearn.datasets import (
     standardize_dataset, NumericConversionWarning, fetch_adult, fetch_bank,
     fetch_german, fetch_compas, fetch_lawschool_gpa, fetch_meps)
@@ -125,6 +127,17 @@ def test_fetch_adult():
     # still in index though
     assert 'race' in num_only_bin_race.X.index.names
 
+def test_adult_matches_old():
+    """Tests Adult Income dataset matches original version."""
+    X, y, _ = fetch_adult()
+    X.race = X.race.cat.set_categories(['Non-white', 'White']).fillna('Non-white')
+
+    adult = AdultDataset()
+    adult = adult.convert_to_dataframe(de_dummy_code=True)[0].drop(columns=adult.label_names)
+
+    assert_frame_equal(X.reset_index(drop=True), adult.reset_index(drop=True),
+                       check_dtype=False, check_categorical=False, check_like=True)
+
 def test_fetch_german():
     """Tests German Credit dataset shapes with various options."""
     german = fetch_german()
@@ -150,6 +163,17 @@ def test_fetch_compas():
     assert fetch_compas(numeric_only=True).X.shape == (6172, 8)
     assert fetch_compas(numeric_only=True, binary_race=True).X.shape == (5278, 9)
 
+def test_compas_matches_old():
+    """Tests COMPAS Recidivism dataset matches original version."""
+    X, y = fetch_compas()
+    X.race = X.race.cat.set_categories(['Not Caucasian', 'Caucasian']).fillna('Not Caucasian')
+
+    compas = CompasDataset()
+    compas = compas.convert_to_dataframe(de_dummy_code=True)[0].drop(columns=compas.label_names)
+
+    assert_frame_equal(X.reset_index(drop=True), compas.reset_index(drop=True),
+                       check_dtype=False, check_categorical=False, check_like=True)
+
 def test_fetch_lawschool_gpa():
     """Tests Law School GPA dataset shapes with various options."""
     gpa = fetch_lawschool_gpa()
@@ -159,8 +183,8 @@ def test_fetch_lawschool_gpa():
     assert fetch_lawschool_gpa(numeric_only=True, dropna=False).X.shape == (22342, 3)
 
 @pytest.mark.parametrize("panel, cls", [(19, MEPSDataset19), (20, MEPSDataset20), (21, MEPSDataset21)])
-def test_fetch_meps(panel, cls):
-    """Tests MEPS datasets shapes with various options."""
+def test_meps_matches_old(panel, cls):
+    """Tests MEPS datasets match original versions."""
     meps = fetch_meps(panel, cache=False, accept_terms=True)
     assert len(meps) == 3
     meps.X.RACE = meps.X.RACE.factorize(sort=True)[0]
@@ -168,7 +192,21 @@ def test_fetch_meps(panel, cls):
     assert all(pd.get_dummies(meps.X) == MEPS.features)
     assert all(meps.y.factorize(sort=True)[0] == MEPS.labels.ravel())
 
-    # assert fetch_meps(panel, dropna=False).X.shape == ()
+def test_cache_meps():
+    """Tests if cached MEPS matches raw."""
+    meps_raw = fetch_meps(19, accept_terms=True)[0]
+    meps_cached = fetch_meps(19)[0]
+    assert_frame_equal(meps_raw, meps_cached)
+
+@pytest.mark.parametrize("panel", [19, 20, 21])
+def test_fetch_meps(panel):
+    """Tests MEPS datasets shapes with various options."""
+    # BUG: dropna does nothing currently
+    # meps = fetch_meps(panel)
+    # meps_dropna = fetch_meps(panel, dropna=False)
+    # assert meps_dropna.shape[0] < meps.shape[0]
+    meps_numeric = fetch_meps(panel, numeric_only=True)
+    assert meps_numeric.X.shape[1] == 5
 
 def test_onehot_transformer():
     """Tests that categorical features can be correctly one-hot encoded."""
