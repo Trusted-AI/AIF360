@@ -21,7 +21,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [3.6, 3.7, 3.8]
+        python-version: [3.7, 3.8, 3.9]
 
     env:
       UCI_DB: "https://archive.ics.uci.edu/ml/machine-learning-databases"
@@ -37,6 +37,9 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
+
+      - name: Set up R
+        uses: r-lib/actions/setup-r@v1
 
       - name: Install dependencies
         run: |
@@ -54,6 +57,7 @@ jobs:
           wget ${UCI_DB}/statlog/german/german.data -P aif360/data/raw/german/
           wget ${UCI_DB}/statlog/german/german.doc -P aif360/data/raw/german/
           wget ${PROPUBLICA_GH}/compas-scores-two-years.csv -P aif360/data/raw/compas/
+          Rscript aif360/data/raw/meps/generate_data.R <<< y
 
       - name: Lint with flake8
         run: |
@@ -71,7 +75,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [3.6, 3.7, 3.8]
+        python-version: [3.7, 3.8, 3.9]
 
     steps:
       - name: Check out repo
