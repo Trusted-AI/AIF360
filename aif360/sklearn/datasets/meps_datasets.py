@@ -117,7 +117,8 @@ def fetch_meps(panel, *, accept_terms=None, data_home=None, cache=True,
                                labels=['< 10 Visits', '>= 10 Visits'])#['low', 'high'])
 
     # TODO: let standardize_dataset handle dropna (see above todo re: extra cols)
-    return standardize_dataset(df.dropna(), prot_attr='RACE', target='UTILIZATION',
+    df = df.dropna()
+    return standardize_dataset(df, prot_attr='RACE', target='UTILIZATION',
                                sample_weight='PERWT', usecols=usecols,
                                dropcols=dropcols, numeric_only=numeric_only,
                                dropna=dropna)
