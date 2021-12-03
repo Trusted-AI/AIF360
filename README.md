@@ -74,9 +74,9 @@ Supported Python Configurations:
 
 | OS      | Python version |
 | ------- | -------------- |
-| macOS   | 3.6, 3.7, 3.8  |
-| Ubuntu  | 3.6, 3.7, 3.8  |
-| Windows | 3.6, 3.7, 3.8  |
+| macOS   | 3.7, 3.8, 3.9  |
+| Ubuntu  | 3.7, 3.8, 3.9  |
+| Windows | 3.7, 3.8, 3.9  |
 
 ### (Optional) Create a virtual environment
 
@@ -93,10 +93,10 @@ is sufficient (see [the difference between Anaconda and
 Miniconda](https://conda.io/docs/user-guide/install/download.html#anaconda-or-miniconda)
 if you are curious) if you do not already have conda installed.
 
-Then, to create a new Python 3.6 environment, run:
+Then, to create a new Python 3.7 environment, run:
 
 ```bash
-conda create --name aif360 python=3.6
+conda create --name aif360 python=3.7
 conda activate aif360
 ```
 
