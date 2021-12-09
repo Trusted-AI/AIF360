@@ -1,12 +1,5 @@
 import numpy as np
 import tensorflow as tf
-# try:
-#     import tensorflow.compat.v1 as tf
-# except ImportError as error:
-#     from logging import warning
-#     warning("{}: AdversarialDebiasing will be unavailable. To install, run:\n"
-#             "pip install 'aif360[AdversarialDebiasing]'".format(error))
-
 from aif360.algorithms import Transformer
 
 class classifier_model(tf.Module):
