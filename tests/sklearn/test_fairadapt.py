@@ -1,20 +1,7 @@
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import lightgbm as lgb
-import rpy2
+from sklearn.model_selection import train_test_split
 
-from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import accuracy_score
-from sklearn.model_selection import GridSearchCV, train_test_split
-from sklearn.preprocessing import OneHotEncoder
-
-from rpy2 import robjects
-from rpy2.robjects import r, pandas2ri
-from rpy2.robjects.conversion import localconverter
-from rpy2.robjects.packages import importr
-from rpy2.robjects.vectors import StrVector
-import rpy2.robjects.numpy2ri as numpy2ri
 
 from aif360.sklearn.datasets import fetch_adult
 from aif360.sklearn.metrics import statistical_parity_difference
@@ -42,7 +29,7 @@ def test_fairadapt_adult():
     adj_mat.at["education-num", ["workclass", "hours-per-week","occupation", "annual-income"]] = 1
     adj_mat.at[["workclass", "hours-per-week", "occupation"], "annual-income"] = 1
 
-    pandas2ri.activate()
+    # pandas2ri.activate()
 
     FA = fairadapt.FairAdapt(prot_attr = "sex", adj_mat = adj_mat, outcome = "annual-income")
     Xf_train, yf_train, Xf_test = FA.fit_transform(X_train, y_train, X_test)

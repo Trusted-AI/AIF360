@@ -6,11 +6,13 @@ from __future__ import unicode_literals
 import pandas as pd
 import numpy as np
 
-from aif360.metrics import utils
 from sklearn.base import BaseEstimator
 
 from rpy2 import robjects
 from rpy2.robjects.vectors import StrVector
+from rpy2.robjects.packages import importr
+from rpy2.robjects import pandas2ri
+from rpy2.robjects.conversion import localconverter
 
 
 class FairAdapt(BaseEstimator):
@@ -124,22 +126,29 @@ class FairAdapt(BaseEstimator):
 		    }
 		    '''
         )
+        # conver to Pandas with a local converter
+        with localconverter(robjects.default_converter + pandas2ri.converter):
+            train_data = robjects.conversion.py2rpy(df_train)
+            test_data = robjects.conversion.py2rpy(X_test)
+            adj_mat = robjects.conversion.py2rpy(self.adj_mat)
 
         # run FairAdapt in R
         res = Fairadapt_R(
-            train_data=df_train,
-            test_data=X_test,
-            adj_mat=self.adj_mat,
+            train_data=train_data,
+            test_data=test_data,
+            adj_mat=adj_mat,
             prot_attr=self.prot_attr,
             outcome=self.outcome
         )
 
-        train_adapt = res.rx2('train')
+        with localconverter(robjects.default_converter + pandas2ri.converter):
+            train_adapt = robjects.conversion.rpy2py(res.rx2('train'))
         train_adapt.columns = [self.outcome] + X_test.columns.tolist()
         y_fair_train = train_adapt[self.outcome]
         X_fair_train = train_adapt.drop([self.outcome], axis=1)
 
-        X_fair_test = res.rx2('test')
+        with localconverter(robjects.default_converter + pandas2ri.converter):
+            X_fair_test = robjects.conversion.rpy2py(res.rx2('test'))
         X_fair_test.columns = X_test.columns
 
         return X_fair_train, y_fair_train, X_fair_test

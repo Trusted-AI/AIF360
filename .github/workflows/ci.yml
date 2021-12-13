@@ -33,6 +33,9 @@ jobs:
       - name: Check out repo
         uses: actions/checkout@v2
 
+      - name: Set up R
+        uses: r-lib/actions/setup-r@v1
+
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v2
         with:
