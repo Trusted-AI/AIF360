@@ -3,9 +3,7 @@ import scipy.special
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.preprocessing import LabelEncoder, OneHotEncoder
 from sklearn.utils import check_random_state
-from sklearn.utils.validation import check_is_fitted
 import tensorflow as tf
-import random
 
 
 from aif360.sklearn.utils import check_inputs, check_groups
@@ -171,7 +169,7 @@ class AdversarialDebiasing(BaseEstimator, ClassifierMixin):
 
         starter_learning_rate = 0.001
         self.clf_model = classifier_model(feature=n_features, Hneuron1=self.classifier_num_hidden_units,
-                                          output=1, dropout=0.2,
+                                          output=n_classes, dropout=0.2,
                                           seed1=self.s1, seed2=self.s2)
         learning_rate = tf.keras.optimizers.schedules.ExponentialDecay(starter_learning_rate,
                                                                        decay_steps=1000, decay_rate=0.96,
@@ -306,10 +304,10 @@ class AdversarialDebiasing(BaseEstimator, ClassifierMixin):
         """
 
         num_test_samples = X.shape[0]
-        n_classes = len(self.classes_)
+        #n_classes = len(self.classes_)
 
-        if n_classes == 2:
-            n_classes = 1
+        #if n_classes == 2:
+        #    n_classes = 1 # lgtm [py/unused-local-variable]
 
         self.clf_model.dropout = 0
         samples_covered = 0
