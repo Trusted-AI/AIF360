@@ -56,7 +56,7 @@ class AdversarialDebiasing(Transformer):
     def __init__(self,
                  unprivileged_groups,
                  privileged_groups,
-                 scope_name,
+                 scope_name=None,
                  seed=None,
                  adversary_loss_weight=0.1,
                  num_epochs=50,
@@ -104,6 +104,7 @@ class AdversarialDebiasing(Transformer):
 
 
 
+
     def fit(self, dataset):
         """Compute the model parameters of the fair classifier using gradient
         descent.
@@ -117,8 +118,8 @@ class AdversarialDebiasing(Transformer):
         if self.seed is not None:
             np.random.seed(self.seed)
         ii32 = np.iinfo(np.int32)
-        self.seed1, self.seed2, self.seed3, self.seed4 = np.random.randint(ii32.min, ii32.max, size=4)
-
+        self.seed1, self.seed2, self.seed3 = np.random.randint(ii32.min, ii32.max, size=3)
+        tf.random.set_seed(self.seed)
         # Map the dataset labels to 0 and 1.
         temp_labels = dataset.labels.copy()
 
@@ -126,8 +127,8 @@ class AdversarialDebiasing(Transformer):
         temp_labels[(dataset.labels == dataset.unfavorable_label).ravel(),0] = 0.0
         num_train_samples, self.features_dim = np.shape(dataset.features)
         starter_learning_rate = 0.001
-        self.clf_model = classifier_model(feature=self.features_dim, Hneuron1=self.classifier_num_hidden_units, output=1, dropout=0.2,
-                                     seed1=self.seed1, seed2=self.seed2)
+        self.clf_model = classifier_model(feature=self.features_dim, Hneuron1=self.classifier_num_hidden_units, output=1,
+                                          dropout=0.2, seed1=self.seed1, seed2=self.seed2)
         learning_rate = tf.keras.optimizers.schedules.ExponentialDecay(starter_learning_rate,
                                                    decay_steps = 1000, decay_rate=0.96, staircase=True)
         classifier_opt = tf.optimizers.Adam(learning_rate)
@@ -141,8 +142,9 @@ class AdversarialDebiasing(Transformer):
                                                                            staircase=True)
             adversary_opt = tf.optimizers.Adam(learning_rate)
             #adversary_vars = [var for var in self.adv_model.trainable_variables]
-            for epoch in range(self.num_epochs):
-                shuffled_ids = np.random.choice(num_train_samples, num_train_samples, replace=False)
+            for epoch in range(self.num_epochs//2):
+                shuffled_ids = [i for i in range(num_train_samples)]
+                #shuffled_ids = np.random.choice(num_train_samples, num_train_samples, replace=False)
                 for i in range(num_train_samples // self.batch_size):
                     batch_ids = shuffled_ids[self.batch_size * i: self.batch_size * (i + 1)]
                     batch_features = dataset.features[batch_ids].astype('float32')
@@ -157,7 +159,7 @@ class AdversarialDebiasing(Transformer):
                         print("(Pretraining Classifier) epoch %d; iter: %d; batch classifier loss: %f" % (
                             epoch, i, loss_clf))
             for epoch in range(self.num_epochs//5):
-                shuffled_ids = np.random.choice(num_train_samples, num_train_samples, replace=False)
+                #shuffled_ids = np.random.choice(num_train_samples, num_train_samples, replace=False)
                 for i in range(num_train_samples // self.batch_size):
                     batch_ids = shuffled_ids[self.batch_size * i: self.batch_size * (i + 1)]
                     batch_features = dataset.features[batch_ids].astype('float32')
@@ -178,9 +180,10 @@ class AdversarialDebiasing(Transformer):
             #Adversary Debiasing
             normalize = lambda  x: x / (tf.norm(x) + np.finfo(np.float32).tiny)
             for epoch in range(self.num_epochs):
+                shuffled_ids = [i for i in range(num_train_samples)]
                 #self.clf_model.dropout=0
                 #self.adversary_loss_weight=sqrt(epoch)
-                shuffled_ids = np.random.choice(num_train_samples, num_train_samples, replace=False)
+                #shuffled_ids = np.random.choice(num_train_samples, num_train_samples, replace=False)
                 for i in range(num_train_samples // self.batch_size):
                     batch_ids = shuffled_ids[self.batch_size * i: self.batch_size * (i + 1)]
                     batch_features = dataset.features[batch_ids].astype('float32')
@@ -223,7 +226,8 @@ class AdversarialDebiasing(Transformer):
 
         else:
             for epoch in range(self.num_epochs):
-                shuffled_ids = np.random.choice(num_train_samples, num_train_samples, replace=False)
+                shuffled_ids = [i for i in range(num_train_samples)]
+                #shuffled_ids = np.random.choice(num_train_samples, num_train_samples, replace=False)
                 for i in range(num_train_samples // self.batch_size):
                     batch_ids = shuffled_ids[self.batch_size * i: self.batch_size * (i + 1)]
                     batch_features = dataset.features[batch_ids].astype('float32')
@@ -250,8 +254,6 @@ class AdversarialDebiasing(Transformer):
             dataset (BinaryLabelDataset): Transformed dataset.
         """
 
-        if self.seed is not None:
-            np.random.seed(self.seed)
 
         num_test_samples, _ = np.shape(dataset.features)
         self.clf_model.dropout=0
