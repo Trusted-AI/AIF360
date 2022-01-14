@@ -19,8 +19,8 @@ extras = {
     'LIME': ['lime'],
     'ART': ['adversarial-robustness-toolbox>=1.0.0'],
     'Reductions': ['fairlearn==0.4.6'],
-    'notebooks': ['jupyter', 'tqdm'],
-    'FairAdapt':['rpy2==3.4.5', 'igraph==0.9.8', 'lightgbm==3.1.1']
+    'FairAdapt':['rpy2==3.4.5'],
+    'notebooks': ['jupyter', 'tqdm', 'igraph[plotting]', 'lightgbm'],
 }
 extras['tests'] = reduce(lambda l1, l2: l1+l2, extras.values(), ['pytest>=3.5'])
 extras['docs'] = ['sphinx', 'sphinx_rtd_theme']
