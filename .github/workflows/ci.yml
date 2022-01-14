@@ -44,7 +44,6 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip setuptools wheel
-          pip install numpy==1.19.5
           pip install -e '.[all]'
           pip install flake8
           pip list
