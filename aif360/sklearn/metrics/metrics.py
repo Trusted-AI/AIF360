@@ -1,3 +1,5 @@
+from itertools import permutations
+
 import numpy as np
 import pandas as pd
 from sklearn.metrics import make_scorer as _make_scorer, recall_score
@@ -14,16 +16,17 @@ from aif360.detectors.mdss.MDSS import MDSS
 
 __all__ = [
     # meta-metrics
-    'difference', 'ratio',
+    'difference', 'ratio', 'intersection',
     # scorer factory
     'make_scorer',
     # helpers
-    'specificity_score', 'base_rate', 'selection_rate', 'generalized_fpr',
-    'generalized_fnr',
+    'specificity_score', 'base_rate', 'selection_rate', 'smoothed_base_rate',
+    'smoothed_selection_rate', 'generalized_fpr', 'generalized_fnr',
     # group fairness
     'statistical_parity_difference', 'disparate_impact_ratio',
     'equal_opportunity_difference', 'average_odds_difference',
-    'average_odds_error', 'mdss_bias_scan', 'mdss_bias_score',
+    'average_odds_error', 'smoothed_edf', 'df_bias_amplification',
+    'mdss_bias_scan', 'mdss_bias_score',
     # individual fairness
     'generalized_entropy_index', 'generalized_entropy_error',
     'between_group_generalized_entropy_error', 'theil_index',
@@ -125,6 +128,60 @@ def ratio(func, y, *args, prot_attr=None, priv_group=1, sample_weight=None,
     return _prf_divide(np.array([numerator]), np.array([denominator]), 'ratio',
                        modifier, None, ('ratio',), zero_division).item()
 
+def intersection(func, y, *args, prot_attr=None, sample_weight=None,
+                 return_groups=False, **kwargs):
+    """Compute an arbitrary metric on all intersectional groups of the protected
+    attributes provided.
+
+    Args:
+        func (function): A metric function from :mod:`sklearn.metrics` or
+            :mod:`aif360.sklearn.metrics.metrics`.
+        y (pandas.Series): Outcome vector with protected attributes as index.
+        *args: Additional positional args to be passed through to func.
+        prot_attr (array-like, keyword-only): Protected attribute(s). If
+            ``None``, all protected attributes in y are used.
+        sample_weight (array-like, optional): Sample weights passed through to
+            func.
+        return_groups (bool, optional): Return group names in addition to metric
+            values. Names are tuples of protected attribute values.
+        **kwargs: Additional keyword args to be passed through to func.
+
+    Returns:
+        list: List of metric values for each intersectional group.
+
+        tuple:
+            Metric values and their corresponding group names.
+
+            * **vals** (`list`) -- List of metric values for each intersectional
+              group
+            * **groups** (:class:`numpy.ndarray`) -- Array of tuples containing
+              unique intersectional groups derived from the provided protected
+              attributes.
+
+    Examples:
+        >>> X, y = fetch_german()
+        >>> v, k = intersection(base_rate, y, prot_attr=['sex', 'age'],
+        ...                     return_groups=True, pos_label='good')
+        >>> dict(zip(k, v))
+        {('female', 'aged'): 0.697560975609756,
+         ('female', 'young'): 0.5523809523809524,
+         ('male', 'aged'): 0.7388429752066116,
+         ('male', 'young'): 0.611764705882353}
+    """
+    groups, _ = check_groups(y, prot_attr)
+    unique_groups = np.unique(groups)
+    func_vals = []
+    for g in unique_groups:
+        idx = (groups == g)
+        sub = map(lambda a: a[idx], (y,) + args)
+        if sample_weight is None:
+            func_vals.append(func(*sub, **kwargs))
+        else:
+            func_vals.append(func(*sub, sample_weight=sample_weight[idx], **kwargs))
+    if return_groups:
+        return func_vals, unique_groups
+    return func_vals
+
 
 # =========================== SCORER FACTORY =================================
 def make_scorer(score_func, is_ratio=False, **kwargs):
@@ -206,6 +263,48 @@ def selection_rate(y_true, y_pred, pos_label=1, sample_weight=None):
         float: Selection rate.
     """
     return base_rate(y_pred, pos_label=pos_label, sample_weight=sample_weight)
+
+def smoothed_base_rate(y_true, y_pred=None, *, concentration=1.0, pos_label=1,
+                       sample_weight=None):
+    r"""Compute the smoothed base rate,
+    :math:`\frac{P + \alpha}{P + N + |R_Y|\alpha}`.
+
+    Args:
+        y_true (array-like): Ground truth (correct) target values.
+        y_pred (array-like, optional): Estimated targets. Ignored.
+        concentration (scalar): Dirichlet smoothing concentration parameter
+            :math:`|R_Y|\alpha` (must be non-negative).
+        pos_label (scalar, optional): The label of the positive class.
+        sample_weight (array-like, optional): Sample weights.
+
+    Returns:
+        float: Smoothed base rate.
+    """
+    if concentration < 0:
+        raise ValueError("Concentration parameter must be non-negative.")
+    num_classes = len(np.unique(y_true))
+    idx = (y_true == pos_label)
+    avg, tot = np.average(idx, weights=sample_weight, returned=True)
+    return (avg*tot + concentration/num_classes) / (tot + concentration)
+
+def smoothed_selection_rate(y_true, y_pred, *, concentration=1.0, pos_label=1,
+                            sample_weight=None):
+    r"""Compute the smoothed selection rate,
+    :math:`\frac{TP + FP + \alpha}{P + N + |R_Y|\alpha}`.
+
+    Args:
+        y_true (array-like): Ground truth (correct) target values. Ignored.
+        y_pred (array-like): Estimated targets as returned by a classifier.
+        concentration (scalar): Dirichlet smoothing concentration parameter
+            :math:`|R_Y|\alpha` (must be non-negative).
+        pos_label (scalar, optional): The label of the positive class.
+        sample_weight (array-like, optional): Sample weights.
+
+    Returns:
+        float: Smoothed selection rate.
+    """
+    return smoothed_base_rate(y_pred, concentration=concentration,
+                              pos_label=pos_label, sample_weight=sample_weight)
 
 def generalized_fpr(y_true, probas_pred, pos_label=1, sample_weight=None,
                     zero_division='warn'):
@@ -447,6 +546,89 @@ def average_odds_error(y_true, y_pred, prot_attr=None, priv_group=None,
                           sample_weight=sample_weight)
     return (abs(tpr_diff) + abs(fpr_diff)) / 2
 
+# TODO: use soft scores if y is probas_pred
+def smoothed_edf(*y, prot_attr=None, pos_label=1, concentration=1.0,
+                 sample_weight=None):
+    r"""Smoothed empirical differential fairness (EDF).
+
+    .. math::
+        e^{-\epsilon} \leq \frac{\sum_{A=s_i}{P(y|x)} + \alpha}{N_{s_i} + |R_Y|\alpha}
+        \frac{N_{s_j} + |R_Y|\alpha}{\sum_{A=s_j}{P(y|x) + \alpha}} \leq e^\epsilon
+
+    See [#foulds18]_ for more details.
+
+    Note:
+        If only y_true is provided, this will return the maximum epsilon for any
+        two intersectional groups (smoothed EDF of the original dataset). If
+        both y_true and y_pred are provided, only y_pred is used.
+
+    Args:
+        y_true (pandas.Series): Ground truth (correct) target values. If y_pred
+            is provided, this is ignored.
+        y_pred (array-like, optional): Estimated targets as returned by a
+            classifier.
+        prot_attr (array-like, keyword-only): Protected attribute(s). If
+            ``None``, all protected attributes in y_true are used.
+        pos_label (scalar, optional): The label of the positive class.
+        concentration (scalar, optional): Dirichlet smoothing concentration
+            parameter :math:`|R_Y|\alpha` (must be non-negative).
+        sample_weight (array-like, optional): Sample weights.
+
+    Returns:
+        float: Smoothed EDF, :math:`\epsilon`. Lower is better.
+
+    See also:
+        :func:`intersection`, :func:`smoothed_base_rate`
+
+    References:
+        .. [#foulds18] J. R. Foulds, R. Islam, K. N. Keya, and S. Pan,
+           "An Intersectional Definition of Fairness," arXiv preprint
+           arXiv:1807.08362, 2018.
+    """
+    rate = smoothed_base_rate if len(y) == 1 or y[1] is None else smoothed_selection_rate
+    sbr = intersection(rate, *y, prot_attr=prot_attr, sample_weight=sample_weight,
+                       pos_label=pos_label, concentration=concentration)
+
+    logsbr = np.log(sbr)
+    pos_ratio = max(abs(i - j) for i, j in permutations(logsbr, 2))
+    lognegsbr = np.log(1 - np.array(sbr))
+    neg_ratio = max(abs(i - j) for i, j in permutations(lognegsbr, 2))
+    return max(pos_ratio, neg_ratio)
+
+def df_bias_amplification(y_true, y_pred, *, prot_attr=None, pos_label=1,
+                          concentration=1.0, sample_weight=None):
+    r"""Differential fairness bias amplification.
+
+    Measures the increase in unfairness attributable to a classifier compared to
+    the original data. See [#foulds18]_ for more details.
+
+    Args:
+        y_true (pandas.Series): Ground truth (correct) target values.
+        y_pred (array-like): Estimated targets as returned by a classifier.
+        prot_attr (array-like, keyword-only): Protected attribute(s). If
+            ``None``, all protected attributes in y_true are used.
+        pos_label (scalar, optional): The label of the positive class.
+        concentration (scalar, optional): Dirichlet smoothing concentration
+            parameter :math:`|R_Y|\alpha` (must be non-negative).
+        sample_weight (array-like, optional): Sample weights.
+
+    Returns:
+        float: Difference in smoothed EDF between the classifier and the
+        original dataset, :math:`\epsilon_{\text{classifier}}
+        - \epsilon_{\text{data}}`. Lower is better.
+
+    References:
+        .. [#foulds18] J. R. Foulds, R. Islam, K. N. Keya, and S. Pan,
+           "An Intersectional Definition of Fairness," arXiv preprint
+           arXiv:1807.08362, 2018.
+    """
+    eps_true = smoothed_edf(y_true, prot_attr=prot_attr, pos_label=pos_label,
+                            concentration=concentration,
+                            sample_weight=sample_weight)
+    eps_pred = smoothed_edf(y_true, y_pred, prot_attr=prot_attr,
+                            pos_label=pos_label, concentration=concentration,
+                            sample_weight=sample_weight)
+    return eps_pred - eps_true
 
 def mdss_bias_score(y_true, probas_pred, X=None, subset=None, *, pos_label=1,
                     scoring='Bernoulli', privileged=True, penalty=1e-17,

@@ -10,11 +10,12 @@ from aif360.sklearn.datasets import fetch_adult
 from aif360.metrics import ClassificationMetric
 from aif360.sklearn.metrics import (
         consistency_score, specificity_score, selection_rate,
-        base_rate, generalized_fpr, generalized_fnr,
+        base_rate, smoothed_base_rate, generalized_fpr, generalized_fnr,
         disparate_impact_ratio, statistical_parity_difference,
         equal_opportunity_difference, average_odds_difference,
-        average_odds_error, generalized_entropy_error,
-        between_group_generalized_entropy_error, make_scorer)
+        average_odds_error, smoothed_edf, df_bias_amplification,
+        generalized_entropy_error, between_group_generalized_entropy_error,
+        intersection, make_scorer)
 
 
 X, y, sample_weight = fetch_adult(numeric_only=True)
@@ -56,6 +57,13 @@ def test_selection_rate():
     select = selection_rate(y, y_pred, sample_weight=sample_weight)
     assert select == cm.selection_rate()
 
+def test_smoothed_base_rate():
+    sbr = smoothed_base_rate(y, y_pred, concentration=0, sample_weight=sample_weight)
+    assert sbr == base_rate(y, y_pred, sample_weight=sample_weight)
+
+    sbr_int = intersection(smoothed_base_rate, y, y_pred, sample_weight=sample_weight)
+    assert (sbr_int == cm._smoothed_base_rates(cm.dataset.labels)).all()
+
 def test_generalized_fpr():
     """Tests that the old and new generalized_fpr matches exactly."""
     gfpr = generalized_fpr(y, y_proba, sample_weight=sample_weight)
@@ -95,6 +103,19 @@ def test_average_odds_error():
     aoe = average_odds_error(y, y_pred, prot_attr='sex',
                              sample_weight=sample_weight)
     assert np.isclose(aoe, cm.average_abs_odds_difference())
+
+def test_smoothed_edf():
+    """Tests that the old and new smoothed_edf matches exactly."""
+    edf = smoothed_edf(y, sample_weight=sample_weight)
+    assert edf == cm.smoothed_empirical_differential_fairness()
+
+    edf = smoothed_edf(y, concentration=1e9, sample_weight=sample_weight)
+    assert edf == cm.smoothed_empirical_differential_fairness(1e9)
+
+def test_df_bias_amplification():
+    """Tests that the old and new df_bias_amplification matches exactly."""
+    amp = df_bias_amplification(y, y_pred, sample_weight=sample_weight)
+    assert amp == cm.differential_fairness_bias_amplification()
 
 def test_generalized_entropy_index():
     """Tests that the old and new generalized_entropy_index matches exactly."""
