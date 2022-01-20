@@ -6,10 +6,17 @@ tensorflow>=1.13.1,<2
 cvxpy>=1.0
 fairlearn==0.4.6
 tempeh
+rpy2==3.4.5
 
 # notebooks
 jupyter
 tqdm
+igraph[plotting]==0.9.8
+lightgbm==3.1.1
 
 # tests
 pytest>=3.5.0
+
+# docs
+sphinx==1.8.6
+sphinx_rtd_theme==0.4.3
