@@ -7,7 +7,6 @@ test for biases, explanations for these metrics, and algorithms to mitigate bias
 
 We have developed the package with extensibility in mind. This library is still in development. We encourage the
 contribution of your datasets, metrics, explainers, and debiasing algorithms."""
-
 version = '0.4.0'
 
 with open("aif360/version.py", 'w') as f:
@@ -20,10 +19,11 @@ extras = {
     'LIME': ['lime'],
     'ART': ['adversarial-robustness-toolbox>=1.0.0'],
     'Reductions': ['fairlearn==0.4.6'],
-    'notebooks': ['jupyter', 'tqdm']
+    'FairAdapt':['rpy2'],
+    'notebooks': ['jupyter', 'tqdm', 'igraph[plotting]', 'lightgbm'],
 }
 extras['tests'] = reduce(lambda l1, l2: l1+l2, extras.values(), ['pytest>=3.5'])
-extras['docs'] = ['sphinx', 'sphinx_rtd_theme']
+extras['docs'] = ['sphinx<2', 'sphinx_rtd_theme']
 extras['all'] = list(reduce(lambda s, l: s.union(l), extras.values(), set()))
 
 setup(name='aif360',
@@ -49,3 +49,4 @@ setup(name='aif360',
       package_data={'aif360': ['data/*', 'data/*/*', 'data/*/*/*']},
       include_package_data=True,
       zip_safe=False)
+
