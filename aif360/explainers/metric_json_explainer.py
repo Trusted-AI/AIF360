@@ -73,7 +73,7 @@ class MetricJSONExplainer(MetricTextExplainer):
         response = OrderedDict((
             ("metric", "Between All Groups Coefficient Of Variation"),
             ("message", outcome),
-            ("description", "Computed as twice the square root of pairwise entropy between every pair of privileged and underprivileged groups."),
+            ("description", "Computed as the square root of twice the pairwise entropy between every pair of privileged and underprivileged groups with alpha = 2."),
             ("ideal", "The ideal value of this metric is 0.") #2.0"
         ))
         return json.dumps(response)
@@ -103,7 +103,7 @@ class MetricJSONExplainer(MetricTextExplainer):
         response = OrderedDict((
             ("metric", "Between Group Coefficient Of Variation"),
             ("message", outcome),
-            ("description", "Computed as twice the square root of pairwise entropy between a given pair of privileged and underprivileged groups."),
+            ("description", "Computed as the square root of twice the pairwise entropy between a given pair of privileged and underprivileged groups with alpha = 2."),
             ("ideal", "The ideal value of this metric is 0.0") #2.0"
         ))
         return json.dumps(response)
@@ -123,7 +123,7 @@ class MetricJSONExplainer(MetricTextExplainer):
         response = OrderedDict((
             ("metric", "Between Group Theil Index"),
             ("message", outcome),
-            ("description", "Computed as the pairwise entropy between a given pair of privileged and underprivileged groups."),
+            ("description", "Computed as the pairwise entropy between a given pair of privileged and underprivileged groups with alpha = 1."),
             ("ideal", "The ideal value of this metric is 0.0") #1.0"
         ))
         return json.dumps(response)
@@ -133,7 +133,7 @@ class MetricJSONExplainer(MetricTextExplainer):
         response = OrderedDict((
             ("metric", "Coefficient Of Variation"),
             ("message", outcome),
-            ("description", "Computed as twice the generalized entropy index."),
+            ("description", "Computed as the square root of twice the generalized entropy index with alpha = 2."),
             ("ideal", "The ideal value of this metric is 0.0") #2.0"
         ))
         return json.dumps(response)
