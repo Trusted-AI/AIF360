@@ -49,6 +49,7 @@ Get in touch with us on [Slack](https://aif360.slack.com) (invitation
 * Rich Subgroup Fairness ([Kearns, Neel, Roth, Wu, 2018](https://arxiv.org/abs/1711.05144))
 * Exponentiated Gradient Reduction ([Agarwal et al., 2018](https://arxiv.org/abs/1803.02453))
 * Grid Search Reduction ([Agarwal et al., 2018](https://arxiv.org/abs/1803.02453), [Agarwal et al., 2019](https://arxiv.org/abs/1905.12843))
+* Fair Data Adaptation ([Plečko and Meinshausen, 2020](https://www.jmlr.org/papers/v21/19-966.html), [Plečko et. al., 2021](https://arxiv.org/abs/2110.10200))
 
 ## Supported fairness metrics
 
@@ -74,9 +75,9 @@ Supported Python Configurations:
 
 | OS      | Python version |
 | ------- | -------------- |
-| macOS   | 3.6, 3.7, 3.8  |
-| Ubuntu  | 3.6, 3.7, 3.8  |
-| Windows | 3.6, 3.7, 3.8  |
+| macOS   | 3.7, 3.8, 3.9  |
+| Ubuntu  | 3.7, 3.8, 3.9  |
+| Windows | 3.7, 3.8, 3.9  |
 
 ### (Optional) Create a virtual environment
 
@@ -93,10 +94,10 @@ is sufficient (see [the difference between Anaconda and
 Miniconda](https://conda.io/docs/user-guide/install/download.html#anaconda-or-miniconda)
 if you are curious) if you do not already have conda installed.
 
-Then, to create a new Python 3.6 environment, run:
+Then, to create a new Python 3.7 environment, run:
 
 ```bash
-conda create --name aif360 python=3.6
+conda create --name aif360 python=3.7
 conda activate aif360
 ```
 
