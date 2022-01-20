@@ -19,11 +19,11 @@ extras = {
     'LIME': ['lime'],
     'ART': ['adversarial-robustness-toolbox>=1.0.0'],
     'Reductions': ['fairlearn==0.4.6'],
-    'FairAdapt':['rpy2==3.4.5'],
+    'FairAdapt':['rpy2'],
     'notebooks': ['jupyter', 'tqdm', 'igraph[plotting]', 'lightgbm'],
 }
 extras['tests'] = reduce(lambda l1, l2: l1+l2, extras.values(), ['pytest>=3.5'])
-extras['docs'] = ['sphinx', 'sphinx_rtd_theme']
+extras['docs'] = ['sphinx<2', 'sphinx_rtd_theme']
 extras['all'] = list(reduce(lambda s, l: s.union(l), extras.values(), set()))
 
 setup(name='aif360',
