@@ -592,7 +592,7 @@ def theil_index(b):
     return generalized_entropy_index(b, alpha=1)
 
 def coefficient_of_variation(b):
-    r"""The coefficient of variation is two times the square root of the
+    r"""The coefficient of variation is the square root of two times the
     :func:`generalized_entropy_index` with :math:`\alpha = 2`.
 
     Args:
@@ -601,7 +601,7 @@ def coefficient_of_variation(b):
     See also:
         :func:`generalized_entropy_index`
     """
-    return 2 * np.sqrt(generalized_entropy_index(b, alpha=2))
+    return np.sqrt(2 * generalized_entropy_index(b, alpha=2))
 
 
 # TODO: use sample_weight?

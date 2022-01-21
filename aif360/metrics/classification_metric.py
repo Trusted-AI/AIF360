@@ -777,10 +777,10 @@ class ClassificationMetric(BinaryLabelDatasetMetric):
         return self.generalized_entropy_index(alpha=1)
 
     def coefficient_of_variation(self):
-        r"""The coefficient of variation is two times the square root of the
+        r"""The coefficient of variation is the square root of two times the
         :meth:`generalized_entropy_index` with :math:`\alpha = 2`.
         """
-        return 2 * np.sqrt(self.generalized_entropy_index(alpha=2))
+        return np.sqrt(2*self.generalized_entropy_index(alpha=2))
 
     def between_group_theil_index(self):
         r"""The between-group Theil index is the
@@ -789,11 +789,11 @@ class ClassificationMetric(BinaryLabelDatasetMetric):
         return self.between_group_generalized_entropy_index(alpha=1)
 
     def between_group_coefficient_of_variation(self):
-        r"""The between-group coefficient of variation is two times the square
-        root of the :meth:`between_group_generalized_entropy_index` with
+        r"""The between-group coefficient of variation is the square
+        root of two times the :meth:`between_group_generalized_entropy_index` with
         :math:`\alpha = 2`.
         """
-        return 2*np.sqrt(self.between_group_generalized_entropy_index(alpha=2))
+        return np.sqrt(2*self.between_group_generalized_entropy_index(alpha=2))
 
     def between_all_groups_theil_index(self):
         r"""The between-group Theil index is the
@@ -803,11 +803,11 @@ class ClassificationMetric(BinaryLabelDatasetMetric):
         return self.between_all_groups_generalized_entropy_index(alpha=1)
 
     def between_all_groups_coefficient_of_variation(self):
-        r"""The between-group coefficient of variation is two times the square
-        root of the :meth:`between_all_groups_generalized_entropy_index` with
+        r"""The between-group coefficient of variation is the square
+        root of two times the :meth:`between_all_groups_generalized_entropy_index` with
         :math:`\alpha = 2`.
         """
-        return 2 * np.sqrt(self.between_all_groups_generalized_entropy_index(
+        return np.sqrt(2*self.between_all_groups_generalized_entropy_index(
             alpha=2))
 
     def differential_fairness_bias_amplification(self, concentration=1.0):
