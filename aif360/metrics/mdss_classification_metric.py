@@ -69,7 +69,7 @@ class MDSSClassificationMetric(ClassificationMetric):
                 (observed better than predicted outcomes).
 
         Returns:
-            float: Bias score for the given group. 
+            float: Bias score for the given group.
                 The higher the score, the evidence for bias.
         """
         groups = self.privileged_groups if privileged else self.unprivileged_groups
@@ -89,16 +89,16 @@ class MDSSClassificationMetric(ClassificationMetric):
         outcomes = pd.Series(self.dataset.labels.flatten() == self.dataset.favorable_label, dtype=int)
 
         # In MDSS, we look for subset whose observations systematically deviates from expectations.
-        # Positive direction means observations are systematically higher than expectations 
-        # (or expectations are systematically higher than observations) while 
+        # Positive direction means observations are systematically higher than expectations
+        # (or expectations are systematically higher than observations) while
         # Negative direction means observatons are systematically lower than expectations
         # (or expectations are systematically higher than observations)
 
-        # For a privileged group, we are looking for a subset whose expectations 
+        # For a privileged group, we are looking for a subset whose expectations
         # (where expectations is obtained from a model) is systematically higher than the observations.
         # This means we scan in the negative direction.
 
-        # For an uprivileged group, we are looking for a subset whose expectations 
+        # For an uprivileged group, we are looking for a subset whose expectations
         # (where expectations is obtained from a model) is systematically lower the observations.
         # This means we scan in the position direction.
 
@@ -141,16 +141,16 @@ class MDSSClassificationMetric(ClassificationMetric):
         outcomes = pd.Series(self.dataset.labels.flatten() == self.dataset.favorable_label, dtype=int)
 
         # In MDSS, we look for subset whose observations systematically deviates from expectations.
-        # Positive direction means observations are systematically higher than expectations 
-        # (or expectations are systematically lower than observations) while 
+        # Positive direction means observations are systematically higher than expectations
+        # (or expectations are systematically lower than observations) while
         # Negative direction means observatons are systematically lower than expectations
         # (or expectations are systematically higher than observations)
 
-        # For a privileged group, we are looking for a subset whose expectations 
+        # For a privileged group, we are looking for a subset whose expectations
         # (where expectations is obtained from a model) is systematically higher than the observations.
         # This means we scan in the negative direction.
 
-        # For an uprivileged group, we are looking for a subset whose expectations 
+        # For an uprivileged group, we are looking for a subset whose expectations
         # (where expectations is obtained from a model) is systematically lower the observations.
         # This means we scan in the position direction.
 

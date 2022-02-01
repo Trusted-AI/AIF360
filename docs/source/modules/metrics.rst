@@ -19,6 +19,7 @@ Fairness Metrics
    metrics.BinaryLabelDatasetMetric
    metrics.ClassificationMetric
    metrics.SampleDistortionMetric
+   metrics.MDSSClassificationMetric
 
 :mod:`aif360.metrics.utils`
 ===========================

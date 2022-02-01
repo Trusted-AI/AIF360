@@ -113,6 +113,8 @@ Group fairness metrics
    metrics.smoothed_edf
    metrics.df_bias_amplification
    metrics.between_group_generalized_entropy_error
+   metrics.mdss_bias_scan
+   metrics.mdss_bias_score
 
 Individual fairness metrics
 ---------------------------

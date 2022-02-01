@@ -660,8 +660,10 @@ def mdss_bias_score(y_true, probas_pred, X=None, subset=None, *, pos_label=1,
             values) the highest scoring subset that gets returned is.
         **kwargs: Additional kwargs to be passed to `scoring` (not including
             `direction`).
+
     Returns:
         float: Bias score for the given group.
+
     See also:
         :func:`mdss_bias_scan`
     """
@@ -695,6 +697,7 @@ def mdss_bias_scan(y_true, probas_pred, X=None, *, pos_label=1,
 
     Bias scan is a technique to identify bias in predictive models using subset
     scanning [#zhang16]_.
+
     Args:
         y_true (array-like): Ground truth (correct) target values.
         probas_pred (array-like): Probability estimates of the positive class.
@@ -715,14 +718,17 @@ def mdss_bias_scan(y_true, probas_pred, X=None, *, pos_label=1,
             values) the highest scoring subset that gets returned is.
         **kwargs: Additional kwargs to be passed to `scoring` (not including
             `direction`).
+
     Returns:
         tuple:
             Highest scoring subset and its bias score
             * **subset** (dict) -- Mapping of features to values defining the
               highest scoring subset.
             * **score** (float) -- Bias score for that group.
+
     See also:
         :func:`mdss_bias_score`
+
     References:
         .. [#zhang16] `Zhang, Z. and Neill, D. B., "Identifying significant
            predictive bias in classifiers," arXiv preprint, 2016.
