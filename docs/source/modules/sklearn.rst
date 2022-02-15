@@ -68,6 +68,7 @@ Meta-metrics
    metrics.difference
    metrics.ratio
    metrics.intersection
+   metrics.one_vs_rest
 
 Scorers
 -------
@@ -87,6 +88,8 @@ Generic metrics
    :toctree: generated/
    :template: base.rst
 
+   metrics.num_samples
+   metrics.num_pos_neg
    metrics.specificity_score
    metrics.sensitivity_score
    metrics.base_rate
@@ -110,6 +113,9 @@ Group fairness metrics
    metrics.equal_opportunity_difference
    metrics.average_odds_difference
    metrics.average_odds_error
+   metrics.class_imbalance
+   metrics.kl_divergence
+   metrics.conditional_demographic_disparity
    metrics.smoothed_edf
    metrics.df_bias_amplification
    metrics.between_group_generalized_entropy_error
