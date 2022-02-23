@@ -403,7 +403,6 @@ def average_odds_error(y_true, y_pred, prot_attr=None, pos_label=1,
         y_pred (array-like): Estimated targets as returned by a classifier.
         prot_attr (array-like, keyword-only): Protected attribute(s). If
             ``None``, all protected attributes in y_true are used.
-        priv_group (scalar, optional): The label of the privileged group.
         pos_label (scalar, optional): The label of the positive class.
         sample_weight (array-like, optional): Sample weights.
 
