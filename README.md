@@ -5,7 +5,7 @@
 [![PyPI version](https://badge.fury.io/py/aif360.svg)](https://badge.fury.io/py/aif360)
 [![CRAN\_Status\_Badge](http://www.r-pkg.org/badges/version/aif360)](https://cran.r-project.org/package=aif360)
 
-The AI Fairness 360 toolkit is an extensible open-source library containg techniques developed by the
+The AI Fairness 360 toolkit is an extensible open-source library containing techniques developed by the
 research community to help detect and mitigate bias in machine learning models throughout the AI application lifecycle. AI Fairness 360 package is available in both Python and R.
 
 The AI Fairness 360 package includes
@@ -45,11 +45,11 @@ Get in touch with us on [Slack](https://aif360.slack.com) (invitation
 * Calibrated Equalized Odds Postprocessing ([Pleiss et al., 2017](https://papers.nips.cc/paper/7151-on-fairness-and-calibration))
 * Learning Fair Representations ([Zemel et al., 2013](http://proceedings.mlr.press/v28/zemel13.html))
 * Adversarial Debiasing ([Zhang et al., 2018](https://arxiv.org/abs/1801.07593))
-* Meta-Algorithm for Fair Classification ([Celis et al.. 2018](https://arxiv.org/abs/1806.06055))
+* Meta-Algorithm for Fair Classification ([Celis et al., 2018](https://arxiv.org/abs/1806.06055))
 * Rich Subgroup Fairness ([Kearns, Neel, Roth, Wu, 2018](https://arxiv.org/abs/1711.05144))
 * Exponentiated Gradient Reduction ([Agarwal et al., 2018](https://arxiv.org/abs/1803.02453))
 * Grid Search Reduction ([Agarwal et al., 2018](https://arxiv.org/abs/1803.02453), [Agarwal et al., 2019](https://arxiv.org/abs/1905.12843))
-* Fair Data Adaptation ([Plečko and Meinshausen, 2020](https://www.jmlr.org/papers/v21/19-966.html), [Plečko et. al., 2021](https://arxiv.org/abs/2110.10200))
+* Fair Data Adaptation ([Plečko and Meinshausen, 2020](https://www.jmlr.org/papers/v21/19-966.html), [Plečko et al., 2021](https://arxiv.org/abs/2110.10200))
 
 ## Supported fairness metrics
 
