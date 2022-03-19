@@ -194,7 +194,7 @@ class MDSS(object):
 
         # Compute and return the penalized score    
         penalized_score = scoring_function.score(observed_sum, probs, total_penalty, current_q_mle)
-        return penalized_score
+        return np.round(penalized_score, 4)
 
     def scan(self, coordinates: pd.DataFrame, probs: pd.Series, outcomes: pd.Series, penalty: float,
                     num_iters: int, verbose: bool = False, seed: int = 0):

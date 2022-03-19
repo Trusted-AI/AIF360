@@ -56,6 +56,7 @@ class MDSSClassificationMetric(ClassificationMetric):
             privileged_groups=privileged_groups,
         )
 
+        kwargs['direction'] = None
         if scoring == "Bernoulli":
             scoring_function = Bernoulli(**kwargs)
         elif scoring == "BerkJones":
@@ -94,13 +95,14 @@ class MDSSClassificationMetric(ClassificationMetric):
         expected = pd.Series(self.classified_dataset.scores.flatten())
         outcomes = pd.Series(self.dataset.labels.flatten() == self.dataset.favorable_label, dtype=int)
 
-        direction = "positive" if privileged else "negative"
+        direction = "negative" if privileged else "positive"
 
         self.scanner.scoring_function.kwargs["direction"] = direction
         return self.scanner.score_current_subset(
             coordinates, expected, outcomes, dict(subset), penalty
         )
 
+    @deprecated('Change to new interface - aif360.detectors.mdss_detector.bias_scan by version 0.5.0.')
     def bias_scan(self, privileged=True, num_iters=10, penalty=1e-17):
         """
         scan to find the highest scoring subset of records
@@ -123,7 +125,7 @@ class MDSSClassificationMetric(ClassificationMetric):
         expected = pd.Series(self.classified_dataset.scores.flatten())
         outcomes = pd.Series(self.dataset.labels.flatten() == self.dataset.favorable_label, dtype=int)
 
-        direction = "positive" if privileged else "negative"
+        direction = "negative" if privileged else "positive"
 
         self.scanner.scoring_function.kwargs["direction"] = direction
         return self.scanner.scan(coordinates, expected, outcomes, penalty, num_iters)
