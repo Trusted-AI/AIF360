@@ -30,7 +30,11 @@ def bias_scan(
     :param expectations (series, optional): estimated targets as returned by a model. 
         If None, model is assumed to be a dumb model that predicts the mean of the targets.
         If pos_label is set, expectations is the model's predicted probabilities of the positive label.
-    :param overpredicted (bool, optional): flag for group to scan for - privileged group (True) or unprivileged group (False).
+    :param overpredicted (bool, optional): flag for group to scan for. 
+        True means we scan for a group whose expectations/predictions are systematically higher than observed.
+        In other words, True means we scan for a group whose observeed is systematically lower than the expectations.
+        False means we scan for a group whose expectations/predictions are systematically lower than observed.
+        In other words, False means we scan for a group whose observed is systematically higher than the expectations.
     :param num_iters (int, optional): number of iterations (random restarts). Should be positive.
     :param penalty (float,optional): penalty term. Should be positive. The penalty term as with any regularization parameter may need to be
         tuned for ones use case. The higher the penalty, the less complex (number of features and feature values) the 
@@ -41,7 +45,7 @@ def bias_scan(
     :returns: the highest scoring subset and the score
     """
 
-    kwargs["direction"] = "positive" if overpredicted else "negative"
+    kwargs["direction"] = "negative" if overpredicted else "positive"
 
     if pos_label is not None:
         labels =  set(observations.unique())
@@ -64,5 +68,4 @@ def bias_scan(
         scoring = scoring(**kwargs)
 
     scanner = MDSS(scoring)
-
     return scanner.scan(data, expectations, observations, penalty, num_iters)
