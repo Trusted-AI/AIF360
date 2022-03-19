@@ -9,8 +9,8 @@ from sklearn.utils import check_X_y
 from sklearn.exceptions import UndefinedMetricWarning
 
 from aif360.sklearn.utils import check_groups
-from aif360.metrics.mdss.ScoringFunctions import Bernoulli
-from aif360.metrics.mdss.MDSS import MDSS
+from aif360.detectors.mdss.ScoringFunctions import Bernoulli
+from aif360.detectors.mdss.MDSS import MDSS
 
 __all__ = [
     # meta-metrics
