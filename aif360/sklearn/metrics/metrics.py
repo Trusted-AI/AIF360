@@ -438,7 +438,7 @@ def mdss_bias_score(y_true, probas_pred, X=None, subset=None, *, pos_label=1,
             be of the form `{'index': [0, 1, ...]}` or `None`. If `None`, score
             over the full set (note: `penalty` is irrelevant in this case).
         pos_label (scalar, optional): Label of the positive class.
-        scoring (str or class): One of 'Bernoulli', 'Poisson', or 'BerkJones' or
+        scoring (str or class): One of 'Bernoulli' or 'BerkJones' or
             subclass of
             :class:`aif360.metrics.mdss.ScoringFunctions.ScoringFunction`.
         privileged (bool): Flag for which direction to scan: privileged
@@ -469,8 +469,6 @@ def mdss_bias_score(y_true, probas_pred, X=None, subset=None, *, pos_label=1,
 
     if scoring == 'Bernoulli':
         scoring_function = Bernoulli(**kwargs)
-    elif scoring == 'Poisson':
-        scoring_function = Poisson(**kwargs)
     elif scoring == 'BerkJones':
         scoring_function = BerkJones(**kwargs)
     else:
@@ -494,7 +492,7 @@ def mdss_bias_scan(y_true, probas_pred, X=None, *, pos_label=1,
             used to predict `probas_pred`. If not specified, the subset is
             returned as indices.
         pos_label (scalar): Label of the positive class.
-        scoring (str or class): One of 'Bernoulli', 'Poisson', or 'BerkJones' or
+        scoring (str or class): One of 'Bernoulli' or 'BerkJones' or
             subclass of
             :class:`aif360.metrics.mdss.ScoringFunctions.ScoringFunction`.
         privileged (bool): Flag for which direction to scan: privileged
@@ -532,8 +530,6 @@ def mdss_bias_scan(y_true, probas_pred, X=None, *, pos_label=1,
     kwargs['direction'] = direction
     if scoring == 'Bernoulli':
         scoring_function = Bernoulli(**kwargs)
-    elif scoring == 'Poisson':
-        scoring_function = Poisson(**kwargs)
     elif scoring == 'BerkJones':
         scoring_function = BerkJones(**kwargs)
     else:
