@@ -1,5 +1,5 @@
-from aif360.metrics.mdss.ScoringFunctions.ScoringFunction import ScoringFunction
-from aif360.metrics.mdss.generator import get_entire_subset, get_random_subset
+from aif360.detectors.mdss.ScoringFunctions.ScoringFunction import ScoringFunction
+from aif360.detectors.mdss.generator import get_entire_subset, get_random_subset
 
 import pandas as pd
 import numpy as np

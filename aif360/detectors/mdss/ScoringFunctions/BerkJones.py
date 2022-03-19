@@ -1,5 +1,5 @@
-from aif360.metrics.mdss.ScoringFunctions.ScoringFunction import ScoringFunction
-from aif360.metrics.mdss.ScoringFunctions import optim
+from aif360.detectors.mdss.ScoringFunctions.ScoringFunction import ScoringFunction
+from aif360.detectors.mdss.ScoringFunctions import optim
 
 import numpy as np
 
