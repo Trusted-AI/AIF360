@@ -52,19 +52,21 @@ def bias_scan(
             In nominal mode, up to 10 categories are supported by default.
             To increase this, pass in keyword argument max_nominal = integer value.
 
-    :returns: the highest scoring subset and the score
+    :returns: the highest scoring subset and the score or dict of the highest scoring subset and the score for each category in nominal mode
     """
+    # Ensure correct mode is passed in.
     modes = ["binary", "continuous", "nominal", "ordinal"]
     assert mode in modes, f"Expected one of {modes}, got {mode}."
 
+    # Set correct favorable value (this tells us if higher or lower is better)
     min_val, max_val = observations.min(), observations.max()
     uniques = list(observations.unique())
 
     if favorable_value is None:
         if mode in ["binary", "ordinal", "continuous"]:
-            favorable_value = max_val
+            favorable_value = max_val # Default to higher is better
         elif mode == "nominal":
-            favorable_value = "flag-all"
+            favorable_value = "flag-all" # Default to scan through all categories
             assert favorable_value in [
                 "flag-all",
                 *uniques,
@@ -77,6 +79,7 @@ def bias_scan(
         *uniques,
     ], f"Favorable_value should be one of min value - {min_val}, max - {max_val} in expectations or one of categories {uniques}, got {favorable_value}."
 
+    # Set appropriate direction for scanner depending on mode and overppredicted flag
     if mode in ["ordinal", "continuous"]:
         if favorable_value == max_val:
             kwargs["direction"] = "negative" if overpredicted else "positive"
@@ -85,9 +88,11 @@ def bias_scan(
     else:
         kwargs["direction"] = "negative" if overpredicted else "positive"
 
+    # Set expectations to mean targets for non-nominal modes
     if expectations is None and mode != "nominal":
         expectations = pd.Series(observations.mean(), index=observations.index)
 
+    # Set appropriate scoring function
     if scoring == "Bernoulli":
         scoring = Bernoulli(**kwargs)
     elif scoring == "BerkJones":
@@ -97,12 +102,12 @@ def bias_scan(
     else:
         scoring = scoring(**kwargs)
 
-    if mode == "binary":
+    if mode == "binary": # Flip observations if favorable_value is 0 in binary mode.
         observations = pd.Series(observations == favorable_value, dtype=int)
     elif mode == "nominal":
         unique_outs = set(sorted(observations.unique()))
         size_unique_outs = len(unique_outs)
-        if expectations is not None:
+        if expectations is not None: # Set expectations to 1/(num of categories) for nominal mode
             expectations_cols = set(sorted(expectations.columns))
             assert (
                 unique_outs == expectations_cols
@@ -117,7 +122,7 @@ def bias_scan(
             size_unique_outs <= max_nominal
         ), f"Nominal mode only support up to {max_nominal} labels, got {size_unique_outs}. Use keyword argument max_nominal to increase the limit."
 
-        if favorable_value != "flag-all":
+        if favorable_value != "flag-all": # If favorable flag is set, use one-vs-others strategy to scan, else use one-vs-all strategy
             observations = observations.map({favorable_value: 1})
             observations = observations.fillna(0)
             if isinstance(expectations, pd.DataFrame):
