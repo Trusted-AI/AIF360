@@ -56,15 +56,8 @@ class MDSSClassificationMetric(ClassificationMetric):
             privileged_groups=privileged_groups,
         )
 
-        kwargs['direction'] = None
-        if scoring == "Bernoulli":
-            scoring_function = Bernoulli(**kwargs)
-        elif scoring == "BerkJones":
-            scoring_function = BerkJones(**kwargs)
-        else:
-            scoring_function = scoring(**kwargs)
-
-        self.scanner = MDSS(scoring_function)
+        self.scoring = scoring
+        self.kwargs = kwargs
 
     def score_groups(self, privileged=True, penalty=1e-17):
         """Compute the bias score for a prespecified group of records.
@@ -109,10 +102,18 @@ class MDSSClassificationMetric(ClassificationMetric):
         # (where expectations is obtained from a model) is systematically lower the observations.
         # This means we scan in the position direction.
 
-        direction = "negative" if privileged else "positive"
+        self.kwargs['direction'] = "negative" if privileged else "positive"
 
-        self.scanner.scoring_function.kwargs["direction"] = direction
-        return self.scanner.score_current_subset(
+        if self.scoring == "Bernoulli":
+            scoring_function = Bernoulli(**self.kwargs)
+        elif self.scoring == "BerkJones":
+            scoring_function = BerkJones(**self.kwargs)
+        else:
+            scoring_function = self.scoring(**self.kwargs)
+
+        scanner = MDSS(scoring_function)
+
+        return scanner.score_current_subset(
             coordinates, expected, outcomes, dict(subset), penalty
         )
 
@@ -153,7 +154,14 @@ class MDSSClassificationMetric(ClassificationMetric):
         # (where expectations is obtained from a model) is systematically lower the observations.
         # This means we scan in the position direction.
 
-        direction = "negative" if privileged else "positive"
+        self.kwargs['direction'] = "negative" if privileged else "positive"
 
-        self.scanner.scoring_function.kwargs["direction"] = direction
-        return self.scanner.scan(coordinates, expected, outcomes, penalty, num_iters)
+        if self.scoring == "Bernoulli":
+            scoring_function = Bernoulli(**self.kwargs)
+        elif self.scoring == "BerkJones":
+            scoring_function = BerkJones(**self.kwargs)
+        else:
+            scoring_function = self.scoring(**self.kwargs)
+
+        scanner = MDSS(scoring_function)
+        return scanner.scan(coordinates, expected, outcomes, penalty, num_iters)
