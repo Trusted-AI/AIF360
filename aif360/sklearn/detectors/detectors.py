@@ -47,7 +47,7 @@ def bias_scan(
             In nominal mode, up to 10 categories are supported by default.
             To increase this, pass in keyword argument max_nominal = integer value.
 
-    :returns: the highest scoring subset and the score
+     :returns: the highest scoring subset and the score or dict of the highest scoring subset and the score for each category in nominal mode
     """
     return bias_scan(
         data=data,
@@ -59,4 +59,5 @@ def bias_scan(
         num_iters=num_iters,
         penalty=penalty,
         mode=mode,
+        kwargs=kwargs
     )
