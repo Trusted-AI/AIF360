@@ -1,1 +1,1 @@
-from aif360.sklearn.detectors.detectors import *
+from aif360.sklearn.detectors.detectors import bias_scan

@@ -38,7 +38,6 @@ class Gaussian(ScoringFunction):
 
         assumed_var =  self.var
         expected_sum = expectations.sum()
-        t = penalty
         penalty /= self.var
 
         C = (

@@ -9,7 +9,7 @@ from sklearn.utils import check_X_y
 from sklearn.exceptions import UndefinedMetricWarning, deprecated
 
 from aif360.sklearn.utils import check_groups
-from aif360.detectors.mdss.ScoringFunctions import BerkJones, Bernoulli, Poisson, ScoringFunction
+from aif360.detectors.mdss.ScoringFunctions import BerkJones, Bernoulli
 from aif360.detectors.mdss.MDSS import MDSS
 
 __all__ = [
