@@ -37,7 +37,7 @@ def bias_scan(
         In other words, True means we scan for a group whose observeed is systematically lower than the expectations.
         False means we scan for a group whose expectations/predictions are systematically lower than observed.
         In other words, False means we scan for a group whose observed is systematically higher than the expectations.
-    :param scoring (str or class): One of 'Bernoulli', 'Poisson', or 'BerkJones' or subclass of
+    :param scoring (str or class): One of 'Bernoulli', Guassian, 'Poisson', or 'BerkJones' or subclass of
             :class:`aif360.metrics.mdss.ScoringFunctions.ScoringFunction`.
     :param num_iters (int, optional): number of iterations (random restarts). Should be positive.
     :param penalty (float,optional): penalty term. Should be positive. The penalty term as with any regularization parameter may need to be
