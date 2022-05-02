@@ -16,7 +16,7 @@ def bias_scan(
     data: pd.DataFrame,
     observations: pd.Series,
     expectations: Union[pd.Series, pd.DataFrame] = None,
-    favorable_value: float = None,
+    favorable_value: Union[str, float] = None,
     overpredicted: bool = True,
     scoring: Union[str, ScoringFunction] = "Bernoulli",
     num_iters: int = 10,
@@ -34,20 +34,17 @@ def bias_scan(
         If mode is nominal, this is a dataframe with columns containing expectations for each nominal class.
         If None, model is assumed to be a dumb model that predicts the mean of the targets
                 or 1/(num of categories) for nominal mode.
-    :param favorable_value(float, optional): Should be either the max or min value in the observations
-            if mode is one of binary, ordinal, or continuous. Defaults to max if None for these modes.
-            If mode is nominal, favorable label should be one of the unique categories in the observations.
+    :param favorable_value(str, float, optional): Should be high or low or float if the mode in [binary, ordinal, or continuous].
+            If float, value has to be minimum or maximum in the observations column. Defaults to high if None for these modes.
+            Support for float left in to keep the intuition clear in binary classification tasks.
+            If mode is nominal, favorable values should be one of the unique categories in the observations.
             Defaults to a one-vs-all scan if None for nominal mode.
     :param overpredicted (bool, optional): flag for group to scan for.
         True means we scan for a group whose expectations/predictions are systematically higher than observed.
         In other words, True means we scan for a group whose observeed is systematically lower than the expectations.
         False means we scan for a group whose expectations/predictions are systematically lower than observed.
         In other words, False means we scan for a group whose observed is systematically higher than the expectations.
-<<<<<<< HEAD
     :param scoring (str or class): One of 'Bernoulli', 'Guassian', 'Poisson', or 'BerkJones' or subclass of
-=======
-    :param scoring (str or class): One of 'Bernoulli', 'Poisson', or 'BerkJones' or subclass of
->>>>>>> 264074366373c0ae6aa5cf1514665390e9055ad6
             :class:`aif360.metrics.mdss.ScoringFunctions.ScoringFunction`.
     :param num_iters (int, optional): number of iterations (random restarts). Should be positive.
     :param penalty (float,optional): penalty term. Should be positive. The penalty term as with any regularization parameter may need to be
@@ -67,7 +64,11 @@ def bias_scan(
     min_val, max_val = observations.min(), observations.max()
     uniques = list(observations.unique())
 
-    if favorable_value is None:
+    if favorable_value == 'high':
+        favorable_value = max_val
+    elif favorable_value == 'low':
+        favorable_value = min_val
+    elif favorable_value is None:
         if mode in ["binary", "ordinal", "continuous"]:
             favorable_value = max_val # Default to higher is better
         elif mode == "nominal":
@@ -82,7 +83,7 @@ def bias_scan(
         max_val,
         "flag-all",
         *uniques,
-    ], f"Favorable_value should be one of min value - {min_val}, max - {max_val} in expectations or one of categories {uniques}, got {favorable_value}."
+    ], f"Favorable_value should be high, low, or one of categories {uniques}, got {favorable_value}."
 
     # Set appropriate direction for scanner depending on mode and overppredicted flag
     if mode in ["ordinal", "continuous"]:

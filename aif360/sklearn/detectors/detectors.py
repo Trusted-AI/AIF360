@@ -10,7 +10,7 @@ def bias_scan(
     data: pd.DataFrame,
     observations: pd.Series,
     expectations: Union[pd.Series, pd.DataFrame] = None,
-    favorable_value: float = None,
+    favorable_value: Union[str, float] = None,
     overpredicted: bool = True,
     scoring: Union[str, ScoringFunction] = "Bernoulli",
     num_iters: int = 10,
@@ -28,9 +28,10 @@ def bias_scan(
         If mode is nominal, this is a dataframe with columns containing expectations for each nominal class.
         If None, model is assumed to be a dumb model that predicts the mean of the targets
                 or 1/(num of categories) for nominal mode.
-    :param favorable_value(float, optional): Should be either the max or min value in the observations
-            if mode is one of binary, ordinal, or continuous. Defaults to max if None for these modes.
-            If mode is nominal, favorable label should be one of the unique categories in the observations.
+    :param favorable_value(str, float, optional): Should be high or low or float if the mode in [binary, ordinal, or continuous].
+            If float, value has to be minimum or maximum in the observations column. Defaults to high if None for these modes.
+            Support for float left in to keep the intuition clear in binary classification tasks.
+            If mode is nominal, favorable values should be one of the unique categories in the observations.
             Defaults to a one-vs-all scan if None for nominal mode.
     :param overpredicted (bool, optional): flag for group to scan for.
         True means we scan for a group whose expectations/predictions are systematically higher than observed.

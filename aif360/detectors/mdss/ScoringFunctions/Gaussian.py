@@ -1,3 +1,4 @@
+from turtle import pen
 from aif360.detectors.mdss.ScoringFunctions.ScoringFunction import ScoringFunction
 from aif360.detectors.mdss.ScoringFunctions import optim
 
@@ -37,6 +38,7 @@ class Gaussian(ScoringFunction):
 
         assumed_var =  self.var
         expected_sum = expectations.sum()
+        t = penalty
         penalty /= self.var
 
         C = (
@@ -56,6 +58,7 @@ class Gaussian(ScoringFunction):
 
         ans -= penalty
         self.score_cache[key] = ans
+
         return ans
 
     def qmle(self, observed_sum: float, expectations: np.array):
@@ -70,7 +73,13 @@ class Gaussian(ScoringFunction):
 
         expected_sum = expectations.sum()
 
-        ans = observed_sum / expected_sum
+        # Deals with case where observed_sum = expected_sum = 0
+        if observed_sum == expected_sum:
+            ans = 1
+        else:
+            ans = observed_sum / expected_sum
+        
+        assert np.isnan(ans) == False, f'{expected_sum}, {observed_sum}, {ans}'
         self.qmle_cache[key] = ans
         return ans
 
