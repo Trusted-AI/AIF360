@@ -111,7 +111,7 @@ class BerkJones(ScoringFunction):
         """
         alpha = self.alpha
 
-        key = tuple([observed_sum, expectations.tostring(), penalty, alpha])
+        key = tuple([observed_sum, len(expectations), penalty, alpha])
         ans = self.compute_qs_cache.get(key)
         if ans is not None:
             self.cache_counter['qs'] += 1
