@@ -47,6 +47,7 @@ jobs:
           pip install -e '.[all]'
           pip install flake8
           pip list
+          python -m rpy2.situation
 
       - name: Download datasets
         run: |
