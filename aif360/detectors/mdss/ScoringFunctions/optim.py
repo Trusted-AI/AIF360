@@ -1,5 +1,5 @@
 import numpy as np
-from aif360.metrics.mdss.ScoringFunctions.ScoringFunction import ScoringFunction
+from aif360.detectors.mdss.ScoringFunctions.ScoringFunction import ScoringFunction
 
 
 def bisection_q_mle(score_function: ScoringFunction, observed_sum: float, probs: np.array, **kwargs):
@@ -14,10 +14,10 @@ def bisection_q_mle(score_function: ScoringFunction, observed_sum: float, probs:
     :param probs: predicted probabilities p_i for each data element i
     :return: q MLE
     """
-    q_temp_min = 1e-6
-    q_temp_max = 1e6
+    q_temp_min = 1e-3
+    q_temp_max = 1e3
 
-    while np.abs(q_temp_max - q_temp_min) > 1e-6:
+    while np.abs(q_temp_max - q_temp_min) > 1e-3:
         q_temp_mid = (q_temp_min + q_temp_max) / 2
 
         if np.sign(score_function.q_dscore(observed_sum, probs, q_temp_mid)) > 0:
@@ -36,7 +36,7 @@ def bisection_q_mle(score_function: ScoringFunction, observed_sum: float, probs:
         
     return q
 
-def bisection_q_min(score_function: ScoringFunction, observed_sum: float, probs: np.array, penalty: float, q_mle: float, temp_min = 1e-6, **kwargs):
+def bisection_q_min(score_function: ScoringFunction, observed_sum: float, probs: np.array, penalty: float, q_mle: float, temp_min = 1e-3, **kwargs):
     """
     Compute q for which score = 0, using the fact that score is monotonically increasing for q > q_mle.
     q_max is computed via binary search.
@@ -51,7 +51,7 @@ def bisection_q_min(score_function: ScoringFunction, observed_sum: float, probs:
     q_temp_min = temp_min
     q_temp_max = q_mle
 
-    while np.abs(q_temp_max - q_temp_min) > 1e-6:
+    while np.abs(q_temp_max - q_temp_min) > 1e-3:
         q_temp_mid = (q_temp_min + q_temp_max) / 2
 
         if np.sign(score_function.score(observed_sum, probs, penalty, q_temp_mid)) > 0:
@@ -61,7 +61,7 @@ def bisection_q_min(score_function: ScoringFunction, observed_sum: float, probs:
 
     return (q_temp_min + q_temp_max) / 2
 
-def bisection_q_max(score_function: ScoringFunction, observed_sum: float, probs: np.array, penalty: float, q_mle: float, temp_max = 1e6, **kwargs):
+def bisection_q_max(score_function: ScoringFunction, observed_sum: float, probs: np.array, penalty: float, q_mle: float, temp_max = 1e3, **kwargs):
     """
     Compute q for which score = 0, using the fact that score is monotonically decreasing for q > q_mle.
     q_max is computed via binary search.
@@ -76,7 +76,7 @@ def bisection_q_max(score_function: ScoringFunction, observed_sum: float, probs:
     q_temp_min = q_mle
     q_temp_max = temp_max
 
-    while np.abs(q_temp_max - q_temp_min) > 1e-6:
+    while np.abs(q_temp_max - q_temp_min) > 1e-3:
         q_temp_mid = (q_temp_min + q_temp_max) / 2
 
         if np.sign(score_function.score(observed_sum, probs, penalty, q_temp_mid)) > 0:
