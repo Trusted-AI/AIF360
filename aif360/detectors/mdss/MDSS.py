@@ -5,6 +5,7 @@ from aif360.detectors.mdss.generator import get_entire_subset, get_random_subset
 from aif360.detectors.mdss.ScoringFunctions import (
     Bernoulli,
     BerkJones,
+    Gaussian,
     ScoringFunction,
     Poisson,
 )
@@ -220,16 +221,17 @@ class MDSS(object):
         np.random.seed(seed)
 
         # Check that the appropriate scoring function is used
-        unique_expectations = expectations.unique()
-
-        if isinstance(self.scoring_function, BerkJones) and len(unique_expectations) != 1:
-            raise Exception(
-                "BerkJones scorer supports scanning in autostrat mode only."
-            )
 
         if isinstance(self.scoring_function, BerkJones):
             modes = ["binary", "continuous", "nominal", "ordinal"]
             assert mode in modes, f"Expected one of {modes} for BerkJones,  got {mode}."
+
+            # Ensure that BerkJones only work in Autostrat mode
+            unique_expectations = expectations.unique()
+            if isinstance(self.scoring_function, BerkJones) and len(unique_expectations) != 1:
+                raise Exception(
+                    "BerkJones scorer supports scanning in autostrat mode only."
+                )
 
             # Bin the continuous outcomes column for Berk Jones in continuous mode
             alpha = self.scoring_function.alpha
@@ -249,6 +251,17 @@ class MDSS(object):
         if isinstance(self.scoring_function, Bernoulli):
             modes = ["binary", "nominal"]
             assert mode in modes, f"Expected one of {modes} for Bernoulli,  got {mode}."
+
+        if isinstance(self.scoring_function, Gaussian):
+            assert mode == 'continuous', f"Expected continuous, got {mode}."
+
+             # Set variance for Gaussian
+            self.scoring_function.var = expectations.var()
+            
+            # Move entire distribution to the positive axis
+            shift = np.abs(expectations.min()) + np.abs(outcomes.min())
+            outcomes = outcomes + shift
+            expectations = expectations + shift
 
         if isinstance(self.scoring_function, Poisson):
             modes = ["binary", "ordinal"]
@@ -330,10 +343,16 @@ class MDSS(object):
                 if temp_score > current_score + 1E-6:
                     flags.fill(0)
 
-                # TODO: confirm with Skyler: sanity check to make sure score has not decreased
-                assert temp_score >= current_score - 1E-6, \
-                    "WARNING SCORE HAS DECREASED from %.3f to %.3f" % (current_score, temp_score)
-
+                # sanity check to make sure score has not decreased
+                # sanity check may not apply to Gaussian in penalized mode (TODO: to check Maths again)
+                if not isinstance(self.scoring_function, Gaussian) and penalty > 0:
+                    assert (
+                        temp_score >= current_score - 1e-6
+                    ), "WARNING SCORE HAS DECREASED from %.6f to %.6f" % (
+                        current_score,
+                        temp_score,
+                    )
+                    
                 flags[attribute_number_to_scan] = 1
                 current_subset = temp_subset
                 current_score = temp_score
