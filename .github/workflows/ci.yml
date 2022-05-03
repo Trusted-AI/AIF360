@@ -50,7 +50,6 @@ jobs:
           pip install flake8
           pip list
           python -m rpy2.situation
-          python -c "from rpy2 import robjects"
 
       - name: Download datasets
         run: |
