@@ -24,21 +24,21 @@ def test_fairadapt_adult():
     )
 
     # Construct the adjacency matrix of the causal graph
-    adj_mat.at[
+    adj_mat.loc[
         ["sex", "age", "native-country"],
         ["marital-status", "education-num", "workclass", "hours-per-week",
          "occupation", "annual-income"]
     ] = 1
-    adj_mat.at[
+    adj_mat.loc[
         "marital-status",
         ["education-num", "workclass", "hours-per-week", "occupation",
          "annual-income"]
     ] = 1
-    adj_mat.at[
+    adj_mat.loc[
         "education-num",
         ["workclass", "hours-per-week", "occupation", "annual-income"]
     ] = 1
-    adj_mat.at[
+    adj_mat.loc[
         ["workclass", "hours-per-week", "occupation"],
         "annual-income"
     ] = 1
