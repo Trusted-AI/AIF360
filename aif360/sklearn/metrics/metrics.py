@@ -6,11 +6,11 @@ from sklearn.metrics import make_scorer as _make_scorer, recall_score
 from sklearn.metrics import multilabel_confusion_matrix
 from sklearn.neighbors import NearestNeighbors
 from sklearn.utils import check_X_y
-from sklearn.exceptions import UndefinedMetricWarning
+from sklearn.exceptions import UndefinedMetricWarning, deprecated
 
 from aif360.sklearn.utils import check_groups
-from aif360.metrics.mdss.ScoringFunctions import Bernoulli
-from aif360.metrics.mdss.MDSS import MDSS
+from aif360.detectors.mdss.ScoringFunctions import BerkJones, Bernoulli
+from aif360.detectors.mdss.MDSS import MDSS
 
 __all__ = [
     # meta-metrics
@@ -420,60 +420,123 @@ def average_odds_error(y_true, y_pred, prot_attr=None, pos_label=1,
     return (abs(tpr_diff) + abs(fpr_diff)) / 2
 
 
-def mdss_bias_score(y_true, y_pred, pos_label=1, privileged=True, num_iters = 10):
+def mdss_bias_score(y_true, probas_pred, X=None, subset=None, *, pos_label=1,
+                    scoring='Bernoulli', privileged=True, penalty=1e-17,
+                    **kwargs):
+    """Compute the bias score for a prespecified group of records using a
+    given scoring function.
+
+    Args:
+        y_true (array-like): Ground truth (correct) target values.
+        probas_pred (array-like): Probability estimates of the positive class.
+        X (DataFrame, optional): The dataset (containing the features) that was
+            used to predict `probas_pred`. If not specified, the subset is
+            returned as indices.
+        subset (dict, optional): Mapping of column names to list of values.
+            Samples are included in the subset if they match any value in each
+            of the columns provided. If `X` is not specified, `subset` may
+            be of the form `{'index': [0, 1, ...]}` or `None`. If `None`, score
+            over the full set (note: `penalty` is irrelevant in this case).
+        pos_label (scalar, optional): Label of the positive class.
+        scoring (str or class): One of 'Bernoulli' or 'BerkJones' or
+            subclass of
+            :class:`aif360.metrics.mdss.ScoringFunctions.ScoringFunction`.
+        privileged (bool): Flag for which direction to scan: privileged
+            (``True``) implies negative (observed worse than predicted outcomes)
+            while unprivileged (``False``) implies positive (observed better
+            than predicted outcomes).
+        penalty (scalar): Penalty coefficient. Should be positive. The higher
+            the penalty, the less complex (number of features and feature
+            values) the highest scoring subset that gets returned is.
+        **kwargs: Additional kwargs to be passed to `scoring` (not including
+            `direction`).
+    Returns:
+        float: Bias score for the given group.
+    See also:
+        :func:`mdss_bias_scan`
     """
-    compute the bias score for a prespecified group of records with each observation's likelihood
-        is assumed to Bernoulli distributed and independent.
-    :param y_true (array-like): ground truth (correct) target values
-    :param y_pred (array-like): estimated targets as returned by a classifier
-    :param pos_label (scalar, optional): label of the positive class
-    :param privileged (bool, optional): flag for group to score - privileged group (True) or unprivileged group (False)
-    :param num_iters (scalar, optional): number of iterations
-    """
-    xor_op = privileged ^ bool(pos_label)
-    direction = 'positive' if xor_op else 'negative'
 
-    dummy_subset = dict({'index': range(len(y_true))})
-    expected = pd.Series(y_pred)
-    outcomes = pd.Series(y_true)
-    coordinates = pd.DataFrame(dummy_subset, index=expected.index)
-
-    scoring_function = Bernoulli(direction=direction)
-    scanner = MDSS(scoring_function)
-
-    return scanner.score_current_subset(coordinates, expected, outcomes, dummy_subset, 1e-17)
-
-
-def mdss_bias_scan(y_true, y_pred, dataset=None, pos_label=1, privileged=True, num_iters = 10, penalty = 0.0):
-    """
-    scan to find the highest scoring subset of records. each observation's likelihood is
-        assumed to Bernoulli distributed and independent.
-    :param y_true (array-like): ground truth (correct) target values
-    :param y_pred (array-like): estimated targets as returned by a classifier
-    :param dataset (dataframe optional): the dataset (containing the features) the classifier was trained on. If not specified, the subset is returned as indices.
-    :param pos_label (scalar, optional): label of the positive class
-    :param privileged (bool, optional): flag for group to scan for - privileged group (True) or unprivileged group (False)
-    :param num_iters (scalar, optional): number of iterations
-    :param penalty: penalty coefficient. Should be positive
-    """
-
-    xor_op = privileged ^ bool(pos_label)
-    direction = 'positive' if xor_op else 'negative'
-
-    expected = pd.Series(y_pred)
-    outcomes = pd.Series(y_true)
-
-    if dataset is not None:
-        coordinates = dataset
+    if X is None:
+        X = pd.DataFrame({'index': range(len(y_true))})
     else:
-        dummy_subset = dict({'index': range(len(y_true))})
-        coordinates = pd.DataFrame(dummy_subset, index=expected.index)
+        X = X.reset_index(drop=True)  # match all indices
 
+    expected = pd.Series(probas_pred).reset_index(drop=True)
+    outcomes = pd.Series(y_true == pos_label, dtype=int).reset_index(drop=True)
 
-    scoring_function = Bernoulli(direction=direction)
+    direction = 'negative' if privileged else 'positive'
+    kwargs['direction'] = direction
+
+    if scoring == 'Bernoulli':
+        scoring_function = Bernoulli(**kwargs)
+    elif scoring == 'BerkJones':
+        scoring_function = BerkJones(**kwargs)
+    else:
+        scoring_function = scoring(**kwargs)
     scanner = MDSS(scoring_function)
 
-    return scanner.scan(coordinates, expected, outcomes, penalty, num_iters)
+    return scanner.score_current_subset(X, expected, outcomes, subset or {}, penalty)
+
+@deprecated('Change to new interface - aif360.sklearn.detectors.mdss_detector.bias_scan by version 0.5.0.')
+def mdss_bias_scan(y_true, probas_pred, X=None, *, pos_label=1,
+                   scoring='Bernoulli', privileged=True, n_iter=10,
+                   penalty=1e-17, **kwargs):
+    """Scan to find the highest scoring subset of records.
+
+    Bias scan is a technique to identify bias in predictive models using subset
+    scanning [#zhang16]_.
+    Args:
+        y_true (array-like): Ground truth (correct) target values.
+        probas_pred (array-like): Probability estimates of the positive class.
+        X (dataframe, optional): The dataset (containing the features) that was
+            used to predict `probas_pred`. If not specified, the subset is
+            returned as indices.
+        pos_label (scalar): Label of the positive class.
+        scoring (str or class): One of 'Bernoulli' or 'BerkJones' or
+            subclass of
+            :class:`aif360.metrics.mdss.ScoringFunctions.ScoringFunction`.
+        privileged (bool): Flag for which direction to scan: privileged
+            (``True``) implies negative (observed worse than predicted outcomes)
+            while unprivileged (``False``) implies positive (observed better
+            than predicted outcomes).
+        n_iter (scalar): Number of iterations (random restarts).
+        penalty (scalar): Penalty coefficient. Should be positive. The higher
+            the penalty, the less complex (number of features and feature
+            values) the highest scoring subset that gets returned is.
+        **kwargs: Additional kwargs to be passed to `scoring` (not including
+            `direction`).
+    Returns:
+        tuple:
+            Highest scoring subset and its bias score
+            * **subset** (dict) -- Mapping of features to values defining the
+              highest scoring subset.
+            * **score** (float) -- Bias score for that group.
+    See also:
+        :func:`mdss_bias_score`
+    References:
+        .. [#zhang16] `Zhang, Z. and Neill, D. B., "Identifying significant
+           predictive bias in classifiers," arXiv preprint, 2016.
+           <https://arxiv.org/abs/1611.08292>`_
+    """
+    if X is None:
+        X = pd.DataFrame({'index': range(len(y_true))})
+    else:
+        X = X.reset_index(drop=True)  # match all indices
+
+    expected = pd.Series(probas_pred).reset_index(drop=True)
+    outcomes = pd.Series(y_true == pos_label, dtype=int).reset_index(drop=True)
+
+    direction = 'negative' if privileged else 'positive'
+    kwargs['direction'] = direction
+    if scoring == 'Bernoulli':
+        scoring_function = Bernoulli(**kwargs)
+    elif scoring == 'BerkJones':
+        scoring_function = BerkJones(**kwargs)
+    else:
+        scoring_function = scoring(**kwargs)
+    scanner = MDSS(scoring_function)
+
+    return scanner.scan(X, expected, outcomes, penalty, n_iter)
 
 
 # ========================== INDIVIDUAL FAIRNESS ===============================
