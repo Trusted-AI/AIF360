@@ -7,10 +7,10 @@ import pandas as pd
 
 
 def bias_scan(
-    data: pd.DataFrame,
-    observations: pd.Series,
-    expectations: Union[pd.Series, pd.DataFrame] = None,
-    favorable_value: Union[str, float] = None,
+    X: pd.DataFrame,
+    y_true: pd.Series,
+    y_pred: Union[pd.Series, pd.DataFrame] = None,
+    pos_label: Union[str, float] = None,
     overpredicted: bool = True,
     scoring: Union[str, ScoringFunction] = "Bernoulli",
     num_iters: int = 10,
@@ -22,13 +22,13 @@ def bias_scan(
     scan to find the highest scoring subset of records (see demo_mdss_detector.ipynb for example usage)
 
     :param data (dataframe): the dataset (containing the features) the model was trained on
-    :param observations (series): ground truth (correct) target values
-    :param expectations (series,  dataframe, optional): pandas series estimated targets
+    :param y_true (series): ground truth (correct) target values
+    :param y_pred (series,  dataframe, optional): pandas series estimated targets
         as returned by a model for binary, continuous and ordinal modes.
         If mode is nominal, this is a dataframe with columns containing expectations for each nominal class.
         If None, model is assumed to be a dumb model that predicts the mean of the targets
                 or 1/(num of categories) for nominal mode.
-    :param favorable_value(str, float, optional): Should be high or low or float if the mode in [binary, ordinal, or continuous].
+    :param pos_label (str, float, optional): Should be high or low or float if the mode in [binary, ordinal, or continuous].
             If float, value has to be minimum or maximum in the observations column. Defaults to high if None for these modes.
             Support for float left in to keep the intuition clear in binary classification tasks.
             If mode is nominal, favorable values should be one of the unique categories in the observations.
@@ -51,10 +51,10 @@ def bias_scan(
      :returns: the highest scoring subset and the score or dict of the highest scoring subset and the score for each category in nominal mode
     """
     return bias_scan(
-        data=data,
-        observations=observations,
-        expectations=expectations,
-        favorable_value=favorable_value,
+        data=X,
+        observations=y_true,
+        expectations=y_pred,
+        favorable_value=pos_label,
         overpredicted=overpredicted,
         scoring=scoring,
         num_iters=num_iters,
