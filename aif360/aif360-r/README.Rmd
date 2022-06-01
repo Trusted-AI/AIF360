@@ -116,6 +116,8 @@ load_aif360_lib()
 load_aif360_lib()
 ```
 
+If you get an error: `cannot change value of locked binding`, please restart the R session and run `load_aif360_lib()` exactly once.
+
 ``` r
 # load a toy dataset
 data <- data.frame("feature1" = c(0,0,1,1,1,1,0,1,1,0),
