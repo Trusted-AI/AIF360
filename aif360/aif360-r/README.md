@@ -100,22 +100,18 @@ aif360::install_aif360(envname = "r-test")
 Note that this step should take a few minutes and the R session will
 restart.
 
-4)  Finally, load the aif360 functions
+4)  You can now activate your Python environment
 
-<!-- -->
-
-    library(aif360)
-    reticulate::use_miniconda(condaenv = "r-test", required = TRUE)
-    load_aif360_lib()
+``` r
+reticulate::use_miniconda(condaenv = "r-test", required = TRUE)
+```
 
 ## Getting Started
 
 ``` r
+library(aif360)
 load_aif360_lib()
 ```
-
-If you get an error: `cannot change value of locked binding`, please
-restart the R session and run `load_aif360_lib()` exactly once.
 
 ``` r
 # load a toy dataset
@@ -131,6 +127,22 @@ formatted_dataset <- aif360::aif_dataset(data_path = data,
                                           privileged_protected_attribute = 1,
                                           target_column = "label",
                                           protected_attribute = "feature1")
+```
+
+## Troubleshooting
+
+If you encounter any errors during the installation process, look for
+your issue here and try the solutions.
+
+### Locked binding
+
+If you get an error: `cannot change value of locked binding`, please
+restart the R session. Then try reactivating your Python environment and
+running the following commands exactly once:
+
+``` r
+library(aif360) 
+load_aif360_lib()
 ```
 
 ## Contributing
