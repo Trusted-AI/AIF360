@@ -10,3 +10,5 @@
 ^CONTRIBUTING\.md$
 ^CODEOFCONDUCT\.md$
 ^cran-comments\.md$
+^doc$
+^Meta$
