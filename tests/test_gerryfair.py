@@ -1,4 +1,4 @@
-from notebook_runner import notebook_run
+from .notebook_runner import notebook_run
 import os
 
 

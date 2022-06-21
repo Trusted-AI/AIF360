@@ -10,44 +10,24 @@ from sklearn.metrics import accuracy_score
 from sklearn.model_selection import GridSearchCV
 from sklearn.pipeline import make_pipeline
 
-from aif360.datasets import GermanDataset  # AdultDataset
-from aif360.sklearn.datasets import fetch_german  # fetch_adult
 from aif360.algorithms.preprocessing import LFR
 from aif360.sklearn.preprocessing import LearnedFairRepresentation
 from aif360.sklearn.metrics import make_scorer, statistical_parity_difference
 
 
-@pytest.fixture(scope='module')
-def old_german():
-    german = GermanDataset(categorical_features=['foreign_worker'],
-            features_to_keep=['month', 'credit_amount',
-            'investment_as_income_percentage', 'residence_since', 'age',
-            'number_of_credits', 'people_liable_for', 'sex'])
-    german.features = np.concatenate(
-            (german.features[:, :-3], german.features[:, -2:-4:-1]), axis=1)
-    german.feature_names = german.feature_names[:-3] + ['foreign_worker', 'sex']
-    german.labels[german.labels == 2] = 0
-    return german
-
-@pytest.fixture(scope='module')
+@pytest.fixture
 def old_lfr(old_german):
     lfr = LFR(unprivileged_groups=[{'age': 0}], privileged_groups=[{'age': 1}],
               seed=123)
     return lfr.fit(old_german, maxfun=3e4)
 
-@pytest.fixture(scope='module')
+@pytest.fixture
 def old_lfr2(old_german):
     lfr = LFR(unprivileged_groups=[{'age': 0}], privileged_groups=[{'age': 1}],
               seed=123)
     return lfr.fit_transform(old_german, maxfun=3e4)
 
-@pytest.fixture(scope='module')
-def new_german():
-    german = fetch_german(numeric_only=True)
-    german.X.age = german.X.age.apply(lambda a: 1 if a > 25 else 0)
-    return german
-
-@pytest.fixture(scope='module')
+@pytest.fixture
 def new_lfr(new_german):
     lfr = LearnedFairRepresentation('age', random_state=123)
     return lfr.fit(**new_german._asdict())
