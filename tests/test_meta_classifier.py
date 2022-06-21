@@ -1,67 +1,57 @@
 import numpy as np
-import pandas as pd
 
 from aif360.datasets import AdultDataset
 from aif360.metrics import ClassificationMetric
 from aif360.algorithms.inprocessing import MetaFairClassifier
-from aif360.algorithms.inprocessing.celisMeta.utils import getStats
 
-def test_adult():
-    np.random.seed(1)
-    # np.random.seed(9876)
 
-    protected = 'sex'
-    ad = AdultDataset(protected_attribute_names=[protected],
-                      privileged_classes=[['Male']], categorical_features=[],
-                      features_to_keep=['age', 'education-num', 'capital-gain',
-                                        'capital-loss', 'hours-per-week'])
+protected = 'sex'
+ad = AdultDataset(protected_attribute_names=[protected],
+                    privileged_classes=[['Male']], categorical_features=[],
+                    features_to_keep=['age', 'education-num', 'capital-gain',
+                                    'capital-loss', 'hours-per-week'])
+test, train = ad.split([16281], shuffle=False)
 
-    #scaler = MinMaxScaler(copy=False)
-    # ad.features = scaler.fit_transform(ad.features)
-
-    test, train = ad.split([16281])
-
-    biased_model = MetaFairClassifier(tau=0, sensitive_attr=protected)
-    biased_model.fit(train)
-
+def test_adult_sr():
+    biased_model = MetaFairClassifier(tau=0, sensitive_attr=protected,
+                                      type='sr', seed=123).fit(train)
     dataset_bias_test = biased_model.predict(test)
 
     biased_cm = ClassificationMetric(test, dataset_bias_test,
-        unprivileged_groups=[{protected: 0}], privileged_groups=[{protected: 1}])
-    unconstrainedFDR2 = biased_cm.false_discovery_rate_ratio()
-    unconstrainedFDR2 = min(unconstrainedFDR2, 1/unconstrainedFDR2)
+            unprivileged_groups=[{protected: 0}],
+            privileged_groups=[{protected: 1}])
+    spd1 = biased_cm.disparate_impact()
+    spd1 = min(spd1, 1/spd1)
 
-    predictions = [1 if y == train.favorable_label else
-                  -1 for y in dataset_bias_test.labels.ravel()]
-    y_test = np.array([1 if y == train.favorable_label else
-                      -1 for y in test.labels.ravel()])
-    x_control_test = pd.DataFrame(data=test.features,
-                                  columns=test.feature_names)[protected]
-
-    acc, sr, unconstrainedFDR = getStats(y_test, predictions, x_control_test)
-    assert np.isclose(unconstrainedFDR, unconstrainedFDR2)
-
-    tau = 0.9
-    debiased_model = MetaFairClassifier(tau=tau, sensitive_attr=protected)
-    debiased_model.fit(train)
-
-    #dataset_debiasing_train = debiased_model.predict(dataset_orig_train)
+    debiased_model = MetaFairClassifier(tau=0.9, sensitive_attr=protected,
+                                        type='sr', seed=123).fit(train)
     dataset_debiasing_test = debiased_model.predict(test)
 
-    predictions = list(dataset_debiasing_test.labels)
-    predictions = [1 if y == train.favorable_label else
-                  -1 for y in dataset_debiasing_test.labels.ravel()]
-    y_test = np.array([1 if y == train.favorable_label else
-                      -1 for y in test.labels.ravel()])
-    x_control_test = pd.DataFrame(data=test.features,
-                                  columns=test.feature_names)[protected]
+    debiased_cm = ClassificationMetric(test, dataset_debiasing_test,
+            unprivileged_groups=[{protected: 0}],
+            privileged_groups=[{protected: 1}])
+    spd2 = debiased_cm.disparate_impact()
+    spd2 = min(spd2, 1/spd2)
+    assert(spd2 >= spd1)
 
-    acc, sr, fdr = getStats(y_test, predictions, x_control_test)
+def test_adult_fdr():
+    biased_model = MetaFairClassifier(tau=0, sensitive_attr=protected,
+                                      type='fdr', seed=123).fit(train)
+    dataset_bias_test = biased_model.predict(test)
+
+    biased_cm = ClassificationMetric(test, dataset_bias_test,
+            unprivileged_groups=[{protected: 0}],
+            privileged_groups=[{protected: 1}])
+    fdr1 = biased_cm.false_discovery_rate_ratio()
+    fdr1 = min(fdr1, 1/fdr1)
+
+    debiased_model = MetaFairClassifier(tau=0.9, sensitive_attr=protected,
+                                        type='fdr', seed=123).fit(train)
+    dataset_debiasing_test = debiased_model.predict(test)
 
     debiased_cm = ClassificationMetric(test, dataset_debiasing_test,
-        unprivileged_groups=[{protected: 0}], privileged_groups=[{protected: 1}])
+            unprivileged_groups=[{protected: 0}],
+            privileged_groups=[{protected: 1}])
     fdr2 = debiased_cm.false_discovery_rate_ratio()
     fdr2 = min(fdr2, 1/fdr2)
-    assert np.isclose(fdr, fdr2)
-    #print(fdr, unconstrainedFDR)
-    assert(fdr2 >= unconstrainedFDR2)
+    assert(fdr2 >= fdr1)

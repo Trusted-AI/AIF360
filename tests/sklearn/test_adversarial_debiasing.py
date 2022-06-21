@@ -1,7 +1,8 @@
 import numpy as np
 from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import accuracy_score
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
+tf.disable_eager_execution()
 
 from aif360.algorithms.inprocessing import AdversarialDebiasing as OldAdversarialDebiasing
 from aif360.sklearn.inprocessing import AdversarialDebiasing

@@ -21,6 +21,7 @@ import sys
 sys.path.insert(0, os.path.abspath('../..'))
 
 import aif360
+import fairlearn
 
 
 # -- General configuration ------------------------------------------------
@@ -43,6 +44,7 @@ intersphinx_mapping = {'numpy': ('https://docs.scipy.org/doc/numpy/', None),
     'scipy': ('https://docs.scipy.org/doc/scipy/reference/', None),
     'pandas': ('https://pandas.pydata.org/pandas-docs/stable/', None),
     'sklearn': ('https://scikit-learn.org/stable/', None),
+    'fairlearn': (f'https://fairlearn.github.io/v{fairlearn.__version__}/', None),
     'python': ('https://docs.python.org/{}.{}'.format(*sys.version_info), None)}
 
 napoleon_include_init_with_doc = True
@@ -73,7 +75,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'aif360'
-copyright = u'2018 - 2020, IBM Corporation'
+copyright = u'2018 - 2021, The AI Fairness 360 (AIF360) Authors.'
 author = u'aif360 developers'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -138,7 +140,7 @@ if os.environ.get('READTHEDOCS') != 'True':
 html_static_path = ['static']
 
 def setup(app):
-    app.add_stylesheet('style.css')
+    app.add_css_file('style.css')
 
 # Custom sidebar templates, must be a dictionary that maps document names
 # to template names.
@@ -266,5 +268,5 @@ def linkcode_resolve(domain, info):
 
     fn = relpath(fn, start=dirname(aif360.__file__))
 
-    return "https://github.com/IBM/AIF360/blob/master/aif360/%s%s" % (
+    return "https://github.com/Trusted-AI/AIF360/blob/master/aif360/%s%s" % (
            fn, linespec)

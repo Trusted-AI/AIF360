@@ -4,6 +4,7 @@ from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.preprocessing import LabelEncoder
 from sklearn.utils import check_random_state
 from sklearn.utils.validation import check_is_fitted
+import tensorflow.compat.v1 as tf
 
 from aif360.sklearn.utils import check_inputs, check_groups
 
@@ -90,10 +91,10 @@ class AdversarialDebiasing(BaseEstimator, ClassifierMixin):
         Returns:
             self
         """
-        import tensorflow as tf
-        if tf.__version__[0] == '2':
-            import tensorflow.compat.v1 as tf
-            tf.disable_eager_execution()
+        if tf.executing_eagerly():
+            raise RuntimeError("AdversarialDebiasing does not work in eager "
+                    "execution mode. To fix, add `tf.disable_eager_execution()`"
+                    " to the top of the calling script.")
 
         X, y, _ = check_inputs(X, y)
         rng = check_random_state(self.random_state)

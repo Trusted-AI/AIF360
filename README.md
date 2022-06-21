@@ -1,11 +1,11 @@
 # AI Fairness 360 (AIF360)
 
-[![Build Status](https://travis-ci.org/IBM/AIF360.svg?branch=master)](https://travis-ci.org/IBM/AIF360)
+![Continuous Integration](https://github.com/Trusted-AI/AIF360/workflows/Continuous%20Integration/badge.svg)
 [![Documentation](https://readthedocs.org/projects/aif360/badge/?version=latest)](http://aif360.readthedocs.io/en/latest/?badge=latest)
 [![PyPI version](https://badge.fury.io/py/aif360.svg)](https://badge.fury.io/py/aif360)
 [![CRAN\_Status\_Badge](http://www.r-pkg.org/badges/version/aif360)](https://cran.r-project.org/package=aif360)
 
-The AI Fairness 360 toolkit is an extensible open-source library containg techniques developed by the
+The AI Fairness 360 toolkit is an extensible open-source library containing techniques developed by the
 research community to help detect and mitigate bias in machine learning models throughout the AI application lifecycle. AI Fairness 360 package is available in both Python and R.
 
 The AI Fairness 360 package includes
@@ -47,6 +47,9 @@ Get in touch with us on [Slack](https://aif360.slack.com) (invitation
 * Adversarial Debiasing ([Zhang et al., 2018](https://arxiv.org/abs/1801.07593))
 * Meta-Algorithm for Fair Classification ([Celis et al., 2018](https://arxiv.org/abs/1806.06055))
 * Rich Subgroup Fairness ([Kearns, Neel, Roth, Wu, 2018](https://arxiv.org/abs/1711.05144))
+* Exponentiated Gradient Reduction ([Agarwal et al., 2018](https://arxiv.org/abs/1803.02453))
+* Grid Search Reduction ([Agarwal et al., 2018](https://arxiv.org/abs/1803.02453), [Agarwal et al., 2019](https://arxiv.org/abs/1905.12843))
+* Fair Data Adaptation ([Plečko and Meinshausen, 2020](https://www.jmlr.org/papers/v21/19-966.html), [Plečko et al., 2021](https://arxiv.org/abs/2110.10200))
 
 ## Supported fairness metrics
 
@@ -54,7 +57,7 @@ Get in touch with us on [Slack](https://aif360.slack.com) (invitation
 * Comprehensive set of sample distortion metrics
 * Generalized Entropy Index ([Speicher et al., 2018](https://doi.org/10.1145/3219819.3220046))
 * Differential Fairness and Bias Amplification ([Foulds et al., 2018](https://arxiv.org/pdf/1807.08362))
-
+* Bias Scan with Multi-Dimensional Subset Scan ([Zhang, Neill, 2017](https://arxiv.org/abs/1611.08292))
 
 ## Setup
 
@@ -72,9 +75,9 @@ Supported Python Configurations:
 
 | OS      | Python version |
 | ------- | -------------- |
-| macOS   | 3.5, 3.6, 3.7  |
-| Ubuntu  | 3.5, 3.6, 3.7  |
-| Windows | 3.5, 3.6, 3.7  |
+| macOS   | 3.7, 3.8, 3.9  |
+| Ubuntu  | 3.7, 3.8, 3.9  |
+| Windows | 3.7, 3.8, 3.9  |
 
 ### (Optional) Create a virtual environment
 
@@ -91,10 +94,10 @@ is sufficient (see [the difference between Anaconda and
 Miniconda](https://conda.io/docs/user-guide/install/download.html#anaconda-or-miniconda)
 if you are curious) if you do not already have conda installed.
 
-Then, to create a new Python 3.6 environment, run:
+Then, to create a new Python 3.7 environment, run:
 
 ```bash
-conda create --name aif360 python=3.6
+conda create --name aif360 python=3.7
 conda activate aif360
 ```
 
@@ -132,7 +135,7 @@ pip install 'aif360[all]'
 ```
 
 The options for available extras are: `OptimPreproc, LFR, AdversarialDebiasing,
-DisparateImpactRemover, LIME, ART, notebooks, tests, docs, all`
+DisparateImpactRemover, LIME, ART, Reductions, notebooks, tests, docs, all`
 
 If you encounter any errors, try the [Troubleshooting](#troubleshooting) steps.
 
@@ -141,7 +144,7 @@ If you encounter any errors, try the [Troubleshooting](#troubleshooting) steps.
 Clone the latest version of this repository:
 
 ```bash
-git clone https://github.com/IBM/AIF360
+git clone https://github.com/Trusted-AI/AIF360
 ```
 
 If you'd like to run the examples, download the datasets now and place them in
@@ -174,10 +177,10 @@ issue here and try the solutions.
 
 #### TensorFlow
 
-See the [Install TensorFlow with pip](https://www.tensorflow.org/install/pip?lang=python3#older-versions-of-tensorflow)
+See the [Install TensorFlow with pip](https://www.tensorflow.org/install/pip)
 page for detailed instructions.
 
-Note: we require `'tensorflow >= 1.13.1, < 2'`.
+Note: we require `'tensorflow >= 1.13.1'`.
 
 Once tensorflow is installed, try re-running:
 
