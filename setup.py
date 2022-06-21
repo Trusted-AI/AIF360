@@ -19,7 +19,7 @@ extras = {
     'LIME': ['lime'],
     'ART': ['adversarial-robustness-toolbox>=1.0.0'],
     'Reductions': ['fairlearn==0.4.6'],
-    'FairAdapt':['rpy2<=3.5.1'],
+    'FairAdapt':['rpy2'],
     'notebooks': ['jupyter', 'tqdm', 'igraph[plotting]', 'lightgbm'],
 }
 extras['tests'] = reduce(lambda l1, l2: l1+l2, extras.values(), ['pytest>=3.5'])
