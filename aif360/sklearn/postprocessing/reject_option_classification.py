@@ -8,7 +8,7 @@ from aif360.sklearn.metrics import statistical_parity_difference
 from aif360.sklearn.metrics import average_odds_error
 from aif360.sklearn.metrics import equal_opportunity_difference
 from aif360.sklearn.metrics import disparate_impact_ratio
-from aif360.sklearn.metrics import make_difference_scorer, make_ratio_scorer
+from aif360.sklearn.metrics import make_scorer
 from aif360.sklearn.utils import check_inputs, check_groups
 
 
@@ -55,7 +55,7 @@ class RejectOptionClassifier(BaseEstimator, ClassifierMixin):
         >>> param = [{'threshold': [t],
                       'margin': np.linspace(0, min(t, 1-t), 50, endpoint=False)}
         ...          for t in np.arange(0.01, 1., 0.01)]
-        >>> stat_par = make_difference_scorer(statistical_parity_difference)
+        >>> stat_par = make_scorer(statistical_parity_difference)
         >>> scoring = {'bal_acc': 'balanced_accuracy', 'stat_par': stat_par}
         >>> def refit(cv_res):
         ...     return np.ma.array(cv_res['mean_test_bal_acc'],
@@ -73,8 +73,8 @@ class RejectOptionClassifier(BaseEstimator, ClassifierMixin):
                 considered. Default is ``None`` meaning all protected attributes
                 from the dataset are used. Note: This algorithm requires there
                 be exactly 2 groups (privileged and unprivileged).
-            threshold ():
-            margin ():
+            threshold (): TODO
+            margin (): TODO
             metric ('statistical_parity', 'average_odds', 'equal_opportunity',
                 or callable):
         """
@@ -88,20 +88,19 @@ class RejectOptionClassifier(BaseEstimator, ClassifierMixin):
         stores them for predict.
 
         Args:
-            X (array-like): Probability estimates of the targets as
-                returned by a ``predict_proba()`` call or equivalent.
+            X (array-like): Ignored.
             y (pandas.Series): Ground-truth (correct) target values.
             labels (list, optional): The ordered set of labels values. Must
                 match the order of columns in X if provided. By default,
                 all labels in y are used in sorted order.
             pos_label (scalar, optional): The label of the positive class.
             priv_group (scalar, optional): The label of the privileged group.
-            sample_weight (array-like, optional): Sample weights.
+            sample_weight (array-like, optional): Ignored.
 
         Returns:
             self
         """
-        X, y, sample_weight = check_inputs(X, y, sample_weight)
+        X, y, _ = check_inputs(X, y, sample_weight)
         groups, self.prot_attr_ = check_groups(y, self.prot_attr,
                                                ensure_binary=True)
         self.classes_ = labels if labels is not None else np.unique(y)
@@ -181,31 +180,36 @@ class RejectOptionClassifierCV(GridSearchCV):
         >>> roc = RejectOptionClassifierCV('disparate_impact', prot_attr='sex')
         >>> roc.fit(pd.DataFrame(lr.predict_proba(X), index=X.index), y)
         >>> res = pd.DataFrame(roc.cv_results_)
-        >>> ax = res.plot.scatter('mean_test_disparate_impact', 'mean_test_bal_acc')
-        >>> res.loc[[roc.best_index_]].plot.scatter('mean_test_disparate_impact', 'mean_test_bal_acc', color='r', ax=ax)
+        >>> ax = res.plot.scatter('mean_test_disparate_impact',
+        ...                       'mean_test_bal_acc')
+        >>> res.loc[[roc.best_index_]].plot.scatter(
+        ... 'mean_test_disparate_impact', 'mean_test_bal_acc', color='r', ax=ax)
         >>> plt.show()
 
         We can also
     """
-    def __init__(self, scorer, mask_func=None, step=0.05, prot_attr=None, **kwargs):
+    def __init__(self, prot_attr=None, *, scoring, step=0.05, refit=True, **kwargs):
         """
         Args:
-            scorer ('statistical_parity', 'average_odds', 'equal_opportunity',
-                'disparate_impact', or callable):
-            mask_func (callable, optional): A
-            step (float): Step size for grid search.
             prot_attr (single label or list-like, optional): Protected
                 attribute(s) to use in the post-processing. If more than one
                 attribute, all combinations of values (intersections) are
                 considered. Default is ``None`` meaning all protected attributes
                 from the dataset are used. Note: This algorithm requires there
                 be exactly 2 groups (privileged and unprivileged).
+            scoring ('statistical_parity', 'average_odds', 'equal_opportunity',
+                'disparate_impact', or callable):
+            step (float): Step size for grid search.
+            refit (bool or callable, optional): A TODO
+            **kwargs: See :class:`~sklearn.model_selection.GridSearchCV` for
+                additional kwargs.
         """
-        self.scorer = scorer
-        self.mask_func = mask_func
+        self.scoring = scoring
+        self.refit = refit
         self.step = step
         self.prot_attr = prot_attr
-        super().__init__(RejectOptionClassifier(), {}, **kwargs)
+        super().__init__(RejectOptionClassifier(), {}, scoring=scoring,
+                         refit=refit, **kwargs)
 
     def fit(self, X, y, **fit_params):
         self.param_grid = [
@@ -213,23 +217,23 @@ class RejectOptionClassifierCV(GridSearchCV):
                  'margin': np.arange(self.step, min(t, 1-t), self.step)}
                 for t in np.arange(self.step, 1, self.step)]
 
-        self.scorer_name_ = self.scorer
-        if self.scorer == 'statistical_parity':
-            self.scorer_ = make_difference_scorer(statistical_parity_difference,
+        self.scorer_name_ = self.scoring
+        if self.scoring == 'statistical_parity':
+            self.scorer_ = make_scorer(statistical_parity_difference,
                     prot_attr=self.prot_attr)
-        elif self.scorer == 'average_odds':
-            self.scorer_ = make_difference_scorer(average_odds_error,
+        elif self.scoring == 'average_odds':
+            self.scorer_ = make_scorer(average_odds_error,
                     prot_attr=self.prot_attr)
-        elif self.scorer == 'equal_opportunity':
-            self.scorer_ = make_difference_scorer(equal_opportunity_difference,
+        elif self.scoring == 'equal_opportunity':
+            self.scorer_ = make_scorer(equal_opportunity_difference,
                     prot_attr=self.prot_attr)
-        elif self.scorer == 'disparate_impact':
-            self.scorer_ = make_ratio_scorer(disparate_impact_ratio,
+        elif self.scoring == 'disparate_impact':
+            self.scorer_ = make_scorer(disparate_impact_ratio, is_ratio=True,
                     prot_attr=self.prot_attr)
-        elif not callable(self.scorer):
+        elif not callable(self.scoring):
             raise ValueError("scorer must be one of: 'statistical_parity', "
                 "'average_odds', 'equal_opportunity', 'disparate_impact' or a "
-                "callable function. Got:\n{}".format(self.scorer))
+                "callable function. Got:\n{}".format(self.scoring))
         else:
             self.scorer_name_ = 'fairness_metric'
             self.scorer_ = self.scorer_
@@ -237,20 +241,21 @@ class RejectOptionClassifierCV(GridSearchCV):
         self.scoring = {'bal_acc': 'balanced_accuracy',
                         self.scorer_name_: self.scorer_}
 
-        if self.refit is True:
-            if self.mask_func is None:
-                if self.scorer_name_ == 'fairness_metric':
-                    self.refit = False
-                elif self.scorer_name_ == 'disparate_impact':
-                    self.mask_func_ = lambda x: x < 0.8
-                else:
-                    self.mask_func_ = lambda x: x < -0.1
+        if self.refit is True and self.scorer_name_ != 'fairness_metric':
+            if self.scorer_name_ == 'disparate_impact':
+                self.refit = lambda res: np.ma.array(res['mean_test_bal_acc'],
+                    mask=res['mean_test_disparate_impact'] < 0.8).argmax()
             else:
-                self.mask_func_ = self.mask_func
-        if self.refit is True:
-            self.refit = lambda cvr: np.ma.array(
-                    cvr['mean_test_bal_acc'],
-                    mask=self.mask_func_(cvr['mean_test_'+self.scorer_name_])
-            ).argmax()
+                self.refit = lambda res: np.ma.array(res['mean_test_bal_acc'],
+                    mask=res['mean_test_'+self.scorer_name_] < -0.1).argmax()
 
-        super().fit(X, y, **fit_params)
+        class NoSplit:
+            def split(self, X, y=None, groups=None):
+                yield np.arange(len(X)), np.arange(len(X))
+
+            def get_n_splits(self, X=None, y=None, groups=None):
+                return 1
+
+        self.cv = NoSplit()
+
+        return super().fit(X, y, **fit_params)
