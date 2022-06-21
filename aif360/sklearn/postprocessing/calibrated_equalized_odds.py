@@ -113,7 +113,11 @@ class CalibratedEqualizedOdds(BaseEstimator, ClassifierMixin):
             raise ValueError('pos_label={} is not in the set of labels. The '
                     'valid values are:\n{}'.format(pos_label, self.classes_))
 
-        X = X[:, np.nonzero(self.classes_ == self.pos_label_)[0][0]]
+        pos_idx = np.nonzero(self.classes_ == self.pos_label_)[0][0]
+        try:
+            X = X.iloc[:, pos_idx]
+        except AttributeError:
+            X = X[:, pos_idx]
 
         # local function to return corresponding args for metric evaluation
         def _args(grp_idx, triv=False):

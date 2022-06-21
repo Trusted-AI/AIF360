@@ -45,8 +45,9 @@ def check_already_dropped(labels, dropped_cols, name, dropped_by='numeric_only',
     return [c for c in labels if isinstance(c, pd.Series)
                               or c not in already_dropped]
 
-def standardize_dataset(df, prot_attr, target, sample_weight=None, usecols=[],
-                       dropcols=[], numeric_only=False, dropna=True):
+def standardize_dataset(df, *, prot_attr, target, sample_weight=None,
+                        usecols=[], dropcols=[], numeric_only=False,
+                        dropna=True):
     """Separate data, targets, and possibly sample weights and populate
     protected attributes as sample properties.
 
@@ -87,9 +88,11 @@ def standardize_dataset(df, prot_attr, target, sample_weight=None, usecols=[],
         >>> import pandas as pd
         >>> from sklearn.linear_model import LinearRegression
 
-        >>> df = pd.DataFrame([[1, 2, 3], [4, 5, 6]], columns=['X', 'y', 'Z'])
-        >>> train = standardize_dataset(df, prot_attr='Z', target='y')
-        >>> reg = LinearRegression().fit(*train)
+        >>> df = pd.DataFrame([[0.5, 1, 1, 0.75], [-0.5, 0, 0, 0.25]],
+        ...                   columns=['X', 'y', 'Z', 'w'])
+        >>> train = standardize_dataset(df, prot_attr='Z', target='y',
+        ...                             sample_weight='w')
+        >>> reg = LinearRegression().fit(**train._asdict())
 
         >>> import numpy as np
         >>> from sklearn.datasets import make_classification

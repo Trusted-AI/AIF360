@@ -108,13 +108,9 @@ class LearnedFairRepresentation(BaseEstimator, ClassifierMixin, TransformerMixin
         n_classes = len(self.classes_)
         if n_classes == 2:
             n_classes = 1  # XXX
-
-        n_prototypes = self.n_prototypes
         n_feat = X.shape[1]
+        w_size = self.n_prototypes*n_classes
 
-        w_size = n_prototypes*n_classes
-        x0 = rng.random(w_size + n_prototypes*n_feat)
-        bounds = [(0, 1)]*w_size + [(None, None)]*n_prototypes*n_feat
         i = 0
         eps = np.finfo(np.float64).eps
 
@@ -144,14 +140,15 @@ class LearnedFairRepresentation(BaseEstimator, ClassifierMixin, TransformerMixin
             i += 1
             return loss.item(), x.grad.numpy()
 
-        X_ = torch.tensor(X.to_numpy())
-        y_ = torch.as_tensor(y)
+        x0 = rng.random(w_size + self.n_prototypes*n_feat)
+        bounds = [(0, 1)]*w_size + [(None, None)]*self.n_prototypes*n_feat
         res = optim.minimize(LFR_optim_objective, x0=x0, method='L-BFGS-B',
-                args=(X_, y_, priv), jac=True, bounds=bounds,
-                options={'gtol': self.tol, 'maxiter': self.max_iter})
+                args=(torch.tensor(X.to_numpy()), torch.as_tensor(y), priv),
+                jac=True, bounds=bounds, options={'gtol': self.tol,
+                'maxiter': self.max_iter})
 
-        self.coef_ = res.x[:n_prototypes*n_classes].reshape(-1, n_classes)
-        self.prototypes_ = res.x[n_prototypes*n_classes:].reshape(-1, n_feat)
+        self.coef_ = res.x[:w_size].reshape(-1, n_classes)
+        self.prototypes_ = res.x[w_size:].reshape(-1, n_feat)
         self.n_iter_ = res.nit
 
         if res.status == 0 and self.verbose:
