@@ -19,6 +19,6 @@ BugReports: https://github.com/Trusted-AI/AIF360/issues
 Imports:
     reticulate,
     rstudioapi
-RoxygenNote: 7.1.0
+RoxygenNote: 7.2.0
 Suggests:
     testthat
