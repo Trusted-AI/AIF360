@@ -18,6 +18,6 @@ load_aif360_lib <- function() {
     lockBinding("post_algo", e)
     lockBinding("tf", e)
   } else {
-    message(paste0(c("The aif360 functions have already been loaded:", bindings), sep = " "))
+    message("The aif360 functions have already been loaded. You can begin using the package.")
   }
 }
