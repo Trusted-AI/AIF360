@@ -5,7 +5,7 @@
 
 <!-- badges: start -->
 
-[![CRAN\_Status\_Badge](http://www.r-pkg.org/badges/version/aif360)](https://cran.r-project.org/package=aif360)
+[![CRAN_Status_Badge](http://www.r-pkg.org/badges/version/aif360)](https://cran.r-project.org/package=aif360)
 <!-- badges: end -->
 
 ## Overview
@@ -31,7 +31,7 @@ Or install the development version from GitHub:
 devtools::install_github("Trusted-AI/AIF360/aif360/aif360-r")
 ```
 
-Then, use the install\_aif360() function to install AIF360:
+Then, use the install_aif360() function to install AIF360:
 
 ``` r
 library(aif360)
@@ -42,7 +42,7 @@ install_aif360()
 
 AIF360 is distributed as a Python package and so needs to be installed
 within a Python environment on your system. By default, the
-install\_aif360() function attempts to install AIF360 within an isolated
+install_aif360() function attempts to install AIF360 within an isolated
 Python environment (“r-reticulate”).
 
 You can check using `reticulate::conda_python()` and
@@ -53,15 +53,14 @@ You can check using `reticulate::conda_python()` and
 1)  Install reticulate and check if you have miniconda installed. If you
     do, go to step 2.
 
-<!-- end list -->
-
 ``` r
 install.packages("reticulate")
 reticulate::conda_list()
 ```
 
-If you get an error: `Error: Unable to find conda binary. Is Anaconda
-installed?`, please install miniconda
+If you get an error:
+`Error: Unable to find conda binary. Is Anaconda installed?`, please
+install miniconda
 
 ``` r
 reticulate::install_miniconda()
@@ -69,8 +68,7 @@ reticulate::install_miniconda()
 
 If everything worked, you should get the message:
 
-`* Miniconda has been successfully installed at
-'/home/rstudio/.local/share/r-miniconda'.`
+`* Miniconda has been successfully installed at '/home/rstudio/.local/share/r-miniconda'.`
 
 You can double check:
 
@@ -78,16 +76,12 @@ You can double check:
 
 You will get something like this:
 
-``` 
-          name                                                              python
-1  r-miniconda                   /home/rstudio/.local/share/r-miniconda/bin/python
-2 r-reticulate /home/rstudio/.local/share/r-miniconda/envs/r-reticulate/bin/python
-```
+              name                                                              python
+    1  r-miniconda                   /home/rstudio/.local/share/r-miniconda/bin/python
+    2 r-reticulate /home/rstudio/.local/share/r-miniconda/envs/r-reticulate/bin/python
 
 2)  You can create a new conda env and then configure which version of
     Python to use:
-
-<!-- end list -->
 
 ``` r
 reticulate::conda_create(envname = "r-test")
@@ -99,8 +93,6 @@ Check that everything is working `reticulate::py_config()`.
 3)  If you haven’t yet, please install the aif360 package
     `install.packages("aif360")` and then install aif360 dependencies
 
-<!-- end list -->
-
 ``` r
 aif360::install_aif360(envname = "r-test")
 ```
@@ -108,17 +100,16 @@ aif360::install_aif360(envname = "r-test")
 Note that this step should take a few minutes and the R session will
 restart.
 
-4)  Finally, load the aif360 functions
+4)  You can now activate your Python environment
 
-<!-- end list -->
-
-    library(aif360)
-    reticulate::use_miniconda(condaenv = "r-test", required = TRUE)
-    load_aif360_lib()
+``` r
+reticulate::use_miniconda(condaenv = "r-test", required = TRUE)
+```
 
 ## Getting Started
 
 ``` r
+library(aif360)
 load_aif360_lib()
 ```
 
@@ -126,7 +117,7 @@ load_aif360_lib()
 # load a toy dataset
 data <- data.frame("feature1" = c(0,0,1,1,1,1,0,1,1,0),
                    "feature2" = c(0,1,0,1,1,0,0,0,0,1),
-                  "label" = c(1,0,0,1,0,0,1,0,1,1))
+                   "label" = c(1,0,0,1,0,0,1,0,1,1))
 
 # format the dataset
 formatted_dataset <- aif360::aif_dataset(data_path = data,
@@ -136,6 +127,22 @@ formatted_dataset <- aif360::aif_dataset(data_path = data,
                                           privileged_protected_attribute = 1,
                                           target_column = "label",
                                           protected_attribute = "feature1")
+```
+
+## Troubleshooting
+
+If you encounter any errors during the installation process, look for
+your issue here and try the solutions.
+
+### Locked binding
+
+If you get an error: `cannot change value of locked binding`, please
+restart the R session. Then try reactivating your Python environment and
+running the following commands exactly once:
+
+``` r
+library(aif360) 
+load_aif360_lib()
 ```
 
 ## Contributing
