@@ -4,7 +4,7 @@ output: rmarkdown::html_vignette
 description: >
   Start here to learn the core concepts of the AIF360 R package. You'll be introduced to the primary components included in the package and how they can be used to detect and mitigate bias.
 vignette: >
-  %\VignetteIndexEntry{Introduction to AIF360}
+  %\VignetteIndexEntry{Introduction to AI Fairness 360}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
