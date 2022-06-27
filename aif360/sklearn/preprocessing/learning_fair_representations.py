@@ -15,12 +15,13 @@ import torch.nn.functional as F
 from aif360.sklearn.utils import check_inputs, check_groups
 
 
-class LearnedFairRepresentation(BaseEstimator, ClassifierMixin, TransformerMixin):
-    """Learned Fair Representation.
+class LearnedFairRepresentations(BaseEstimator, ClassifierMixin, TransformerMixin):
+    """Learned Fair Representations.
 
-    Learning fair representations is a pre-processing technique that finds a
+    Learned fair representations is a pre-processing technique that finds a
     latent representation which encodes the data well but obfuscates information
-    about protected attributes [#zemel13]_.
+    about protected attributes [#zemel13]_. It can also be used as an in-
+    processing method by utilizing the learned target coefficients.
 
     References:
         .. [#zemel13] `R. Zemel, Y. Wu, K. Swersky, T. Pitassi, and C. Dwork,
