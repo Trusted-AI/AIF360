@@ -259,7 +259,7 @@ class RejectOptionClassifierCV(GridSearchCV):
                         prot_attr=self.prot_attr)
             elif self.scoring == 'disparate_impact':
                 self.scorer_ = make_scorer(disparate_impact_ratio, is_ratio=True,
-                        prot_attr=self.prot_attr)
+                        prot_attr=self.prot_attr, zero_division=0)
             elif not callable(self.scoring):
                 raise ValueError("scorer must be one of: 'statistical_parity', "
                     "'average_odds', 'equal_opportunity', 'disparate_impact' "
