@@ -34,11 +34,11 @@
 #' ad_df_pred$label <- as.character(ad_pred)
 #' colnames(ad_df_pred) <- c(ad$feature_names, 'label')
 #'
-#' ad_ds <- aif_dataset(ad_df, target_column='label', favor_label = 1,
+#' ad_ds <- binary_label_dataset(ad_df, target_column='label', favor_label = 1,
 #'                      unfavor_label = 0, unprivileged_protected_attribute = 0,
 #'                      privileged_protected_attribute = 1, protected_attribute='race')
 #'
-#' ad_ds_pred <- aif_dataset(ad_df_pred, target_column='label', favor_label = 1,
+#' ad_ds_pred <- binary_label_dataset(ad_df_pred, target_column='label', favor_label = 1,
 #'                unfavor_label = 0, unprivileged_protected_attribute = 0,
 #'                privileged_protected_attribute = 1, protected_attribute='race')
 #'

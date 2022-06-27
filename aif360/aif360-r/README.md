@@ -120,7 +120,7 @@ data <- data.frame("feature1" = c(0,0,1,1,1,1,0,1,1,0),
                    "label" = c(1,0,0,1,0,0,1,0,1,1))
 
 # format the dataset
-formatted_dataset <- aif360::aif_dataset(data_path = data,
+formatted_dataset <- aif360::binary_label_dataset(data_path = data,
                                           favor_label = 0,
                                           unfavor_label = 1,
                                           unprivileged_protected_attribute = 0,

@@ -9,7 +9,7 @@
 #' @param target_column Name describing the label.
 #' @param protected_attribute A feature for which fairness is desired.
 #' @usage
-#' aif_dataset(data_path,  favor_label, unfavor_label,
+#' binary_label_dataset(data_path,  favor_label, unfavor_label,
 #'                      unprivileged_protected_attribute,
 #'                      privileged_protected_attribute,
 #'                      target_column, protected_attribute)
@@ -19,7 +19,7 @@
 #' # Input dataset
 #' data <- data.frame("feat" = c(0,0,1,1,1,1,0,1,1,0), "label" = c(1,0,0,1,0,0,1,0,1,1))
 #' # Create aif compatible input dataset
-#' act <- aif360::aif_dataset(data_path = data,  favor_label=0, unfavor_label=1,
+#' act <- aif360::binary_label_dataset(data_path = data,  favor_label=0, unfavor_label=1,
 #'                             unprivileged_protected_attribute=0,
 #'                             privileged_protected_attribute=1,
 #'                             target_column="label", protected_attribute="feat")
@@ -30,7 +30,7 @@
 #' @importFrom reticulate py_suppress_warnings py_dict r_to_py
 #' @importFrom utils file_test
 #'
-aif_dataset <- function(data_path, favor_label,
+binary_label_dataset <- function(data_path, favor_label,
                         unfavor_label, unprivileged_protected_attribute,
                         privileged_protected_attribute,
                         target_column, protected_attribute) {
