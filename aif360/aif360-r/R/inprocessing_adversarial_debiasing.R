@@ -31,10 +31,35 @@
 #' @export
 #'
 adversarial_debiasing <- function(unprivileged_groups, privileged_groups, scope_name='current', sess=tf$compat$v1$Session(),
-                                  seed=NULL, adversary_loss_weight=0.1, num_epochs=50, batch_size=128,
-                                  classifier_num_hidden_units=200, debias=TRUE) {
+                                  seed=NULL, adversary_loss_weight=0.1, num_epochs=50L, batch_size=128L,
+                                  classifier_num_hidden_units=200L, debias=TRUE) {
+  
+  
+  
   unprivileged_dict <- dict_fn(unprivileged_groups)
   privileged_dict <- dict_fn(privileged_groups)
-  ad <- in_algo$AdversarialDebiasing(unprivileged_dict, privileged_dict, scope_name=scope_name, sess=sess)
-  return (ad)
+  
+  # run check for variables that must be integers
+  int_vars <- list(num_epochs = num_epochs, batch_size = batch_size, classifier_num_hidden_units = classifier_num_hidden_units)
+  
+  if (!is.null(seed)) int_vars <- append(int_vars, c(seed = seed))
+  
+  is_int <- sapply(int_vars, is.integer)
+  int_varnames <- names(int_vars)
+  
+  if (any(!is_int)) stop(paste(int_varnames[!is_int], collapse = ", "), " must be integer(s)")
+  
+  
+  
+  ad <- in_algo$AdversarialDebiasing(unprivileged_dict, 
+                                     privileged_dict, 
+                                     scope_name = scope_name, 
+                                     sess = sess,
+                                     seed = seed, 
+                                     adversary_loss_weight = adversary_loss_weight,
+                                     num_epochs = num_epochs,
+                                     batch_size = batch_size,
+                                     classifier_num_hidden_units = classifier_num_hidden_units, 
+                                     debias = debias)
+  return(ad)
 }
