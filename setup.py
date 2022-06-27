@@ -16,11 +16,12 @@ extras = {
     'OptimPreproc': ['cvxpy>=1.0'],
     'AdversarialDebiasing': ['tensorflow>=1.13.1'],
     'DisparateImpactRemover': ['BlackBoxAuditing'],
+    'LFR': ['torch'],
     'LIME': ['lime'],
     'ART': ['adversarial-robustness-toolbox>=1.0.0'],
     'Reductions': ['fairlearn==0.4.6'],
     'FairAdapt':['rpy2'],
-    'notebooks': ['jupyter', 'tqdm', 'igraph[plotting]', 'lightgbm'],
+    'notebooks': ['jupyter', 'tqdm', 'igraph[plotting]', 'lightgbm', 'seaborn', 'ipympl'],
 }
 extras['tests'] = reduce(lambda l1, l2: l1+l2, extras.values(), ['pytest>=3.5'])
 extras['docs'] = ['sphinx<2', 'sphinx_rtd_theme']
