@@ -1,17 +1,13 @@
 import numpy as np
-# np.set_printoptions(linewidth=200)
 import pandas as pd
-# pd.set_option('display.width', 200)
-# pd.set_option('max_columns', 10)
 import pytest
 from sklearn.datasets import make_classification
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import accuracy_score
 from sklearn.model_selection import GridSearchCV
 from sklearn.pipeline import make_pipeline
 
 from aif360.algorithms.preprocessing import LFR
-from aif360.sklearn.preprocessing import LearnedFairRepresentation
+from aif360.sklearn.preprocessing import LearnedFairRepresentations
 from aif360.sklearn.metrics import make_scorer, statistical_parity_difference
 
 
@@ -29,12 +25,12 @@ def old_lfr2(old_german):
 
 @pytest.fixture
 def new_lfr(new_german):
-    lfr = LearnedFairRepresentation('age', random_state=123)
+    lfr = LearnedFairRepresentations('age', random_state=123)
     return lfr.fit(**new_german._asdict())
 
 @pytest.fixture
 def new_lfr2(new_german):
-    lfr = LearnedFairRepresentation('age', random_state=123)
+    lfr = LearnedFairRepresentations('age', random_state=123)
     X, y = new_german
     Xt = lfr.fit_transform(X, y)
     yt = lfr.predict(X)
@@ -79,7 +75,7 @@ def test_lfr_multiclass():
     X, y = make_classification(n_informative=3, n_classes=4)
     prot_attr = np.random.randint(2, size=X.shape[:1])
     X = pd.DataFrame(X, index=pd.Series(prot_attr, name='prot_attr'))
-    lfr = LearnedFairRepresentation()
+    lfr = LearnedFairRepresentations()
     lfr.fit(X, y)
     assert lfr.coef_.shape[1] == 4
 
@@ -88,7 +84,7 @@ def test_lfr_grid(new_german):
     results in improved statistical parity difference).
     """
     X, y = new_german
-    lfr = LearnedFairRepresentation('age', random_state=123)
+    lfr = LearnedFairRepresentations('age', reconstruct_weight=0, max_iter=1000)
     params = {'fairness_weight': [50, 0]}
     min_disc = make_scorer(statistical_parity_difference, prot_attr='age')
     clf = GridSearchCV(lfr, params, scoring=min_disc, cv=2)
@@ -99,7 +95,7 @@ def test_lfr_grid(new_german):
 def test_lfr_pipe(new_german):
     """Test that the new LFR works as a pre-processing step in a pipeline."""
     X, y = new_german
-    lfr = LearnedFairRepresentation('age', random_state=123)
+    lfr = LearnedFairRepresentations('age', random_state=123)
     lr = LogisticRegression(solver='lbfgs', random_state=123)
     pipe = make_pipeline(lfr, lr)
 
