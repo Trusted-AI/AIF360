@@ -1,7 +1,6 @@
 import numpy as np
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.model_selection import GridSearchCV
-from sklearn.utils import check_random_state
 from sklearn.utils.validation import check_is_fitted
 
 from aif360.sklearn.metrics import statistical_parity_difference
@@ -53,15 +52,20 @@ class RejectOptionClassifier(BaseEstimator, ClassifierMixin):
         >>> from sklearn.model_selection import GridSearchCV
         >>> roc = RejectOptionClassifier()
         >>> param = [{'threshold': [t],
-                      'margin': np.linspace(0, min(t, 1-t), 50, endpoint=False)}
-        ...          for t in np.arange(0.01, 1., 0.01)]
+                      'margin': np.arange(0.05, min(t, 1-t)+0.025, 0.05)}
+        ...          for t in np.arange(0.05, 1., 0.05)]
         >>> stat_par = make_scorer(statistical_parity_difference)
         >>> scoring = {'bal_acc': 'balanced_accuracy', 'stat_par': stat_par}
         >>> def refit(cv_res):
         ...     return np.ma.array(cv_res['mean_test_bal_acc'],
-        ...             mask=cv_res['mean_test_stat_par'] > 0.05).argmax()
+        ...             mask=cv_res['mean_test_stat_par'] < -0.1).argmax()
         ...
         >>> grid = GridSearchCV(roc, param, scoring=scoring, refit=refit)
+
+        Or, alternatively, this can be done in one step with
+        RejectOptionClassifierCV:
+
+        >>> grid = RejectOptionClassifierCV(scoring='statistical_parity')
 
     """
     def __init__(self, prot_attr=None, threshold=0.5, margin=0.1):
@@ -73,14 +77,21 @@ class RejectOptionClassifier(BaseEstimator, ClassifierMixin):
                 considered. Default is ``None`` meaning all protected attributes
                 from the dataset are used. Note: This algorithm requires there
                 be exactly 2 groups (privileged and unprivileged).
-            threshold (): TODO
-            margin (): TODO
+            threshold (scalar): Classification threshold. Probability estimates
+                greater than this value are considered positive. Must be between
+                0 and 1.
+            margin (scalar): Half width of the critical region. Estimates within
+                the critical region are "rejected" and assigned according to
+                their group. Must be between 0 and min(threshold, 1-threshold).
             metric ('statistical_parity', 'average_odds', 'equal_opportunity',
                 or callable):
         """
         self.prot_attr = prot_attr
         self.threshold = threshold
         self.margin = margin
+
+    def _more_tags(self):
+        return {'requires_proba': True}
 
     def fit(self, X, y, labels=None, pos_label=1, priv_group=1,
             sample_weight=None):
@@ -177,16 +188,14 @@ class RejectOptionClassifierCV(GridSearchCV):
         >>> from aif360.sklearn.postprocessing import RejectOptionClassifierCV
         >>> X, y = fetch_german(numeric_only=True)
         >>> lr = LogisticRegression(solver='lbfgs').fit(X, y)
-        >>> roc = RejectOptionClassifierCV('disparate_impact', prot_attr='sex')
+        >>> roc = RejectOptionClassifierCV('sex', scoring='disparate_impact')
         >>> roc.fit(pd.DataFrame(lr.predict_proba(X), index=X.index), y)
-        >>> res = pd.DataFrame(roc.cv_results_)
-        >>> ax = res.plot.scatter('mean_test_disparate_impact',
-        ...                       'mean_test_bal_acc')
-        >>> res.loc[[roc.best_index_]].plot.scatter(
-        ... 'mean_test_disparate_impact', 'mean_test_bal_acc', color='r', ax=ax)
-        >>> plt.show()
 
-        We can also
+        We can also achieve this more simply using a PostProcessingMeta
+        estimator:
+
+        >>> from aif360.sklearn.postprocessing import PostProcessingMeta
+        >>> pp = PostProcessingMeta(lr, roc).fit(X, y)
     """
     def __init__(self, prot_attr=None, *, scoring, step=0.05, refit=True, **kwargs):
         """
@@ -198,9 +207,22 @@ class RejectOptionClassifierCV(GridSearchCV):
                 from the dataset are used. Note: This algorithm requires there
                 be exactly 2 groups (privileged and unprivileged).
             scoring ('statistical_parity', 'average_odds', 'equal_opportunity',
-                'disparate_impact', or callable):
-            step (float): Step size for grid search.
-            refit (bool or callable, optional): A TODO
+                'disparate_impact', or callable/dict): Fairness scorer to use to
+                evaluate the predictions. If type is a `str`, constructs the
+                corresponding scorer for that metric in addition to the default
+                balanced accuracy. If type is callable (i.e., a scorer object),
+                that will be used along with balanced accuracy. Finally, if an
+                explicit dictionary is passed, this will be used as is.
+            step (float): Step size for grid search. Will search every valid
+                combination of threshold and margin that are multiples of this
+                step size. See `param_grid` after fitting for the exact search
+                space.
+            refit (bool or callable, optional): Refit the estimator using the
+                best parameters found. If `True` and not using a custom scoring
+                function, this chooses the highest balanced accuracy given
+                fairness score > -0.1 (or > 0.8 for disparate impact only).
+                Alternatively, a custom refitting function may be passed. See
+                :class:`~sklearn.model_selection.GridSearchCV` for details.
             **kwargs: See :class:`~sklearn.model_selection.GridSearchCV` for
                 additional kwargs.
         """
@@ -211,35 +233,43 @@ class RejectOptionClassifierCV(GridSearchCV):
         super().__init__(RejectOptionClassifier(), {}, scoring=scoring,
                          refit=refit, **kwargs)
 
+    def _more_tags(self):
+        return {'requires_proba': True}
+
     def fit(self, X, y, **fit_params):
-        self.param_grid = [
-                {'prot_attr': [self.prot_attr], 'threshold': [t],
-                 'margin': np.arange(self.step, min(t, 1-t), self.step)}
-                for t in np.arange(self.step, 1, self.step)]
+        self.param_grid = []
+        thresholds = np.arange(self.step, 1, self.step)
+        # arange has numerical instabilities. this way guarantees margin <= threshold
+        for i, t in enumerate(thresholds):
+            n = min(i+1, len(thresholds)-i)
+            margins = np.linspace(min(self.step, min(t, 1-t)), min(t, 1-t), n)
+            self.param_grid.append({'prot_attr': [self.prot_attr],
+                                    'threshold': [t], 'margin': margins})
 
-        self.scorer_name_ = self.scoring
-        if self.scoring == 'statistical_parity':
-            self.scorer_ = make_scorer(statistical_parity_difference,
-                    prot_attr=self.prot_attr)
-        elif self.scoring == 'average_odds':
-            self.scorer_ = make_scorer(average_odds_error,
-                    prot_attr=self.prot_attr)
-        elif self.scoring == 'equal_opportunity':
-            self.scorer_ = make_scorer(equal_opportunity_difference,
-                    prot_attr=self.prot_attr)
-        elif self.scoring == 'disparate_impact':
-            self.scorer_ = make_scorer(disparate_impact_ratio, is_ratio=True,
-                    prot_attr=self.prot_attr)
-        elif not callable(self.scoring):
-            raise ValueError("scorer must be one of: 'statistical_parity', "
-                "'average_odds', 'equal_opportunity', 'disparate_impact' or a "
-                "callable function. Got:\n{}".format(self.scoring))
-        else:
-            self.scorer_name_ = 'fairness_metric'
-            self.scorer_ = self.scorer_
+        if not isinstance(self.scoring, dict):
+            self.scorer_name_ = self.scoring
+            if self.scoring == 'statistical_parity':
+                self.scorer_ = make_scorer(statistical_parity_difference,
+                        prot_attr=self.prot_attr)
+            elif self.scoring == 'average_odds':
+                self.scorer_ = make_scorer(average_odds_error,
+                        prot_attr=self.prot_attr)
+            elif self.scoring == 'equal_opportunity':
+                self.scorer_ = make_scorer(equal_opportunity_difference,
+                        prot_attr=self.prot_attr)
+            elif self.scoring == 'disparate_impact':
+                self.scorer_ = make_scorer(disparate_impact_ratio, is_ratio=True,
+                        prot_attr=self.prot_attr)
+            elif not callable(self.scoring):
+                raise ValueError("scorer must be one of: 'statistical_parity', "
+                    "'average_odds', 'equal_opportunity', 'disparate_impact' "
+                    "or a callable function. Got:\n{}".format(self.scoring))
+            else:
+                self.scorer_name_ = 'fairness_metric'
+                self.scorer_ = self.scoring
 
-        self.scoring = {'bal_acc': 'balanced_accuracy',
-                        self.scorer_name_: self.scorer_}
+            self.scoring = {'bal_acc': 'balanced_accuracy',
+                            self.scorer_name_: self.scorer_}
 
         if self.refit is True and self.scorer_name_ != 'fairness_metric':
             if self.scorer_name_ == 'disparate_impact':

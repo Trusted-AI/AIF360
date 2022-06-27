@@ -67,6 +67,9 @@ class CalibratedEqualizedOdds(BaseEstimator, ClassifierMixin):
         self.cost_constraint = cost_constraint
         self.random_state = random_state
 
+    def _more_tags(self):
+        return {'requires_proba': True}
+
     def _weighted_cost(self, y_true, probas_pred, pos_label=1,
                        sample_weight=None):
         """Evaluates the cost function specified by ``self.cost_constraint``."""
