@@ -3,7 +3,7 @@ context("Comprehensive Test for Classification Metric")
 
 test_that("running dataset test", {
 
-  act <- aif360::aif_dataset(
+  act <- aif360::binary_label_dataset(
     data_path = system.file("extdata", "actual_data.csv", package="aif360"),
     favor_label=1,
     unfavor_label=0,
@@ -12,7 +12,7 @@ test_that("running dataset test", {
     target_column="income",
     protected_attribute="sex")
 
-  pred <- aif360::aif_dataset(
+  pred <- aif360::binary_label_dataset(
     data_path = system.file("extdata", "predicted_data.csv", package="aif360"),
     favor_label=1,
     unfavor_label=0,

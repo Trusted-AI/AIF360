@@ -3,7 +3,7 @@ context("Comprehensive Test for Binary Dataset Creation")
 
 test_that("running dataset test", {
 
-  dd <- aif360::aif_dataset(
+  dd <- aif360::binary_label_dataset(
     data_path = system.file("extdata", "data.csv", package="aif360"),
     favor_label=0,
     unfavor_label=1,
