@@ -19,5 +19,13 @@ compas_dataset <- function(){
 #' German Dataset
 #' @export
 german_dataset <- function(){
-    return (datasets$GermanDataset())
+  return (datasets$GermanDataset())
+}
+
+#' Law School GPA Dataset
+#'@seealso
+#' \href{https://aif360.readthedocs.io/en/latest/modules/generated/aif360.datasets.LawSchoolGPADataset.html#aif360.datasets.LawSchoolGPADataset}{More about the Law School GPA dataset.}
+#' @export
+law_school_gpa_dataset <- function(){
+  return (datasets$LawSchoolGPADataset())
 }
