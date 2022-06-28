@@ -73,14 +73,14 @@ class CalibratedEqualizedOdds(BaseEstimator, ClassifierMixin):
     def _weighted_cost(self, y_true, probas_pred, pos_label=1,
                        sample_weight=None):
         """Evaluates the cost function specified by ``self.cost_constraint``."""
-        fpr = generalized_fpr(y_true, probas_pred, pos_label, sample_weight)
-        fnr = generalized_fnr(y_true, probas_pred, pos_label, sample_weight)
-        br = base_rate(y_true, probas_pred, pos_label, sample_weight)
         if self.cost_constraint == 'fpr':
-            return fpr
+            return generalized_fpr(y_true, probas_pred, pos_label, sample_weight)
         elif self.cost_constraint == 'fnr':
-            return fnr
+            return generalized_fnr(y_true, probas_pred, pos_label, sample_weight)
         elif self.cost_constraint == 'weighted':
+            fpr = generalized_fpr(y_true, probas_pred, pos_label, sample_weight)
+            fnr = generalized_fnr(y_true, probas_pred, pos_label, sample_weight)
+            br = base_rate(y_true, probas_pred, pos_label, sample_weight)
             return fpr * (1 - br) + fnr * br
         else:
             raise ValueError("`cost_constraint` must be one of: 'fpr', 'fnr', "
@@ -105,7 +105,7 @@ class CalibratedEqualizedOdds(BaseEstimator, ClassifierMixin):
         X, y, sample_weight = check_inputs(X, y, sample_weight)
         groups, self.prot_attr_ = check_groups(y, self.prot_attr,
                                                ensure_binary=True)
-        self.classes_ = labels if labels is not None else np.unique(y)
+        self.classes_ = np.array(labels) if labels is not None else np.unique(y)
         self.groups_ = np.unique(groups)
         self.pos_label_ = pos_label
 
@@ -131,6 +131,7 @@ class CalibratedEqualizedOdds(BaseEstimator, ClassifierMixin):
         self.base_rates_ = [base_rate(*_args(i)) for i in range(2)]
 
         costs = [self._weighted_cost(*_args(i)) for i in range(2)]
+        # TODO _prf_divide here
         self.mix_rates_ = [(costs[1] - costs[0])
                          / (self._weighted_cost(*_args(0, True)) - costs[0]),
                            (costs[0] - costs[1])

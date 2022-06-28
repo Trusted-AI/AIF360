@@ -1,5 +1,4 @@
 from itertools import product
-from random import sample
 
 import numpy as np
 import pandas as pd
@@ -28,27 +27,26 @@ def old_ROC(old_adult, log_reg_probs):
     old_adult_pred.scores = log_reg_probs[:, [1]]
 
     ROC = RejectOptionClassification(unprivileged_groups=[{'sex': 0}],
-            privileged_groups=[{'sex': 1}], low_class_thresh=0.01,
-            high_class_thresh=0.99, num_class_thresh=99, num_ROC_margin=50,
+            privileged_groups=[{'sex': 1}], low_class_thresh=0.1,
+            high_class_thresh=0.9, num_class_thresh=9, num_ROC_margin=9,
             metric_name='Statistical parity difference', metric_ub=0.1,
             metric_lb=-0.1)
     return ROC.fit(old_adult, old_adult_pred)
 
 @pytest.fixture(scope='module')
 def new_ROC(new_adult, log_reg_probs):
-    _, y, sample_weight = new_adult
+    _, y, _ = new_adult
     y_pred = pd.DataFrame(log_reg_probs, index=y.index)
 
-    ROC = RejectOptionClassifierCV('sex', scoring='statistical_parity', step=0.01, n_jobs=-1)
-    return ROC.fit(y_pred, y, sample_weight=sample_weight)
+    ROC = RejectOptionClassifierCV('sex', scoring='statistical_parity',
+                                   step=0.1, n_jobs=-1)
+    return ROC.fit(y_pred, y)
 
 def test_rej_opt_clf_fit(new_ROC, old_ROC):
     """Test RejectOptionClassifierCV fit matches old."""
-    assert np.isclose(new_ROC.best_estimator_.threshold, old_ROC.classification_threshold, atol=0.01)
-    assert np.isclose(new_ROC.best_estimator_.margin, old_ROC.ROC_margin, atol=0.01)
-
-    # grid = new_ROC.param_grid
-    # assert all(p['margin'][-1] <= min(p['threshold'][0], 1-p['threshold'][0]) for p in grid)
+    assert np.isclose(new_ROC.best_estimator_.threshold,
+                      old_ROC.classification_threshold, atol=0.05)
+    assert np.isclose(new_ROC.best_estimator_.margin, old_ROC.ROC_margin, atol=0.05)
 
 def test_rej_opt_clf_predict(new_adult, old_adult, log_reg_probs, old_ROC):
     """Test RejectOptionClassifier predict matches old."""
@@ -60,9 +58,29 @@ def test_rej_opt_clf_predict(new_adult, old_adult, log_reg_probs, old_ROC):
     margin = old_ROC.ROC_margin
     ROC = RejectOptionClassifier('sex', threshold=threshold, margin=margin)
     y_pred = pd.DataFrame(log_reg_probs, index=y.index)
-    y_postpred = ROC.fit(y_pred, y).predict(y_pred)
+    y_postpred = ROC.fit_predict(y_pred, y)
 
     assert np.allclose(y_postpred, old_ROC.predict(old_adult_pred).labels.ravel())
+
+@pytest.mark.filterwarnings('error', category=RuntimeWarning)
+def test_rej_opt_clf_errors():
+    y_proba = np.array([[0.5, 0.5], [0.3, 0.7], [0.55, 0.45]])
+    # y_true = pd.Series([0, 0, 0], index=[1, 1, 0]).rename_axis(index='prot')
+    y_true = pd.DataFrame([[0, 1], [0, 1], [0, 0]], columns=['feat', 'prot'])
+    y_true = y_true.set_index('prot', append=True).squeeze()
+    roc = RejectOptionClassifier('prot')
+    with pytest.raises(ValueError):  # binary classification
+        roc.fit(y_proba, y_true)
+    with pytest.raises(TypeError):  # missing prot attr
+        roc.fit(y_proba, y_true, labels=[0, 1]).predict(y_proba)
+    y_proba = pd.DataFrame(y_proba, index=y_true.index)
+    y_postpred = roc.fit_predict(y_proba, labels=[0, 1])
+    assert (y_postpred == [0, 1, 1]).all()
+
+    cv = RejectOptionClassifierCV('prot', scoring='statistical_parity',
+                                  step=0.1, cv=3)
+    with pytest.raises(RuntimeWarning):  # sample_weight ignored warning
+        cv.fit(y_proba, y_true, sample_weight=[10, 1, 1])
 
 def test_rej_opt_clf_postproc_meta(new_adult, new_ROC):
     """Test PostProcessingMeta pipeline with RejectOptionClassifierCV."""
@@ -71,9 +89,9 @@ def test_rej_opt_clf_postproc_meta(new_adult, new_ROC):
     lr.fit(X, y, sample_weight=sample_weight)
     pp = PostProcessingMeta(lr,
             RejectOptionClassifierCV('sex', scoring='statistical_parity',
-                                     step=0.01, n_jobs=-1),
+                                     step=0.1, n_jobs=-1),
             prefit=True, random_state=1234)
-    pp.fit(X, y, sample_weight=sample_weight)
+    pp.fit(X, y)
     assert pp.postprocessor_.best_params_ == new_ROC.best_params_
     assert (pp.postprocessor_.cv_results_['mean_test_bal_acc']
          == new_ROC.cv_results_['mean_test_bal_acc']).all()
@@ -84,7 +102,7 @@ def test_rej_opt_clf_postproc_meta(new_adult, new_ROC):
             sample_weight, train_size=0.75, random_state=1234)
     lr.fit(X_train, y_train, sample_weight=sw_train)
     y_pred = pd.DataFrame(lr.predict_proba(X_test), index=y_test.index)
-    new_ROC.fit(y_pred, y_test, sample_weight=sw_test)
+    new_ROC.fit(y_pred, y_test)
     assert (lr.coef_ == pp.estimator_.coef_).all()
     assert pp.postprocessor_.best_params_ == new_ROC.best_params_
     assert (pp.postprocessor_.cv_results_['mean_test_bal_acc']
@@ -99,7 +117,8 @@ def test_rej_opt_clf_scoring(prot_attr, scoring, new_adult):
     """Test all scoring options work."""
     X, y, sample_weight = new_adult
     pp = PostProcessingMeta(LogisticRegression(solver='lbfgs', max_iter=500),
-            RejectOptionClassifierCV(prot_attr, scoring=scoring, refit=scoring, n_jobs=-1))
+            RejectOptionClassifierCV(prot_attr, scoring=scoring, step=0.1,
+                                     refit=scoring, n_jobs=-1))
     pp.fit(X, y, sample_weight=sample_weight)
 
     if scoring == 'disparate_impact':
@@ -111,7 +130,8 @@ def test_rej_opt_clf_custom_scoring(new_adult):
     X, y, sample_weight = new_adult
     scoring = make_scorer(generalized_entropy_error, greater_is_better=False)
     pp = PostProcessingMeta(LogisticRegression(solver='lbfgs', max_iter=500),
-            RejectOptionClassifierCV('sex', scoring=scoring, refit=False, n_jobs=-1))
+            RejectOptionClassifierCV('sex', scoring=scoring, step=0.1,
+                                     refit=False, n_jobs=-1))
     pp.fit(X, y, sample_weight=sample_weight)
     res = pd.DataFrame(pp.postprocessor_.cv_results_)
     assert not res.isna().any(axis=None)

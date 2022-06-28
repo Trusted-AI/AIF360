@@ -123,7 +123,7 @@ def ratio(func, y, *args, prot_attr=None, priv_group=1, sample_weight=None,
     else:
         modifier = f'value for {func.__name__} on privileged'
     return _prf_divide(np.array([numerator]), np.array([denominator]), 'ratio',
-                       modifier, None, ('ratio',), zero_division)
+                       modifier, None, ('ratio',), zero_division).item()
 
 
 # =========================== SCORER FACTORY =================================
@@ -175,7 +175,7 @@ def specificity_score(y_true, y_pred, pos_label=1, sample_weight=None,
     tn, fp = MCM[:, 0, 0], MCM[:, 0, 1]
     negs = tn + fp
     return _prf_divide(tn, negs, 'specificity', 'negative', None,
-                       ('specificity',), zero_division)
+                       ('specificity',), zero_division).item()
 
 def base_rate(y_true, y_pred=None, pos_label=1, sample_weight=None):
     r"""Compute the base rate, :math:`Pr(Y = \text{pos_label}) = \frac{P}{P+N}`.
@@ -228,7 +228,7 @@ def generalized_fpr(y_true, probas_pred, pos_label=1, sample_weight=None,
         float: Generalized false positive rate.
     """
     _check_zero_division(zero_division)
-    probas_pred = column_or_1d(probas_pred)
+    y_true, probas_pred = column_or_1d(y_true), column_or_1d(probas_pred)
 
     idx = (y_true != pos_label)
     gfps = probas_pred[idx]
@@ -239,7 +239,7 @@ def generalized_fpr(y_true, probas_pred, pos_label=1, sample_weight=None,
         gfp = np.array([np.dot(gfps, sample_weight[idx])])
         neg = np.array([sample_weight[idx].sum()])
     return _prf_divide(gfp, neg, 'generalized FPR', 'negative', None,
-                       ('generalized FPR',), zero_division)
+                       ('generalized FPR',), zero_division).item()
 
 def generalized_fnr(y_true, probas_pred, pos_label=1, sample_weight=None,
                     zero_division='warn'):
@@ -262,7 +262,7 @@ def generalized_fnr(y_true, probas_pred, pos_label=1, sample_weight=None,
         float: Generalized false negative rate.
     """
     _check_zero_division(zero_division)
-    probas_pred = column_or_1d(probas_pred)
+    y_true, probas_pred = column_or_1d(y_true), column_or_1d(probas_pred)
 
     idx = (y_true == pos_label)
     gfns = 1 - probas_pred[idx]
@@ -273,7 +273,7 @@ def generalized_fnr(y_true, probas_pred, pos_label=1, sample_weight=None,
         gfn = np.array([np.dot(gfns, sample_weight[idx])])
         pos = np.array([sample_weight[idx].sum()])
     return _prf_divide(gfn, pos, 'generalized FNR', 'positive', None,
-                       ('generalized FNR',), zero_division)
+                       ('generalized FNR',), zero_division).item()
 
 
 # ============================ GROUP FAIRNESS ==================================
