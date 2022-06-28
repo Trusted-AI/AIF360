@@ -11,35 +11,36 @@ adversarial_debiasing(
   sess = tf$compat$v1$Session(),
   seed = NULL,
   adversary_loss_weight = 0.1,
-  num_epochs = 50,
-  batch_size = 128,
-  classifier_num_hidden_units = 200,
+  num_epochs = 50L,
+  batch_size = 128L,
+  classifier_num_hidden_units = 200L,
   debias = TRUE
 )
 }
 \arguments{
-\item{unprivileged_groups}{a list with two values: the column of the protected class and the value indicating representation for unprivileged group}
+\item{unprivileged_groups}{A list with two values: the column of the protected class and the value indicating representation for unprivileged group.}
 
-\item{privileged_groups}{a list with two values: the column of the protected class and the value indicating representation for privileged group}
+\item{privileged_groups}{A list with two values: the column of the protected class and the value indicating representation for privileged group.}
 
-\item{scope_name}{scope name for the tensorflow variables}
+\item{scope_name}{Scope name for the tensorflow variables.}
 
 \item{sess}{tensorflow session}
 
-\item{seed}{seed to make `predict` repeatable.}
+\item{seed}{Seed to make \code{predict} repeatable. If not, \code{NULL}, must be an integer.}
 
-\item{adversary_loss_weight}{hyperparameter that chooses the strength of the adversarial loss.}
+\item{adversary_loss_weight}{Hyperparameter that chooses the strength of the adversarial loss.}
 
-\item{num_epochs}{number of training epochs.}
+\item{num_epochs}{Number of training epochs. Must be an integer.}
 
-\item{batch_size}{batch size.}
+\item{batch_size}{Batch size. Must be an integer.}
 
-\item{classifier_num_hidden_units}{number of hidden units in the classifier model.}
+\item{classifier_num_hidden_units}{Number of hidden units in the classifier model. Must be an integer.}
 
-\item{debias}{learn a classifier with or without debiasing.}
+\item{debias}{Learn a classifier with or without debiasing.}
 }
 \description{
-Adversarial debiasing is an in-processing technique that learns a classifier to maximize prediction accuracy and simultaneously reduce an adversary's ability to determine the protected attribute from the predictions
+Adversarial debiasing is an in-processing technique that learns a classifier to maximize prediction accuracy 
+and simultaneously reduce an adversary's ability to determine the protected attribute from the predictions
 }
 \examples{
 \dontrun{
@@ -48,13 +49,13 @@ ad <- adult_dataset()
 p <- list("race", 1)
 u <- list("race", 0)
 
-sess = tf$compat$v1$Session()
+sess <- tf$compat$v1$Session()
 
-plain_model = adversarial_debiasing(privileged_groups = p,
-                                    unprivileged_groups = u,
-                                    scope_name='debiased_classifier',
-                                    debias=TRUE,
-                                    sess=sess)
+plain_model <- adversarial_debiasing(privileged_groups = p,
+                                     unprivileged_groups = u,
+                                     scope_name = "debiased_classifier",
+                                     debias = TRUE,
+                                     sess = sess)
 
 plain_model$fit(ad)
 ad_nodebiasing <- plain_model$predict(ad)
