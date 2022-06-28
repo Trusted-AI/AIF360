@@ -1,3 +1,5 @@
+import warnings
+
 import numpy as np
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.model_selection import GridSearchCV
@@ -8,7 +10,7 @@ from aif360.sklearn.metrics import average_odds_error
 from aif360.sklearn.metrics import equal_opportunity_difference
 from aif360.sklearn.metrics import disparate_impact_ratio
 from aif360.sklearn.metrics import make_scorer
-from aif360.sklearn.utils import check_inputs, check_groups
+from aif360.sklearn.utils import check_groups
 
 
 class RejectOptionClassifier(BaseEstimator, ClassifierMixin):
@@ -100,7 +102,8 @@ class RejectOptionClassifier(BaseEstimator, ClassifierMixin):
 
         Args:
             X (array-like): Ignored.
-            y (pandas.Series): Ground-truth (correct) target values.
+            y (array-like): Ground-truth (correct) target values. Note: one of X
+                or y must contain protected attribute information.
             labels (list, optional): The ordered set of labels values. Must
                 match the order of columns in X if provided. By default,
                 all labels in y are used in sorted order.
@@ -111,20 +114,27 @@ class RejectOptionClassifier(BaseEstimator, ClassifierMixin):
         Returns:
             self
         """
-        X, y, _ = check_inputs(X, y, sample_weight)
-        groups, self.prot_attr_ = check_groups(y, self.prot_attr,
-                                               ensure_binary=True)
-        self.classes_ = labels if labels is not None else np.unique(y)
+        try:
+            groups, self.prot_attr_ = check_groups(X, self.prot_attr,
+                                                   ensure_binary=True)
+        except TypeError:
+            groups, self.prot_attr_ = check_groups(y, self.prot_attr,
+                                                   ensure_binary=True)
+        self.classes_ = np.array(labels) if labels is not None else np.unique(y)
         self.groups_ = np.unique(groups)
         self.pos_label_ = pos_label
         self.priv_group_ = priv_group
 
-        if len(self.classes_) > 2:
+        if len(self.classes_) != 2:
             raise ValueError('Only binary classification is supported.')
 
         if pos_label not in self.classes_:
             raise ValueError('pos_label={} is not in the set of labels. The '
                     'valid values are:\n{}'.format(pos_label, self.classes_))
+
+        if priv_group not in self.groups_:
+            raise ValueError('priv_group={} is not in the set of groups. The '
+                    'valid values are:\n{}'.format(priv_group, self.groups_))
 
         if not 0.0 <= self.threshold <= 1.0:
             raise ValueError('threshold must be between 0.0 and 1.0, '
@@ -151,13 +161,9 @@ class RejectOptionClassifier(BaseEstimator, ClassifierMixin):
         check_is_fitted(self, 'pos_label_')
 
         groups, _ = check_groups(X, self.prot_attr_)
-        if not set(np.unique(groups)) <= set(self.groups_):
-            raise ValueError('The protected groups from X:\n{}\ndo not '
-                             'match those from the training set:\n{}'.format(
-                                     np.unique(groups), self.groups_))
 
         pos_idx = np.nonzero(self.classes_ == self.pos_label_)[0][0]
-        X = X.iloc[:, pos_idx]
+        X = X.iloc[:, pos_idx].to_numpy()
 
         yt = (X > self.threshold).astype(int)
         y_pred = self.classes_[yt if pos_idx == 1 else 1 - yt]
@@ -172,10 +178,36 @@ class RejectOptionClassifier(BaseEstimator, ClassifierMixin):
 
         return y_pred
 
+    def fit_predict(self, X, y=None, **fit_params):
+        """Predict class labels for the given scores.
+
+        In general, it is not necessary to fit and predict separately so this
+        method may be used instead. For subsequent predicts, it may be easier
+        to use the `predict` method, though.
+
+        Args:
+            X (pandas.DataFrame): Probability estimates of the targets as
+                returned by a ``predict_proba()`` call or equivalent. Note: must
+                include protected attributes in the index.
+            y (array-like, optional): Ground-truth (correct) target values.
+                Note: if not provided, `labels` must be provided in
+                `**fit_params`. See `fit` for details.
+            **fit_params: See `fit` for details.
+
+        Returns:
+            numpy.ndarray: Predicted class label per sample.
+        """
+        return self.fit(X, y, **fit_params).predict(X)
+
 
 class RejectOptionClassifierCV(GridSearchCV):
     """Wrapper for running a grid search over threshold, margin combinations for
     a RejectOptionClassifier.
+
+    Note:
+        :class:`~sklearn.model_selection.GridSearchCV` does not currently
+        support sample weights in scoring. This will work but throw a warning if
+        `sample_weight` is provided.
 
     See also:
         :class:`RejectOptionClassifier`
@@ -237,6 +269,18 @@ class RejectOptionClassifierCV(GridSearchCV):
         return {'requires_proba': True}
 
     def fit(self, X, y, **fit_params):
+        """Run fit with all sets of parameters.
+
+        Args:
+            X (pandas.DataFrame): Probability estimates of the targets as
+                returned by a ``predict_proba()`` call or equivalent. Note: must
+                include protected attributes in the index.
+            y (pandas.Series): Ground-truth (correct) target values.
+            **fit_params: Parameters passed to the ``fit()`` method.
+
+        Returns:
+            self
+        """
         self.param_grid = []
         thresholds = np.arange(self.step, 1, self.step)
         # arange has numerical instabilities. this way guarantees margin <= threshold
@@ -246,7 +290,12 @@ class RejectOptionClassifierCV(GridSearchCV):
             self.param_grid.append({'prot_attr': [self.prot_attr],
                                     'threshold': [t], 'margin': margins})
 
+        if fit_params.get('sample_weight', None) is not None:
+            warnings.warn('sample_weight will be ignored when scoring.',
+                          RuntimeWarning)
+
         if not isinstance(self.scoring, dict):
+            # TODO: sample_weight scoring workaround
             self.scorer_name_ = self.scoring
             if self.scoring == 'statistical_parity':
                 self.scorer_ = make_scorer(statistical_parity_difference,
