@@ -12,7 +12,7 @@
 #' load_aif360_lib()
 #' data <- data.frame("feat" = c(0,0,1,1,1,1,0,1,1,0), "label" = c(1,0,0,1,0,0,1,0,1,1))
 #' # Create aif compatible dataset
-#' dd <- aif360::aif_dataset(data_path = data,
+#' dd <- aif360::binary_label_dataset(data_path = data,
 #'                            favor_label=0, unfavor_label=1,
 #'                             unprivileged_protected_attribute=0,
 #'                             privileged_protected_attribute=1,

@@ -4,7 +4,7 @@
 \alias{disparate_impact_remover}
 \title{Disparate Impact Remover}
 \usage{
-disparate_impact_remover(repair_level, sensitive_attribute)
+disparate_impact_remover(repair_level = 1.0, sensitive_attribute = '')
 }
 \arguments{
 \item{repair_level}{Repair amount. 0.0 is no repair while 1.0 is full repair.}

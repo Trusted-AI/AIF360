@@ -2,8 +2,8 @@
 
 export(adult_dataset)
 export(adversarial_debiasing)
-export(aif_dataset)
 export(bank_dataset)
+export(binary_label_dataset)
 export(binary_label_dataset_metric)
 export(classification_metric)
 export(compas_dataset)

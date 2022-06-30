@@ -4,10 +4,10 @@
 \alias{binary_label_dataset_metric}
 \title{Binary Label Dataset Metric}
 \usage{
-binary_label_dataset_metric(data, privileged_groups, unprivileged_groups)
+binary_label_dataset_metric(dataset, privileged_groups, unprivileged_groups)
 }
 \arguments{
-\item{data}{A aif360 compatible dataset.}
+\item{dataset}{A aif360 compatible dataset.}
 
 \item{privileged_groups}{Privileged groups. List containing privileged protected attribute name and value of the privileged protected attribute.}
 
@@ -27,7 +27,7 @@ privileged_groups <- list("race", 1)
 unprivileged_groups <- list("race", 0)
 
 # Metric for Binary Label Dataset
-bm <- binary_label_dataset_metric(data = adult_dataset,
+bm <- binary_label_dataset_metric(dataset = adult_dataset,
                                   privileged_groups = privileged_groups,
                                   unprivileged_groups = unprivileged_groups)
 
