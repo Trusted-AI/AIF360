@@ -4,14 +4,13 @@ predictions out).
 """
 from logging import warning
 
-import numpy as np
 import pandas as pd
 from sklearn.base import BaseEstimator, MetaEstimatorMixin, clone
 from sklearn.model_selection import train_test_split
 from sklearn.utils.metaestimators import if_delegate_has_method
-from sklearn.utils.validation import check_is_fitted
 
 from aif360.sklearn.postprocessing.calibrated_equalized_odds import CalibratedEqualizedOdds
+from aif360.sklearn.postprocessing.reject_option_classification import RejectOptionClassifier, RejectOptionClassifierCV
 
 
 class PostProcessingMeta(BaseEstimator, MetaEstimatorMixin):
@@ -28,19 +27,15 @@ class PostProcessingMeta(BaseEstimator, MetaEstimatorMixin):
     Attributes:
         estimator_: Fitted estimator.
         postprocessor_: Fitted postprocessor.
-        needs_proba_ (bool): Determined depending on the postprocessor type if
-            `needs_proba` is None.
+        classes_ (array, shape (n_classes,)): Class labels from `estimator_`.
     """
 
-    def __init__(self, estimator, postprocessor=CalibratedEqualizedOdds(),
-                 needs_proba=None, prefit=False, val_size=0.25, **options):
+    def __init__(self, estimator, postprocessor, *, prefit=False, val_size=0.25,
+                 **options):
         """
         Args:
             estimator (sklearn.BaseEstimator): Original estimator.
             postprocessor: Post-processing algorithm.
-            needs_proba (bool): Use ``self.estimator_.predict_proba()`` instead
-                of ``self.estimator_.predict()`` as input to postprocessor. If
-                ``None``, defaults to ``True`` if the postprocessor supports it.
             prefit (bool): If ``True``, it is assumed that estimator has been
                 fitted already and all data is used to train postprocessor.
             val_size (int or float): Size of validation set used to fit the
@@ -55,7 +50,6 @@ class PostProcessingMeta(BaseEstimator, MetaEstimatorMixin):
         """
         self.estimator = estimator
         self.postprocessor = postprocessor
-        self.needs_proba = needs_proba
         self.prefit = prefit
         self.val_size = val_size
         self.options = options
@@ -63,6 +57,11 @@ class PostProcessingMeta(BaseEstimator, MetaEstimatorMixin):
     @property
     def _estimator_type(self):
         return self.postprocessor._estimator_type
+
+    @property
+    def classes_(self):
+        """Class labels from the base estimator."""
+        return self.estimator_.classes_
 
     def fit(self, X, y, sample_weight=None, **fit_params):
         """Splits the training samples with
@@ -82,9 +81,15 @@ class PostProcessingMeta(BaseEstimator, MetaEstimatorMixin):
         Returns:
             self
         """
-        self.needs_proba_ = (self.needs_proba if self.needs_proba is not None
-                else isinstance(self.postprocessor, CalibratedEqualizedOdds))
-        if self.needs_proba_ and not hasattr(self.estimator, 'predict_proba'):
+        self.postprocessor_ = clone(self.postprocessor)
+        self.estimator_ = self.estimator if self.prefit else clone(self.estimator)
+
+        try:
+            use_proba = self.postprocessor._get_tags()['requires_proba']
+        except KeyError:
+            raise TypeError("`postprocessor` (type: {}) does not have a "
+                            "'requires_proba' tag.".format(type(self.estimator)))
+        if use_proba and not hasattr(self.estimator, 'predict_proba'):
             raise TypeError("`estimator` (type: {}) does not implement method "
                             "`predict_proba()`.".format(type(self.estimator)))
 
@@ -92,9 +97,9 @@ class PostProcessingMeta(BaseEstimator, MetaEstimatorMixin):
             if len(self.options):
                 warning("Splitting options were passed but prefit is True so "
                         "these are ignored.")
-            self.postprocessor_ = clone(self.postprocessor)
-            y_score = (self.estimator.predict(X) if not self.needs_proba_ else
-                       self.estimator.predict_proba(X))
+            y_score = (self.estimator_.predict_proba(X) if use_proba else
+                       self.estimator_.predict(X))
+            y_score = pd.DataFrame(y_score, index=X.index).squeeze('columns')
             fit_params = fit_params.copy()
             fit_params.update(labels=self.estimator_.classes_)
             self.postprocessor_.fit(y_score, y, sample_weight=sample_weight,
@@ -109,9 +114,6 @@ class PostProcessingMeta(BaseEstimator, MetaEstimatorMixin):
         if 'train_size' in options_:
             del options_['train_size']
 
-        self.estimator_ = clone(self.estimator)
-        self.postprocessor_ = clone(self.postprocessor)
-
         if sample_weight is not None:
             X_est, X_post, y_est, y_post, sw_est, sw_post = train_test_split(
                     X, y, sample_weight, **options_)
@@ -120,8 +122,9 @@ class PostProcessingMeta(BaseEstimator, MetaEstimatorMixin):
             X_est, X_post, y_est, y_post = train_test_split(X, y, **options_)
             self.estimator_.fit(X_est, y_est)
 
-        y_score = (self.estimator_.predict(X_post) if not self.needs_proba_ else
-                  self.estimator_.predict_proba(X_post))
+        y_score = (self.estimator_.predict_proba(X_post) if use_proba else
+                   self.estimator_.predict(X_post))
+        y_score = pd.DataFrame(y_score, index=X_post.index).squeeze('columns')
         fit_params = fit_params.copy()
         fit_params.update(labels=self.estimator_.classes_)
         self.postprocessor_.fit(y_score, y_post, sample_weight=sw_post
@@ -134,8 +137,7 @@ class PostProcessingMeta(BaseEstimator, MetaEstimatorMixin):
         """Predict class labels for the given samples.
 
         First, runs ``self.estimator_.predict()`` (or ``predict_proba()`` if
-        ``self.needs_proba_`` is ``True``) then returns the post-processed
-        output from those predictions.
+        required) then returns the post-processed output from those predictions.
 
         Args:
             X (pandas.DataFrame): Test samples.
@@ -143,8 +145,9 @@ class PostProcessingMeta(BaseEstimator, MetaEstimatorMixin):
         Returns:
             numpy.ndarray: Predicted class label per sample.
         """
-        y_score = (self.estimator_.predict(X) if not self.needs_proba_ else
-                   self.estimator_.predict_proba(X))
+        use_proba = self.postprocessor_._get_tags()['requires_proba']
+        y_score = (self.estimator_.predict_proba(X) if use_proba else
+                   self.estimator_.predict(X))
         y_score = pd.DataFrame(y_score, index=X.index).squeeze('columns')
         return self.postprocessor_.predict(y_score)
 
@@ -153,8 +156,7 @@ class PostProcessingMeta(BaseEstimator, MetaEstimatorMixin):
         """Probability estimates.
 
         First, runs ``self.estimator_.predict()`` (or ``predict_proba()`` if
-        ``self.needs_proba_`` is ``True``) then returns the post-processed
-        output from those predictions.
+        required) then returns the post-processed output from those predictions.
 
         The returned estimates for all classes are ordered by the label of
         classes.
@@ -167,8 +169,9 @@ class PostProcessingMeta(BaseEstimator, MetaEstimatorMixin):
             in the model, where classes are ordered as they are in
             ``self.classes_``.
         """
-        y_score = (self.estimator_.predict(X) if not self.needs_proba_ else
-                   self.estimator_.predict_proba(X))
+        use_proba = self.postprocessor_._get_tags()['requires_proba']
+        y_score = (self.estimator_.predict_proba(X) if use_proba else
+                   self.estimator_.predict(X))
         y_score = pd.DataFrame(y_score, index=X.index).squeeze('columns')
         return self.postprocessor_.predict_proba(y_score)
 
@@ -177,8 +180,7 @@ class PostProcessingMeta(BaseEstimator, MetaEstimatorMixin):
         """Log of probability estimates.
 
         First, runs ``self.estimator_.predict()`` (or ``predict_proba()`` if
-        ``self.needs_proba_`` is ``True``) then returns the post-processed
-        output from those predictions.
+        required) then returns the post-processed output from those predictions.
 
         The returned estimates for all classes are ordered by the label of
         classes.
@@ -191,8 +193,9 @@ class PostProcessingMeta(BaseEstimator, MetaEstimatorMixin):
             the model, where classes are ordered as they are in
             ``self.classes_``.
         """
-        y_score = (self.estimator_.predict(X) if not self.needs_proba_ else
-                   self.estimator_.predict_proba(X))
+        use_proba = self.postprocessor_._get_tags()['requires_proba']
+        y_score = (self.estimator_.predict_proba(X) if use_proba else
+                   self.estimator_.predict(X))
         y_score = pd.DataFrame(y_score, index=X.index).squeeze('columns')
         return self.postprocessor_.predict_log_proba(y_score)
 
@@ -202,8 +205,8 @@ class PostProcessingMeta(BaseEstimator, MetaEstimatorMixin):
         given test data and labels.
 
         First, runs ``self.estimator_.predict()`` (or ``predict_proba()`` if
-        ``self.needs_proba_`` is ``True``) then gets the post-processed output
-        from those predictions and scores it.
+        required) then gets the post-processed output from those predictions and
+        scores it.
 
         Args:
             X (pandas.DataFrame): Test samples.
@@ -213,13 +216,17 @@ class PostProcessingMeta(BaseEstimator, MetaEstimatorMixin):
         Returns:
             float: Score value.
         """
-        y_score = (self.estimator_.predict(X) if not self.needs_proba_ else
-                   self.estimator_.predict_proba(X))
+        use_proba = self.postprocessor_._get_tags()['requires_proba']
+        y_score = (self.estimator_.predict_proba(X) if use_proba else
+                   self.estimator_.predict(X))
         y_score = pd.DataFrame(y_score, index=X.index).squeeze('columns')
+        if sample_weight is None:
+            return self.postprocessor_.score(y_score, y)
         return self.postprocessor_.score(y_score, y,
                                          sample_weight=sample_weight)
 
 
 __all__ = [
-    'CalibratedEqualizedOdds', 'PostProcessingMeta'
+    'CalibratedEqualizedOdds', 'PostProcessingMeta', 'RejectOptionClassifier',
+    'RejectOptionClassifierCV'
 ]

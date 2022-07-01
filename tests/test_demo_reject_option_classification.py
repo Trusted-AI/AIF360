@@ -1,7 +1,7 @@
 # Adapted from:
 # http://www.christianmoscardi.com/blog/2016/01/20/jupyter-testing.html
 
-from notebook_runner import notebook_run
+from .notebook_runner import notebook_run
 import os
 
 
