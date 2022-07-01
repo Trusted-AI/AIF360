@@ -1,43 +1,40 @@
 import numpy as np
+import pytest
+import sklearn
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 
-from aif360.datasets import AdultDataset
-from aif360.sklearn.datasets import fetch_adult
 from aif360.algorithms.postprocessing import CalibratedEqOddsPostprocessing
 from aif360.sklearn.postprocessing import CalibratedEqualizedOdds, PostProcessingMeta
 
 
-X, y, sample_weight = fetch_adult(numeric_only=True)
-adult = AdultDataset(instance_weights_name='fnlwgt', categorical_features=[],
-        features_to_keep=['age', 'education-num', 'capital-gain', 'capital-loss',
-                          'hours-per-week'], features_to_drop=[])
-
-def test_calib_eq_odds_sex_weighted():
+def test_calib_eq_odds_sex_weighted(old_adult, new_adult):
     """Test that the old and new CalibratedEqualizedOdds produce the same mix
     rates.
     """
+    X, y, sample_weight = new_adult
     logreg = LogisticRegression(solver='lbfgs', max_iter=500)
     y_pred = logreg.fit(X, y, sample_weight=sample_weight).predict_proba(X)
-    adult_pred = adult.copy()
+    adult_pred = old_adult.copy()
     adult_pred.scores = y_pred[:, 1]
     orig_cal_eq_odds = CalibratedEqOddsPostprocessing(
             unprivileged_groups=[{'sex': 0}], privileged_groups=[{'sex': 1}])
-    orig_cal_eq_odds.fit(adult, adult_pred)
+    orig_cal_eq_odds.fit(old_adult, adult_pred)
     cal_eq_odds = CalibratedEqualizedOdds('sex')
     cal_eq_odds.fit(y_pred, y, sample_weight=sample_weight)
 
     assert np.isclose(orig_cal_eq_odds.priv_mix_rate, cal_eq_odds.mix_rates_[1])
     assert np.isclose(orig_cal_eq_odds.unpriv_mix_rate, cal_eq_odds.mix_rates_[0])
 
-def test_postprocessingmeta_fnr():
+def test_postprocessingmeta_fnr(old_adult, new_adult):
     """Test that the old and new CalibratedEqualizedOdds produce the same
     probability predictions.
 
     This tests the whole "pipeline": splitting the data the same way, training a
     LogisticRegression classifier, and training the post-processor the same way.
     """
-    adult_train, adult_test = adult.split([0.9], shuffle=False)
+    X, y, sample_weight = new_adult
+    adult_train, adult_test = old_adult.split([0.9], shuffle=False)
     X_tr, X_te, y_tr, _, sw_tr, _ = train_test_split(X, y, sample_weight,
                 train_size=0.9, shuffle=False)
 
@@ -79,3 +76,22 @@ def test_postprocessingmeta_fnr():
     y_test_pred = cal_eq_odds.predict_proba(X_te)
 
     assert np.allclose(adult_test_pred.scores, y_test_pred[:, 1])
+
+def test_calib_eq_odds_prefit(new_adult):
+    """Test the 'prefit' option in PostProcessingMeta."""
+    X, y, sample_weight = new_adult
+
+    logreg = LogisticRegression(solver='lbfgs', max_iter=500)
+    cal_eq_odds = CalibratedEqualizedOdds('sex')
+    pp = PostProcessingMeta(logreg, cal_eq_odds, prefit=True)
+    with pytest.raises(sklearn.exceptions.NotFittedError):
+        pp.fit(X, y, sample_weight=sample_weight)
+
+    pp = PostProcessingMeta(logreg, cal_eq_odds, random_state=1234)
+    pp.fit(X, y, sample_weight=sample_weight)
+
+    _, X_pp, _, y_pp, _, sw_pp = train_test_split(X, y, sample_weight, random_state=1234)
+    pp_prefit = PostProcessingMeta(pp.estimator_, cal_eq_odds, prefit=True)
+    pp_prefit.fit(X_pp, y_pp, sample_weight=sw_pp)
+
+    assert np.allclose(pp.postprocessor_.mix_rates_, pp_prefit.postprocessor_.mix_rates_)

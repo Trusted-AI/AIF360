@@ -15,7 +15,8 @@ def check_already_dropped(labels, dropped_cols, name, dropped_by='numeric_only',
     haven't.
 
     Args:
-        labels (single label or list-like): Column labels to check.
+        labels (label, pandas.Series, or list-like of labels/Series): Column
+            labels to check.
         dropped_cols (set or pandas.Index): Columns that were already dropped.
         name (str): Original arg that triggered the check (e.g. dropcols).
         dropped_by (str, optional): Original arg that caused dropped_cols``
@@ -27,28 +28,38 @@ def check_already_dropped(labels, dropped_cols, name, dropped_by='numeric_only',
     Returns:
         list: Columns in labels which are not in dropped_cols.
     """
-    if not is_list_like(labels):
+    if isinstance(labels, pd.Series) or not is_list_like(labels):
         labels = [labels]
-    str_labels = [c for c in labels if isinstance(c, str)]
-    already_dropped = dropped_cols.intersection(str_labels)
+    str_labels = [c for c in labels if not isinstance(c, pd.Series)]
+    try:
+        already_dropped = dropped_cols.intersection(str_labels)
+        if isinstance(already_dropped, pd.MultiIndex):
+            raise TypeError  # list of lists results in MultiIndex
+    except TypeError as e:
+        raise TypeError("Only labels or Series are allowed for {}. Got types:\n"
+                        "{}".format(name, [type(c) for c in labels]))
     if warn and any(already_dropped):
         warnings.warn("Some column labels from `{}` were already dropped by "
                 "`{}`:\n{}".format(name, dropped_by, already_dropped.tolist()),
                 ColumnAlreadyDroppedWarning, stacklevel=2)
-    return [c for c in labels if not isinstance(c, str) or c not in already_dropped]
+    return [c for c in labels if isinstance(c, pd.Series)
+                              or c not in already_dropped]
 
-def standardize_dataset(df, prot_attr, target, sample_weight=None, usecols=[],
-                       dropcols=[], numeric_only=False, dropna=True):
+def standardize_dataset(df, *, prot_attr, target, sample_weight=None,
+                        usecols=[], dropcols=[], numeric_only=False,
+                        dropna=True):
     """Separate data, targets, and possibly sample weights and populate
     protected attributes as sample properties.
 
     Args:
         df (pandas.DataFrame): DataFrame with features and target together.
-        prot_attr (single label or list-like): Label or list of labels
-            corresponding to protected attribute columns. Even if these are
-            dropped from the features, they remain in the index.
-        target (single label or list-like): Column label of the target (outcome)
-            variable.
+        prot_attr (label, pandas.Series, or list-like of labels/Series): Single
+            label, Series, or list-like of labels/Series corresponding to
+            protected attribute columns. Even if these are dropped from the
+            features, they remain in the index. If a Series is provided, it will
+            be added to the index but not show up in the features.
+        target (label, pandas.Series, or list-like of labels/Series): Column
+            label(s) or values of the target (outcome) variable.
         sample_weight (single label, optional): Name of the column containing
             sample weights.
         usecols (single label or list-like, optional): Column(s) to keep. All
@@ -77,9 +88,11 @@ def standardize_dataset(df, prot_attr, target, sample_weight=None, usecols=[],
         >>> import pandas as pd
         >>> from sklearn.linear_model import LinearRegression
 
-        >>> df = pd.DataFrame([[1, 2, 3], [4, 5, 6]], columns=['X', 'y', 'Z'])
-        >>> train = standardize_dataset(df, prot_attr='Z', target='y')
-        >>> reg = LinearRegression().fit(*train)
+        >>> df = pd.DataFrame([[0.5, 1, 1, 0.75], [-0.5, 0, 0, 0.25]],
+        ...                   columns=['X', 'y', 'Z', 'w'])
+        >>> train = standardize_dataset(df, prot_attr='Z', target='y',
+        ...                             sample_weight='w')
+        >>> reg = LinearRegression().fit(**train._asdict())
 
         >>> import numpy as np
         >>> from sklearn.datasets import make_classification
@@ -105,7 +118,9 @@ def standardize_dataset(df, prot_attr, target, sample_weight=None, usecols=[],
     target = check_already_dropped(target, nonnumeric, 'target')
     if len(target) == 0:
         raise ValueError("At least one target must be present.")
-    y = pd.concat([df.pop(t) for t in target], axis=1).squeeze()  # maybe Series
+    y = pd.concat([df.pop(t) if not isinstance(t, pd.Series) else
+                   t.set_axis(df.index, inplace=False) for t in target], axis=1)
+    y = y.squeeze()  # maybe Series
 
     # Column-wise drops
     orig_cols = df.columns

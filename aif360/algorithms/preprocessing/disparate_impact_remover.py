@@ -60,6 +60,6 @@ class DisparateImpactRemover(Transformer):
         repaired_features = repairer.repair(features)
         repaired.features = np.array(repaired_features, dtype=np.float64)
         # protected attribute shouldn't change
-        repaired.features[:, index] = repaired.protected_attributes[:, 0]
+        repaired.features[:, index] = repaired.protected_attributes[:, repaired.protected_attribute_names.index(self.sensitive_attribute)]
 
         return repaired
