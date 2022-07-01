@@ -103,6 +103,7 @@ class ReweighingMeta(BaseEstimator, MetaEstimatorMixin):
     Attributes:
         estimator_ (sklearn.BaseEstimator): The fitted underlying estimator.
         reweigher_: The fitted underlying reweigher.
+        classes_ (array, shape (n_classes,)): Class labels from `estimator_`.
     """
     def __init__(self, estimator, reweigher=None):
         """
@@ -118,6 +119,11 @@ class ReweighingMeta(BaseEstimator, MetaEstimatorMixin):
     @property
     def _estimator_type(self):
         return self.estimator._estimator_type
+
+    @property
+    def classes_(self):
+        """Class labels from the base estimator."""
+        return self.estimator_.classes_
 
     def fit(self, X, y, sample_weight=None):
         """Performs ``self.reweigher_.fit_transform(X, y, sample_weight)`` and

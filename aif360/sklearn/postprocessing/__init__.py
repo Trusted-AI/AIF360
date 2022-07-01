@@ -27,6 +27,7 @@ class PostProcessingMeta(BaseEstimator, MetaEstimatorMixin):
     Attributes:
         estimator_: Fitted estimator.
         postprocessor_: Fitted postprocessor.
+        classes_ (array, shape (n_classes,)): Class labels from `estimator_`.
     """
 
     def __init__(self, estimator, postprocessor, *, prefit=False, val_size=0.25,
@@ -56,6 +57,11 @@ class PostProcessingMeta(BaseEstimator, MetaEstimatorMixin):
     @property
     def _estimator_type(self):
         return self.postprocessor._estimator_type
+
+    @property
+    def classes_(self):
+        """Class labels from the base estimator."""
+        return self.estimator_.classes_
 
     def fit(self, X, y, sample_weight=None, **fit_params):
         """Splits the training samples with
