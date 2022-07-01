@@ -161,6 +161,9 @@ class RejectOptionClassifier(BaseEstimator, ClassifierMixin):
         check_is_fitted(self, 'pos_label_')
 
         groups, _ = check_groups(X, self.prot_attr_)
+        if len(self.classes_) != X.shape[1]:
+            raise ValueError('X should contain one column per class. Got: {} '
+                             'columns.'.format(X.shape[1]))
 
         pos_idx = np.nonzero(self.classes_ == self.pos_label_)[0][0]
         X = X.iloc[:, pos_idx].to_numpy()

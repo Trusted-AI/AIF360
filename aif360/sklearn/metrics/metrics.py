@@ -409,8 +409,8 @@ def average_odds_difference(y_true, y_pred, prot_attr=None, priv_group=1,
                           sample_weight=sample_weight)
     return (tpr_diff + fpr_diff) / 2
 
-def average_odds_error(y_true, y_pred, prot_attr=None, pos_label=1,
-                       sample_weight=None):
+def average_odds_error(y_true, y_pred, prot_attr=None, priv_group=None,
+                       pos_label=1, sample_weight=None):
     r"""A relaxed version of equality of odds.
 
     Returns the average of the absolute difference in FPR and TPR for the
@@ -428,14 +428,17 @@ def average_odds_error(y_true, y_pred, prot_attr=None, pos_label=1,
         y_pred (array-like): Estimated targets as returned by a classifier.
         prot_attr (array-like, keyword-only): Protected attribute(s). If
             ``None``, all protected attributes in y_true are used.
-        priv_group (scalar, optional): The label of the privileged group.
+        priv_group (scalar, optional): The label of the privileged group. If
+            prot_attr is binary, this may be ``None``.
         pos_label (scalar, optional): The label of the positive class.
         sample_weight (array-like, optional): Sample weights.
 
     Returns:
         float: Average odds error.
     """
-    priv_group = check_groups(y_true, prot_attr=prot_attr)[0][0]
+    if priv_group is None:
+        priv_group = check_groups(y_true, prot_attr=prot_attr,
+                                  ensure_binary=True)[0][0]
     fpr_diff = -difference(specificity_score, y_true, y_pred,
                            prot_attr=prot_attr, priv_group=priv_group,
                            pos_label=pos_label, sample_weight=sample_weight)

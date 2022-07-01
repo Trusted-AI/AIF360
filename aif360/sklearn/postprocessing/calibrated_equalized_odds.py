@@ -109,8 +109,12 @@ class CalibratedEqualizedOdds(BaseEstimator, ClassifierMixin):
         self.groups_ = np.unique(groups)
         self.pos_label_ = pos_label
 
-        if len(self.classes_) > 2:
+        if len(self.classes_) != 2:
             raise ValueError('Only binary classification is supported.')
+        if len(self.classes_) != X.shape[1]:
+            raise ValueError('Only binary classification is supported. X should'
+                    ' contain one column per class. Got: {} columns.'.format(
+                            X.shape[1]))
 
         if pos_label not in self.classes_:
             raise ValueError('pos_label={} is not in the set of labels. The '
@@ -122,21 +126,20 @@ class CalibratedEqualizedOdds(BaseEstimator, ClassifierMixin):
         except AttributeError:
             X = X[:, pos_idx]
 
-        # local function to return corresponding args for metric evaluation
-        def _args(grp_idx, triv=False):
+        # local function to evaluate corresponding metric
+        def _eval(func, grp_idx, trivial=False):
             idx = (groups == self.groups_[grp_idx])
-            pred = np.full_like(X, self.base_rates_[grp_idx]) if triv else X
-            return [y[idx], pred[idx], pos_label, sample_weight[idx]]
+            pred = np.full_like(X, self.base_rates_[grp_idx]) if trivial else X
+            return func(y[idx], pred[idx], pos_label, sample_weight[idx])
 
-        self.base_rates_ = [base_rate(*_args(i)) for i in range(2)]
+        self.base_rates_ = [_eval(base_rate, i) for i in range(2)]
 
-        costs = [self._weighted_cost(*_args(i)) for i in range(2)]
-        # TODO _prf_divide here
-        self.mix_rates_ = [(costs[1] - costs[0])
-                         / (self._weighted_cost(*_args(0, True)) - costs[0]),
-                           (costs[0] - costs[1])
-                         / (self._weighted_cost(*_args(1, True)) - costs[1])]
-        self.mix_rates_[np.argmax(costs)] = 0
+        costs = np.array([[_eval(self._weighted_cost, i, t) for i in range(2)]
+                          for t in (False, True)])
+        self.mix_rates_ = [
+                (costs[0, 1] - costs[0, 0]) / (costs[1, 0] - costs[0, 0]),
+                (costs[0, 0] - costs[0, 1]) / (costs[1, 1] - costs[0, 1])]
+        self.mix_rates_[np.argmax(costs[0])] = 0
 
         return self
 
