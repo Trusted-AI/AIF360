@@ -32,14 +32,8 @@ class Poisson(ScoringFunction):
             "observed_sum=%.2f, expectations of length=%d, penalty=%.2f, q=%.2f"
             % (observed_sum, len(expectations), penalty, q)
         )
-        key = tuple([observed_sum, expectations.sum(), penalty, q])
-        ans = self.score_cache.get(key)
-        if ans is not None:
-            self.cache_counter['score'] += 1
-            return ans
 
         ans = observed_sum * np.log(q) + (expectations - q * expectations).sum() - penalty
-        self.score_cache[key] = ans
         return ans
 
     def qmle(self, observed_sum: float, expectations: np.array):
@@ -47,15 +41,7 @@ class Poisson(ScoringFunction):
         Computes the q which maximizes score (q_mle).
         """
         direction = self.direction
-        
-        key = tuple([observed_sum, expectations.sum()])
-        ans = self.qmle_cache.get(key)
-        if ans is not None:
-            self.cache_counter['qmle'] += 1
-            return ans
-
         ans = optim.bisection_q_mle(self, observed_sum, expectations, direction=direction)
-        self.qmle_cache[key] = ans
         return ans
 
     def compute_qs(self, observed_sum: float, expectations: np.array, penalty: float):
@@ -68,14 +54,7 @@ class Poisson(ScoringFunction):
         """
 
         direction = self.direction
-
         q_mle = self.qmle(observed_sum, expectations)
-
-        key = tuple([observed_sum, expectations.tostring(), penalty])
-        ans = self.compute_qs_cache.get(key)
-        if ans is not None:
-            self.cache_counter['qs'] += 1
-            return ans
 
         if self.score(observed_sum, expectations, penalty, q_mle) > 0:
             exist = 1
@@ -92,7 +71,6 @@ class Poisson(ScoringFunction):
             exist, q_min, q_max = optim.direction_assertions(direction, q_min, q_max)
 
         ans = [exist, q_mle, q_min, q_max]
-        self.compute_qs_cache[key] = ans
         return ans
 
     def q_dscore(self, observed_sum, expectations, q):
@@ -107,12 +85,5 @@ class Poisson(ScoringFunction):
         :param q: current value of q
         :return: q dscore/dq
         """
-        key = tuple([observed_sum, expectations.sum(), q])
-        ans = self.qdscore_cache.get(key)
-        if ans is not None:
-            self.cache_counter['qdscore'] += 1
-            return ans
-        
         ans = observed_sum - (q * expectations).sum()
-        self.qdscore_cache[key] = ans
         return ans
