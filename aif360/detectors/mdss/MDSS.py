@@ -220,6 +220,14 @@ class MDSS(object):
         """
         np.random.seed(seed)
 
+        # Reset indexes
+        coordinates = coordinates.reset_index(drop = True)
+        expectations = expectations.reset_index(drop = True)
+        outcomes = outcomes.reset_index(drop = True)
+
+        assert len(coordinates) == len(expectations) == len(outcomes), \
+            f'Lengths of coordinates, expectations, and outcomes should be equal.'
+
         # Check that the appropriate scoring function is used
 
         if isinstance(self.scoring_function, BerkJones):

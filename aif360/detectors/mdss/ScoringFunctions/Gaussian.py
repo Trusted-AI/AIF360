@@ -30,12 +30,6 @@ class Gaussian(ScoringFunction):
         :return: bias score for the current value of q
         """
 
-        key = tuple([observed_sum, expectations.sum(), penalty, q])
-        ans = self.score_cache.get(key)
-        if ans is not None:
-            self.cache_counter["score"] += 1
-            return ans
-
         assumed_var =  self.var
         expected_sum = expectations.sum()
         penalty /= self.var
@@ -56,7 +50,6 @@ class Gaussian(ScoringFunction):
             ans = 0
 
         ans -= penalty
-        self.score_cache[key] = ans
 
         return ans
 
@@ -64,12 +57,6 @@ class Gaussian(ScoringFunction):
         """
         Computes the q which maximizes score (q_mle).
         """
-        key = tuple([observed_sum, expectations.sum()])
-        ans = self.qmle_cache.get(key)
-        if ans is not None:
-            self.cache_counter["qmle"] += 1
-            return ans
-
         expected_sum = expectations.sum()
 
         # Deals with case where observed_sum = expected_sum = 0
@@ -78,8 +65,7 @@ class Gaussian(ScoringFunction):
         else:
             ans = observed_sum / expected_sum
         
-        assert np.isnan(ans) == False, f'{expected_sum}, {observed_sum}, {ans}'
-        self.qmle_cache[key] = ans
+        assert np.isnan(ans) == False, f'{expected_sum}, {observed_sum}, {ans}' 
         return ans
 
     def compute_qs(self, observed_sum: float, expectations: np.array, penalty: float):
@@ -94,13 +80,6 @@ class Gaussian(ScoringFunction):
         direction = self.direction
 
         q_mle = self.qmle(observed_sum, expectations)
-
-        key = tuple([observed_sum, expectations.sum(), penalty])
-        ans = self.compute_qs_cache.get(key)
-        if ans is not None:
-            self.cache_counter["qs"] += 1
-            return ans
-
         q_mle_score = self.score(observed_sum, expectations, penalty, q_mle)
 
         if q_mle_score > 0:
@@ -118,5 +97,4 @@ class Gaussian(ScoringFunction):
             exist, q_min, q_max = optim.direction_assertions(direction, q_min, q_max)
 
         ans = [exist, q_mle, q_min, q_max]
-        self.compute_qs_cache[key] = ans
         return ans

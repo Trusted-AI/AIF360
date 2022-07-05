@@ -15,19 +15,10 @@ class ScoringFunction:
         Journal of Computational and Graphical Statistics, 25(2), 382-404.
         """
         self.kwargs = kwargs
-        self._reset()
         self.direction = kwargs.get('direction')
 
         directions = ['positive', 'negative']
         assert self.direction in directions, f"Expected one of {directions}, got {self.direction}"
-
-    def _reset(self):
-        self.score_cache = {}
-        self.dscore_cache = {}
-        self.qdscore_cache = {}
-        self.qmle_cache = {}
-        self.compute_qs_cache = {}
-        self.cache_counter = {"score": 0, "dscore": 0, "qdscore": 0, "qmle": 0, "qs": 0}
 
     def score(
         self, observed_sum: float, expectations: np.array, penalty: float, q: float

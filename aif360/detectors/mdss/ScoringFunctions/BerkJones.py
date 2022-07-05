@@ -41,12 +41,6 @@ class BerkJones(ScoringFunction):
         """
         alpha = self.alpha
 
-        key = tuple([observed_sum, len(expectations), penalty, q, alpha])
-        ans = self.score_cache.get(key)
-        if ans is not None:
-            self.cache_counter['score'] += 1
-            return ans
-
         if q < alpha:
             q = alpha
 
@@ -57,7 +51,6 @@ class BerkJones(ScoringFunction):
         )
         if q == 1:
             ans = observed_sum * np.log(q / alpha) - penalty
-            self.score_cache[key] = ans
             return ans
 
         a = observed_sum * np.log(q / alpha)
@@ -68,7 +61,6 @@ class BerkJones(ScoringFunction):
             - penalty
         )
 
-        self.score_cache[key] = ans
         return ans
 
     def qmle(self, observed_sum: float, expectations: np.array):
@@ -81,24 +73,15 @@ class BerkJones(ScoringFunction):
         :return: q MLE
         """
         alpha = self.alpha
-        
-        key = tuple([observed_sum, len(expectations), alpha])
-        ans = self.qmle_cache.get(key)
-        if ans is not None:
-            self.cache_counter['qmle'] += 1
-            return ans
 
         if len(expectations) == 0:
-            self.qmle_cache[key] = 0
             return 0
         else:
             q = observed_sum / len(expectations)
 
         if (q < alpha):
-            self.qmle_cache[key] = alpha
             return alpha
 
-        self.qmle_cache[key] = q
         return q
 
     def compute_qs(self, observed_sum: float, expectations: np.array, penalty: float):
@@ -110,13 +93,6 @@ class BerkJones(ScoringFunction):
         :param penalty: penalty coefficient
         """
         alpha = self.alpha
-
-        key = tuple([observed_sum, len(expectations), penalty, alpha])
-        ans = self.compute_qs_cache.get(key)
-        if ans is not None:
-            self.cache_counter['qs'] += 1
-            return ans
-
         q_mle = self.qmle(observed_sum, expectations)
 
         if self.score(observed_sum, expectations, penalty, q_mle) > 0:
@@ -134,5 +110,4 @@ class BerkJones(ScoringFunction):
             q_max = 0
 
         ans = [exist, q_mle, q_min, q_max]
-        self.compute_qs_cache[key] = ans
         return ans
