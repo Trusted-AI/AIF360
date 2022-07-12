@@ -202,6 +202,39 @@ class RejectOptionClassifier(BaseEstimator, ClassifierMixin):
         """
         return self.fit(X, y, **fit_params).predict(X)
 
+    
+    def predict_proba(self, X):
+        """Predict class labels for the given scores.
+        Args:
+            X (pandas.DataFrame): Probability estimates of the targets as
+                returned by a ``predict_proba()`` call or equivalent. Note: must
+                include protected attributes in the index.
+        Returns:
+            numpy.ndarray: Predicted class label per sample.
+        """
+        check_is_fitted(self, 'pos_label_')
+
+        groups, _ = check_groups(X, self.prot_attr_)
+        if len(self.classes_) != X.shape[1]:
+            raise ValueError('X should contain one column per class. Got: {} '
+                             'columns.'.format(X.shape[1]))
+
+        pos_idx = np.nonzero(self.classes_ == self.pos_label_)[0][0]
+        X = X.iloc[:, pos_idx].to_numpy()
+
+        # yt = (X > self.threshold) #.astype(int) # need to keep as a float, not a binary 0/1
+        # y_pred = self.classes_[yt if pos_idx == 1 else 1 - yt]
+
+        # indices of critical region around the classification boundary
+        crit_region = (abs(X - self.threshold) < self.margin)
+
+        # replace labels in critical region
+        X[crit_region] = 2*self.threshold - X[crit_region]
+        
+        yt = X.copy()
+
+        return np.c_[1 - yt, yt] if pos_idx == 1 else np.c_[yt, 1 - yt]
+
 
 class RejectOptionClassifierCV(GridSearchCV):
     """Wrapper for running a grid search over threshold, margin combinations for
