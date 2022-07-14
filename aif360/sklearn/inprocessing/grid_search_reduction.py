@@ -6,6 +6,7 @@ licensed under the MIT Licencse, Copyright Microsoft Corporation
 """
 import fairlearn.reductions as red
 from sklearn.base import BaseEstimator, ClassifierMixin, clone
+from sklearn.preprocessing import LabelEncoder
 
 
 class GridSearchReduction(BaseEstimator, ClassifierMixin):
@@ -146,6 +147,10 @@ class GridSearchReduction(BaseEstimator, ClassifierMixin):
 
         if self.drop_prot_attr:
             X = X.drop(self.prot_attr, axis=1)
+
+        le = LabelEncoder()
+        y = le.fit_transform(y)
+        self.classes_ = le.classes_
 
         self.model_.fit(X, y, sensitive_features=A)
 
