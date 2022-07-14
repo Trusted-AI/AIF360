@@ -5,11 +5,8 @@ available in the https://github.com/fairlearn/fairlearn library
 licensed under the MIT Licencse, Copyright Microsoft Corporation
 """
 import fairlearn.reductions as red
-import numpy as np
-from sklearn.base import BaseEstimator, ClassifierMixin
+from sklearn.base import BaseEstimator, ClassifierMixin, clone
 from sklearn.preprocessing import LabelEncoder
-
-from aif360.sklearn.utils import check_inputs
 
 
 class ExponentiatedGradientReduction(BaseEstimator, ClassifierMixin):
@@ -65,32 +62,13 @@ class ExponentiatedGradientReduction(BaseEstimator, ClassifierMixin):
                 attributes from training data.
         """
         self.prot_attr = prot_attr
-        self.moments = {
-                "DemographicParity": red.DemographicParity,
-                "EqualizedOdds": red.EqualizedOdds,
-                "TruePositiveRateDifference": red.TruePositiveRateDifference,
-                "ErrorRateRatio": red.ErrorRateRatio
-        }
-
-        if isinstance(constraints, str):
-            if constraints not in self.moments:
-                raise ValueError(f"Constraint not recognized: {constraints}")
-
-            self.moment = self.moments[constraints]()
-        elif isinstance(constraints, red.Moment):
-            self.moment = constraints
-        else:
-            raise ValueError("constraints must be a string or Moment object.")
-
         self.estimator = estimator
+        self.constraints = constraints
         self.eps = eps
         self.T = T
         self.nu = nu
         self.eta_mul = eta_mul
         self.drop_prot_attr = drop_prot_attr
-
-        self.model = red.ExponentiatedGradient(self.estimator, self.moment,
-            self.eps, self.T, self.nu, self.eta_mul)
 
     def fit(self, X, y):
         """Learns randomized model with less bias
@@ -102,6 +80,26 @@ class ExponentiatedGradientReduction(BaseEstimator, ClassifierMixin):
         Returns:
             self
         """
+        self.estimator_ = clone(self.estimator)
+
+        moments = {
+            "DemographicParity": red.DemographicParity,
+            "EqualizedOdds": red.EqualizedOdds,
+            "TruePositiveRateDifference": red.TruePositiveRateDifference,
+            "ErrorRateRatio": red.ErrorRateRatio
+        }
+        if isinstance(self.constraints, str):
+            if self.constraints not in moments:
+                raise ValueError(f"Constraint not recognized: {self.constraints}")
+            self.moment_ = moments[self.constraints]()
+        elif isinstance(self.constraints, red.Moment):
+            self.moment_ = self.constraints
+        else:
+            raise ValueError("constraints must be a string or Moment object.")
+
+        self.model_ = red.ExponentiatedGradient(self.estimator_, self.moment_,
+                eps=self.eps, T=self.T, nu=self.nu, eta_mul=self.eta_mul)
+
         A = X[self.prot_attr]
 
         if self.drop_prot_attr:
@@ -111,7 +109,7 @@ class ExponentiatedGradientReduction(BaseEstimator, ClassifierMixin):
         y = le.fit_transform(y)
         self.classes_ = le.classes_
 
-        self.model.fit(X, y, sensitive_features=A)
+        self.model_.fit(X, y, sensitive_features=A)
 
         return self
 
@@ -126,7 +124,7 @@ class ExponentiatedGradientReduction(BaseEstimator, ClassifierMixin):
         if self.drop_prot_attr:
             X = X.drop(self.prot_attr, axis=1)
 
-        return self.classes_[self.model.predict(X)]
+        return self.classes_[self.model_.predict(X)]
 
 
     def predict_proba(self, X):
@@ -146,4 +144,4 @@ class ExponentiatedGradientReduction(BaseEstimator, ClassifierMixin):
         if self.drop_prot_attr:
             X = X.drop(self.prot_attr, axis=1)
 
-        return self.model._pmf_predict(X)
+        return self.model_._pmf_predict(X)

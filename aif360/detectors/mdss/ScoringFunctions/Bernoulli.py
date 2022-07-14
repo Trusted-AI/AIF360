@@ -33,14 +33,7 @@ class Bernoulli(ScoringFunction):
             % (observed_sum, len(expectations), penalty, q)
         )
 
-        key = tuple([observed_sum, expectations.tostring(), penalty, q])
-        ans = self.score_cache.get(key)
-        if ans is not None:
-            self.cache_counter['score'] += 1
-            return ans
-
         ans = observed_sum * np.log(q) - np.log(1 - expectations + q * expectations).sum() - penalty
-        self.score_cache[key] = ans
         return ans
 
     def qmle(self, observed_sum: float, expectations: np.array):
@@ -50,16 +43,8 @@ class Bernoulli(ScoringFunction):
         :param observed_sum: sum of observed binary outcomes for all i
         :param expectations: predicted outcomes for each data element i
         """
-        direction = self.direction
-        
-        key = tuple([observed_sum, expectations.tostring()])
-        ans = self.qmle_cache.get(key)
-        if ans is not None:
-            self.cache_counter['qmle'] += 1
-            return ans
-        
+        direction = self.direction        
         ans = optim.bisection_q_mle(self, observed_sum, expectations, direction=direction)
-        self.qmle_cache[key] = ans
         return ans
 
     def compute_qs(self, observed_sum: float, expectations: np.array, penalty: float):
@@ -71,13 +56,6 @@ class Bernoulli(ScoringFunction):
         :param penalty: penalty coefficient
         """
         direction = self.direction
-        
-        key = tuple([observed_sum, expectations.tostring(), penalty])
-        ans = self.compute_qs_cache.get(key)
-        if ans is not None:
-            self.cache_counter['qs'] += 1
-            return ans
-
         q_mle = self.qmle(observed_sum, expectations)
 
         if self.score(observed_sum, expectations, penalty, q_mle) > 0:
@@ -95,7 +73,6 @@ class Bernoulli(ScoringFunction):
             exist, q_min, q_max = optim.direction_assertions(direction, q_min, q_max)
 
         ans = [exist, q_mle, q_min, q_max]
-        self.compute_qs_cache[key] = ans
         return ans
 
     def q_dscore(self, observed_sum:float, expectations:np.array, q:float):
@@ -110,12 +87,5 @@ class Bernoulli(ScoringFunction):
         :param q: current value of q
         :return: q dscore/dq
         """
-        key = tuple([observed_sum, expectations.tostring(), q])
-        ans = self.qdscore_cache.get(key)
-        if ans is not None:
-            self.cache_counter['qdscore'] += 1
-            return ans
-
         ans = observed_sum - (q * expectations / (1 - expectations + q * expectations)).sum()
-        self.qdscore_cache[key] = ans
         return ans
