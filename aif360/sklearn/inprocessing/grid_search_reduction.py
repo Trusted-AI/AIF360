@@ -7,8 +7,6 @@ licensed under the MIT Licencse, Copyright Microsoft Corporation
 import fairlearn.reductions as red
 from sklearn.base import BaseEstimator, ClassifierMixin, clone
 
-from aif360.sklearn.utils import check_inputs, check_groups
-
 
 class GridSearchReduction(BaseEstimator, ClassifierMixin):
     """Grid search reduction for fair classification or regression.
@@ -33,9 +31,9 @@ class GridSearchReduction(BaseEstimator, ClassifierMixin):
            <https://arxiv.org/abs/1905.12843>`_
     """
     def __init__(self,
+                prot_attr,
                 estimator,
                 constraints,
-                prot_attr=None,
                 constraint_weight=0.5,
                 grid_size=10,
                 grid_limit=2.0,
@@ -47,6 +45,8 @@ class GridSearchReduction(BaseEstimator, ClassifierMixin):
                 ):
         """
         Args:
+            prot_attr: String or array-like column indices or column names
+                of protected attributes.
             estimator: An estimator implementing methods ``fit(X, y,
                 sample_weight)`` and ``predict(X)``, where ``X`` is the matrix
                 of features, ``y`` is the vector of labels, and
@@ -60,11 +60,6 @@ class GridSearchReduction(BaseEstimator, ClassifierMixin):
                 `self.model.moments`. Otherwise, provide the desired
                 :class:`~fairlearn.reductions.Moment` object defining the
                 disparity constraints.
-            prot_attr (single label or list-like, optional): Protected
-                attribute(s) to use in the grid search. If more than one
-                attribute, all combinations of values (intersections) are
-                considered. Default is ``None`` meaning all protected attributes
-                from the dataset are used.
             constraint_weight: When the ``selection_rule`` is
                 "tradeoff_optimization" (default, no other option currently)
                 this float specifies the relative weight put on the constraint
@@ -87,9 +82,9 @@ class GridSearchReduction(BaseEstimator, ClassifierMixin):
             max_val: Loss function parameter for "Square" and "Absolute,"
                 typically the maximum of the range of y values.
         """
+        self.prot_attr = prot_attr
         self.estimator = estimator
         self.constraints = constraints
-        self.prot_attr = prot_attr
         self.constraint_weight = constraint_weight
         self.grid_size = grid_size
         self.grid_limit = grid_limit
@@ -110,8 +105,6 @@ class GridSearchReduction(BaseEstimator, ClassifierMixin):
         Returns:
             self
         """
-        X, y, _ = check_inputs(X, y)
-        _, self.prot_attr_ = check_groups(X, self.prot_attr)
         self.estimator_ = clone(self.estimator)
 
         moments = {
@@ -149,10 +142,10 @@ class GridSearchReduction(BaseEstimator, ClassifierMixin):
                 grid_size=self.grid_size, grid_limit=self.grid_limit,
                 grid=self.grid)
 
-        A = X[self.prot_attr_]
+        A = X[self.prot_attr]
 
         if self.drop_prot_attr:
-            X = X.drop(self.prot_attr_, axis=1)
+            X = X.drop(self.prot_attr, axis=1)
 
         self.model_.fit(X, y, sensitive_features=A)
 
@@ -168,7 +161,7 @@ class GridSearchReduction(BaseEstimator, ClassifierMixin):
             numpy.ndarray: Predicted output per sample.
         """
         if self.drop_prot_attr:
-            X = X.drop(self.prot_attr_, axis=1)
+            X = X.drop(self.prot_attr, axis=1)
 
         return self.model_.predict(X)
 
@@ -188,7 +181,7 @@ class GridSearchReduction(BaseEstimator, ClassifierMixin):
             ``self.classes_``.
         """
         if self.drop_prot_attr:
-            X = X.drop(self.prot_attr_)
+            X = X.drop(self.prot_attr)
 
         if isinstance(self.model_.constraints, red.ClassificationMoment):
             return self.model_.predict_proba(X)

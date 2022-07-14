@@ -8,8 +8,6 @@ import fairlearn.reductions as red
 from sklearn.base import BaseEstimator, ClassifierMixin, clone
 from sklearn.preprocessing import LabelEncoder
 
-from aif360.sklearn.utils import check_inputs, check_groups
-
 
 class ExponentiatedGradientReduction(BaseEstimator, ClassifierMixin):
     """Exponentiated gradient reduction for fair classification.
@@ -26,9 +24,9 @@ class ExponentiatedGradientReduction(BaseEstimator, ClassifierMixin):
            <https://arxiv.org/abs/1803.02453>`_
     """
     def __init__(self,
+                 prot_attr,
                  estimator,
                  constraints,
-                 prot_attr=None,
                  eps=0.01,
                  T=50,
                  nu=None,
@@ -36,6 +34,8 @@ class ExponentiatedGradientReduction(BaseEstimator, ClassifierMixin):
                  drop_prot_attr=True):
         """
         Args:
+            prot_attr: String or array-like column indices or column names of
+                protected attributes.
             estimator: An estimator implementing methods ``fit(X, y,
                 sample_weight)`` and ``predict(X)``, where ``X`` is the matrix
                 of features, ``y`` is the vector of labels, and
@@ -49,11 +49,6 @@ class ExponentiatedGradientReduction(BaseEstimator, ClassifierMixin):
                 `self.model.moments`. Otherwise, provide the desired
                 :class:`~fairlearn.reductions.Moment` object defining the
                 disparity constraints.
-            prot_attr (single label or list-like, optional): Protected
-                attribute(s) to use in the reduction process. If more than one
-                attribute, all combinations of values (intersections) are
-                considered. Default is ``None`` meaning all protected attributes
-                from the dataset are used.
             eps: Allowed fairness constraint violation; the solution is
                 guaranteed to have the error within ``2*best_gap`` of the best
                 error under constraint eps; the constraint violation is at most
@@ -66,9 +61,9 @@ class ExponentiatedGradientReduction(BaseEstimator, ClassifierMixin):
             drop_prot_attr: Boolean flag indicating whether to drop protected
                 attributes from training data.
         """
+        self.prot_attr = prot_attr
         self.estimator = estimator
         self.constraints = constraints
-        self.prot_attr = prot_attr
         self.eps = eps
         self.T = T
         self.nu = nu
@@ -85,8 +80,6 @@ class ExponentiatedGradientReduction(BaseEstimator, ClassifierMixin):
         Returns:
             self
         """
-        X, y, _ = check_inputs(X, y)
-        _, self.prot_attr_ = check_groups(X, self.prot_attr)
         self.estimator_ = clone(self.estimator)
 
         moments = {
@@ -107,10 +100,10 @@ class ExponentiatedGradientReduction(BaseEstimator, ClassifierMixin):
         self.model_ = red.ExponentiatedGradient(self.estimator_, self.moment_,
                 eps=self.eps, T=self.T, nu=self.nu, eta_mul=self.eta_mul)
 
-        A = X[self.prot_attr_]
+        A = X[self.prot_attr]
 
         if self.drop_prot_attr:
-            X = X.drop(self.prot_attr_, axis=1)
+            X = X.drop(self.prot_attr, axis=1)
 
         le = LabelEncoder()
         y = le.fit_transform(y)
@@ -129,7 +122,7 @@ class ExponentiatedGradientReduction(BaseEstimator, ClassifierMixin):
             numpy.ndarray: Predicted class label per sample.
         """
         if self.drop_prot_attr:
-            X = X.drop(self.prot_attr_, axis=1)
+            X = X.drop(self.prot_attr, axis=1)
 
         return self.classes_[self.model_.predict(X)]
 
@@ -149,6 +142,6 @@ class ExponentiatedGradientReduction(BaseEstimator, ClassifierMixin):
             ``self.classes_``.
         """
         if self.drop_prot_attr:
-            X = X.drop(self.prot_attr_, axis=1)
+            X = X.drop(self.prot_attr, axis=1)
 
-        return self.model._pmf_predict(X)
+        return self.model_._pmf_predict(X)
