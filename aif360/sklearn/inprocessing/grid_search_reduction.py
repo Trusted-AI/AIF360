@@ -5,8 +5,7 @@ available in the https://github.com/fairlearn/fairlearn library
 licensed under the MIT Licencse, Copyright Microsoft Corporation
 """
 import fairlearn.reductions as red
-import numpy as np
-from sklearn.base import BaseEstimator, ClassifierMixin
+from sklearn.base import BaseEstimator, ClassifierMixin, clone
 from sklearn.preprocessing import LabelEncoder
 
 
@@ -85,50 +84,16 @@ class GridSearchReduction(BaseEstimator, ClassifierMixin):
                 typically the maximum of the range of y values.
         """
         self.prot_attr = prot_attr
-        self.moments = {
-                "DemographicParity": red.DemographicParity,
-                "EqualizedOdds": red.EqualizedOdds,
-                "TruePositiveRateDifference": red.TruePositiveRateDifference,
-                "ErrorRateRatio": red.ErrorRateRatio,
-                "GroupLoss": red.GroupLossMoment
-        }
-
-        if isinstance(constraints, str):
-            if constraints not in self.moments:
-                raise ValueError(f"Constraint not recognized: {constraints}")
-
-            if constraints == "GroupLoss":
-                losses = {
-                        "ZeroOne": red.ZeroOneLoss,
-                        "Square": red.SquareLoss,
-                        "Absolute": red.AbsoluteLoss
-                }
-
-                if loss == "ZeroOne":
-                    self.loss = losses[loss]()
-                else:
-                    self.loss = losses[loss](min_val, max_val)
-
-                self.moment = self.moments[constraints](loss=self.loss)
-            else:
-                self.moment = self.moments[constraints]()
-        elif isinstance(constraints, red.Moment):
-            self.moment = constraints
-        else:
-            raise ValueError("constraints must be a string or Moment object.")
-
         self.estimator = estimator
+        self.constraints = constraints
         self.constraint_weight = constraint_weight
         self.grid_size = grid_size
         self.grid_limit = grid_limit
         self.grid = grid
         self.drop_prot_attr = drop_prot_attr
-
-        self.model = red.GridSearch(estimator=self.estimator,
-                constraints=self.moment,
-                constraint_weight=self.constraint_weight,
-                grid_size=self.grid_size, grid_limit=self.grid_limit,
-                grid=self.grid)
+        self.loss = loss
+        self.min_val = min_val
+        self.max_val = max_val
 
     def fit(self, X, y):
         """Train a less biased classifier or regressor with the given training
@@ -141,12 +106,53 @@ class GridSearchReduction(BaseEstimator, ClassifierMixin):
         Returns:
             self
         """
+        self.estimator_ = clone(self.estimator)
+
+        moments = {
+            "DemographicParity": red.DemographicParity,
+            "EqualizedOdds": red.EqualizedOdds,
+            "TruePositiveRateDifference": red.TruePositiveRateDifference,
+            "ErrorRateRatio": red.ErrorRateRatio,
+            "GroupLoss": red.GroupLossMoment
+        }
+        if isinstance(self.constraints, str):
+            if self.constraints not in moments:
+                raise ValueError(f"Constraint not recognized: {self.constraints}")
+            if self.constraints == "GroupLoss":
+                losses = {
+                    "ZeroOne": red.ZeroOneLoss,
+                    "Square": red.SquareLoss,
+                    "Absolute": red.AbsoluteLoss
+                }
+                if self.loss == "ZeroOne":
+                    self.loss_ = losses[self.loss]()
+                else:
+                    self.loss_ = losses[self.loss](self.min_val, self.max_val)
+
+                self.moment_ = moments[self.constraints](loss=self.loss_)
+            else:
+                self.moment_ = moments[self.constraints]()
+        elif isinstance(self.constraints, red.Moment):
+            self.moment_ = self.constraints
+        else:
+            raise ValueError("constraints must be a string or Moment object.")
+
+        self.model_ = red.GridSearch(estimator=self.estimator_,
+                constraints=self.moment_,
+                constraint_weight=self.constraint_weight,
+                grid_size=self.grid_size, grid_limit=self.grid_limit,
+                grid=self.grid)
+
         A = X[self.prot_attr]
 
         if self.drop_prot_attr:
             X = X.drop(self.prot_attr, axis=1)
 
-        self.model.fit(X, y, sensitive_features=A)
+        le = LabelEncoder()
+        y = le.fit_transform(y)
+        self.classes_ = le.classes_
+
+        self.model_.fit(X, y, sensitive_features=A)
 
         return self
 
@@ -162,7 +168,7 @@ class GridSearchReduction(BaseEstimator, ClassifierMixin):
         if self.drop_prot_attr:
             X = X.drop(self.prot_attr, axis=1)
 
-        return self.model.predict(X)
+        return self.model_.predict(X)
 
 
     def predict_proba(self, X):
@@ -182,8 +188,8 @@ class GridSearchReduction(BaseEstimator, ClassifierMixin):
         if self.drop_prot_attr:
             X = X.drop(self.prot_attr)
 
-        if isinstance(self.model.constraints, red.ClassificationMoment):
-            return self.model.predict_proba(X)
+        if isinstance(self.model_.constraints, red.ClassificationMoment):
+            return self.model_.predict_proba(X)
 
         raise NotImplementedError("Underlying model does not support "
                                   "predict_proba")

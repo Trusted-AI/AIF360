@@ -61,9 +61,11 @@ def standardize_dataset(df, *, prot_attr, target, sample_weight=None,
         >>> import pandas as pd
         >>> from sklearn.linear_model import LinearRegression
 
-        >>> df = pd.DataFrame([[1, 2, 3], [4, 5, 6]], columns=['X', 'y', 'Z'])
-        >>> train = standardize_dataset(df, prot_attr='Z', target='y')
-        >>> reg = LinearRegression().fit(*train)
+        >>> df = pd.DataFrame([[0.5, 1, 1, 0.75], [-0.5, 0, 0, 0.25]],
+        ...                   columns=['X', 'y', 'Z', 'w'])
+        >>> train = standardize_dataset(df, prot_attr='Z', target='y',
+        ...                             sample_weight='w')
+        >>> reg = LinearRegression().fit(**train._asdict())
 
         >>> import numpy as np
         >>> from sklearn.datasets import make_classification

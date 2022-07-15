@@ -138,6 +138,8 @@ Pre-processors
    :toctree: generated/
    :template: class.rst
 
+   preprocessing.FairAdapt
+   preprocessing.LearnedFairRepresentations
    preprocessing.Reweighing
 
 Meta-Estimator
@@ -185,6 +187,7 @@ Post-processors
    :template: class.rst
 
    postprocessing.CalibratedEqualizedOdds
+   postprocessing.RejectOptionClassifier
 
 Meta-Estimator
 --------------

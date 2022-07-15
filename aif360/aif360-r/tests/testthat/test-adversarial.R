@@ -2,7 +2,7 @@ context("Comprehensive Test for Inprocessing Adversarial DebiasingAlgorithm")
 
 
 test_that("running dataset test", {
-  dd <- aif360::aif_dataset(
+  dd <- aif360::binary_label_dataset(
     data_path = system.file("extdata", "data.csv", package="aif360"),
     favor_label=0,
     unfavor_label=1,
@@ -11,7 +11,7 @@ test_that("running dataset test", {
     target_column="income",
     protected_attribute="sex")
 
-  pred <- aif360::aif_dataset(
+  pred <- aif360::binary_label_dataset(
     data_path = system.file("extdata", "actual_data.csv", package="aif360"),
     favor_label=1,
     unfavor_label=0,

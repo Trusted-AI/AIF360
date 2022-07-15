@@ -56,7 +56,7 @@ class AdversarialDebiasing(BaseEstimator, ClassifierMixin):
                 entire model (classifier and adversary).
             adversary_loss_weight (float or ``None``, optional): If ``None``,
                 this will use the suggestion from the paper:
-                :math:`\alpha = \sqrt(global_step)` with inverse time decay on
+                :math:`\alpha = \sqrt{global\_step}` with inverse time decay on
                 the learning rate. Otherwise, it uses the provided coefficient
                 with exponential learning rate decay.
             num_epochs (int, optional): Number of epochs for which to train.
@@ -340,7 +340,7 @@ class AdversarialDebiasing(BaseEstimator, ClassifierMixin):
         """
         scores = self.decision_function(X)
         if scores.ndim == 1:
-            indices = (scores > 0).astype(np.int)
+            indices = (scores > 0).astype(int)
         else:
             indices = scores.argmax(axis=1)
         return self.classes_[indices]

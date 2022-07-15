@@ -1,16 +1,16 @@
-import warnings
-
 import numpy as np
 import pandas as pd
 from sklearn.metrics import make_scorer as _make_scorer, recall_score
 from sklearn.metrics import multilabel_confusion_matrix
+from sklearn.metrics._classification import _prf_divide, _check_zero_division
 from sklearn.neighbors import NearestNeighbors
 from sklearn.utils import check_X_y
-from sklearn.exceptions import UndefinedMetricWarning
+from sklearn.utils.validation import column_or_1d
+from sklearn.exceptions import deprecated
 
 from aif360.sklearn.utils import check_groups
-from aif360.metrics.mdss.ScoringFunctions import Bernoulli
-from aif360.metrics.mdss.MDSS import MDSS
+from aif360.detectors.mdss.ScoringFunctions import BerkJones, Bernoulli
+from aif360.detectors.mdss.MDSS import MDSS
 
 __all__ = [
     # meta-metrics
@@ -77,7 +77,7 @@ def difference(func, y, *args, prot_attr=None, priv_group=1, sample_weight=None,
     return func(*unpriv, **kwargs) - func(*priv, **kwargs)
 
 def ratio(func, y, *args, prot_attr=None, priv_group=1, sample_weight=None,
-          **kwargs):
+          zero_division='warn', **kwargs):
     """Compute the ratio between unprivileged and privileged subsets for an
     arbitrary metric.
 
@@ -96,11 +96,15 @@ def ratio(func, y, *args, prot_attr=None, priv_group=1, sample_weight=None,
         priv_group (scalar, optional): The label of the privileged group.
         sample_weight (array-like, optional): Sample weights passed through to
             func.
+        zero_division ('warn', 0 or 1): Sets the value to return when there is a
+            zero division. If set to “warn”, this acts as 0, but warnings are
+            also raised.
         **kwargs: Additional keyword args to be passed through to func.
 
     Returns:
         scalar: Ratio of metric values for unprivileged and privileged groups.
     """
+    _check_zero_division(zero_division)
     groups, _ = check_groups(y, prot_attr)
     idx = (groups == priv_group)
     unpriv = map(lambda a: a[~idx], (y,) + args)
@@ -112,13 +116,14 @@ def ratio(func, y, *args, prot_attr=None, priv_group=1, sample_weight=None,
         numerator = func(*unpriv, **kwargs)
         denominator = func(*priv, **kwargs)
 
-    if denominator == 0:
-        warnings.warn("The ratio is ill-defined and being set to 0.0 because "
-                      "'{}' for privileged samples is 0.".format(func.__name__),
-                      UndefinedMetricWarning)
-        return 0.
-
-    return numerator / denominator
+    if func == base_rate:
+        modifier = 'positive privileged'
+    elif func == selection_rate:
+        modifier = 'predicted privileged'
+    else:
+        modifier = f'value for {func.__name__} on privileged'
+    return _prf_divide(np.array([numerator]), np.array([denominator]), 'ratio',
+                       modifier, None, ('ratio',), zero_division).item()
 
 
 # =========================== SCORER FACTORY =================================
@@ -151,7 +156,8 @@ def make_scorer(score_func, is_ratio=False, **kwargs):
     return scorer
 
 # ================================ HELPERS =====================================
-def specificity_score(y_true, y_pred, pos_label=1, sample_weight=None):
+def specificity_score(y_true, y_pred, pos_label=1, sample_weight=None,
+                      zero_division='warn'):
     """Compute the specificity or true negative rate.
 
     Args:
@@ -159,16 +165,17 @@ def specificity_score(y_true, y_pred, pos_label=1, sample_weight=None):
         y_pred (array-like): Estimated targets as returned by a classifier.
         pos_label (scalar, optional): The label of the positive class.
         sample_weight (array-like, optional): Sample weights.
+        zero_division ('warn', 0 or 1): Sets the value to return when there is a
+            zero division. If set to “warn”, this acts as 0, but warnings are
+            also raised.
     """
+    _check_zero_division(zero_division)
     MCM = multilabel_confusion_matrix(y_true, y_pred, labels=[pos_label],
                                       sample_weight=sample_weight)
-    tn, fp, fn, tp = MCM.ravel()
+    tn, fp = MCM[:, 0, 0], MCM[:, 0, 1]
     negs = tn + fp
-    if negs == 0:
-        warnings.warn('specificity_score is ill-defined and being set to 0.0 '
-                      'due to no negative samples.', UndefinedMetricWarning)
-        return 0.
-    return tn / negs
+    return _prf_divide(tn, negs, 'specificity', 'negative', None,
+                       ('specificity',), zero_division).item()
 
 def base_rate(y_true, y_pred=None, pos_label=1, sample_weight=None):
     r"""Compute the base rate, :math:`Pr(Y = \text{pos_label}) = \frac{P}{P+N}`.
@@ -200,7 +207,8 @@ def selection_rate(y_true, y_pred, pos_label=1, sample_weight=None):
     """
     return base_rate(y_pred, pos_label=pos_label, sample_weight=sample_weight)
 
-def generalized_fpr(y_true, probas_pred, pos_label=1, sample_weight=None):
+def generalized_fpr(y_true, probas_pred, pos_label=1, sample_weight=None,
+                    zero_division='warn'):
     r"""Return the ratio of generalized false positives to negative examples in
     the dataset, :math:`GFPR = \tfrac{GFP}{N}`.
 
@@ -212,22 +220,29 @@ def generalized_fpr(y_true, probas_pred, pos_label=1, sample_weight=None):
         probas_pred (array-like): Probability estimates of the positive class.
         pos_label (scalar, optional): The label of the positive class.
         sample_weight (array-like, optional): Sample weights.
+        zero_division ('warn', 0 or 1): Sets the value to return when there is a
+            zero division. If set to “warn”, this acts as 0, but warnings are
+            also raised.
 
     Returns:
-        float: Generalized false positive rate. If there are no negative samples
-        in y_true, this will raise an
-        :class:`~sklearn.exceptions.UndefinedMetricWarning` and return 0.
+        float: Generalized false positive rate.
     """
-    idx = (y_true != pos_label)
-    if not np.any(idx):
-        warnings.warn("generalized_fpr is ill-defined because there are no "
-                      "negative samples in y_true.", UndefinedMetricWarning)
-        return 0.
-    if sample_weight is None:
-        return probas_pred[idx].mean()
-    return np.average(probas_pred[idx], weights=sample_weight[idx])
+    _check_zero_division(zero_division)
+    y_true, probas_pred = column_or_1d(y_true), column_or_1d(probas_pred)
 
-def generalized_fnr(y_true, probas_pred, pos_label=1, sample_weight=None):
+    idx = (y_true != pos_label)
+    gfps = probas_pred[idx]
+    if sample_weight is None:
+        gfp = np.array([gfps.sum()])
+        neg = np.array([len(gfps)])
+    else:
+        gfp = np.array([np.dot(gfps, sample_weight[idx])])
+        neg = np.array([sample_weight[idx].sum()])
+    return _prf_divide(gfp, neg, 'generalized FPR', 'negative', None,
+                       ('generalized FPR',), zero_division).item()
+
+def generalized_fnr(y_true, probas_pred, pos_label=1, sample_weight=None,
+                    zero_division='warn'):
     r"""Return the ratio of generalized false negatives to positive examples in
     the dataset, :math:`GFNR = \tfrac{GFN}{P}`.
 
@@ -239,20 +254,26 @@ def generalized_fnr(y_true, probas_pred, pos_label=1, sample_weight=None):
         probas_pred (array-like): Probability estimates of the positive class.
         pos_label (scalar, optional): The label of the positive class.
         sample_weight (array-like, optional): Sample weights.
+        zero_division ('warn', 0 or 1): Sets the value to return when there is a
+            zero division. If set to “warn”, this acts as 0, but warnings are
+            also raised.
 
     Returns:
-        float: Generalized false negative rate. If there are no positive samples
-        in y_true, this will raise an
-        :class:`~sklearn.exceptions.UndefinedMetricWarning` and return 0.
+        float: Generalized false negative rate.
     """
+    _check_zero_division(zero_division)
+    y_true, probas_pred = column_or_1d(y_true), column_or_1d(probas_pred)
+
     idx = (y_true == pos_label)
-    if not np.any(idx):
-        warnings.warn("generalized_fnr is ill-defined because there are no "
-                      "positive samples in y_true.", UndefinedMetricWarning)
-        return 0.
+    gfns = 1 - probas_pred[idx]
     if sample_weight is None:
-        return 1 - probas_pred[idx].mean()
-    return 1 - np.average(probas_pred[idx], weights=sample_weight[idx])
+        gfn = np.array([gfns.sum()])
+        pos = np.array([len(gfns)])
+    else:
+        gfn = np.array([np.dot(gfns, sample_weight[idx])])
+        pos = np.array([sample_weight[idx].sum()])
+    return _prf_divide(gfn, pos, 'generalized FNR', 'positive', None,
+                       ('generalized FNR',), zero_division).item()
 
 
 # ============================ GROUP FAIRNESS ==================================
@@ -291,7 +312,7 @@ def statistical_parity_difference(*y, prot_attr=None, priv_group=1, pos_label=1,
                       pos_label=pos_label, sample_weight=sample_weight)
 
 def disparate_impact_ratio(*y, prot_attr=None, priv_group=1, pos_label=1,
-                           sample_weight=None):
+                           sample_weight=None, zero_division='warn'):
     r"""Ratio of selection rates.
 
     .. math::
@@ -313,6 +334,9 @@ def disparate_impact_ratio(*y, prot_attr=None, priv_group=1, pos_label=1,
         priv_group (scalar, optional): The label of the privileged group.
         pos_label (scalar, optional): The label of the positive class.
         sample_weight (array-like, optional): Sample weights.
+        zero_division ('warn', 0 or 1): Sets the value to return when there is a
+            zero division. If set to “warn”, this acts as 0, but warnings are
+            also raised.
 
     Returns:
         float: Disparate impact.
@@ -322,7 +346,8 @@ def disparate_impact_ratio(*y, prot_attr=None, priv_group=1, pos_label=1,
     """
     rate = base_rate if len(y) == 1 or y[1] is None else selection_rate
     return ratio(rate, *y, prot_attr=prot_attr, priv_group=priv_group,
-                 pos_label=pos_label, sample_weight=sample_weight)
+                 pos_label=pos_label, sample_weight=sample_weight,
+                 zero_division=zero_division)
 
 def equal_opportunity_difference(y_true, y_pred, prot_attr=None, priv_group=1,
                                  pos_label=1, sample_weight=None):
@@ -404,7 +429,7 @@ def average_odds_error(y_true, y_pred, prot_attr=None, priv_group=None,
         prot_attr (array-like, keyword-only): Protected attribute(s). If
             ``None``, all protected attributes in y_true are used.
         priv_group (scalar, optional): The label of the privileged group. If
-            ``None`` and prot_attr is binary, priv_group is irrelevant.
+            prot_attr is binary, this may be ``None``.
         pos_label (scalar, optional): The label of the positive class.
         sample_weight (array-like, optional): Sample weights.
 
@@ -412,7 +437,8 @@ def average_odds_error(y_true, y_pred, prot_attr=None, priv_group=None,
         float: Average odds error.
     """
     if priv_group is None:
-        priv_group = check_groups(y_true, prot_attr=prot_attr, ensure_binary=True)[0][0]
+        priv_group = check_groups(y_true, prot_attr=prot_attr,
+                                  ensure_binary=True)[0][0]
     fpr_diff = -difference(specificity_score, y_true, y_pred,
                            prot_attr=prot_attr, priv_group=priv_group,
                            pos_label=pos_label, sample_weight=sample_weight)
@@ -422,60 +448,123 @@ def average_odds_error(y_true, y_pred, prot_attr=None, priv_group=None,
     return (abs(tpr_diff) + abs(fpr_diff)) / 2
 
 
-def mdss_bias_score(y_true, y_pred, pos_label=1, privileged=True, num_iters = 10):
+def mdss_bias_score(y_true, probas_pred, X=None, subset=None, *, pos_label=1,
+                    scoring='Bernoulli', privileged=True, penalty=1e-17,
+                    **kwargs):
+    """Compute the bias score for a prespecified group of records using a
+    given scoring function.
+
+    Args:
+        y_true (array-like): Ground truth (correct) target values.
+        probas_pred (array-like): Probability estimates of the positive class.
+        X (DataFrame, optional): The dataset (containing the features) that was
+            used to predict `probas_pred`. If not specified, the subset is
+            returned as indices.
+        subset (dict, optional): Mapping of column names to list of values.
+            Samples are included in the subset if they match any value in each
+            of the columns provided. If `X` is not specified, `subset` may
+            be of the form `{'index': [0, 1, ...]}` or `None`. If `None`, score
+            over the full set (note: `penalty` is irrelevant in this case).
+        pos_label (scalar, optional): Label of the positive class.
+        scoring (str or class): One of 'Bernoulli' or 'BerkJones' or
+            subclass of
+            :class:`aif360.metrics.mdss.ScoringFunctions.ScoringFunction`.
+        privileged (bool): Flag for which direction to scan: privileged
+            (``True``) implies negative (observed worse than predicted outcomes)
+            while unprivileged (``False``) implies positive (observed better
+            than predicted outcomes).
+        penalty (scalar): Penalty coefficient. Should be positive. The higher
+            the penalty, the less complex (number of features and feature
+            values) the highest scoring subset that gets returned is.
+        **kwargs: Additional kwargs to be passed to `scoring` (not including
+            `direction`).
+    Returns:
+        float: Bias score for the given group.
+    See also:
+        :func:`mdss_bias_scan`
     """
-    compute the bias score for a prespecified group of records with each observation's likelihood
-        is assumed to Bernoulli distributed and independent.
-    :param y_true (array-like): ground truth (correct) target values
-    :param y_pred (array-like): estimated targets as returned by a classifier
-    :param pos_label (scalar, optional): label of the positive class
-    :param privileged (bool, optional): flag for group to score - privileged group (True) or unprivileged group (False)
-    :param num_iters (scalar, optional): number of iterations
-    """
-    xor_op = privileged ^ bool(pos_label)
-    direction = 'positive' if xor_op else 'negative'
 
-    dummy_subset = dict({'index': range(len(y_true))})
-    expected = pd.Series(y_pred)
-    outcomes = pd.Series(y_true)
-    coordinates = pd.DataFrame(dummy_subset, index=expected.index)
-
-    scoring_function = Bernoulli(direction=direction)
-    scanner = MDSS(scoring_function)
-
-    return scanner.score_current_subset(coordinates, expected, outcomes, dummy_subset, 1e-17)
-
-
-def mdss_bias_scan(y_true, y_pred, dataset=None, pos_label=1, privileged=True, num_iters = 10, penalty = 0.0):
-    """
-    scan to find the highest scoring subset of records. each observation's likelihood is
-        assumed to Bernoulli distributed and independent.
-    :param y_true (array-like): ground truth (correct) target values
-    :param y_pred (array-like): estimated targets as returned by a classifier
-    :param dataset (dataframe optional): the dataset (containing the features) the classifier was trained on. If not specified, the subset is returned as indices.
-    :param pos_label (scalar, optional): label of the positive class
-    :param privileged (bool, optional): flag for group to scan for - privileged group (True) or unprivileged group (False)
-    :param num_iters (scalar, optional): number of iterations
-    :param penalty: penalty coefficient. Should be positive
-    """
-
-    xor_op = privileged ^ bool(pos_label)
-    direction = 'positive' if xor_op else 'negative'
-
-    expected = pd.Series(y_pred)
-    outcomes = pd.Series(y_true)
-
-    if dataset is not None:
-        coordinates = dataset
+    if X is None:
+        X = pd.DataFrame({'index': range(len(y_true))})
     else:
-        dummy_subset = dict({'index': range(len(y_true))})
-        coordinates = pd.DataFrame(dummy_subset, index=expected.index)
+        X = X.reset_index(drop=True)  # match all indices
 
+    expected = pd.Series(probas_pred).reset_index(drop=True)
+    outcomes = pd.Series(y_true == pos_label, dtype=int).reset_index(drop=True)
 
-    scoring_function = Bernoulli(direction=direction)
+    direction = 'negative' if privileged else 'positive'
+    kwargs['direction'] = direction
+
+    if scoring == 'Bernoulli':
+        scoring_function = Bernoulli(**kwargs)
+    elif scoring == 'BerkJones':
+        scoring_function = BerkJones(**kwargs)
+    else:
+        scoring_function = scoring(**kwargs)
     scanner = MDSS(scoring_function)
 
-    return scanner.scan(coordinates, expected, outcomes, penalty, num_iters)
+    return scanner.score_current_subset(X, expected, outcomes, subset or {}, penalty)
+
+@deprecated('Change to new interface - aif360.sklearn.detectors.mdss_detector.bias_scan by version 0.5.0.')
+def mdss_bias_scan(y_true, probas_pred, X=None, *, pos_label=1,
+                   scoring='Bernoulli', privileged=True, n_iter=10,
+                   penalty=1e-17, **kwargs):
+    """Scan to find the highest scoring subset of records.
+
+    Bias scan is a technique to identify bias in predictive models using subset
+    scanning [#zhang16]_.
+    Args:
+        y_true (array-like): Ground truth (correct) target values.
+        probas_pred (array-like): Probability estimates of the positive class.
+        X (dataframe, optional): The dataset (containing the features) that was
+            used to predict `probas_pred`. If not specified, the subset is
+            returned as indices.
+        pos_label (scalar): Label of the positive class.
+        scoring (str or class): One of 'Bernoulli' or 'BerkJones' or
+            subclass of
+            :class:`aif360.metrics.mdss.ScoringFunctions.ScoringFunction`.
+        privileged (bool): Flag for which direction to scan: privileged
+            (``True``) implies negative (observed worse than predicted outcomes)
+            while unprivileged (``False``) implies positive (observed better
+            than predicted outcomes).
+        n_iter (scalar): Number of iterations (random restarts).
+        penalty (scalar): Penalty coefficient. Should be positive. The higher
+            the penalty, the less complex (number of features and feature
+            values) the highest scoring subset that gets returned is.
+        **kwargs: Additional kwargs to be passed to `scoring` (not including
+            `direction`).
+    Returns:
+        tuple:
+            Highest scoring subset and its bias score
+            * **subset** (dict) -- Mapping of features to values defining the
+              highest scoring subset.
+            * **score** (float) -- Bias score for that group.
+    See also:
+        :func:`mdss_bias_score`
+    References:
+        .. [#zhang16] `Zhang, Z. and Neill, D. B., "Identifying significant
+           predictive bias in classifiers," arXiv preprint, 2016.
+           <https://arxiv.org/abs/1611.08292>`_
+    """
+    if X is None:
+        X = pd.DataFrame({'index': range(len(y_true))})
+    else:
+        X = X.reset_index(drop=True)  # match all indices
+
+    expected = pd.Series(probas_pred).reset_index(drop=True)
+    outcomes = pd.Series(y_true == pos_label, dtype=int).reset_index(drop=True)
+
+    direction = 'negative' if privileged else 'positive'
+    kwargs['direction'] = direction
+    if scoring == 'Bernoulli':
+        scoring_function = Bernoulli(**kwargs)
+    elif scoring == 'BerkJones':
+        scoring_function = BerkJones(**kwargs)
+    else:
+        scoring_function = scoring(**kwargs)
+    scanner = MDSS(scoring_function)
+
+    return scanner.scan(X, expected, outcomes, penalty, n_iter)
 
 
 # ========================== INDIVIDUAL FAIRNESS ===============================
@@ -594,7 +683,7 @@ def theil_index(b):
     return generalized_entropy_index(b, alpha=1)
 
 def coefficient_of_variation(b):
-    r"""The coefficient of variation is two times the square root of the
+    r"""The coefficient of variation is the square root of two times the
     :func:`generalized_entropy_index` with :math:`\alpha = 2`.
 
     Args:
@@ -603,7 +692,7 @@ def coefficient_of_variation(b):
     See also:
         :func:`generalized_entropy_index`
     """
-    return 2 * np.sqrt(generalized_entropy_index(b, alpha=2))
+    return np.sqrt(2 * generalized_entropy_index(b, alpha=2))
 
 
 # TODO: use sample_weight?

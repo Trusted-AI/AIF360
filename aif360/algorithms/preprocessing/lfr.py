@@ -145,7 +145,7 @@ class LFR(Transformer):
         dataset_new.labels = transformed_bin_labels
         dataset_new.scores = np.array(transformed_labels)
 
-        return dataset_new    
+        return dataset_new
 
     def fit_transform(self, dataset, maxiter=5000, maxfun=5000, threshold=0.5):
         """Fit and transform methods sequentially.

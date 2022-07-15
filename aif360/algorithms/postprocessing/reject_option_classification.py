@@ -216,9 +216,9 @@ class RejectOptionClassification(Transformer):
         return self.fit(dataset_true, dataset_pred).predict(dataset_pred)
 
 # Function to obtain the pareto frontier
-def _get_pareto_frontier(costs, return_mask = True):  # <- Fastest for many points
+def _get_pareto_frontier(scores, return_mask = True):  # <- Fastest for many points
     """
-    :param costs: An (n_points, n_costs) array
+    :param scores: An (n_points, n_scores) array
     :param return_mask: True to return a mask, False to return integer indices of efficient points.
     :return: An array of indices of pareto-efficient points.
         If return_mask is True, this will be an (n_points, ) boolean array
@@ -226,14 +226,14 @@ def _get_pareto_frontier(costs, return_mask = True):  # <- Fastest for many poin
 
     adapted from: https://stackoverflow.com/questions/32791911/fast-calculation-of-pareto-front-in-python
     """
-    is_efficient = np.arange(costs.shape[0])
-    n_points = costs.shape[0]
+    is_efficient = np.arange(scores.shape[0])
+    n_points = scores.shape[0]
     next_point_index = 0  # Next index in the is_efficient array to search for
 
-    while next_point_index<len(costs):
-        nondominated_point_mask = np.any(costs<=costs[next_point_index], axis=1)
+    while next_point_index<len(scores):
+        nondominated_point_mask = np.any(scores>=scores[next_point_index], axis=1)
         is_efficient = is_efficient[nondominated_point_mask]  # Remove dominated points
-        costs = costs[nondominated_point_mask]
+        scores = scores[nondominated_point_mask]
         next_point_index = np.sum(nondominated_point_mask[:next_point_index])+1
 
     if return_mask:
