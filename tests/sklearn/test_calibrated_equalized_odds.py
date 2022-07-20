@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 import pytest
 import sklearn
 from sklearn.linear_model import LogisticRegression
@@ -7,6 +8,16 @@ from sklearn.model_selection import train_test_split
 from aif360.algorithms.postprocessing import CalibratedEqOddsPostprocessing
 from aif360.sklearn.postprocessing import CalibratedEqualizedOdds, PostProcessingMeta
 
+
+def test_calib_eq_odds_priv_group():
+    """Test the behavior of the `priv_group` option."""
+    y = pd.DataFrame([[0, 0, 0], [1, 1, 0], [0, 2, 1], [1, 0, 1]], columns=['a', 'b', 'y'])
+    y = y.set_index(['a', 'b']).squeeze()
+    y_pred = np.array([[0.5, 0.5], [0.3, 0.7], [0.8, 0.2], [0.1, 0.9]])
+    assert CalibratedEqualizedOdds('a').fit(y_pred, y).priv_group_ == 1
+    with pytest.raises(ValueError):
+        CalibratedEqualizedOdds('b').fit(y_pred, y)
+    assert CalibratedEqualizedOdds('b').fit(y_pred, y, priv_group=0)
 
 def test_calib_eq_odds_sex_weighted(old_adult, new_adult):
     """Test that the old and new CalibratedEqualizedOdds produce the same mix
