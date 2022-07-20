@@ -35,13 +35,15 @@ class CalibratedEqualizedOdds(BaseEstimator, ClassifierMixin):
     Attributes:
         prot_attr_ (str or list(str)): Protected attribute(s) used for post-
             processing.
-        groups_ (array, shape (2,)): A list of group labels known to the
-            classifier. Note: this algorithm require a binary division of the
-            data.
+        groups_ (array, shape (n_groups,)): A list of group labels known to the
+            classifier.
         classes_ (array, shape (num_classes,)): A list of class labels known to
             the classifier. Note: this algorithm treats all non-positive
             outcomes as negative (binary classification only).
         pos_label_ (scalar): The label of the positive class.
+        priv_group_ (scalar): The label of the privileged group. If only two
+            groups are present, this is taken to be `self.groups_[1]` without
+            loss of generality.
         mix_rates_ (array, shape (2,)): The interpolation parameters -- the
             probability of randomly returning the group's base rate. The group
             for which the cost function is higher is set to 0.
@@ -86,7 +88,8 @@ class CalibratedEqualizedOdds(BaseEstimator, ClassifierMixin):
             raise ValueError("`cost_constraint` must be one of: 'fpr', 'fnr', "
                              "or 'weighted'")
 
-    def fit(self, X, y, labels=None, pos_label=1, sample_weight=None):
+    def fit(self, X, y, labels=None, pos_label=1, priv_group=None,
+            sample_weight=None):
         """Compute the mixing rates required to satisfy the cost constraint.
 
         Args:
@@ -97,6 +100,9 @@ class CalibratedEqualizedOdds(BaseEstimator, ClassifierMixin):
                 match the order of columns in X if provided. By default,
                 all labels in y are used in sorted order.
             pos_label (scalar, optional): The label of the positive class.
+            priv_group (scalar, optional): The label of the privileged group.
+                All other groups will be treated as unprivileged. If ``None``,
+                the protected attribute must be binary.
             sample_weight (array-like, optional): Sample weights.
 
         Returns:
@@ -104,10 +110,11 @@ class CalibratedEqualizedOdds(BaseEstimator, ClassifierMixin):
         """
         X, y, sample_weight = check_inputs(X, y, sample_weight)
         groups, self.prot_attr_ = check_groups(y, self.prot_attr,
-                                               ensure_binary=True)
+                                               ensure_binary=priv_group is None)
         self.classes_ = np.array(labels) if labels is not None else np.unique(y)
         self.groups_ = np.unique(groups)
         self.pos_label_ = pos_label
+        self.priv_group_ = self.groups_[1] if priv_group is None else priv_group
 
         if len(self.classes_) != 2:
             raise ValueError('Only binary classification is supported.')
@@ -127,14 +134,14 @@ class CalibratedEqualizedOdds(BaseEstimator, ClassifierMixin):
             X = X[:, pos_idx]
 
         # local function to evaluate corresponding metric
-        def _eval(func, grp_idx, trivial=False):
-            idx = (groups == self.groups_[grp_idx])
-            pred = np.full_like(X, self.base_rates_[grp_idx]) if trivial else X
+        def _eval(func, priv, trivial=False):
+            idx = (groups != self.priv_group_) ^ priv
+            pred = np.full_like(X, self.base_rates_[int(priv)]) if trivial else X
             return func(y[idx], pred[idx], pos_label, sample_weight[idx])
 
-        self.base_rates_ = [_eval(base_rate, i) for i in range(2)]
+        self.base_rates_ = [_eval(base_rate, p) for p in (False, True)]
 
-        costs = np.array([[_eval(self._weighted_cost, i, t) for i in range(2)]
+        costs = np.array([[_eval(self._weighted_cost, p, t) for p in (False, True)]
                           for t in (False, True)])
         self.mix_rates_ = [
                 (costs[0, 1] - costs[0, 0]) / (costs[1, 0] - costs[0, 0]),
@@ -159,23 +166,25 @@ class CalibratedEqualizedOdds(BaseEstimator, ClassifierMixin):
         """
         check_is_fitted(self, 'mix_rates_')
         rng = check_random_state(self.random_state)
-
         groups, _ = check_groups(X, self.prot_attr_)
-        if not set(np.unique(groups)) <= set(self.groups_):
-            raise ValueError('The protected groups from X:\n{}\ndo not '
-                             'match those from the training set:\n{}'.format(
-                                     np.unique(groups), self.groups_))
 
         pos_idx = np.nonzero(self.classes_ == self.pos_label_)[0][0]
         X = X.iloc[:, pos_idx]
 
         yt = np.empty_like(X)
         for grp_idx in range(2):
-            i = (groups == self.groups_[grp_idx])
+            i = (groups != self.priv_group_) ^ bool(grp_idx)
             to_replace = (rng.rand(sum(i)) < self.mix_rates_[grp_idx])
             new_preds = X[i].copy()
             new_preds[to_replace] = self.base_rates_[grp_idx]
             yt[i] = new_preds
+        # yt = np.array(X.iloc[:, pos_idx])
+
+        # i = (groups == self.priv_group_).astype(int)
+        # new_preds = np.take(self.base_rates_, i)
+        # to_replace = (rng.random_sample(yt.shape+(1,)) < self.mix_rates_)
+        # to_replace = np.take_along_axis(to_replace, i[:, np.newaxis], axis=1)
+        # yt[to_replace.squeeze()] = new_preds[to_replace.squeeze()]
 
         return np.c_[1 - yt, yt] if pos_idx == 1 else np.c_[yt, 1 - yt]
 

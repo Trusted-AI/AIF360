@@ -127,9 +127,9 @@ class PostProcessingMeta(BaseEstimator, MetaEstimatorMixin):
         y_score = pd.DataFrame(y_score, index=X_post.index).squeeze('columns')
         fit_params = fit_params.copy()
         fit_params.update(labels=self.estimator_.classes_)
-        self.postprocessor_.fit(y_score, y_post, sample_weight=sw_post
-                                if sample_weight is not None else None,
-                                **fit_params)
+        if sample_weight is not None:
+            fit_params.update(sample_weight=sw_post)
+        self.postprocessor_.fit(y_score, y_post, **fit_params)
         return self
 
     @if_delegate_has_method('postprocessor_')
@@ -220,10 +220,9 @@ class PostProcessingMeta(BaseEstimator, MetaEstimatorMixin):
         y_score = (self.estimator_.predict_proba(X) if use_proba else
                    self.estimator_.predict(X))
         y_score = pd.DataFrame(y_score, index=X.index).squeeze('columns')
-        if sample_weight is None:
-            return self.postprocessor_.score(y_score, y)
-        return self.postprocessor_.score(y_score, y,
-                                         sample_weight=sample_weight)
+        score_params = ({} if sample_weight is None else
+                        {'sample_weight': sample_weight})
+        return self.postprocessor_.score(y_score, y, **score_params)
 
 
 __all__ = [
