@@ -40,7 +40,9 @@ class CalibratedEqualizedOdds(BaseEstimator, ClassifierMixin):
         classes_ (array, shape (num_classes,)): A list of class labels known to
             the classifier. Note: this algorithm treats all non-positive
             outcomes as negative (binary classification only).
-        pos_label_ (scalar): The label of the positive class.
+        pos_label_ (scalar): The label of the positive class. If
+            `self.cost_constraint` is `'weighted'`, this is taken to be
+            `self.classes_[1]` without loss of generality.
         priv_group_ (scalar): The label of the privileged group. If only two
             groups are present, this is taken to be `self.groups_[1]` without
             loss of generality.
@@ -88,7 +90,7 @@ class CalibratedEqualizedOdds(BaseEstimator, ClassifierMixin):
             raise ValueError("`cost_constraint` must be one of: 'fpr', 'fnr', "
                              "or 'weighted'")
 
-    def fit(self, X, y, labels=None, pos_label=1, priv_group=None,
+    def fit(self, X, y, labels=None, pos_label=None, priv_group=None,
             sample_weight=None):
         """Compute the mixing rates required to satisfy the cost constraint.
 
@@ -99,7 +101,8 @@ class CalibratedEqualizedOdds(BaseEstimator, ClassifierMixin):
             labels (list, optional): The ordered set of labels values. Must
                 match the order of columns in X if provided. By default,
                 all labels in y are used in sorted order.
-            pos_label (scalar, optional): The label of the positive class.
+            pos_label (scalar, optional): The label of the positive class. If
+                ``None``, the cost_constraint must be `'weighted'`.
             priv_group (scalar, optional): The label of the privileged group.
                 All other groups will be treated as unprivileged. If ``None``,
                 the protected attribute must be binary.
@@ -113,7 +116,7 @@ class CalibratedEqualizedOdds(BaseEstimator, ClassifierMixin):
                                                ensure_binary=priv_group is None)
         self.classes_ = np.array(labels) if labels is not None else np.unique(y)
         self.groups_ = np.unique(groups)
-        self.pos_label_ = pos_label
+        self.pos_label_ = self.classes_[1] if pos_label is None else pos_label
         self.priv_group_ = self.groups_[1] if priv_group is None else priv_group
 
         if len(self.classes_) != 2:
@@ -123,7 +126,10 @@ class CalibratedEqualizedOdds(BaseEstimator, ClassifierMixin):
                     ' contain one column per class. Got: {} columns.'.format(
                             X.shape[1]))
 
-        if pos_label not in self.classes_:
+        if pos_label is None and self.cost_constraint != 'weighted':
+            raise ValueError("pos_label must be supplied if "
+                             "cost_constraint='fpr' or 'fnr'.")
+        if self.pos_label_ not in self.classes_:
             raise ValueError('pos_label={} is not in the set of labels. The '
                     'valid values are:\n{}'.format(pos_label, self.classes_))
 
@@ -137,7 +143,7 @@ class CalibratedEqualizedOdds(BaseEstimator, ClassifierMixin):
         def _eval(func, priv, trivial=False):
             idx = (groups != self.priv_group_) ^ priv
             pred = np.full_like(X, self.base_rates_[int(priv)]) if trivial else X
-            return func(y[idx], pred[idx], pos_label, sample_weight[idx])
+            return func(y[idx], pred[idx], self.pos_label_, sample_weight[idx])
 
         self.base_rates_ = [_eval(base_rate, p) for p in (False, True)]
 
