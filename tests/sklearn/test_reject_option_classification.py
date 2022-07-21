@@ -150,7 +150,7 @@ def test_pred_proba():
     mod = LogisticRegression()
     mod.fit(X_train, y_train)
 
-    pp = RejectOptionClassifierCV(prot, scoring='disparate_impact', step=0.02, n_jobs=-1)
+    pp = RejectOptionClassifierCV(protected, scoring='disparate_impact', step=0.02, n_jobs=-1)
     roc = PostProcessingMeta(estimator=mod, postprocessor=pp, random_state=42)
     roc.fit(X_train, y_train)
     y_pred_CEO = roc.predict(X_test)
