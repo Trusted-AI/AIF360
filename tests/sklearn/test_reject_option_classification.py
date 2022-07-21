@@ -11,6 +11,8 @@ from aif360.algorithms.postprocessing import RejectOptionClassification
 from aif360.sklearn.postprocessing import RejectOptionClassifier, RejectOptionClassifierCV, PostProcessingMeta
 from aif360.sklearn.metrics import generalized_entropy_error
 
+from aif360.sklearn.datasets import fetch_adult
+
 
 @pytest.fixture(scope='module')
 def log_reg_probs(new_adult):
@@ -135,3 +137,25 @@ def test_rej_opt_clf_custom_scoring(new_adult):
     pp.fit(X, y, sample_weight=sample_weight)
     res = pd.DataFrame(pp.postprocessor_.cv_results_)
     assert not res.isna().any(axis=None)
+
+def test_pred_proba():
+    """Test if predict_proba works."""
+
+    X, y, _ = fetch_adult(numeric_only=True, binary_race=True)
+    protected = 'sex'
+    priv, unpriv = [{protected: 1}], [{protected: 0}]
+
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=1234567)
+
+    mod = LogisticRegression()
+    mod.fit(X_train, y_train)
+
+    pp = RejectOptionClassifierCV(prot, scoring='disparate_impact', step=0.02, n_jobs=-1)
+    roc = PostProcessingMeta(estimator=mod, postprocessor=pp, random_state=42)
+    roc.fit(X_train, y_train)
+    y_pred_CEO = roc.predict(X_test)
+    y_pred_CEO_proba = roc.predict_proba(X_test)[:, 1]
+
+    thresh = roc.postprocessor_.best_params_['threshold']
+
+    assert sum(np.equal(np.where(y_pred_CEO_proba >= thresh, 1, 0), y_pred_CEO)) == len(y_pred_CEO)

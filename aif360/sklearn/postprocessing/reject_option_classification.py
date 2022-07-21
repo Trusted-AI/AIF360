@@ -228,8 +228,16 @@ class RejectOptionClassifier(BaseEstimator, ClassifierMixin):
         # indices of critical region around the classification boundary
         crit_region = (abs(X - self.threshold) < self.margin)
 
-        # replace labels in critical region
-        X[crit_region] = 2*self.threshold - X[crit_region]
+        below_threshold = (X - self.threshold) < 0
+        above_threshold = (X - self.threshold) > 0
+
+        # flip labels
+
+        # priv + above -> below
+        X[crit_region & (groups == self.priv_group_) & above_threshold] = 2*self.threshold - X[crit_region & (groups == self.priv_group_) & above_threshold]
+
+        # unpriv + below -> above
+        X[crit_region & (groups != self.priv_group_) & below_threshold] = 2*self.threshold - X[crit_region & (groups != self.priv_group_) & below_threshold]
         
         yt = X.copy()
 
