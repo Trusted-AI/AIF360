@@ -19,6 +19,23 @@ def test_calib_eq_odds_priv_group():
         CalibratedEqualizedOdds('b').fit(y_pred, y)
     assert CalibratedEqualizedOdds('b').fit(y_pred, y, priv_group=0)
 
+def test_calib_eq_odds_pos_label(new_adult):
+    """Test the behavior of the `pos_label` option."""
+    X, y, sample_weight = new_adult
+    logreg = LogisticRegression(solver='lbfgs', max_iter=500)
+    y_pred = logreg.fit(X, y, sample_weight=sample_weight).predict_proba(X)
+    ceo = CalibratedEqualizedOdds('sex')
+    p0 = ceo.fit(y_pred, y, sample_weight=sample_weight, pos_label=0).mix_rates_
+    p1 = ceo.fit(y_pred, y, sample_weight=sample_weight, pos_label=1).mix_rates_
+    assert np.allclose(p0, p1)
+
+    ceo = CalibratedEqualizedOdds('sex', cost_constraint='fpr')
+    with pytest.raises(ValueError):
+        ceo.fit(y_pred, y, sample_weight=sample_weight)
+    p0 = ceo.fit(y_pred, y, sample_weight=sample_weight, pos_label=0).mix_rates_
+    p1 = ceo.fit(y_pred, y, sample_weight=sample_weight, pos_label=1).mix_rates_
+    assert not np.allclose(p0, p1)
+
 def test_calib_eq_odds_sex_weighted(old_adult, new_adult):
     """Test that the old and new CalibratedEqualizedOdds produce the same mix
     rates.
