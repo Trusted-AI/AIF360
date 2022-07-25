@@ -11,12 +11,10 @@ from aif360.algorithms.postprocessing import RejectOptionClassification
 from aif360.sklearn.postprocessing import RejectOptionClassifier, RejectOptionClassifierCV, PostProcessingMeta
 from aif360.sklearn.metrics import generalized_entropy_error
 
-from aif360.sklearn.datasets import fetch_adult
-
 
 @pytest.fixture(scope='module')
 def log_reg_probs(new_adult):
-    """Train a LogisticRegression model and return val and test pred probs."""
+    """Train a LogisticRegression model and return predicted probabilities."""
     X, y, sample_weight = new_adult
     lr = LogisticRegression(solver='lbfgs', max_iter=500)
     lr.fit(X, y, sample_weight=sample_weight)
@@ -24,7 +22,7 @@ def log_reg_probs(new_adult):
 
 @pytest.fixture(scope='module')
 def old_ROC(old_adult, log_reg_probs):
-    """Fit old ROC on test."""
+    """Fit old ROC."""
     old_adult_pred = old_adult.copy()
     old_adult_pred.scores = log_reg_probs[:, [1]]
 
@@ -37,6 +35,7 @@ def old_ROC(old_adult, log_reg_probs):
 
 @pytest.fixture(scope='module')
 def new_ROC(new_adult, log_reg_probs):
+    """Fit new ROC."""
     _, y, _ = new_adult
     y_pred = pd.DataFrame(log_reg_probs, index=y.index)
 
@@ -63,6 +62,24 @@ def test_rej_opt_clf_predict(new_adult, old_adult, log_reg_probs, old_ROC):
     y_postpred = ROC.fit_predict(y_pred, y)
 
     assert np.allclose(y_postpred, old_ROC.predict(old_adult_pred).labels.ravel())
+
+def test_rej_opt_clf_predict_proba(new_adult, log_reg_probs, new_ROC):
+    """Test RejectOptionClassifier predict_proba + threshold matches predict."""
+    _, y, _ = new_adult
+    y_pred = pd.DataFrame(log_reg_probs, index=y.index)
+    y_postpred = new_ROC.predict(y_pred)
+    y_postproba = new_ROC.predict_proba(y_pred)[:, 1]
+
+    threshold = new_ROC.best_estimator_.threshold
+    assert all((y_postproba > threshold).astype(int) == y_postpred)
+
+    # test pos_label=0
+    y_pred = pd.DataFrame(log_reg_probs[:, ::-1], index=y.index)
+    new_ROC.fit(y_pred, 1-y, pos_label=0)
+
+    assert threshold == new_ROC.best_estimator_.threshold
+    assert all(y_postpred == 1-new_ROC.predict(y_pred))
+    assert all(y_postproba == new_ROC.predict_proba(y_pred)[:, 0])
 
 @pytest.mark.filterwarnings('error', category=RuntimeWarning)
 def test_rej_opt_clf_errors():
@@ -137,25 +154,3 @@ def test_rej_opt_clf_custom_scoring(new_adult):
     pp.fit(X, y, sample_weight=sample_weight)
     res = pd.DataFrame(pp.postprocessor_.cv_results_)
     assert not res.isna().any(axis=None)
-
-def test_pred_proba():
-    """Test if predict_proba works."""
-
-    X, y, _ = fetch_adult(numeric_only=True, binary_race=True)
-    protected = 'sex'
-    priv, unpriv = [{protected: 1}], [{protected: 0}]
-
-    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=1234567)
-
-    mod = LogisticRegression()
-    mod.fit(X_train, y_train)
-
-    pp = RejectOptionClassifierCV(protected, scoring='disparate_impact', step=0.02, n_jobs=-1)
-    roc = PostProcessingMeta(estimator=mod, postprocessor=pp, random_state=42)
-    roc.fit(X_train, y_train)
-    y_pred_CEO = roc.predict(X_test)
-    y_pred_CEO_proba = roc.predict_proba(X_test)[:, 1]
-
-    thresh = roc.postprocessor_.best_params_['threshold']
-
-    assert sum(np.equal(np.where(y_pred_CEO_proba >= thresh, 1, 0), y_pred_CEO)) == len(y_pred_CEO)

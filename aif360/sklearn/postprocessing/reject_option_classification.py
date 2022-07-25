@@ -147,6 +147,42 @@ class RejectOptionClassifier(BaseEstimator, ClassifierMixin):
 
         return self
 
+    def predict_proba(self, X):
+        """Probability estimates.
+
+        The returned estimates for all classes are ordered by the label of
+        classes.
+
+        Args:
+            X (pandas.DataFrame): Probability estimates of the targets as
+                returned by a ``predict_proba()`` call or equivalent. Note: must
+                include protected attributes in the index.
+        Returns:
+            numpy.ndarray: Returns the probability of the sample for each class
+            in the model, where classes are ordered as they are in
+            ``self.classes_``.
+        """
+        check_is_fitted(self, 'pos_label_')
+
+        groups, _ = check_groups(X, self.prot_attr_)
+        if len(self.classes_) != X.shape[1]:
+            raise ValueError('X should contain one column per class. Got: {} '
+                             'columns.'.format(X.shape[1]))
+
+        pos_idx = np.nonzero(self.classes_ == self.pos_label_)[0][0]
+        yt = X.iloc[:, pos_idx].to_numpy().copy()
+
+        # indices of critical region around the classification boundary
+        crit_above = (self.margin > yt-self.threshold) & (yt > self.threshold)
+        crit_below = (-self.margin < yt-self.threshold) & (yt < self.threshold)
+
+        # flip labels: priv + above -> below, unpriv + below -> above
+        priv = (groups == self.priv_group_)
+        flip = (priv & crit_above) | (~priv & crit_below)
+        yt[flip] = 2*self.threshold - yt[flip]
+
+        return np.c_[1 - yt, yt] if pos_idx == 1 else np.c_[yt, 1 - yt]
+
     def predict(self, X):
         """Predict class labels for the given scores.
 
@@ -158,28 +194,10 @@ class RejectOptionClassifier(BaseEstimator, ClassifierMixin):
         Returns:
             numpy.ndarray: Predicted class label per sample.
         """
-        check_is_fitted(self, 'pos_label_')
-
-        groups, _ = check_groups(X, self.prot_attr_)
-        if len(self.classes_) != X.shape[1]:
-            raise ValueError('X should contain one column per class. Got: {} '
-                             'columns.'.format(X.shape[1]))
-
+        scores = self.predict_proba(X)
         pos_idx = np.nonzero(self.classes_ == self.pos_label_)[0][0]
-        X = X.iloc[:, pos_idx].to_numpy()
-
-        yt = (X > self.threshold).astype(int)
-        y_pred = self.classes_[yt if pos_idx == 1 else 1 - yt]
-
-        # indices of critical region around the classification boundary
-        crit_region = (abs(X - self.threshold) < self.margin)
-
-        # replace labels in critical region
-        neg_label = self.classes_[(pos_idx + 1) % 2]
-        y_pred[crit_region & (groups == self.priv_group_)] = neg_label
-        y_pred[crit_region & (groups != self.priv_group_)] = self.pos_label_
-
-        return y_pred
+        y_pred = (scores[:, pos_idx] > self.threshold).astype(int)
+        return self.classes_[y_pred if pos_idx == 1 else 1 - y_pred]
 
     def fit_predict(self, X, y=None, **fit_params):
         """Predict class labels for the given scores.
@@ -201,47 +219,6 @@ class RejectOptionClassifier(BaseEstimator, ClassifierMixin):
             numpy.ndarray: Predicted class label per sample.
         """
         return self.fit(X, y, **fit_params).predict(X)
-
-    
-    def predict_proba(self, X):
-        """Predict class labels for the given scores.
-        Args:
-            X (pandas.DataFrame): Probability estimates of the targets as
-                returned by a ``predict_proba()`` call or equivalent. Note: must
-                include protected attributes in the index.
-        Returns:
-            numpy.ndarray: Predicted class label per sample.
-        """
-        check_is_fitted(self, 'pos_label_')
-
-        groups, _ = check_groups(X, self.prot_attr_)
-        if len(self.classes_) != X.shape[1]:
-            raise ValueError('X should contain one column per class. Got: {} '
-                             'columns.'.format(X.shape[1]))
-
-        pos_idx = np.nonzero(self.classes_ == self.pos_label_)[0][0]
-        X = X.iloc[:, pos_idx].to_numpy()
-
-        # yt = (X > self.threshold) #.astype(int) # need to keep as a float, not a binary 0/1
-        # y_pred = self.classes_[yt if pos_idx == 1 else 1 - yt]
-
-        # indices of critical region around the classification boundary
-        crit_region = (abs(X - self.threshold) < self.margin)
-
-        below_threshold = (X - self.threshold) < 0
-        above_threshold = (X - self.threshold) > 0
-
-        # flip labels
-
-        # priv + above -> below
-        X[crit_region & (groups == self.priv_group_) & above_threshold] = 2*self.threshold - X[crit_region & (groups == self.priv_group_) & above_threshold]
-
-        # unpriv + below -> above
-        X[crit_region & (groups != self.priv_group_) & below_threshold] = 2*self.threshold - X[crit_region & (groups != self.priv_group_) & below_threshold]
-        
-        yt = X.copy()
-
-        return np.c_[1 - yt, yt] if pos_idx == 1 else np.c_[yt, 1 - yt]
 
 
 class RejectOptionClassifierCV(GridSearchCV):
