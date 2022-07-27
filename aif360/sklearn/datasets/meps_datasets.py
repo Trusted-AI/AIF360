@@ -31,6 +31,10 @@ def fetch_meps(panel, *, accept_terms=None, data_home=None, cache=True,
                dropcols=None, numeric_only=False, dropna=True):
     """Load the Medical Expenditure Panel Survey (MEPS) dataset.
 
+    Note:
+        For descriptions of the dataset features, see the `data codebook
+        <https://meps.ahrq.gov/mepsweb/data_stats/download_data_files_codebook.jsp?PUFId=H181>`_.
+
     Args:
         panel ({19, 20, 21}): Panel number (only 19, 20, and 21 are currently
             supported).
@@ -99,7 +103,13 @@ def fetch_meps(panel, *, accept_terms=None, data_home=None, cache=True,
                 'DIABDX', 'JTPAIN', 'ARTHDX', 'ARTHTYPE', 'ASTHDX', 'ADHDADDX',
                 'PREGNT', 'WLKLIM', 'ACTLIM', 'SOCLIM', 'COGLIM', 'DFHEAR42',
                 'DFSEE42', 'ADSMOK42', 'PHQ242', 'EMPST', 'POVCAT', 'INSCOV',
-                'EDUCYR', 'HIDEG']  # TODO: why are these included here but not in usecols?
+    # NOTE: education tracking seems to have changed between panels. 'EDUYRDG'
+    # was used for panel 19, 'EDUCYR' and 'HIDEG' were used for panels 20 & 21.
+    # User may change usecols to include these manually.
+                'EDUCYR', 'HIDEG']
+    if panel == 19:
+        cat_cols += ['EDUYRDG']
+
     for col in cat_cols:
         df[col] = df[col].astype('category')
         thresh = 0 if col in ['REGION', 'MARRY', 'ASTHDX'] else -1
@@ -116,8 +126,6 @@ def fetch_meps(panel, *, accept_terms=None, data_home=None, cache=True,
     df['UTILIZATION'] = pd.cut(util, [min(util)-1, 10, max(util)+1], right=False,
                                labels=['< 10 Visits', '>= 10 Visits'])#['low', 'high'])
 
-    # TODO: let standardize_dataset handle dropna (see above todo re: extra cols)
-    df = df.dropna()
     return standardize_dataset(df, prot_attr='RACE', target='UTILIZATION',
                                sample_weight='PERWT', usecols=usecols,
                                dropcols=dropcols, numeric_only=numeric_only,

@@ -241,20 +241,28 @@ def test_cache_meps(panel):
     [(19, MEPSDataset19), (20, MEPSDataset20), (21, MEPSDataset21)])
 def test_meps_matches_old(panel, cls):
     """Tests MEPS datasets match original versions."""
-    meps = fetch_meps(panel, accept_terms=True)
+    usecols = ['REGION', 'AGE', 'SEX', 'RACE', 'MARRY', 'FTSTU',
+               'ACTDTY', 'HONRDC', 'RTHLTH', 'MNHLTH', 'HIBPDX',
+               'CHDDX', 'ANGIDX', 'MIDX', 'OHRTDX', 'STRKDX', 'EMPHDX',
+               'CHBRON', 'CHOLDX', 'CANCERDX', 'DIABDX', 'JTPAIN',
+               'ARTHDX', 'ARTHTYPE', 'ASTHDX', 'ADHDADDX', 'PREGNT',
+               'WLKLIM', 'ACTLIM', 'SOCLIM', 'COGLIM', 'DFHEAR42',
+               'DFSEE42', 'ADSMOK42', 'PCS42', 'MCS42', 'K6SUM42',
+               'PHQ242', 'EMPST', 'POVCAT', 'INSCOV']
+    educols = ['EDUCYR', 'HIDEG']
+    meps = fetch_meps(panel, accept_terms=True, usecols=usecols + educols)
     assert len(meps) == 3
     meps.X.RACE = meps.X.RACE.factorize(sort=True)[0]
     MEPS = cls()
-    assert_array_equal(pd.get_dummies(meps.X), MEPS.features)
+    assert_array_equal(pd.get_dummies(meps.X.drop(columns=educols)), MEPS.features)
     assert_array_equal(meps.y.factorize(sort=True)[0], MEPS.labels.ravel())
 
 @pytest.mark.parametrize("panel", [19, 20, 21])
 def test_fetch_meps(panel):
     """Tests MEPS datasets shapes with various options."""
-    # BUG: dropna does nothing currently
-    # meps = fetch_meps(panel, accept_terms=True)
-    # meps_dropna = fetch_meps(panel, dropna=False)
-    # assert meps_dropna.shape[0] < meps.shape[0]
+    meps = fetch_meps(panel, accept_terms=True)
+    meps_dropna = fetch_meps(panel, dropna=False)
+    assert meps_dropna.shape[0] < meps.shape[0]
     meps_numeric = fetch_meps(panel, accept_terms=True, numeric_only=True)
     assert meps_numeric.X.shape[1] == 5
 
