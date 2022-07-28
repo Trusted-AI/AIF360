@@ -260,9 +260,9 @@ def test_meps_matches_old(panel, cls):
 @pytest.mark.parametrize("panel", [19, 20, 21])
 def test_fetch_meps(panel):
     """Tests MEPS datasets shapes with various options."""
-    meps = fetch_meps(panel, accept_terms=True)
-    meps_dropna = fetch_meps(panel, dropna=False)
-    assert meps_dropna.shape[0] < meps.shape[0]
+    meps = fetch_meps(panel, accept_terms=True, dropna=False)
+    meps_dropna = fetch_meps(panel, dropna=True)
+    assert meps_dropna.X.shape[0] < meps.X.shape[0]
     meps_numeric = fetch_meps(panel, accept_terms=True, numeric_only=True)
     assert meps_numeric.X.shape[1] == 5
 
