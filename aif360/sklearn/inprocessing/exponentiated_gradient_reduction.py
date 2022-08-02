@@ -28,9 +28,10 @@ class ExponentiatedGradientReduction(BaseEstimator, ClassifierMixin):
                  estimator,
                  constraints,
                  eps=0.01,
-                 T=50,
+                 max_iter=50,
                  nu=None,
-                 eta_mul=2.0,
+                 eta0=2.0,
+                 run_linprog_step=True,
                  drop_prot_attr=True):
         """
         Args:
@@ -53,11 +54,14 @@ class ExponentiatedGradientReduction(BaseEstimator, ClassifierMixin):
                 guaranteed to have the error within ``2*best_gap`` of the best
                 error under constraint eps; the constraint violation is at most
                 ``2*(eps+best_gap)``.
-            T: Maximum number of iterations.
+            max_iter: Maximum number of iterations.
             nu: Convergence threshold for the duality gap, corresponding to a
                 conservative automatic setting based on the statistical
                 uncertainty in measuring classification error.
-            eta_mul: Initial setting of the learning rate.
+            eta0: Initial setting of the learning rate.
+            run_linprog_step: if True each step of exponentiated gradient is
+                              followed by the saddle point optimization over the
+                              convex hull of classifiers returned so far;
             drop_prot_attr: Boolean flag indicating whether to drop protected
                 attributes from training data.
         """
@@ -65,9 +69,10 @@ class ExponentiatedGradientReduction(BaseEstimator, ClassifierMixin):
         self.estimator = estimator
         self.constraints = constraints
         self.eps = eps
-        self.T = T
+        self.max_iter = max_iter
         self.nu = nu
-        self.eta_mul = eta_mul
+        self.eta0 = eta0
+        self.run_linprog_step = run_linprog_step
         self.drop_prot_attr = drop_prot_attr
 
     def fit(self, X, y):
@@ -83,11 +88,15 @@ class ExponentiatedGradientReduction(BaseEstimator, ClassifierMixin):
         self.estimator_ = clone(self.estimator)
 
         moments = {
+            "BoundedGroupLoss": red.BoundedGroupLoss,
             "DemographicParity": red.DemographicParity,
             "EqualizedOdds": red.EqualizedOdds,
-            "TruePositiveRateDifference": red.TruePositiveRateDifference,
-            "ErrorRateRatio": red.ErrorRateRatio
+            "ErrorRateParity": red.ErrorRateParity,
+            "FalsePositiveRateParity": red.FalsePositiveRateParity,
+            "TruePositiveRateParity": red.TruePositiveRateParity,
+            "UtilityParity": red.UtilityParity    
         }
+
         if isinstance(self.constraints, str):
             if self.constraints not in moments:
                 raise ValueError(f"Constraint not recognized: {self.constraints}")
@@ -98,7 +107,7 @@ class ExponentiatedGradientReduction(BaseEstimator, ClassifierMixin):
             raise ValueError("constraints must be a string or Moment object.")
 
         self.model_ = red.ExponentiatedGradient(self.estimator_, self.moment_,
-                eps=self.eps, T=self.T, nu=self.nu, eta_mul=self.eta_mul)
+                eps=self.eps, max_iter=self.max_iter, nu=self.nu, eta0=self.eta0)
 
         A = X[self.prot_attr]
 
