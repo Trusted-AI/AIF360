@@ -27,12 +27,13 @@ class ExponentiatedGradientReduction(Transformer):
            <https://arxiv.org/abs/1803.02453>`_
     """
     def __init__(self,
+                 prot_attr,
                  estimator,
                  constraints,
                  eps=0.01,
-                 T=50,
+                 max_iter=50,
                  nu=None,
-                 eta_mul=2.0,
+                 eta0=2.0,
                  drop_prot_attr=True):
         """
         Args:
@@ -67,7 +68,7 @@ class ExponentiatedGradientReduction(Transformer):
         #init model, set prot_attr during fit
         prot_attr = []
         self.model = skExpGradRed(prot_attr=prot_attr, estimator=estimator,
-            constraints=constraints, eps=eps, T=T, nu=nu, eta_mul=eta_mul,
+            constraints=constraints, eps=eps, max_iter=max_iter, nu=nu, eta0=eta0,
             drop_prot_attr=drop_prot_attr)
 
 

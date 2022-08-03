@@ -121,7 +121,7 @@ class GridSearchReduction(BaseEstimator, ClassifierMixin):
         if isinstance(self.constraints, str):
             if self.constraints not in moments:
                 raise ValueError(f"Constraint not recognized: {self.constraints}")
-            if self.constraints == "GroupLoss":
+            if self.constraints == "BoundedGroupLoss":
                 losses = {
                     "ZeroOne": red.ZeroOneLoss,
                     "Square": red.SquareLoss,
