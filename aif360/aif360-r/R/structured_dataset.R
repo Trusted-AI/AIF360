@@ -15,7 +15,7 @@
 #' \dontrun{
 #' load_aif360_lib()
 #' # Input dataset
-#' data <- data.frame("feat" = c(0,0,1,1,1,1,0,1,1,0), "label" = c(1,0,2,1,0,0,2,0,2,1))
+#' data <- data.frame("feat" = c(0,0,1,1,1,1,0,1,1,0), "label" = c(1,0,0.5,1,0,0,0.5,0,0.5,1))
 #' # Create aif structured dataset
 #' act <- aif360::structured_dataset(data_path = data, target_column="label",
 #'                                   protected_attribute="feat",
