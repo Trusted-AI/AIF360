@@ -7,7 +7,7 @@ from aif360.detectors.mdss.ScoringFunctions import Bernoulli, BerkJones, Scoring
 from aif360.detectors.mdss.MDSS import MDSS
 
 import pandas as pd
-from sklearn.exceptions import deprecated
+from sklearn.utils.deprecation import deprecated
 
 
 class MDSSClassificationMetric(ClassificationMetric):
