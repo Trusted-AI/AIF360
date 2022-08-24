@@ -4,7 +4,12 @@ from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.preprocessing import LabelEncoder
 from sklearn.utils import check_random_state
 from sklearn.utils.validation import check_is_fitted
-import tensorflow.compat.v1 as tf
+try:
+    import tensorflow.compat.v1 as tf
+except ImportError as error:
+    from logging import warning
+    warning("{}: AdversarialDebiasing will be unavailable. To install, run:\n"
+            "pip install 'aif360[AdversarialDebiasing]'".format(error))
 
 from aif360.sklearn.utils import check_inputs, check_groups
 
