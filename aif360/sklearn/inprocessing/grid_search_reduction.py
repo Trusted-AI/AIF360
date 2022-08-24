@@ -4,7 +4,12 @@ fairlearn.reductions.GridSearch
 available in the https://github.com/fairlearn/fairlearn library
 licensed under the MIT Licencse, Copyright Microsoft Corporation
 """
-import fairlearn.reductions as red
+try:
+    import fairlearn.reductions as red
+except ImportError as error:
+    from logging import warning
+    warning("{}: GridSearchReduction will be unavailable. To install, run:\n"
+            "pip install 'aif360[Reductions]'".format(error))
 from sklearn.base import BaseEstimator, ClassifierMixin, clone
 from sklearn.preprocessing import LabelEncoder
 

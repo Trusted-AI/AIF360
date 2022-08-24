@@ -6,7 +6,11 @@ licensed under the MIT Licencse, Copyright Microsoft Corporation
 """
 from logging import warning
 
-import fairlearn.reductions as red
+try:
+    import fairlearn.reductions as red
+except ImportError as error:
+    warning("{}: GridSearchReduction will be unavailable. To install, run:\n"
+            "pip install 'aif360[Reductions]'".format(error))
 import pandas as pd
 
 from aif360.algorithms import Transformer
