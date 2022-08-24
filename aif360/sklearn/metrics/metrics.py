@@ -6,7 +6,7 @@ from sklearn.metrics._classification import _prf_divide, _check_zero_division
 from sklearn.neighbors import NearestNeighbors
 from sklearn.utils import check_X_y
 from sklearn.utils.validation import column_or_1d
-from sklearn.exceptions import deprecated
+from sklearn.utils.deprecation import deprecated
 
 from aif360.sklearn.utils import check_groups
 from aif360.detectors.mdss.ScoringFunctions import BerkJones, Bernoulli
