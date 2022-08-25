@@ -8,13 +8,14 @@ from aif360.sklearn.datasets.utils import standardize_dataset
 # cache location
 DATA_HOME_DEFAULT = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                                  '..', 'data', 'raw')
-COMPAS_URL = 'https://raw.githubusercontent.com/propublica/compas-analysis/master/compas-scores-two-years.csv'
+COMPAS_URL = 'https://raw.githubusercontent.com/propublica/compas-analysis/bafff5da3f2e45eca6c2d5055faad269defd135a/compas-scores-two-years.csv'
+COMPAS_VIOLENT_URL = 'https://raw.githubusercontent.com/propublica/compas-analysis/bafff5da3f2e45eca6c2d5055faad269defd135a/compas-scores-two-years-violent.csv'
 
-def fetch_compas(data_home=None, binary_race=False,
+def fetch_compas(subset='all', *, data_home=None, cache=True, binary_race=False,
                  usecols=['sex', 'age', 'age_cat', 'race', 'juv_fel_count',
                           'juv_misd_count', 'juv_other_count', 'priors_count',
                           'c_charge_degree', 'c_charge_desc'],
-                 dropcols=[], numeric_only=False, dropna=True):
+                 dropcols=None, numeric_only=False, dropna=True):
     """Load the COMPAS Recidivism Risk Scores dataset.
 
     Optionally binarizes 'race' to 'Caucasian' (privileged) or
@@ -28,9 +29,14 @@ def fetch_compas(data_home=None, binary_race=False,
         'Female and 0 for 'Male' -- opposite the convention of other datasets.
 
     Args:
+        subset ({'all' or 'violent'}): Use the violent recidivism or full
+            version of the dataset. Note: 'violent' is not a strict subset of
+            'all' -- there are four samples in 'violent' which do not show up in
+            'all'.
         data_home (string, optional): Specify another download and cache folder
             for the datasets. By default all AIF360 datasets are stored in
             'aif360/sklearn/data/raw' subfolders.
+        cache (bool): Whether to cache downloaded datasets.
         binary_race (bool, optional): Filter only White and Black defendants.
         usecols (single label or list-like, optional): Feature column(s) to
             keep. All others are dropped.
@@ -43,14 +49,20 @@ def fetch_compas(data_home=None, binary_race=False,
         namedtuple: Tuple containing X and y for the COMPAS dataset accessible
         by index or name.
     """
+    if subset not in {'violent', 'all'}:
+        raise ValueError("subset must be either 'violent' or 'all'; cannot be "
+                        f"{subset}")
+
+    data_url = COMPAS_VIOLENT_URL if subset == 'violent' else COMPAS_URL
     cache_path = os.path.join(data_home or DATA_HOME_DEFAULT,
-                              os.path.basename(COMPAS_URL))
-    if os.path.isfile(cache_path):
+                              os.path.basename(data_url))
+    if cache and os.path.isfile(cache_path):
         df = pd.read_csv(cache_path, index_col='id')
     else:
-        df = pd.read_csv(COMPAS_URL, index_col='id')
-        os.makedirs(os.path.dirname(cache_path), exist_ok=True)
-        df.to_csv(cache_path)
+        df = pd.read_csv(data_url, index_col='id')
+        if cache:
+            os.makedirs(os.path.dirname(cache_path), exist_ok=True)
+            df.to_csv(cache_path)
 
     # Perform the same preprocessing as the original analysis:
     # https://github.com/propublica/compas-analysis/blob/master/Compas%20Analysis.ipynb
@@ -58,10 +70,17 @@ def fetch_compas(data_home=None, binary_race=False,
           & (df.days_b_screening_arrest >= -30)
           & (df.is_recid != -1)
           & (df.c_charge_degree != 'O')
-          & (df.score_text != 'N/A')]
+          & (df['score_text' if subset == 'all' else 'v_score_text'] != 'N/A')]
 
     for col in ['sex', 'age_cat', 'race', 'c_charge_degree', 'c_charge_desc']:
         df[col] = df[col].astype('category')
+
+    # Misdemeanor < Felony
+    df.c_charge_degree = df.c_charge_degree.cat.reorder_categories(
+        ['M', 'F'], ordered=True)
+    # 'Less than 25' < '25 - 45' < 'Greater than 45'
+    df.age_cat = df.age_cat.cat.reorder_categories(
+        ['Less than 25', '25 - 45', 'Greater than 45'], ordered=True)
 
     # 'Survived' < 'Recidivated'
     cats = ['Survived', 'Recidivated']

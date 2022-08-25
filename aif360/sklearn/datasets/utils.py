@@ -3,68 +3,41 @@ import warnings
 
 import numpy as np
 import pandas as pd
-from pandas.core.dtypes.common import is_list_like
+from pandas.api.types import is_list_like, is_numeric_dtype
 
 
-class ColumnAlreadyDroppedWarning(UserWarning):
-    """Warning used if a column is attempted to be dropped twice."""
+Dataset = namedtuple('Dataset', ['X', 'y'])
+WeightedDataset = namedtuple('WeightedDataset', ['X', 'y', 'sample_weight'])
 
-def check_already_dropped(labels, dropped_cols, name, dropped_by='numeric_only',
-                          warn=True):
-    """Check if columns have already been dropped and return only those that
-    haven't.
-
-    Args:
-        labels (label, pandas.Series, or list-like of labels/Series): Column
-            labels to check.
-        dropped_cols (set or pandas.Index): Columns that were already dropped.
-        name (str): Original arg that triggered the check (e.g. dropcols).
-        dropped_by (str, optional): Original arg that caused dropped_cols``
-            (e.g. numeric_only).
-        warn (bool, optional): If ``True``, produces a
-            :class:`ColumnAlreadyDroppedWarning` if there are columns in the
-            intersection of dropped_cols and labels.
-
-    Returns:
-        list: Columns in labels which are not in dropped_cols.
-    """
-    if isinstance(labels, pd.Series) or not is_list_like(labels):
-        labels = [labels]
-    str_labels = [c for c in labels if not isinstance(c, pd.Series)]
-    try:
-        already_dropped = dropped_cols.intersection(str_labels)
-        if isinstance(already_dropped, pd.MultiIndex):
-            raise TypeError  # list of lists results in MultiIndex
-    except TypeError as e:
-        raise TypeError("Only labels or Series are allowed for {}. Got types:\n"
-                        "{}".format(name, [type(c) for c in labels]))
-    if warn and any(already_dropped):
-        warnings.warn("Some column labels from `{}` were already dropped by "
-                "`{}`:\n{}".format(name, dropped_by, already_dropped.tolist()),
-                ColumnAlreadyDroppedWarning, stacklevel=2)
-    return [c for c in labels if isinstance(c, pd.Series)
-                              or c not in already_dropped]
+class NumericConversionWarning(UserWarning):
+    """Warning used if protected attribute or target is unable to be converted
+    automatically to a numeric type."""
 
 def standardize_dataset(df, *, prot_attr, target, sample_weight=None,
-                        usecols=[], dropcols=[], numeric_only=False,
-                        dropna=True):
+        usecols=None, dropcols=None, numeric_only=False, dropna=True):
     """Separate data, targets, and possibly sample weights and populate
     protected attributes as sample properties.
 
     Args:
-        df (pandas.DataFrame): DataFrame with features and target together.
-        prot_attr (label, pandas.Series, or list-like of labels/Series): Single
-            label, Series, or list-like of labels/Series corresponding to
-            protected attribute columns. Even if these are dropped from the
-            features, they remain in the index. If a Series is provided, it will
-            be added to the index but not show up in the features.
-        target (label, pandas.Series, or list-like of labels/Series): Column
-            label(s) or values of the target (outcome) variable.
-        sample_weight (single label, optional): Name of the column containing
-            sample weights.
-        usecols (single label or list-like, optional): Column(s) to keep. All
-            others are dropped.
-        dropcols (single label or list-like, optional): Column(s) to drop.
+        df (pandas.DataFrame): DataFrame with features and, optionally, target.
+        prot_attr (label or array-like or list of labels/arrays): Label, array
+            of the same length as `df`, or a list containing any combination of
+            the two corresponding to protected attribute columns. Even if these
+            are dropped from the features, they remain in the index. Column(s)
+            indicated by label will be copied from `df`, not dropped. Column(s)
+            passed explicitly as arrays will not be added to features.
+        target (label or array-like or list of labels/arrays): Label, array of
+            the same length as `df`, or a list containing any combination of the
+            two corresponding to the target (outcome) variable. Column(s)
+            indicated by label will be dropped from features.
+        sample_weight (single label or array-like, optional): Name of the column
+            containing sample weights or an array of sample weights of the same
+            length as `df`. If a label is passed, the column is dropped from
+            features. Note: the index of a passed Series will be ignored.
+        usecols (list-like, optional): Column(s) to keep. All others are
+            dropped.
+        dropcols (list-like, optional): Column(s) to drop. Missing labels are
+            ignored.
         numeric_only (bool): Drop all non-numeric, non-binary feature columns.
         dropna (bool): Drop rows with NAs.
 
@@ -81,8 +54,8 @@ def standardize_dataset(df, *, prot_attr, target, sample_weight=None,
             * **sample_weight** (`pandas.Series`, optional) -- Sample weights.
 
     Note:
-        The order of execution for the dropping parameters is: numeric_only ->
-        usecols -> dropcols -> dropna.
+        The order of execution for the dropping parameters is: usecols ->
+        dropcols -> numeric_only -> dropna.
 
     Examples:
         >>> import pandas as pd
@@ -101,45 +74,54 @@ def standardize_dataset(df, *, prot_attr, target, sample_weight=None,
         >>> X, y = standardize_dataset(df, prot_attr=0, target=5)
         >>> X_tr, X_te, y_tr, y_te = train_test_split(X, y)
     """
-    orig_cols = df.columns
     if numeric_only:
         for col in df.select_dtypes('category'):
             if df[col].cat.ordered:
                 df[col] = df[col].factorize(sort=True)[0]
                 df[col] = df[col].replace(-1, np.nan)
-        df = df.select_dtypes(['number', 'bool'])
-    nonnumeric = orig_cols.difference(df.columns)
 
-    prot_attr = check_already_dropped(prot_attr, nonnumeric, 'prot_attr')
-    if len(prot_attr) == 0:
-        raise ValueError("At least one protected attribute must be present.")
-    df = df.set_index(prot_attr, drop=False, append=True)
+    # protected attribute(s)
+    df = df.set_index(prot_attr, drop=False)
+    pa = df.index
 
-    target = check_already_dropped(target, nonnumeric, 'target')
-    if len(target) == 0:
-        raise ValueError("At least one target must be present.")
-    y = pd.concat([df.pop(t) if not isinstance(t, pd.Series) else
-                   t.set_axis(df.index, inplace=False) for t in target], axis=1)
-    y = y.squeeze()  # maybe Series
+    # target(s)
+    df = df.set_index(target, drop=True)  # utilize set_index logic for mixed types
+    y = df.index.to_frame().squeeze()
+    df.index = y.index = pa
+
+    # sample weight
+    if sample_weight is not None:
+        sw = pd.Series(sample_weight) if is_list_like(sample_weight) else \
+             df.pop(sample_weight)
+        sw.index = pa
 
     # Column-wise drops
-    orig_cols = df.columns
     if usecols:
-        usecols = check_already_dropped(usecols, nonnumeric, 'usecols')
-        df = df[usecols]
-    unused = orig_cols.difference(df.columns)
-
-    dropcols = check_already_dropped(dropcols, nonnumeric, 'dropcols', warn=False)
-    dropcols = check_already_dropped(dropcols, unused, 'dropcols', 'usecols', False)
-    df = df.drop(columns=dropcols)
+        if not is_list_like(usecols):
+            usecols = [usecols]  # ensure output is DataFrame, not Series
+        df = df.loc[:, usecols]
+    if dropcols:
+        df = df.drop(columns=dropcols, errors='ignore')
+    if numeric_only:
+        df = df.select_dtypes(['number', 'bool'])
+        # warn if nonnumeric prot_attr or target but proceed
+        if any(not is_numeric_dtype(dt) for dt in pa.to_frame().dtypes):
+            warnings.warn(f"index contains non-numeric:\n{pa.to_frame().dtypes}",
+                          category=NumericConversionWarning)
+        if any(not is_numeric_dtype(dt) for dt in y.to_frame().dtypes):
+            warnings.warn(f"y contains non-numeric column:\n{y.to_frame().dtypes}",
+                          category=NumericConversionWarning)
 
     # Index-wise drops
     if dropna:
-        notna = df.notna().all(axis=1) & y.notna()
+        notna = df.notna().all(axis=1) & y.notna() & pa.to_frame().notna().all(axis=1)
+        if sample_weight is not None:
+            notna &= sw.notna()
+            sw = sw.loc[notna]
         df = df.loc[notna]
         y = y.loc[notna]
 
-    if sample_weight is not None:
-        return namedtuple('WeightedDataset', ['X', 'y', 'sample_weight'])(
-                          df, y, df.pop(sample_weight).rename('sample_weight'))
-    return namedtuple('Dataset', ['X', 'y'])(df, y)
+    for col in df.select_dtypes('category'):
+        df[col] = df[col].cat.remove_unused_categories()
+
+    return Dataset(df, y) if sample_weight is None else WeightedDataset(df, y, sw)

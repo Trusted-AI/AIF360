@@ -39,3 +39,6 @@ Common datasets
    datasets.GermanDataset
    datasets.LawSchoolGPADataset
    datasets.CmcDataset
+   datasets.MEPSDataset19
+   datasets.MEPSDataset20
+   datasets.MEPSDataset21

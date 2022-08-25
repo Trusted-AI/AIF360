@@ -1,3 +1,5 @@
+from functools import partial
+
 import numpy as np
 import pytest
 from numpy.testing import assert_almost_equal
@@ -125,3 +127,17 @@ def test_make_scorer(func, is_ratio):
         # The lower the better
         assert_almost_equal(-abs(actual), expected, 3)
         assert_almost_equal(-abs(actual_fliped), expected, 3)
+
+def test_explicit_prot_attr_array():
+    """Tests that metrics work with explicit prot_attr arrays."""
+    prot_attr = y.index.to_flat_index()#y.index.get_level_values('sex')
+    y_arr = y.to_numpy()
+    # ratio
+    di = partial(disparate_impact_ratio, priv_group=(1, 1), sample_weight=sample_weight)
+    assert di(y_arr, y_pred, prot_attr=prot_attr) == di(y, y_pred)
+    # difference
+    aoe = partial(average_odds_error, priv_group=(1, 1), sample_weight=sample_weight)
+    assert aoe(y_arr, y_pred, prot_attr=prot_attr) == aoe(y, y_pred)
+    # index
+    ind = partial(between_group_generalized_entropy_error, priv_group=(1, 1))
+    assert ind(y_arr, y_pred, prot_attr=prot_attr) == ind(y, y_pred)
