@@ -148,9 +148,10 @@ class GridSearchReduction(BaseEstimator, ClassifierMixin):
         if self.drop_prot_attr:
             X = X.drop(self.prot_attr, axis=1)
 
-        le = LabelEncoder()
-        y = le.fit_transform(y)
-        self.classes_ = le.classes_
+        if isinstance(self.model_.constraints, red.ClassificationMoment):
+            le = LabelEncoder()
+            y = le.fit_transform(y)
+            self.classes_ = le.classes_
 
         self.model_.fit(X, y, sensitive_features=A)
 

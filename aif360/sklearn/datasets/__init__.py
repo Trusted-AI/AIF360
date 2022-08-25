@@ -8,7 +8,8 @@ Warning:
     processing steps, when placed before an ``aif360.sklearn`` step in a
     Pipeline, will cause errors.
 """
-from aif360.sklearn.datasets.utils import *
-from aif360.sklearn.datasets.openml_datasets import *
+from aif360.sklearn.datasets.utils import standardize_dataset, NumericConversionWarning
+from aif360.sklearn.datasets.openml_datasets import fetch_adult, fetch_german, fetch_bank
 from aif360.sklearn.datasets.compas_dataset import fetch_compas
-from aif360.sklearn.datasets.tempeh_datasets import *
+from aif360.sklearn.datasets.meps_datasets import fetch_meps
+from aif360.sklearn.datasets.tempeh_datasets import fetch_lawschool_gpa

@@ -4,8 +4,8 @@ import tempeh.configurations as tc
 from aif360.sklearn.datasets.utils import standardize_dataset
 
 
-def fetch_lawschool_gpa(subset="all", usecols=[], dropcols=[],
-                        numeric_only=False, dropna=False):
+def fetch_lawschool_gpa(subset="all", *, usecols=None, dropcols=None,
+                        numeric_only=False, dropna=True):
     """Load the Law School GPA dataset
 
     Note:
@@ -21,7 +21,7 @@ def fetch_lawschool_gpa(subset="all", usecols=[], dropcols=[],
         dropcols (single label or list-like, optional): Feature column(s) to
             drop.
         numeric_only (bool): Drop all non-numeric feature columns.
-        dropna (bool): Drop rows with NAs.
+        dropna (bool): Drop rows with NAs. FIXME: NAs already dropped by tempeh
 
     Returns:
         namedtuple: Tuple containing X, y, and sample_weights for the Law School
@@ -46,6 +46,9 @@ def fetch_lawschool_gpa(subset="all", usecols=[], dropcols=[],
     else:
         df = pd.concat([all_train, all_test], axis=0)
 
-    return standardize_dataset(df, prot_attr=['race'], target='zfygpa',
-                              usecols=usecols, dropcols=dropcols,
-                              numeric_only=numeric_only, dropna=dropna)
+    df.race = df.race.astype('category').cat.set_categories(
+        ['black', 'white'], ordered=True)
+
+    return standardize_dataset(df, prot_attr='race', target='zfygpa',
+                               usecols=usecols, dropcols=dropcols,
+                               numeric_only=numeric_only, dropna=dropna)

@@ -10,30 +10,8 @@ from aif360.sklearn.datasets.utils import standardize_dataset
 DATA_HOME_DEFAULT = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                                  '..', 'data', 'raw')
 
-def to_dataframe(data):
-    """Format an OpenML dataset Bunch as a DataFrame with categorical features
-    if needed.
-
-    Args:
-        data (Bunch): Dict-like object containing ``data``, ``feature_names``
-            and, optionally, ``categories`` attributes. Note: ``data`` should
-            contain both X and y data.
-
-    Returns:
-        pandas.DataFrame: A DataFrame containing all data, including target,
-        with categorical features converted to 'category' dtypes.
-    """
-    def categorize(item):
-        return cats[int(item)] if not pd.isna(item) else item
-
-    df = pd.DataFrame(data['data'], columns=data['feature_names'])
-    for col, cats in data['categories'].items():
-        df[col] = df[col].apply(categorize).astype('category')
-
-    return df
-
-def fetch_adult(subset='all', data_home=None, binary_race=True, usecols=[],
-                dropcols=[], numeric_only=False, dropna=True):
+def fetch_adult(subset='all', *, data_home=None, cache=True, binary_race=True,
+                usecols=None, dropcols=None, numeric_only=False, dropna=True):
     """Load the Adult Census Income Dataset.
 
     Binarizes 'race' to 'White' (privileged) or 'Non-white' (unprivileged). The
@@ -52,11 +30,13 @@ def fetch_adult(subset='all', data_home=None, binary_race=True, usecols=[],
         data_home (string, optional): Specify another download and cache folder
             for the datasets. By default all AIF360 datasets are stored in
             'aif360/sklearn/data/raw' subfolders.
-        binary_race (bool, optional): Group all non-white races together.
-        usecols (single label or list-like, optional): Feature column(s) to
-            keep. All others are dropped.
-        dropcols (single label or list-like, optional): Feature column(s) to
-            drop.
+        cache (bool): Whether to cache downloaded datasets.
+        binary_race (bool, optional): Group all non-white races together. Only
+            the protected attribute is affected, not the feature column, unless
+            numeric_only is ``True``.
+        usecols (list-like, optional): Feature column(s) to keep. All others are
+            dropped.
+        dropcols (list-like, optional): Feature column(s) to drop.
         numeric_only (bool): Drop all non-numeric feature columns.
         dropna (bool): Drop rows with NAs.
 
@@ -79,30 +59,32 @@ def fetch_adult(subset='all', data_home=None, binary_race=True, usecols=[],
     if subset not in {'train', 'test', 'all'}:
         raise ValueError("subset must be either 'train', 'test', or 'all'; "
                          "cannot be {}".format(subset))
-    df = to_dataframe(fetch_openml(data_id=1590, target_column=None,
-                                   data_home=data_home or DATA_HOME_DEFAULT,
-                                   as_frame=False))
+    df = fetch_openml(data_id=1590, data_home=data_home or DATA_HOME_DEFAULT,
+                      cache=cache, as_frame=True).frame
     if subset == 'train':
         df = df.iloc[16281:]
     elif subset == 'test':
         df = df.iloc[:16281]
 
     df = df.rename(columns={'class': 'annual-income'})  # more descriptive name
-    df['annual-income'] = df['annual-income'].cat.as_ordered()  # '<=50K' < '>50K'
+    df['annual-income'] = df['annual-income'].cat.reorder_categories(
+        ['<=50K', '>50K'], ordered=True)
 
     # binarize protected attributes
-    if binary_race:
-        df.race = df.race.cat.set_categories(['Non-white', 'White'],
-                                             ordered=True).fillna('Non-white')
-    df.sex = df.sex.cat.as_ordered()  # 'Female' < 'Male'
+    race = df.race.cat.set_categories(['Non-white', 'White'], ordered=True)
+    race = race.fillna('Non-white') if binary_race else 'race'
+    if numeric_only and binary_race:
+        df.race = race
+        race = 'race'
+    df.sex = df.sex.cat.reorder_categories(['Female', 'Male'], ordered=True)
 
-    return standardize_dataset(df, prot_attr=['race', 'sex'],
-                              target='annual-income', sample_weight='fnlwgt',
-                              usecols=usecols, dropcols=dropcols,
-                              numeric_only=numeric_only, dropna=dropna)
+    return standardize_dataset(df, prot_attr=[race, 'sex'],
+                               target='annual-income', sample_weight='fnlwgt',
+                               usecols=usecols, dropcols=dropcols,
+                               numeric_only=numeric_only, dropna=dropna)
 
-def fetch_german(data_home=None, binary_age=True, usecols=[], dropcols=[],
-                 numeric_only=False, dropna=True):
+def fetch_german(*, data_home=None, cache=True, binary_age=True, usecols=None,
+                 dropcols=None, numeric_only=False, dropna=True):
     """Load the German Credit Dataset.
 
     Protected attributes are 'sex' ('male' is privileged and 'female' is
@@ -119,12 +101,13 @@ def fetch_german(data_home=None, binary_age=True, usecols=[], dropcols=[],
         data_home (string, optional): Specify another download and cache folder
             for the datasets. By default all AIF360 datasets are stored in
             'aif360/sklearn/data/raw' subfolders.
+        cache (bool): Whether to cache downloaded datasets.
         binary_age (bool, optional): If ``True``, split protected attribute,
             'age', into 'aged' (privileged) and 'youth' (unprivileged). The
             'age' feature remains continuous.
-        usecols (single label or list-like, optional): Column name(s) to keep.
-            All others are dropped.
-        dropcols (single label or list-like, optional): Column name(s) to drop.
+        usecols (list-like, optional): Column name(s) to keep. All others are
+            dropped.
+        dropcols (list-like, optional): Column name(s) to drop.
         numeric_only (bool): Drop all non-numeric feature columns.
         dropna (bool): Drop rows with NAs.
 
@@ -158,12 +141,12 @@ def fetch_german(data_home=None, binary_age=True, usecols=[], dropcols=[],
         ... pos_label='good')
         0.9483094846144106
     """
-    df = to_dataframe(fetch_openml(data_id=31, target_column=None,
-                                   data_home=data_home or DATA_HOME_DEFAULT,
-                                   as_frame=False))
+    df = fetch_openml(data_id=31, data_home=data_home or DATA_HOME_DEFAULT,
+                      cache=cache, as_frame=True).frame
 
     df = df.rename(columns={'class': 'credit-risk'})  # more descriptive name
-    df['credit-risk'] = df['credit-risk'].cat.as_ordered()  # 'bad' < 'good'
+    df['credit-risk'] = df['credit-risk'].cat.reorder_categories(
+        ['bad', 'good'], ordered=True)
 
     # binarize protected attribute (but not corresponding feature)
     age = (pd.cut(df.age, [0, 25, 100],
@@ -175,18 +158,18 @@ def fetch_german(data_home=None, binary_age=True, usecols=[], dropcols=[],
     personal_status = df.pop('personal_status').str.split(expand=True)
     personal_status.columns = ['sex', 'marital_status']
     df = df.join(personal_status.astype('category'))
-    df.sex = df.sex.cat.as_ordered()  # 'female' < 'male'
+    df.sex = df.sex.cat.reorder_categories(['female', 'male'], ordered=True)
 
-    # 'no' < 'yes'
-    df.foreign_worker = df.foreign_worker.astype('category').cat.as_ordered()
+    df.foreign_worker = df.foreign_worker.astype('category').cat.set_categories(
+        ['no', 'yes'], ordered=True)
 
     return standardize_dataset(df, prot_attr=['sex', age, 'foreign_worker'],
                                target='credit-risk', usecols=usecols,
                                dropcols=dropcols, numeric_only=numeric_only,
                                dropna=dropna)
 
-def fetch_bank(data_home=None, percent10=False, usecols=[], dropcols='duration',
-               numeric_only=False, dropna=False):
+def fetch_bank(*, data_home=None, cache=True, percent10=False, usecols=None,
+               dropcols=['duration'], numeric_only=False, dropna=False):
     """Load the Bank Marketing Dataset.
 
     The protected attribute is 'age' (left as continuous). The outcome variable
@@ -200,10 +183,11 @@ def fetch_bank(data_home=None, percent10=False, usecols=[], dropcols='duration',
         data_home (string, optional): Specify another download and cache folder
             for the datasets. By default all AIF360 datasets are stored in
             'aif360/sklearn/data/raw' subfolders.
+        cache (bool): Whether to cache downloaded datasets.
         percent10 (bool, optional): Download the reduced version (10% of data).
-        usecols (single label or list-like, optional): Column name(s) to keep.
-            All others are dropped.
-        dropcols (single label or list-like, optional): Column name(s) to drop.
+        usecols (list-like, optional): Column name(s) to keep. All others are
+            dropped.
+        dropcols (list-like, optional): Column name(s) to drop.
         numeric_only (bool): Drop all non-numeric feature columns.
         dropna (bool): Drop rows with NAs. Note: this is False by default for
             this dataset.
@@ -229,20 +213,21 @@ def fetch_bank(data_home=None, percent10=False, usecols=[], dropcols='duration',
         (45211, 6)
     """
     # TODO: this seems to be an old version
-    df = to_dataframe(fetch_openml(data_id=1558 if percent10 else 1461,
-                                   data_home=data_home or DATA_HOME_DEFAULT,
-                                   target_column=None, as_frame=False))
+    df = fetch_openml(data_id=1558 if percent10 else 1461, data_home=data_home
+                      or DATA_HOME_DEFAULT, cache=cache, as_frame=True).frame
     df.columns = ['age', 'job', 'marital', 'education', 'default', 'balance',
                   'housing', 'loan', 'contact', 'day', 'month', 'duration',
                   'campaign', 'pdays', 'previous', 'poutcome', 'deposit']
     # remap target
     df.deposit = df.deposit.map({'1': 'no', '2': 'yes'}).astype('category')
-    df.deposit = df.deposit.cat.as_ordered()  # 'no' < 'yes'
+    df.deposit = df.deposit.cat.set_categories(['no', 'yes'], ordered=True)
+
     # replace 'unknown' marker with NaN
-    df.apply(lambda s: s.cat.remove_categories('unknown', inplace=True)
-             if hasattr(s, 'cat') and 'unknown' in s.cat.categories else s)
-    # 'primary' < 'secondary' < 'tertiary'
-    df.education = df.education.astype('category').cat.as_ordered()
+    for col in df.select_dtypes('category'):
+        if 'unknown' in df[col].cat.categories:
+            df[col] = df[col].cat.remove_categories('unknown')
+    df.education = df.education.astype('category').cat.reorder_categories(
+        ['primary', 'secondary', 'tertiary'], ordered=True)
 
     return standardize_dataset(df, prot_attr='age', target='deposit',
                                usecols=usecols, dropcols=dropcols,
