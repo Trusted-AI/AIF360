@@ -59,9 +59,9 @@ class ExponentiatedGradientReduction(BaseEstimator, ClassifierMixin):
                 conservative automatic setting based on the statistical
                 uncertainty in measuring classification error.
             eta0: Initial setting of the learning rate.
-            run_linprog_step: if True each step of exponentiated gradient is
-                              followed by the saddle point optimization over the
-                              convex hull of classifiers returned so far;
+            run_linprog_step: If True each step of exponentiated gradient is
+                followed by the saddle point optimization over the convex hull
+                of classifiers returned so far.
             drop_prot_attr: Boolean flag indicating whether to drop protected
                 attributes from training data.
         """
@@ -88,15 +88,12 @@ class ExponentiatedGradientReduction(BaseEstimator, ClassifierMixin):
         self.estimator_ = clone(self.estimator)
 
         moments = {
-            "BoundedGroupLoss": red.BoundedGroupLoss,
             "DemographicParity": red.DemographicParity,
             "EqualizedOdds": red.EqualizedOdds,
-            "ErrorRateParity": red.ErrorRateParity,
-            "FalsePositiveRateParity": red.FalsePositiveRateParity,
             "TruePositiveRateParity": red.TruePositiveRateParity,
-            "UtilityParity": red.UtilityParity    
+            "FalsePositiveRateParity": red.FalsePositiveRateParity,
+            "ErrorRateParity": red.ErrorRateParity,
         }
-
         if isinstance(self.constraints, str):
             if self.constraints not in moments:
                 raise ValueError(f"Constraint not recognized: {self.constraints}")

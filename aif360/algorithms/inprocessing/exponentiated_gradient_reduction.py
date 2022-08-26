@@ -27,13 +27,13 @@ class ExponentiatedGradientReduction(Transformer):
            <https://arxiv.org/abs/1803.02453>`_
     """
     def __init__(self,
-                 prot_attr,
                  estimator,
                  constraints,
                  eps=0.01,
                  max_iter=50,
                  nu=None,
                  eta0=2.0,
+                 run_linprog_step=True,
                  drop_prot_attr=True):
         """
         Args:
@@ -59,6 +59,9 @@ class ExponentiatedGradientReduction(Transformer):
                 conservative automatic setting based on the statistical
                 uncertainty in measuring classification error.
             eta_mul: Initial setting of the learning rate.
+            run_linprog_step: If True each step of exponentiated gradient is
+                followed by the saddle point optimization over the convex hull
+                of classifiers returned so far.
             drop_prot_attr: Boolean flag indicating whether to drop protected
                 attributes from training data.
 
@@ -68,7 +71,8 @@ class ExponentiatedGradientReduction(Transformer):
         #init model, set prot_attr during fit
         prot_attr = []
         self.model = skExpGradRed(prot_attr=prot_attr, estimator=estimator,
-            constraints=constraints, eps=eps, max_iter=max_iter, nu=nu, eta0=eta0,
+            constraints=constraints, eps=eps, max_iter=max_iter, nu=nu,
+            eta0=eta0, run_linprog_step=run_linprog_step,
             drop_prot_attr=drop_prot_attr)
 
 
