@@ -116,14 +116,15 @@ class GridSearchReduction(BaseEstimator, ClassifierMixin):
         moments = {
             "DemographicParity": red.DemographicParity,
             "EqualizedOdds": red.EqualizedOdds,
-            "TruePositiveRateDifference": red.TruePositiveRateDifference,
-            "ErrorRateRatio": red.ErrorRateRatio,
-            "GroupLoss": red.GroupLossMoment
+            "TruePositiveRateParity": red.TruePositiveRateParity,
+            "FalsePositiveRateParity": red.FalsePositiveRateParity,
+            "ErrorRateParity": red.ErrorRateParity,
+            "BoundedGroupLoss": red.BoundedGroupLoss,
         }
         if isinstance(self.constraints, str):
             if self.constraints not in moments:
                 raise ValueError(f"Constraint not recognized: {self.constraints}")
-            if self.constraints == "GroupLoss":
+            if self.constraints == "BoundedGroupLoss":
                 losses = {
                     "ZeroOne": red.ZeroOneLoss,
                     "Square": red.SquareLoss,
