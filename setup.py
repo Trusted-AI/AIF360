@@ -22,7 +22,7 @@ extras = {
     'Reductions': ['fairlearn==0.4.6'],
     'FairAdapt':['rpy2'],
     'notebooks': ['jupyter', 'tqdm', 'igraph[plotting]', 'lightgbm', 'seaborn', 'ipympl'],
-    'tempeh-datasets': ['tempeh'],
+    'LawSchoolGPA': ['tempeh'],
 }
 extras['tests'] = reduce(lambda l1, l2: l1+l2, extras.values(), ['pytest>=3.5'])
 extras['docs'] = ['sphinx<2', 'sphinx_rtd_theme']

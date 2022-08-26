@@ -1,5 +1,10 @@
 import pandas as pd
-import tempeh.configurations as tc
+try:
+    import tempeh.configurations as tc
+except ImportError as error:
+    from logging import warning
+    warning("{}: fetch_lawschool_gpa will be unavailable. To install, run:\n"
+            "pip install 'aif360[LawSchoolGPA]'".format(error))
 
 from aif360.sklearn.datasets.utils import standardize_dataset
 
