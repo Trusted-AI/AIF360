@@ -57,6 +57,7 @@ jobs:
           wget ${UCI_DB}/statlog/german/german.data -P aif360/data/raw/german/
           wget ${UCI_DB}/statlog/german/german.doc -P aif360/data/raw/german/
           wget ${PROPUBLICA_GH}/compas-scores-two-years.csv -P aif360/data/raw/compas/
+          (cd aif360/data/raw/meps;Rscript generate_data.R <<< y)
 
       - name: Lint with flake8
         run: |

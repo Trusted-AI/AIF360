@@ -50,10 +50,15 @@ def check_groups(arr, prot_attr, ensure_binary=False):
     provided protected attributes are in the index.
 
     Args:
-        arr (:class:`pandas.Series` or :class:`pandas.DataFrame`): A Pandas
-            object containing protected attribute information in the index.
-        prot_attr (single label or list-like): Protected attribute(s). If
-            ``None``, all protected attributes in arr are used.
+        arr (array-like): Either a Pandas object containing protected attribute
+            information in the index or array-like with explicit protected
+            attribute array(s) for `prot_attr`.
+        prot_attr (label or array-like or list of labels/arrays): Protected
+            attribute(s). If contains labels, arr must include these in its
+            index. If ``None``, all protected attributes in ``arr.index`` are
+            used. Can also be 1D array-like of the same length as arr or a
+            list of a combination of such arrays and labels in which case, arr
+            may not necessarily be a Pandas type.
         ensure_binary (bool): Raise an error if the resultant groups are not
             binary.
 
@@ -62,32 +67,34 @@ def check_groups(arr, prot_attr, ensure_binary=False):
 
             * **groups** (:class:`pandas.Index`) -- Label (or tuple of labels)
               of protected attribute for each sample in arr.
-            * **prot_attr** (`list-like`) -- Modified input. If input is a
+            * **prot_attr** (`FrozenList`) -- Modified input. If input is a
               single label, returns single-item list. If input is ``None``
               returns list of all protected attributes.
     """
-    if not hasattr(arr, 'index'):
-        raise TypeError(
-                "Expected `Series` or `DataFrame`, got {} instead.".format(
-                        type(arr).__name__))
-
-    all_prot_attrs = [name for name in arr.index.names if name]  # not None or ''
-    if prot_attr is None:
-        prot_attr = all_prot_attrs
-    elif not is_list_like(prot_attr):
-        prot_attr = [prot_attr]
-
-    if any(p not in arr.index.names for p in prot_attr):
-        raise ValueError("Some of the attributes provided are not present "
-                         "in the dataset. Expected a subset of:\n{}\nGot:\n"
-                         "{}".format(all_prot_attrs, prot_attr))
-
-    groups = arr.index.droplevel(list(set(arr.index.names) - set(prot_attr)))
+    arr_is_pandas = isinstance(arr, (pd.DataFrame, pd.Series))
+    if prot_attr is None:  # use all protected attributes provided in arr
+        if not arr_is_pandas:
+            raise TypeError("Expected `Series` or `DataFrame` for arr, got "
+                           f"{type(arr).__name__} instead. Otherwise, pass "
+                            "explicit prot_attr array(s).")
+        groups = arr.index
+    elif arr_is_pandas:
+        df = arr.index.to_frame()
+        groups = df.set_index(prot_attr).index  # let pandas handle errors
+    else:  # arr isn't pandas. might be okay if prot_attr is array-like
+        df = pd.DataFrame(index=[None]*len(arr))  # dummy to check lengths match
+        try:
+            groups = df.set_index(prot_attr).index
+        except KeyError as e:
+            raise TypeError("arr does not include protected attributes in the "
+                            "index. Check if this got dropped or prot_attr is "
+                            "formatted incorrectly.") from e
+    prot_attr = groups.names
     groups = groups.to_flat_index()
 
     n_unique = groups.nunique()
     if ensure_binary and n_unique != 2:
-        raise ValueError("Expected 2 protected attribute groups, got {}".format(
-                groups.unique() if n_unique > 5 else n_unique))
+        raise ValueError("Expected 2 protected attribute groups, got "
+                        f"{groups.unique() if n_unique > 5 else n_unique}")
 
     return groups, prot_attr

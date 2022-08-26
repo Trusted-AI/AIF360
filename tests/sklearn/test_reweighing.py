@@ -35,11 +35,11 @@ def test_gridsearch(new_adult):
 
     # UGLY workaround for sklearn issue: https://stackoverflow.com/a/49598597
     def score_func(y_true, y_pred, sample_weight):
-        idx = y_true.index.to_flat_index()
-        return accuracy_score(y_true, y_pred, sample_weight=sample_weight[idx])
-    scoring = make_scorer(score_func, **{'sample_weight': sample_weight})
+        return accuracy_score(y_true, y_pred, sample_weight=sample_weight.iloc[y_true.index])
+    scoring = make_scorer(score_func, sample_weight=sample_weight)
 
     params = {'estimator__C': [1, 10], 'reweigher__prot_attr': ['sex']}
 
     clf = GridSearchCV(rew, params, scoring=scoring, cv=5)
-    clf.fit(X, y, sample_weight=sample_weight)
+    # need to reset index for score_func to work
+    clf.fit(X, y.reset_index(drop=True), sample_weight=sample_weight)
