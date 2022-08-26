@@ -89,7 +89,7 @@ def test_postprocessingmeta_fnr(old_adult, new_adult):
             postprocessor=CalibratedEqualizedOdds('sex', cost_constraint='fnr',
                                                   random_state=0),
             shuffle=False)
-    cal_eq_odds.fit(X_tr, y_tr, sample_weight=sw_tr)
+    cal_eq_odds.fit(X_tr, y_tr, sample_weight=sw_tr, pos_label=1)
 
     assert np.allclose(logreg.coef_, cal_eq_odds.estimator_.coef_)
 
