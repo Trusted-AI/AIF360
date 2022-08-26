@@ -1,8 +1,12 @@
 import os
 import pandas as pd
 from aif360.datasets import RegressionDataset
-import tempeh.configurations as tc
-
+try:
+    import tempeh.configurations as tc
+except ImportError as error:
+    from logging import warning
+    warning("{}: LawSchoolGPADataset will be unavailable. To install, run:\n"
+            "pip install 'aif360[LawSchoolGPA]'".format(error))
 
 class LawSchoolGPADataset(RegressionDataset):
     """Law School GPA dataset.

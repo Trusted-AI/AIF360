@@ -9,8 +9,13 @@ from sklearn.base import BaseEstimator, ClassifierMixin, TransformerMixin
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.preprocessing import LabelEncoder
 from sklearn.utils import check_random_state
-import torch
-import torch.nn.functional as F
+try:
+    import torch
+    import torch.nn.functional as F
+except ImportError as error:
+    from logging import warning
+    warning("{}: LearnedFairRepresentations will be unavailable. To install, run:\n"
+            "pip install 'aif360[LFR]'".format(error))
 
 from aif360.sklearn.utils import check_inputs, check_groups
 
