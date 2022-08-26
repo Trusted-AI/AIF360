@@ -19,7 +19,7 @@ extras = {
     'LFR': ['torch'],
     'LIME': ['lime'],
     'ART': ['adversarial-robustness-toolbox>=1.0.0'],
-    'Reductions': ['fairlearn==0.4.6'],
+    'Reductions': ['fairlearn~=0.7'],
     'FairAdapt':['rpy2'],
     'notebooks': ['jupyter', 'tqdm', 'igraph[plotting]', 'lightgbm', 'seaborn', 'ipympl'],
     'LawSchoolGPA': ['tempeh'],

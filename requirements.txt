@@ -5,7 +5,7 @@ BlackBoxAuditing
 tensorflow>=1.13.1,<2
 torch
 cvxpy>=1.0
-fairlearn==0.4.6
+fairlearn>=0.7.0
 tempeh
 rpy2==3.4.5
 
