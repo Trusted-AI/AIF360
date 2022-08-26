@@ -22,6 +22,7 @@ extras = {
     'Reductions': ['fairlearn==0.4.6'],
     'FairAdapt':['rpy2'],
     'notebooks': ['jupyter', 'tqdm', 'igraph[plotting]', 'lightgbm', 'seaborn', 'ipympl'],
+    'LawSchoolGPA': ['tempeh'],
 }
 extras['tests'] = reduce(lambda l1, l2: l1+l2, extras.values(), ['pytest>=3.5'])
 extras['docs'] = ['sphinx<2', 'sphinx_rtd_theme']
@@ -40,11 +41,10 @@ setup(name='aif360',
       python_requires='>=3.7',
       install_requires=[
           'numpy>=1.16',
-          'scipy>=1.2.0,<1.6.0',
+          'scipy>=1.2.0',
           'pandas>=0.24.0',
           'scikit-learn>=1.0',
           'matplotlib',
-          'tempeh',
       ],
       extras_require=extras,
       package_data={'aif360': ['data/*', 'data/*/*', 'data/*/*/*']},

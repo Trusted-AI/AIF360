@@ -2,11 +2,16 @@ import os.path as osp
 
 import pandas as pd
 import numpy as np
-from rpy2 import robjects
-from rpy2.robjects.vectors import StrVector
-from rpy2.robjects.packages import importr
-from rpy2.robjects import pandas2ri
-from rpy2.robjects.conversion import localconverter
+try:
+    from rpy2 import robjects
+    from rpy2.robjects.vectors import StrVector
+    from rpy2.robjects.packages import importr
+    from rpy2.robjects import pandas2ri
+    from rpy2.robjects.conversion import localconverter
+except ImportError as error:
+    from logging import warning
+    warning("{}: FairAdapt will be unavailable. To install, run:\n"
+            "pip install 'aif360[FairAdapt]'".format(error))
 from sklearn.base import BaseEstimator
 
 from aif360.sklearn.utils import check_inputs, check_groups
