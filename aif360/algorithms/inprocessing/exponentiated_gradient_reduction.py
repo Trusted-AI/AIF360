@@ -37,9 +37,9 @@ class ExponentiatedGradientReduction(Transformer):
                  drop_prot_attr=True):
         """
         Args:
-            estimator: An estimator implementing methods ``fit(X, y,
-                sample_weight)`` and ``predict(X)``, where ``X`` is the matrix
-                of features, ``y`` is the vector of labels, and
+            estimator: An estimator implementing methods
+                ``fit(X, y, sample_weight)`` and ``predict(X)``, where ``X`` is
+                the matrix of features, ``y`` is the vector of labels, and
                 ``sample_weight`` is a vector of weights; labels ``y`` and
                 predictions returned by ``predict(X)`` are either 0 or 1 -- e.g.
                 scikit-learn classifiers.
