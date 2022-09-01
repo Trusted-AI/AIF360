@@ -27,6 +27,7 @@ Changes made to fairness-comparison code:
         - kamfadm-2012ecmlpkdd/train_nb.py
     * fixed typo in kamfadm-2012ecmlpkdd/fadm/lr/pr.py:244 (typeError -> TypeError)
     * removed commands.py and instead use subprocess.getoutput
+    * increased max_iter to 1000 in kamfadm-2012ecmlpkdd/fadm/lr/pr.py:239
 
 Notes from fairness-comparison's KamishimaAlgorithm.py on changes made to
 original Kamishima code.
