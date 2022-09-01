@@ -50,8 +50,8 @@ class CalibratedEqualizedOdds(BaseEstimator, ClassifierMixin):
             probability of randomly returning the group's base rate. The group
             for which the cost function is higher is set to 0.
     """
-    def __init__(self, prot_attr=None, cost_constraint='weighted',
-                 random_state=None):
+    def __init__(self, prot_attr=None, cost_constraint='weighted', fp_weight=1,
+                 fn_weight=1, random_state=None):
         """
         Args:
             prot_attr (single label or list-like, optional): Protected
@@ -64,11 +64,28 @@ class CalibratedEqualizedOdds(BaseEstimator, ClassifierMixin):
                 constraint to satisfy: generalized false positive rate ('fpr'),
                 generalized false negative rate ('fnr'), or a weighted
                 combination of both ('weighted').
+            fp_weight (scalar): Weight associated with false positive penalty
+                when cost is 'weighted'. Must be >= 0.
+            fn_weight (scalar): Weight associated with false negative penalty
+                when cost is 'weighted'. Must be >= 0.
             random_state (int or numpy.RandomState, optional): Seed of pseudo-
                 random number generator for sampling from the mix rates.
+
+        Note:
+            The 'weighted' cost is calculated as the weighted sum (scaled by the
+            number of samples) of *total* generalized false positives and
+            generalized false negatives *not* the respective rates. This means
+            setting `fp_weight` to 0 and `fn_weight` to 1 is **not** the same as
+            `cost_constraint == 'fnr'`. For equal fp and fn weights, this is
+            essentially an error rate parity cost. Finally, since this
+            constraint does not explicitly match either error type, the two
+            groups will, in expectation, experience different types of errors.
+            The only way around this would be to sacrifice calibration.
         """
         self.prot_attr = prot_attr
         self.cost_constraint = cost_constraint
+        self.fp_weight = fp_weight
+        self.fn_weight = fn_weight
         self.random_state = random_state
 
     def _more_tags(self):
@@ -85,7 +102,8 @@ class CalibratedEqualizedOdds(BaseEstimator, ClassifierMixin):
             fpr = generalized_fpr(y_true, probas_pred, pos_label, sample_weight)
             fnr = generalized_fnr(y_true, probas_pred, pos_label, sample_weight)
             br = base_rate(y_true, probas_pred, pos_label, sample_weight)
-            return fpr * (1 - br) + fnr * br
+            wt = self.fp_weight / (self.fp_weight+self.fn_weight)
+            return (wt*fpr*(1-br) + (1-wt)*fnr*br)
         else:
             raise ValueError("`cost_constraint` must be one of: 'fpr', 'fnr', "
                              "or 'weighted'")
