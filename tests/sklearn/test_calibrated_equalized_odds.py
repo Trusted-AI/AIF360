@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 import pytest
 import sklearn
 from sklearn.linear_model import LogisticRegression
@@ -7,6 +8,33 @@ from sklearn.model_selection import train_test_split
 from aif360.algorithms.postprocessing import CalibratedEqOddsPostprocessing
 from aif360.sklearn.postprocessing import CalibratedEqualizedOdds, PostProcessingMeta
 
+
+def test_calib_eq_odds_priv_group():
+    """Test the behavior of the `priv_group` option."""
+    y = pd.DataFrame([[0, 0, 0], [1, 1, 0], [0, 2, 1], [1, 0, 1]], columns=['a', 'b', 'y'])
+    y = y.set_index(['a', 'b']).squeeze()
+    y_pred = np.array([[0.5, 0.5], [0.3, 0.7], [0.8, 0.2], [0.1, 0.9]])
+    assert CalibratedEqualizedOdds('a').fit(y_pred, y).priv_group_ == 1
+    with pytest.raises(ValueError):
+        CalibratedEqualizedOdds('b').fit(y_pred, y)
+    assert CalibratedEqualizedOdds('b').fit(y_pred, y, priv_group=0)
+
+def test_calib_eq_odds_pos_label(new_adult):
+    """Test the behavior of the `pos_label` option."""
+    X, y, sample_weight = new_adult
+    logreg = LogisticRegression(solver='lbfgs', max_iter=500)
+    y_pred = logreg.fit(X, y, sample_weight=sample_weight).predict_proba(X)
+    ceo = CalibratedEqualizedOdds('sex')
+    p0 = ceo.fit(y_pred, y, sample_weight=sample_weight, pos_label=0).mix_rates_
+    p1 = ceo.fit(y_pred, y, sample_weight=sample_weight, pos_label=1).mix_rates_
+    assert np.allclose(p0, p1)
+
+    ceo = CalibratedEqualizedOdds('sex', cost_constraint='fpr')
+    with pytest.raises(ValueError):
+        ceo.fit(y_pred, y, sample_weight=sample_weight)
+    p0 = ceo.fit(y_pred, y, sample_weight=sample_weight, pos_label=0).mix_rates_
+    p1 = ceo.fit(y_pred, y, sample_weight=sample_weight, pos_label=1).mix_rates_
+    assert not np.allclose(p0, p1)
 
 def test_calib_eq_odds_sex_weighted(old_adult, new_adult):
     """Test that the old and new CalibratedEqualizedOdds produce the same mix
@@ -61,7 +89,7 @@ def test_postprocessingmeta_fnr(old_adult, new_adult):
             postprocessor=CalibratedEqualizedOdds('sex', cost_constraint='fnr',
                                                   random_state=0),
             shuffle=False)
-    cal_eq_odds.fit(X_tr, y_tr, sample_weight=sw_tr)
+    cal_eq_odds.fit(X_tr, y_tr, sample_weight=sw_tr, pos_label=1)
 
     assert np.allclose(logreg.coef_, cal_eq_odds.estimator_.coef_)
 
