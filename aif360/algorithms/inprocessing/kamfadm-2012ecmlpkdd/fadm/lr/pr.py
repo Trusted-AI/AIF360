@@ -236,7 +236,7 @@ class LRwPRFittingType1Mixin(LRwPR):
             coef = self.coef_.reshape(self.n_sfv_, self.n_features_)
 
             for i in range(self.n_sfv_):
-                clr = LogisticRegression(C=self.C, penalty='l2',
+                clr = LogisticRegression(C=self.C, penalty='l2', max_iter=1000,
                                          fit_intercept=False)
                 clr.fit(X[s == i, :], y[s == i])
                 coef[i, :] = clr.coef_
