@@ -16,6 +16,7 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 
+from datetime import datetime
 import os
 import sys
 sys.path.insert(0, os.path.abspath('../..'))
@@ -74,9 +75,9 @@ source_suffix = ['.rst', '.md']
 master_doc = 'index'
 
 # General information about the project.
-project = u'aif360'
-copyright = u'2018 - 2021, The AI Fairness 360 (AIF360) Authors.'
-author = u'aif360 developers'
+project = 'aif360'
+copyright = f'2018 - {datetime.now().year}, The AI Fairness 360 (AIF360) Authors'
+author = 'aif360 developers'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the

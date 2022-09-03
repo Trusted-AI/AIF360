@@ -67,6 +67,8 @@ Meta-metrics
 
    metrics.difference
    metrics.ratio
+   metrics.intersection
+   metrics.one_vs_rest
 
 Scorers
 -------
@@ -86,10 +88,14 @@ Generic metrics
    :toctree: generated/
    :template: base.rst
 
+   metrics.num_samples
+   metrics.num_pos_neg
    metrics.specificity_score
    metrics.sensitivity_score
    metrics.base_rate
    metrics.selection_rate
+   metrics.smoothed_base_rate
+   metrics.smoothed_selection_rate
    metrics.generalized_fpr
    metrics.generalized_fnr
 
@@ -107,7 +113,14 @@ Group fairness metrics
    metrics.equal_opportunity_difference
    metrics.average_odds_difference
    metrics.average_odds_error
+   metrics.class_imbalance
+   metrics.kl_divergence
+   metrics.conditional_demographic_disparity
+   metrics.smoothed_edf
+   metrics.df_bias_amplification
    metrics.between_group_generalized_entropy_error
+   metrics.mdss_bias_scan
+   metrics.mdss_bias_score
 
 Individual fairness metrics
 ---------------------------
@@ -122,6 +135,23 @@ Individual fairness metrics
    metrics.theil_index
    metrics.coefficient_of_variation
    metrics.consistency_score
+
+:mod:`aif360.sklearn.detectors`: Bias detection methods
+=======================================================
+
+.. automodule:: aif360.sklearn.detectors
+    :no-members:
+    :no-inherited-members:
+
+Bias scan
+---------
+.. currentmodule:: aif360.sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: base.rst
+
+   detectors.bias_scan
 
 :mod:`aif360.sklearn.preprocessing`: Pre-processing algorithms
 ==============================================================
