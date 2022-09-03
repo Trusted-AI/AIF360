@@ -193,7 +193,7 @@ class GridSearchReduction(BaseEstimator, ClassifierMixin):
             ``self.classes_``.
         """
         if self.drop_prot_attr:
-            X = X.drop(self.prot_attr)
+            X = X.drop(self.prot_attr, axis=1)
 
         if isinstance(self.model_.constraints, red.ClassificationMoment):
             return self.model_.predict_proba(X)
