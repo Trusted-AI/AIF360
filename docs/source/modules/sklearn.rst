@@ -136,6 +136,23 @@ Individual fairness metrics
    metrics.coefficient_of_variation
    metrics.consistency_score
 
+:mod:`aif360.sklearn.detectors`: Bias detection methods
+=======================================================
+
+.. automodule:: aif360.sklearn.detectors
+    :no-members:
+    :no-inherited-members:
+
+Bias scan
+---------
+.. currentmodule:: aif360.sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: base.rst
+
+   detectors.bias_scan
+
 :mod:`aif360.sklearn.preprocessing`: Pre-processing algorithms
 ==============================================================
 
