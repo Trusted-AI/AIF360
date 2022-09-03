@@ -1,6 +1,7 @@
 from functools import partial
 
 import numpy as np
+import pandas as pd
 import pytest
 from numpy.testing import assert_almost_equal
 from sklearn.linear_model import LogisticRegression
@@ -10,11 +11,13 @@ from aif360.sklearn.datasets import fetch_adult
 from aif360.metrics import ClassificationMetric
 from aif360.sklearn.metrics import (
         consistency_score, specificity_score, selection_rate,
-        base_rate, generalized_fpr, generalized_fnr,
+        base_rate, smoothed_base_rate, generalized_fpr, generalized_fnr,
         disparate_impact_ratio, statistical_parity_difference,
         equal_opportunity_difference, average_odds_difference,
-        average_odds_error, generalized_entropy_error,
-        between_group_generalized_entropy_error, make_scorer)
+        average_odds_error, smoothed_edf, df_bias_amplification,
+        generalized_entropy_error, between_group_generalized_entropy_error,
+        class_imbalance, kl_divergence, conditional_demographic_disparity,
+        intersection, one_vs_rest, make_scorer)
 
 
 X, y, sample_weight = fetch_adult(numeric_only=True)
@@ -56,6 +59,13 @@ def test_selection_rate():
     select = selection_rate(y, y_pred, sample_weight=sample_weight)
     assert select == cm.selection_rate()
 
+def test_smoothed_base_rate():
+    sbr = smoothed_base_rate(y, y_pred, concentration=0, sample_weight=sample_weight)
+    assert sbr == base_rate(y, y_pred, sample_weight=sample_weight)
+
+    sbr_int = intersection(smoothed_base_rate, y, y_pred, sample_weight=sample_weight)
+    assert (sbr_int == cm._smoothed_base_rates(cm.dataset.labels)).all()
+
 def test_generalized_fpr():
     """Tests that the old and new generalized_fpr matches exactly."""
     gfpr = generalized_fpr(y, y_proba, sample_weight=sample_weight)
@@ -96,6 +106,19 @@ def test_average_odds_error():
                              sample_weight=sample_weight)
     assert np.isclose(aoe, cm.average_abs_odds_difference())
 
+def test_smoothed_edf():
+    """Tests that the old and new smoothed_edf matches exactly."""
+    edf = smoothed_edf(y, sample_weight=sample_weight)
+    assert edf == cm.smoothed_empirical_differential_fairness()
+
+    edf = smoothed_edf(y, concentration=1e9, sample_weight=sample_weight)
+    assert edf == cm.smoothed_empirical_differential_fairness(1e9)
+
+def test_df_bias_amplification():
+    """Tests that the old and new df_bias_amplification matches exactly."""
+    amp = df_bias_amplification(y, y_pred, sample_weight=sample_weight)
+    assert amp == cm.differential_fairness_bias_amplification()
+
 def test_generalized_entropy_index():
     """Tests that the old and new generalized_entropy_index matches exactly."""
     gei = generalized_entropy_error(y, y_pred)
@@ -105,6 +128,30 @@ def test_between_group_generalized_entropy_index():
     """Tests that the old and new between_group_GEI matches exactly."""
     bggei = between_group_generalized_entropy_error(y, y_pred, prot_attr='sex')
     assert bggei == cm.between_group_generalized_entropy_index()
+
+def test_class_imbalance():
+    prot_attr = pd.Series([1, 1, 1, 1, 0, 0, 0], name='sex')
+    y = pd.Series(np.random.random(7), index=prot_attr)  # y values are irrelevant
+    sample_weight = np.array([1, 2, 3, 4, 3, 2, 1])
+    assert class_imbalance(y, sample_weight=sample_weight) == -0.25  # -4/16
+    assert class_imbalance(y, priv_group=0, sample_weight=sample_weight) == 0.25
+
+def test_kl_divergence():
+    prot_attr = pd.Series([1, 1, 1, 1, 0, 0, 0], name='sex')
+    y = pd.Series([0, 1, 2, 0, 0, 1, 2], index=prot_attr)
+    sample_weight = [1, 2, 3, 4, 4, 3, 3]
+    kld = kl_divergence(y, priv_group=1, sample_weight=sample_weight)
+    assert np.isclose(kld, (5*np.log(5/4) + 2*np.log(2/3) + 3*np.log(3/3))/10)
+
+    kld = kl_divergence(y, priv_group=0, sample_weight=sample_weight)
+    assert np.isclose(kld, (4*np.log(4/5) + 3*np.log(3/2) + 3*np.log(3/3))/10)
+
+def test_conditional_demographic_disparity():
+    prot_attr = pd.Series([0, 0, 1, 1, 2, 2, 2], name='sex')
+    y = pd.Series([0, 1, 0, 1, 0, 1, 0], index=prot_attr)
+    sample_weight = [1, 2, 3, 4, 3, 2, 1]
+    cdd = conditional_demographic_disparity(y, sample_weight=sample_weight)
+    assert cdd == (3*(1-2) + 7*(3-4) + 6*(4-2)) / (8*16)
 
 @pytest.mark.parametrize(
     "func, is_ratio",
@@ -128,16 +175,30 @@ def test_make_scorer(func, is_ratio):
         assert_almost_equal(-abs(actual), expected, 3)
         assert_almost_equal(-abs(actual_fliped), expected, 3)
 
-def test_explicit_prot_attr_array():
+@pytest.mark.parametrize(
+    "func",
+    [
+        disparate_impact_ratio,  # ratio
+        average_odds_error,  # difference
+        between_group_generalized_entropy_error,  # index
+    ]
+)
+def test_explicit_prot_attr_array(func):
     """Tests that metrics work with explicit prot_attr arrays."""
     prot_attr = y.index.to_flat_index()#y.index.get_level_values('sex')
     y_arr = y.to_numpy()
-    # ratio
-    di = partial(disparate_impact_ratio, priv_group=(1, 1), sample_weight=sample_weight)
-    assert di(y_arr, y_pred, prot_attr=prot_attr) == di(y, y_pred)
-    # difference
-    aoe = partial(average_odds_error, priv_group=(1, 1), sample_weight=sample_weight)
-    assert aoe(y_arr, y_pred, prot_attr=prot_attr) == aoe(y, y_pred)
-    # index
-    ind = partial(between_group_generalized_entropy_error, priv_group=(1, 1))
-    assert ind(y_arr, y_pred, prot_attr=prot_attr) == ind(y, y_pred)
+    f = partial(func, priv_group=(1, 1))
+    assert f(y_arr, y_pred, prot_attr=prot_attr) == f(y, y_pred)
+
+def test_one_vs_rest():
+    ovr = one_vs_rest(statistical_parity_difference, y, y_pred, prot_attr='sex')
+    assert ovr[0] == -ovr[1]
+    assert ovr[1] == statistical_parity_difference(y, y_pred, prot_attr='sex')
+
+    v, k = one_vs_rest(disparate_impact_ratio, y, y_pred, return_groups=True)
+    assert len(v) == 4
+    ovr = dict(zip(k, v))
+    for i in range(2):
+        for j in range(2):
+            g = (i, j)
+            assert disparate_impact_ratio(y, y_pred, priv_group=g) == ovr[g]
