@@ -22,4 +22,5 @@ pytest>=3.5.0
 
 # docs
 sphinx==1.8.6
+jinja2==3.0.3
 sphinx_rtd_theme==0.4.3
