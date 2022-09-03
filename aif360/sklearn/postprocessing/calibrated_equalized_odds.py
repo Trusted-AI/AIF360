@@ -74,13 +74,18 @@ class CalibratedEqualizedOdds(BaseEstimator, ClassifierMixin):
                        sample_weight=None):
         """Evaluates the cost function specified by ``self.cost_constraint``."""
         if self.cost_constraint == 'fpr':
-            return generalized_fpr(y_true, probas_pred, pos_label, sample_weight)
+            return generalized_fpr(y_true, probas_pred, pos_label=pos_label,
+                                   sample_weight=sample_weight)
         elif self.cost_constraint == 'fnr':
-            return generalized_fnr(y_true, probas_pred, pos_label, sample_weight)
+            return generalized_fnr(y_true, probas_pred, pos_label=pos_label,
+                                   sample_weight=sample_weight)
         elif self.cost_constraint == 'weighted':
-            fpr = generalized_fpr(y_true, probas_pred, pos_label, sample_weight)
-            fnr = generalized_fnr(y_true, probas_pred, pos_label, sample_weight)
-            br = base_rate(y_true, probas_pred, pos_label, sample_weight)
+            fpr = generalized_fpr(y_true, probas_pred, pos_label=pos_label,
+                                  sample_weight=sample_weight)
+            fnr = generalized_fnr(y_true, probas_pred, pos_label=pos_label,
+                                  sample_weight=sample_weight)
+            br = base_rate(y_true, probas_pred, pos_label=pos_label,
+                           sample_weight=sample_weight)
             return fpr * (1 - br) + fnr * br
         else:
             raise ValueError("`cost_constraint` must be one of: 'fpr', 'fnr', "
@@ -130,7 +135,8 @@ class CalibratedEqualizedOdds(BaseEstimator, ClassifierMixin):
         def _eval(func, grp_idx, trivial=False):
             idx = (groups == self.groups_[grp_idx])
             pred = np.full_like(X, self.base_rates_[grp_idx]) if trivial else X
-            return func(y[idx], pred[idx], pos_label, sample_weight[idx])
+            return func(y[idx], pred[idx], pos_label=pos_label,
+                        sample_weight=sample_weight[idx])
 
         self.base_rates_ = [_eval(base_rate, i) for i in range(2)]
 
