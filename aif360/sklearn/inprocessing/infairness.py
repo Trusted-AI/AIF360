@@ -1,8 +1,10 @@
 from inFairness import fairalgo
-from skorch import NeuralNetClassifier
+from sklearn.preprocessing import LabelBinarizer
+from sklearn.utils.multiclass import type_of_target
+from sklearn.exceptions import NotFittedError
+from skorch import NeuralNet
 from skorch.dataset import unpack_data, Dataset as Dataset_
 from skorch.utils import is_pandas_ndframe
-import torch.nn as nn
 
 
 class Dataset(Dataset_):
@@ -13,25 +15,39 @@ class Dataset(Dataset_):
             y = y.values
         super().__init__(X, y=y, length=length)
 
-class InFairnessNet(NeuralNetClassifier):
+class InFairnessNet(NeuralNet):
     """"TODO:
-    * regressor version?
     * defaults?
-    * check clone behavior (does SenSeI auditor/distances get copied properly?)
+    * integrate distance fitting
     """
-    def __init__(self, *args, criterion=nn.CrossEntropyLoss, train_split=None,
-                 **kwargs):
+    def __init__(self, *args, criterion, train_split=None, regression='auto',
+                 dataset=Dataset, **kwargs):
         """
         Args:
-            criterion (torch.nn.Module): Loss function. Default is
-                :class:`~torch.nn.CrossEntropyLoss`.
+            criterion (torch.nn.Module, keyword-only): Loss function.
             train_split (callable, optional): See :class:`skorch.NeuralNet`.
                 Note: validation loss *does not* include any fairness loss, only
                 the provided criterion, and should not be used for early
                 stopping, etc. Default is None (no split).
+            regression (bool or 'auto'): Task is regression. If 'auto', this is
+                inferred using :func:`sklearn.utils.multiclass.type_of_target`
+                on y in fit(). If a Dataset is provided to fit, this defaults to
+                False. If y contains 'soft' targets (i.e. probabilities per
+                class), this should be manually set to False.
         """
         super().__init__(*args, criterion=criterion, train_split=train_split,
-                         dataset=Dataset, **kwargs)
+                         dataset=dataset, **kwargs)
+        self.regression = regression
+
+    @property
+    def _estimator_type(self):
+        if hasattr(self, "regression_"):
+            return 'regressor' if self.regression_ else 'classifier'
+        elif self.regression != 'auto':
+            return 'regressor' if self.regression else 'classifier'
+        else:
+            raise NotFittedError("regression is set to 'auto'. Call 'fit' with "
+                    "appropriate arguments or set regression manually.")
 
     def initialize(self):
         """Initializes all of its components and returns self."""
@@ -159,6 +175,29 @@ class InFairnessNet(NeuralNetClassifier):
         """
         return super().evaluation_step(batch, training=training).y_pred
 
+    def fit(self, X, y, **fit_params):
+        self.regression_ = self.regression
+        if y is not None:
+            ttype = type_of_target(y)
+            if ttype in ("binary", "multiclass", "multilabel-indicator"):
+                lb = LabelBinarizer().fit(y)
+                self.classes_ = lb.classes_
+                if self.classes_.tolist() != list(range(len(self.classes_))):
+                    y = lb.transform(y).astype('float32')
+            elif "continuous" in ttype and self.regression_ == 'auto':
+                self.regression_ = True
+        if self.regression_ == 'auto':
+            self.regression_ = False
+        return super().fit(X, y, **fit_params)
+
+    def predict(self, X):
+        if self.regression_:
+            return super().predict(X)
+        elif hasattr(self, "classes_"):
+            return self.classes_[self.predict_proba(X).argmax(axis=1)]
+        else:
+            return self.predict_proba(X).argmax(axis=1)
+
 class SenSeI(InFairnessNet):
     def __init__(self, module, distance_x, distance_y, rho, eps, auditor_nsteps,
                  auditor_lr, **kwargs):
@@ -211,7 +250,6 @@ class SenSeI(InFairnessNet):
             'auditor_lr': self.auditor_lr,
         }
         module = self.initialized_instance(fairalgo.SenSeI, sensei_kwargs)
-        # pylint: disable=attribute-defined-outside-init
         self.module_ = module
         return self
 
