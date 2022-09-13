@@ -8,6 +8,10 @@ from skorch.utils import is_pandas_ndframe
 
 
 class Dataset(Dataset_):
+    """A generic dataset class inheriting from :class:`skorch.dataset.Dataset`
+    which simply converts DataFrames to arrays instead of treating them like
+    dicts.
+    """
     def __init__(self, X, y=None, length=None):
         if is_pandas_ndframe(X):
             X = X.values
@@ -16,16 +20,13 @@ class Dataset(Dataset_):
         super().__init__(X, y=y, length=length)
 
 class InFairnessNet(NeuralNet):
-    """"TODO:
-    * defaults?
-    * integrate distance fitting
-    """
+    """Base class for models which incorporate inFairness algorithms."""
     def __init__(self, *args, criterion, train_split=None, regression='auto',
                  dataset=Dataset, **kwargs):
         """
         Args:
             criterion (torch.nn.Module, keyword-only): Loss function.
-            train_split (callable, optional): See :class:`skorch.NeuralNet`.
+            train_split (callable, optional): See :class:`skorch.net.NeuralNet`.
                 Note: validation loss *does not* include any fairness loss, only
                 the provided criterion, and should not be used for early
                 stopping, etc. Default is None (no split).
@@ -176,8 +177,30 @@ class InFairnessNet(NeuralNet):
         return super().evaluation_step(batch, training=training).y_pred
 
     def fit(self, X, y, **fit_params):
+        """Initialize and fit the model.
+
+        If the module was already initialized, by calling fit, the module will
+        be re-initialized (unless ``warm_start`` is True).
+
+        Args:
+            X (array-like): Training samples.
+            y (array-like): Training labels. If X is a Dataset that contains
+                the target, y may be set to ``None``. Note: if ``regression`` is
+                'auto' in this case, classification will be assumed. If y is
+                already binary/ordinal encoded (i.e., the unique labels consist
+                of the integers from [0, C)) it is passed as-is, however, if y
+                contains nominal values, it is encoded with
+                :class:`sklearn.preprocessing.LabelBinarizer` and cast to
+                'float32' for compatibility with torch loss functions.
+                Regression targets are also left unmodified.
+            **fit_params: Additional parameters passed to the `forward`` method
+                of the module and to the ``self.train_split`` call.
+
+        Returns:
+            self
+        """
         self.regression_ = self.regression
-        if y is not None:
+        if y is not None and self.regression_ is not True:
             ttype = type_of_target(y)
             if ttype in ("binary", "multiclass", "multilabel-indicator"):
                 lb = LabelBinarizer().fit(y)
@@ -186,11 +209,26 @@ class InFairnessNet(NeuralNet):
                     y = lb.transform(y).astype('float32')
             elif "continuous" in ttype and self.regression_ == 'auto':
                 self.regression_ = True
+            else:
+                raise ValueError(f'Detected {ttype} type y with regression='
+                    f'{self.regression}. This combination is not supported.')
         if self.regression_ == 'auto':
             self.regression_ = False
         return super().fit(X, y, **fit_params)
 
     def predict(self, X):
+        """Return class labels for samples in X if task is classification or
+        predicted values if task is regression.
+
+        Args:
+            X (array-like): Test samples.
+
+        Returns:
+            numpy.ndarray: Test predictions.
+
+        See also:
+            :meth:`skorch.net.NeuralNet.predict`
+        """
         if self.regression_:
             return super().predict(X)
         elif hasattr(self, "classes_"):
@@ -199,13 +237,35 @@ class InFairnessNet(NeuralNet):
             return self.predict_proba(X).argmax(axis=1)
 
 class SenSeI(InFairnessNet):
-    def __init__(self, module, distance_x, distance_y, rho, eps, auditor_nsteps,
-                 auditor_lr, **kwargs):
+    """Sensitive Set Invariance (SenSeI).
+
+    SenSeI is an in-processing method for individual fairness [#yurochkin20]_.
+    In this method, individual fairness is formulated as invariance on certain
+    sensitive sets. SenSeI minimizes a transport-based regularizer that enforces
+    this version of individual fairness.
+
+    References:
+        .. [#yurochkin20] `M. Yurochkin and Y. Sun, "SenSeI: Sensitive Set
+           Invariance for Enforcing Individual Fairness." International
+           Conference on Learning Representations, 2021.
+           <https://arxiv.org/abs/2006.14168>`_
+
+    See also:
+        :class:`inFairness.fairalgo.SenSeI`
+
+    Attributes:
+        regression_ (bool): Whether or not this task is treated as regression.
+        classes_ (array, shape (n_classes,)): A list of class labels known to
+            the transformer. Only present if ``self.regression_`` is False and
+            y is provided to ``fit``.
+        module_ (inFairness.fairalgo.SenSeI): The fair PyTorch module.
+    """
+    def __init__(self, module, *, criterion, distance_x, distance_y, rho, eps,
+                 auditor_nsteps, auditor_lr, regression='auto', **kwargs):
         """
         Args:
             module (torch.nn.Module): Network architecture.
-            criterion (torch.nn.Module): Loss function. Default is
-                :class:`~torch.nn.CrossEntropyLoss`.
+            criterion (torch.nn.Module): Loss function.
             distance_x (inFairness.distances.Distance): Distance metric in the
                 input space.
             distance_y (inFairness.distances.Distance): Distance metric in the
@@ -215,10 +275,16 @@ class SenSeI(InFairnessNet):
             auditor_nsteps (int): Number of update steps for the auditor to find
                 worst-case examples
             auditor_lr (float): Learning rate for the auditor.
-            train_split (callable, optional): See :class:`skorch.NeuralNet`.
+            regression (bool or 'auto'): Task is regression. If 'auto', this is
+                inferred using :func:`sklearn.utils.multiclass.type_of_target`
+                on y in fit(). If a Dataset is provided to fit, this defaults to
+                False. If y contains 'soft' targets (i.e. probabilities per
+                class), this should be manually set to False.
+            train_split (callable, optional): See :class:`skorch.net.NeuralNet`.
                 Note: validation loss *does not* include any fairness loss, only
                 the provided criterion, and should not be used for early
                 stopping, etc. Default is None (no split).
+            **kwargs: See :class:`skorch.net.NeuralNet`.
         """
         self.distance_x = distance_x
         self.distance_y = distance_y
@@ -227,14 +293,14 @@ class SenSeI(InFairnessNet):
         self.auditor_nsteps = auditor_nsteps
         self.auditor_lr = auditor_lr
 
-        super().__init__(module=module, **kwargs)
+        super().__init__(module=module, criterion=criterion,
+                         regression=regression, **kwargs)
 
     def initialize_module(self):
         """Initializes the module.
 
         If the module is already initialized and no parameter was changed, it
         will be left as is.
-
         """
         kwargs = self.get_params_for('module')
         network = self.initialized_instance(self.module, kwargs)
@@ -249,18 +315,38 @@ class SenSeI(InFairnessNet):
             'auditor_nsteps': self.auditor_nsteps,
             'auditor_lr': self.auditor_lr,
         }
-        module = self.initialized_instance(fairalgo.SenSeI, sensei_kwargs)
-        self.module_ = module
+        self.module_ = self.initialized_instance(fairalgo.SenSeI, sensei_kwargs)
         return self
 
 class SenSR(InFairnessNet):
-    def __init__(self, module, distance_x, eps, lr_lamb, lr_param,
-                 auditor_nsteps, auditor_lr, **kwargs):
+    """Sensitive Subspace Robustness (SenSR).
+
+    SenSR is an in-processing method for individual fairness which enforces
+    performance invariance under certain sensitive perturbations to the input
+    [#yurochkin19]_.
+
+    References:
+        .. [#yurochkin19] `M. Yurochkin, A. Bower, and Y. Sun, "Training
+           individually fair ML models with sensitive subspace robustness."
+           International Conference on Learning Representations, 2020.
+           <https://arxiv.org/abs/1907.00020>`_
+
+    See also:
+        :class:`inFairness.fairalgo.SenSR`
+
+    Attributes:
+        regression_ (bool): Whether or not this task is treated as regression.
+        classes_ (array, shape (n_classes,)): A list of class labels known to
+            the transformer. Only present if ``self.regression_`` is False and
+            y is provided to ``fit``.
+        module_ (inFairness.fairalgo.SenSR): The fair PyTorch module.
+    """
+    def __init__(self, module, *, criterion, distance_x, eps, lr_lamb, lr_param,
+                 auditor_nsteps, auditor_lr, regression='auto', **kwargs):
         """
         Args:
             module (torch.nn.Module): Network architecture.
-            criterion (torch.nn.Module): Loss function. Default is
-                :class:`~torch.nn.CrossEntropyLoss`.
+            criterion (torch.nn.Module): Loss function.
             distance_x (inFairness.distances.Distance): Distance metric in the
                 input space.
             eps (float): :math:`\epsilon` parameter in the SenSR algorithm.
@@ -269,10 +355,16 @@ class SenSR(InFairnessNet):
             auditor_nsteps (int): Number of update steps for the auditor to find
                 worst-case examples
             auditor_lr (float): Learning rate for the auditor.
-            train_split (callable, optional): See :class:`skorch.NeuralNet`.
+            regression (bool or 'auto'): Task is regression. If 'auto', this is
+                inferred using :func:`sklearn.utils.multiclass.type_of_target`
+                on y in fit(). If a Dataset is provided to fit, this defaults to
+                False. If y contains 'soft' targets (i.e. probabilities per
+                class), this should be manually set to False.
+            train_split (callable, optional): See :class:`skorch.net.NeuralNet`.
                 Note: validation loss *does not* include any fairness loss, only
                 the provided criterion, and should not be used for early
                 stopping, etc. Default is None (no split).
+            **kwargs: See :class:`skorch.net.NeuralNet`.
         """
         self.distance_x = distance_x
         self.eps = eps
@@ -281,14 +373,14 @@ class SenSR(InFairnessNet):
         self.auditor_nsteps = auditor_nsteps
         self.auditor_lr = auditor_lr
 
-        super().__init__(module=module, **kwargs)
+        super().__init__(module=module, criterion=criterion,
+                         regression=regression, **kwargs)
 
     def initialize_module(self):
         """Initializes the module.
 
         If the module is already initialized and no parameter was changed, it
         will be left as is.
-
         """
         kwargs = self.get_params_for('module')
         network = self.initialized_instance(self.module, kwargs)
@@ -303,7 +395,5 @@ class SenSR(InFairnessNet):
             'auditor_nsteps': self.auditor_nsteps,
             'auditor_lr': self.auditor_lr,
         }
-        module = self.initialized_instance(fairalgo.SenSR, sensr_kwargs)
-        # pylint: disable=attribute-defined-outside-init
-        self.module_ = module
+        self.module_ = self.initialized_instance(fairalgo.SenSR, sensr_kwargs)
         return self

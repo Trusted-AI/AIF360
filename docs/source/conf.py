@@ -41,12 +41,16 @@ extensions = ['sphinx.ext.autodoc',
     'sphinx.ext.intersphinx',
     'sphinx.ext.mathjax']
 
-intersphinx_mapping = {'numpy': ('https://docs.scipy.org/doc/numpy/', None),
+intersphinx_mapping = {
+    'numpy': ('https://docs.scipy.org/doc/numpy/', None),
     'scipy': ('https://docs.scipy.org/doc/scipy/reference/', None),
     'pandas': ('https://pandas.pydata.org/pandas-docs/stable/', None),
     'sklearn': ('https://scikit-learn.org/stable/', None),
     'fairlearn': (f'https://fairlearn.github.io/v{fairlearn.__version__}/', None),
-    'python': ('https://docs.python.org/{}.{}'.format(*sys.version_info), None)}
+    'python': ('https://docs.python.org/{}.{}'.format(*sys.version_info), None),
+    'inFairness': ('https://ibm.github.io/inFairness/', None),
+    'skorch': ('https://skorch.readthedocs.io/en/stable/', None),
+}
 
 napoleon_include_init_with_doc = True
 napoleon_use_ivar = True
