@@ -1,5 +1,3 @@
-
-
 ARG OWNER=jupyter
 ARG BASE_CONTAINER=$OWNER/minimal-notebook:python-3.8.8
 FROM $BASE_CONTAINER
