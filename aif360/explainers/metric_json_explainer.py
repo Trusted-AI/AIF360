@@ -152,7 +152,7 @@ class MetricJSONExplainer(MetricTextExplainer):
     def disparate_impact(self):
         outcome = super(MetricJSONExplainer, self).disparate_impact()
         response = []
-        if isinstance(self.metric, BinaryLabelDatasetMetric):
+        if type(self.metric) is BinaryLabelDatasetMetric:
             response = OrderedDict((
                 ("metric", "Disparate Impact"),
                 ("message", outcome),
@@ -546,7 +546,7 @@ class MetricJSONExplainer(MetricTextExplainer):
     def statistical_parity_difference(self):
         outcome = super(MetricJSONExplainer, self).statistical_parity_difference()
         response = []
-        if isinstance(self.metric, BinaryLabelDatasetMetric):
+        if type(self.metric) is BinaryLabelDatasetMetric:
             response = OrderedDict((
                 ("metric", "Statistical Parity Difference"),
                 ("message", outcome),
