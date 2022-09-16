@@ -13,7 +13,7 @@ from aif360.sklearn.metrics import (
         consistency_score, specificity_score, selection_rate,
         base_rate, smoothed_base_rate, generalized_fpr, generalized_fnr,
         disparate_impact_ratio, statistical_parity_difference,
-        equal_opportunity_difference, average_odds_difference,
+        equal_opportunity_difference, average_odds_difference, average_predictive_value_difference,
         average_odds_error, smoothed_edf, df_bias_amplification,
         generalized_entropy_error, between_group_generalized_entropy_error,
         class_imbalance, kl_divergence, conditional_demographic_disparity,
@@ -99,6 +99,12 @@ def test_average_odds_difference():
     aod = average_odds_difference(y, y_pred, prot_attr='sex',
                                   sample_weight=sample_weight)
     assert np.isclose(aod, cm.average_odds_difference())
+
+def test_average_predictive_value_difference():
+    """Tests that the old and new average_predictive_value_difference matches exactly."""
+    aod = average_predictive_value_difference(y, y_pred, prot_attr='sex',
+                                  sample_weight=sample_weight)
+    assert np.isclose(aod, cm.average_predictive_value_difference())
 
 def test_average_odds_error():
     """Tests that the old and new average_odds_error matches exactly."""
