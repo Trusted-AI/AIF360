@@ -9,7 +9,8 @@ from sklearn.metrics._classification import _prf_divide, _check_zero_division
 from sklearn.neighbors import NearestNeighbors
 from sklearn.utils import check_X_y
 from sklearn.utils.deprecation import deprecated
-
+from sklearn.utils.multiclass import type_of_target
+from sklearn.preprocessing import LabelEncoder
 from aif360.sklearn.utils import check_inputs, check_groups
 from aif360.detectors.mdss.ScoringFunctions import BerkJones, Bernoulli
 from aif360.detectors.mdss.MDSS import MDSS
@@ -1088,7 +1089,7 @@ def coefficient_of_variation(b):
 
 
 # TODO: use sample_weight?
-def consistency_score(X, y, n_neighbors=5):
+def consistency_score(X, y, n_neighbors=5,**kwargs):
     r"""Compute the consistency score.
 
     Individual fairness metric from [#zemel13]_ that measures how similar the
@@ -1111,8 +1112,19 @@ def consistency_score(X, y, n_neighbors=5):
     """
     # cast as ndarrays
     X, y = check_X_y(X, y)
+    #check type of y
+    target_type = type_of_target(y)
+    if target_type =='binary':
+        label_encoder = LabelEncoder()
+        y = label_encoder.fit_transform(y)
+    elif target_type =='continuous':
+        pass
+    else:
+        raise TypeError("Unexpected target type")
+    
     # learn a KNN on the features
-    nbrs = NearestNeighbors(n_neighbors=n_neighbors, algorithm='ball_tree')
+    nbrs = NearestNeighbors(
+        n_neighbors=n_neighbors, algorithm='ball_tree',**kwargs)
     nbrs.fit(X)
     indices = nbrs.kneighbors(X, return_distance=False)
 
