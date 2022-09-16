@@ -143,8 +143,8 @@ class MetricJSONExplainer(MetricTextExplainer):
         response = OrderedDict((
             ("metric", "Consistency"),
             ("message", outcome),
-            ("description", "Individual fairness metric from Zemel, Rich, et al. \"Learning fair representations.\", ICML 2013. "),
-            ("Measures how similar the labels are for similar instances."),
+            ("description", "Individual fairness metric from Zemel, Rich, et al. \"Learning fair representations.\", ICML 2013. "
+                            "Measures how similar the labels are for similar instances."),
             ("ideal", "The ideal value of this metric is 1.0")
         ))
         return json.dumps(response)
