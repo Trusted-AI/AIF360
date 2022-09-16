@@ -34,3 +34,8 @@ class KaggleStore(Store):
 
     def existsInDestination(self, **kwargs):
         pass
+
+
+# Usage example
+# obj = KaggleStore(source="uciml/forest-cover-type-dataset", destination="output")
+# obj.download()
