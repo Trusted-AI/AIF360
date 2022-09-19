@@ -571,6 +571,20 @@ class ClassificationMetric(BinaryLabelDatasetMetric):
         return 0.5 * (np.abs(self.difference(self.false_positive_rate))
                     + np.abs(self.difference(self.true_positive_rate)))
 
+    def average_predictive_value_difference(self):
+        r"""Average of difference in PPV and FOR for unprivileged and privileged
+        groups:
+
+        .. math::
+
+           \tfrac{1}{2}\left[(PPV_{D = \text{unprivileged}} - PPV_{D = \text{privileged}})
+           + (FOR_{D = \text{unprivileged}} - FOR_{D = \text{privileged}}))\right]
+
+        A value of 0 indicates equality of chance of success.
+        """
+        return 0.5 * (self.difference(self.positive_predictive_value)
+                    + self.difference(self.false_omission_rate))
+
     def error_rate_difference(self):
         r"""Difference in error rates for unprivileged and privileged groups,
         :math:`ERR_{D = \text{unprivileged}} - ERR_{D = \text{privileged}}`.
