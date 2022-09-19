@@ -3,7 +3,7 @@ from itertools import permutations
 import numpy as np
 import pandas as pd
 from scipy.special import rel_entr
-from sklearn.metrics import make_scorer as _make_scorer, recall_score
+from sklearn.metrics import make_scorer as _make_scorer, recall_score, precision_score
 from sklearn.metrics import multilabel_confusion_matrix
 from sklearn.metrics._classification import _prf_divide, _check_zero_division
 from sklearn.neighbors import NearestNeighbors
@@ -25,7 +25,7 @@ __all__ = [
     'smoothed_selection_rate', 'generalized_fpr', 'generalized_fnr',
     # group fairness
     'statistical_parity_difference', 'disparate_impact_ratio',
-    'equal_opportunity_difference', 'average_odds_difference',
+    'equal_opportunity_difference', 'average_odds_difference', 'average_predictive_value_difference',
     'average_odds_error', 'class_imbalance', 'kl_divergence',
     'conditional_demographic_disparity', 'smoothed_edf',
     'df_bias_amplification', 'mdss_bias_scan', 'mdss_bias_score',
@@ -344,6 +344,27 @@ def specificity_score(y_true, y_pred, *, pos_label=1, sample_weight=None,
     return _prf_divide(tn, negs, 'specificity', 'negative', None,
                        ('specificity',), zero_division).item()
 
+def false_omission_rate_error(y_true, y_pred, *, pos_label=1, sample_weight=None,
+                      zero_division='warn'):
+    """Compute the false omission rate.
+
+    Args:
+        y_true (array-like): Ground truth (correct) target values.
+        y_pred (array-like): Estimated targets as returned by a classifier.
+        pos_label (scalar, optional): The label of the positive class.
+        sample_weight (array-like, optional): Sample weights.
+        zero_division ('warn', 0 or 1): Sets the value to return when there is a
+            zero division. If set to “warn”, this acts as 0, but warnings are
+            also raised.
+    """
+    _check_zero_division(zero_division)
+    MCM = multilabel_confusion_matrix(y_true, y_pred, labels=[pos_label],
+                                      sample_weight=sample_weight)
+    tn, fn = MCM[:, 0, 0], MCM[:, 1, 0]
+    negs = tn + fn
+    return _prf_divide(fn, negs, 'false omission rate', 'predicted negative', None,
+                       ('false omission rate',), zero_division).item()
+
 def base_rate(y_true, y_pred=None, *, pos_label=1, sample_weight=None):
     r"""Compute the base rate, :math:`Pr(Y = \text{pos_label}) = \frac{P}{P+N}`.
 
@@ -648,6 +669,37 @@ def average_odds_error(y_true, y_pred, *, prot_attr=None, priv_group=None,
                           priv_group=priv_group, pos_label=pos_label,
                           sample_weight=sample_weight)
     return (abs(tpr_diff) + abs(fpr_diff)) / 2
+
+def average_predictive_value_difference(y_true, y_pred, *, prot_attr=None, priv_group=1,
+                            pos_label=1, sample_weight=None):
+    r"""Returns the average of the difference in positive predictive value and false omission rate for the unprivileged and privileged groups:
+
+    .. math::
+
+        \dfrac{(PPV_{D = \text{unprivileged}} - PPV_{D = \text{privileged}})
+        + (FOR_{D = \text{unprivileged}} - FOR_{D = \text{privileged}})}{2}
+
+    A value of 0 indicates equality of chance of success.
+
+    Args:
+        y_true (pandas.Series): Ground truth (correct) target values.
+        y_pred (array-like): Estimated targets as returned by a classifier.
+        prot_attr (array-like, keyword-only): Protected attribute(s). If
+            ``None``, all protected attributes in y_true are used.
+        priv_group (scalar, optional): The label of the privileged group.
+        pos_label (scalar, optional): The label of the positive class.
+        sample_weight (array-like, optional): Sample weights.
+
+    Returns:
+        float: Average predictive value difference.
+    """
+    for_diff = difference(false_omission_rate_error, y_true, y_pred,
+                           prot_attr=prot_attr, priv_group=priv_group,
+                           pos_label=pos_label, sample_weight=sample_weight)
+    ppv_diff = difference(precision_score, y_true, y_pred, prot_attr=prot_attr,
+                          priv_group=priv_group, pos_label=pos_label,
+                          sample_weight=sample_weight)
+    return (ppv_diff + for_diff) / 2
 
 def class_imbalance(y_true, y_pred=None, *, prot_attr=None, priv_group=1,
                     sample_weight=None):
