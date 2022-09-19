@@ -344,7 +344,7 @@ def specificity_score(y_true, y_pred, *, pos_label=1, sample_weight=None,
     return _prf_divide(tn, negs, 'specificity', 'negative', None,
                        ('specificity',), zero_division).item()
 
-def false_omission_score(y_true, y_pred, *, pos_label=1, sample_weight=None,
+def false_omission_rate_error(y_true, y_pred, *, pos_label=1, sample_weight=None,
                       zero_division='warn'):
     """Compute the false omission rate.
 
@@ -362,8 +362,8 @@ def false_omission_score(y_true, y_pred, *, pos_label=1, sample_weight=None,
                                       sample_weight=sample_weight)
     tn, fn = MCM[:, 0, 0], MCM[:, 1, 0]
     negs = tn + fn
-    return _prf_divide(fn, negs, 'negative_predictive', 'negative', None,
-                       ('negative_predictive',), zero_division).item()
+    return _prf_divide(fn, negs, 'false omission rate', 'predicted negative', None,
+                       ('false omission rate',), zero_division).item()
 
 def base_rate(y_true, y_pred=None, *, pos_label=1, sample_weight=None):
     r"""Compute the base rate, :math:`Pr(Y = \text{pos_label}) = \frac{P}{P+N}`.
@@ -693,7 +693,7 @@ def average_predictive_value_difference(y_true, y_pred, *, prot_attr=None, priv_
     Returns:
         float: Average predictive value difference.
     """
-    for_diff = difference(false_omission_score, y_true, y_pred,
+    for_diff = difference(false_omission_rate_error, y_true, y_pred,
                            prot_attr=prot_attr, priv_group=priv_group,
                            pos_label=pos_label, sample_weight=sample_weight)
     ppv_diff = difference(precision_score, y_true, y_pred, prot_attr=prot_attr,
