@@ -2,6 +2,7 @@ from itertools import permutations
 
 import numpy as np
 import pandas as pd
+from scipy.stats import gmean, hmean
 from scipy.special import rel_entr
 from sklearn.metrics import make_scorer as _make_scorer, recall_score, precision_score
 from sklearn.metrics import multilabel_confusion_matrix
@@ -133,6 +134,51 @@ def ratio(func, y_true, y_pred=None, prot_attr=None, priv_group=1,
         modifier = f'value for {func.__name__} on privileged'
     return _prf_divide(np.array([numerator]), np.array([denominator]), 'ratio',
                        modifier, None, ('ratio',), zero_division).item()
+
+def average(arr, average_method='arithmetic'):
+    """Perform a (generalized) mean.
+
+    This is a helper method intended to be used with :func:`difference` or
+    :func:`ratio` when the corresponding func returns an array over target
+    classes, e.g., :func:`~sklearn.metrics.recall_score` with ``average=None``.
+
+    Args:
+        arr (array-like): Array of values. Note: this will be flattened.
+        average_method (str, optional): How to compute the average. Must be one
+            of 'minimum'/'min', 'harmonic', 'geometric', 'arithmetic',
+            'quadratic'/'rms', or 'maximum'/'max'. Defaults to 'arithmetic'.
+
+    Notes:
+        The following means may be calculated:
+
+        |          mean           |      name       |
+        |-------------------------|-----------------|
+        | min(arr)                | minimum/min     |
+        | max(arr)                | maximum/max     |
+        | n_cls/\sum{1/arr}       | harmonic mean   |
+        | \sqrt^{n_cls}\prod{arr} | geometric mean  |
+        | 1/n_cls \sum{arr}       | arithmetic mean |
+        |\sqrt{\sum{arr^2}/n_cls} | quadratic/rms   |
+
+    Returns:
+        float: The average of the flattened array.
+    """
+    if average_method == 'minimum' or average_method == 'min':
+        return np.amin(arr)
+    elif average_method == 'harmonic':
+        return hmean(arr)
+    elif average_method == 'geometric':
+        return gmean(arr)
+    elif average_method == 'arithmetic':
+        return np.mean(arr)
+    elif average_method == 'quadratic' or average_method == 'rms':
+        return np.sqrt(np.mean(arr ** 2))
+    elif average_method == 'maximum' or average_method == 'max':
+        return np.amax(arr)
+    else:
+        raise ValueError("average_method must be one of 'minimum'/'min', "
+                         "'harmonic', 'geometric', 'arithmetic', "
+                         "'quadratic'/'rms', 'maximum'/'max'.")
 
 def intersection(func, y_true, y_pred=None, prot_attr=None, sample_weight=None,
                  return_groups=False, **kwargs):
@@ -599,16 +645,17 @@ def equal_opportunity_difference(y_true, y_pred, *, prot_attr=None,
                       sample_weight=sample_weight)
 
 def average_odds_difference(y_true, y_pred, *, prot_attr=None, priv_group=1,
-                            pos_label=1, sample_weight=None):
+                            average_method='arithmetic', sample_weight=None):
     r"""A relaxed version of equality of odds.
 
-    Returns the average of the difference in FPR and TPR for the unprivileged
-    and privileged groups:
+    Returns the average of the difference in TPR (recall) for the unprivileged
+    and privileged groups over all target classes. In the binary case with
+    average_method='arithmetic', this corresponds to:
 
     .. math::
 
-        \dfrac{(FPR_{D = \text{unprivileged}} - FPR_{D = \text{privileged}})
-        + (TPR_{D = \text{unprivileged}} - TPR_{D = \text{privileged}})}{2}
+        \dfrac{(TPR_{D = \text{unprivileged}} - TPR_{D = \text{privileged}})
+        + (TNR_{D = \text{unprivileged}} - TNR_{D = \text{privileged}})}{2}
 
     A value of 0 indicates equality of odds.
 
@@ -619,30 +666,34 @@ def average_odds_difference(y_true, y_pred, *, prot_attr=None, priv_group=1,
             ``None``, all protected attributes in y_true are used.
         priv_group (scalar, optional): The label of the privileged group.
         pos_label (scalar, optional): The label of the positive class.
+        average_method (str, optional): How to compute the average. If ``None``,
+            no average is performed and the array of differences is returned.
+            See :func:`average` for details.
         sample_weight (array-like, optional): Sample weights.
 
     Returns:
         float: Average odds difference.
     """
-    fpr_diff = -difference(specificity_score, y_true, y_pred,
-                           prot_attr=prot_attr, priv_group=priv_group,
-                           pos_label=pos_label, sample_weight=sample_weight)
-    tpr_diff = difference(recall_score, y_true, y_pred, prot_attr=prot_attr,
-                          priv_group=priv_group, pos_label=pos_label,
-                          sample_weight=sample_weight)
-    return (tpr_diff + fpr_diff) / 2
+    diffs = difference(recall_score, y_true, y_pred, prot_attr=prot_attr,
+            priv_group=priv_group, sample_weight=sample_weight, average=None)
+    if average_method is None:
+        return diffs
+    # elif average_method not in ('harmonic', 'arithmetic'):
+    #     raise ValueError("average_method must be either 'arithmetic', 'harmonic' or None.")
+    return average(diffs, average_method=average_method)
 
 def average_odds_error(y_true, y_pred, *, prot_attr=None, priv_group=None,
-                       pos_label=1, sample_weight=None):
+                       average_method='arithmetic', sample_weight=None):
     r"""A relaxed version of equality of odds.
 
-    Returns the average of the absolute difference in FPR and TPR for the
-    unprivileged and privileged groups:
+    Returns the average of the absolute difference in TPR (recall) for the
+    unprivileged and privileged groups over all target classes. In the binary
+    case with average_method='arithmetic', this corresponds to:
 
     .. math::
 
-        \dfrac{|FPR_{D = \text{unprivileged}} - FPR_{D = \text{privileged}}|
-        + |TPR_{D = \text{unprivileged}} - TPR_{D = \text{privileged}}|}{2}
+        \dfrac{|TPR_{D = \text{unprivileged}} - TPR_{D = \text{privileged}}|
+        + |TNR_{D = \text{unprivileged}} - TNR_{D = \text{privileged}}|}{2}
 
     A value of 0 indicates equality of odds.
 
@@ -653,7 +704,9 @@ def average_odds_error(y_true, y_pred, *, prot_attr=None, priv_group=None,
             ``None``, all protected attributes in y_true are used.
         priv_group (scalar, optional): The label of the privileged group. If
             prot_attr is binary, this may be ``None``.
-        pos_label (scalar, optional): The label of the positive class.
+        average_method (str, optional): How to compute the average. If ``None``,
+            no average is performed and the array of differences is returned.
+            See :func:`average` for details.
         sample_weight (array-like, optional): Sample weights.
 
     Returns:
@@ -662,22 +715,24 @@ def average_odds_error(y_true, y_pred, *, prot_attr=None, priv_group=None,
     if priv_group is None:
         priv_group = check_groups(y_true, prot_attr=prot_attr,
                                   ensure_binary=True)[0][0]
-    fpr_diff = -difference(specificity_score, y_true, y_pred,
-                           prot_attr=prot_attr, priv_group=priv_group,
-                           pos_label=pos_label, sample_weight=sample_weight)
-    tpr_diff = difference(recall_score, y_true, y_pred, prot_attr=prot_attr,
-                          priv_group=priv_group, pos_label=pos_label,
-                          sample_weight=sample_weight)
-    return (abs(tpr_diff) + abs(fpr_diff)) / 2
+    diffs = abs(difference(recall_score, y_true, y_pred, prot_attr=prot_attr,
+            priv_group=priv_group, sample_weight=sample_weight, average=None))
+    if average_method is None:
+        return diffs
+    return average(diffs, average_method=average_method)
 
-def average_predictive_value_difference(y_true, y_pred, *, prot_attr=None, priv_group=1,
-                            pos_label=1, sample_weight=None):
-    r"""Returns the average of the difference in positive predictive value and false omission rate for the unprivileged and privileged groups:
+def average_predictive_value_difference(y_true, y_pred, *, prot_attr=None,
+        priv_group=1, average_method='arithmetic', sample_weight=None):
+    r"""Predictive value parity.
+
+    Returns the average of the difference in positive predictive value (PPV) for
+    the unprivileged and privileged groups over all target classes. In the
+    binary case with average_method='arithmetic', this corresponds to:
 
     .. math::
 
         \dfrac{(PPV_{D = \text{unprivileged}} - PPV_{D = \text{privileged}})
-        + (FOR_{D = \text{unprivileged}} - FOR_{D = \text{privileged}})}{2}
+        + (NPV_{D = \text{unprivileged}} - NPV_{D = \text{privileged}})}{2}
 
     A value of 0 indicates equality of chance of success.
 
@@ -688,18 +743,58 @@ def average_predictive_value_difference(y_true, y_pred, *, prot_attr=None, priv_
             ``None``, all protected attributes in y_true are used.
         priv_group (scalar, optional): The label of the privileged group.
         pos_label (scalar, optional): The label of the positive class.
+        average_method (str, optional): How to compute the average. If ``None``,
+            no average is performed and the array of differences is returned.
+            See :func:`average` for details.
         sample_weight (array-like, optional): Sample weights.
 
     Returns:
         float: Average predictive value difference.
     """
-    for_diff = difference(false_omission_rate_error, y_true, y_pred,
-                           prot_attr=prot_attr, priv_group=priv_group,
-                           pos_label=pos_label, sample_weight=sample_weight)
-    ppv_diff = difference(precision_score, y_true, y_pred, prot_attr=prot_attr,
-                          priv_group=priv_group, pos_label=pos_label,
-                          sample_weight=sample_weight)
-    return (ppv_diff + for_diff) / 2
+    diffs = difference(precision_score, y_true, y_pred, prot_attr=prot_attr,
+            priv_group=priv_group, sample_weight=sample_weight, average=None)
+    if average_method is None:
+        return diffs
+    return average(diffs, average_method=average_method)
+
+def average_predictive_value_error(y_true, y_pred, *, prot_attr=None,
+        priv_group=None, average_method='arithmetic', sample_weight=None):
+    r"""Predictive value parity.
+
+    Returns the average of the absolute difference in positive predictive value
+    (PPV) for the unprivileged and privileged groups over all target classes. In
+    the binary case with average_method='arithmetic', this corresponds to:
+
+    .. math::
+
+        \dfrac{|PPV_{D = \text{unprivileged}} - PPV_{D = \text{privileged}}|
+        + |NPV_{D = \text{unprivileged}} - NPV_{D = \text{privileged}}|}{2}
+
+    A value of 0 indicates equality of chance of success.
+
+    Args:
+        y_true (pandas.Series): Ground truth (correct) target values.
+        y_pred (array-like): Estimated targets as returned by a classifier.
+        prot_attr (array-like, keyword-only): Protected attribute(s). If
+            ``None``, all protected attributes in y_true are used.
+        priv_group (scalar, optional): The label of the privileged group.
+        pos_label (scalar, optional): The label of the positive class.
+        average_method (str, optional): How to compute the average. If ``None``,
+            no average is performed and the array of differences is returned.
+            See :func:`average` for details.
+        sample_weight (array-like, optional): Sample weights.
+
+    Returns:
+        float: Average predictive value error.
+    """
+    if priv_group is None:
+        priv_group = check_groups(y_true, prot_attr=prot_attr,
+                                  ensure_binary=True)[0][0]
+    diffs = abs(difference(precision_score, y_true, y_pred, prot_attr=prot_attr,
+            priv_group=priv_group, sample_weight=sample_weight, average=None))
+    if average_method is None:
+        return diffs
+    return average(diffs, average_method=average_method)
 
 def class_imbalance(y_true, y_pred=None, *, prot_attr=None, priv_group=1,
                     sample_weight=None):
@@ -1185,6 +1280,14 @@ def false_negative_rate_error(y_true, y_pred, pos_label=1, sample_weight=None):
 def false_positive_rate_error(y_true, y_pred, pos_label=1, sample_weight=None):
     return 1 - specificity_score(y_true, y_pred, pos_label=pos_label,
                                  sample_weight=sample_weight)
+
+def false_discovery_rate_error(y_true, y_pred, pos_label=1, sample_weight=None):
+    return 1 - precision_score(y_true, y_pred, pos_label=pos_label,
+                               sample_weight=sample_weight)
+
+def negative_predictive_value_score(y_true, y_pred, pos_label=1, sample_weight=None):
+    return 1 - false_omission_rate_error(y_true, y_pred, pos_label=pos_label,
+                               sample_weight=sample_weight)
 
 def mean_difference(y_true, y_pred=None, *, prot_attr=None, priv_group=1,
                     pos_label=1, sample_weight=None):
