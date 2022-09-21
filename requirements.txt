@@ -19,6 +19,7 @@ ipympl
 
 # tests
 pytest>=3.5.0
+pytest-cov>=2.8.1
 
 # docs
 sphinx==1.8.6
