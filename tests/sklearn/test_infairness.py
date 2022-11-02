@@ -33,7 +33,7 @@ def test_sensei_classification():
     aif360_sensei = SenSeI(
             mlp, criterion=nn.CrossEntropyLoss, distance_x=dx, distance_y=dy,
             rho=1., eps=0.1, auditor_nsteps=10, auditor_lr=0.01, max_epochs=5,
-            optimizer=optim.Adam, lr=1e-3, predict_nonlinearity=None)
+            optimizer=optim.Adam, lr=1e-3, predict_nonlinearity=None, verbose=0)
     y_pred = aif360_sensei.fit(X, y).predict_proba(X)
     assert aif360_sensei.regression_ == False
 
@@ -56,7 +56,7 @@ def test_sensei_classification():
 def test_sensr_regression():
     """Tests whether SenSR output matches original implementation."""
     X, y = make_regression(n_features=10)
-    X, y = X.astype('float32'), y.astype('float32')
+    X, y = X.astype('float32'), y.astype('float32').reshape(-1, 1)
     ds = Dataset(X, y)
 
     dx = distances.MahalanobisDistances()
@@ -67,7 +67,7 @@ def test_sensr_regression():
     aif360_sensei = SenSR(
             mlp, criterion=nn.MSELoss, distance_x=dx, eps=0.1, lr_lamb=1.,
             lr_param=1., auditor_nsteps=10, auditor_lr=0.01, max_epochs=5,
-            optimizer=optim.Adam, lr=1e-3, predict_nonlinearity=None)
+            optimizer=optim.Adam, lr=1e-3, predict_nonlinearity=None, verbose=0)
     y_pred = aif360_sensei.fit(X, y).predict(X)
     assert aif360_sensei.regression_ == True
 
@@ -108,7 +108,7 @@ def test_sensr_regression():
     # input unchanged -- detected regression (wrong shape)
     ([0.1, 1, 0, 2], nn.CrossEntropyLoss, RuntimeError),
     # input unchanged -- detected regression
-    ([0.1, 1, 0, 2], nn.MSELoss, None),
+    ([[0.1], [1], [0], [2]], nn.MSELoss, None),
     # binarized to [[0], [1], [0], [1]]
     (['a', 'b', 'a', 'b'], nn.BCEWithLogitsLoss, None),
     # input unchanged -- binary
@@ -138,7 +138,7 @@ def test_target_encoding(y, criterion, raises):
     mlp = nn.Sequential(nn.Linear(2, 10), nn.ReLU(), nn.Linear(10, ndim))
     sensei = SenSeI(mlp, criterion=criterion, distance_x=dx, distance_y=dy,
             rho=1., eps=0.1, auditor_nsteps=1, auditor_lr=0.01, max_epochs=1,
-            optimizer=optim.Adam, lr=1e-3)
+            optimizer=optim.Adam, lr=1e-3, verbose=0)
     with pytest.raises(raises) if raises is not None else nullcontext():
         sensei.fit(X, y)
         assert sensei.regression_ == (criterion == nn.MSELoss)
@@ -162,7 +162,7 @@ def test_grid_pipe(estimator_cls):
 
     mlp = nn.Sequential(nn.Linear(10, 100), nn.ReLU(), nn.Linear(100, 2))
     estimator = estimator_cls(mlp, criterion=nn.CrossEntropyLoss, distance_x=dx,
-                              optimizer=optim.Adam, lr=1e-3, max_epochs=5)
+                              optimizer=optim.Adam, lr=1e-3, max_epochs=5, verbose=0)
 
     pipe = Pipeline([('scaler', StandardScaler()), ('estimator', estimator)])
     params = {'estimator__auditor_nsteps': [0, 10, 25]}
