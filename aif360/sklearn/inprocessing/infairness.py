@@ -50,21 +50,6 @@ class InFairnessNet(NeuralNet):
             raise NotFittedError("regression is set to 'auto'. Call 'fit' with "
                     "appropriate arguments or set regression manually.")
 
-    def initialize(self):
-        """Initializes all of its components and returns self."""
-        self._initialize_virtual_params()
-        self._initialize_callbacks()
-        # initialize criterion before module
-        self._initialize_criterion()
-        self._initialize_module()
-        self._initialize_optimizer()
-        self._initialize_history()
-
-        self._check_kwargs(self._kwargs)
-
-        self.initialized_ = True
-        return self
-
     def get_loss(self, y_pred, y_true, X=None, training=False):
         """Return the loss for this batch.
 
@@ -302,6 +287,7 @@ class SenSeI(InFairnessNet):
         If the module is already initialized and no parameter was changed, it
         will be left as is.
         """
+        self.initialize_criterion()
         kwargs = self.get_params_for('module')
         network = self.initialized_instance(self.module, kwargs)
 
@@ -382,6 +368,7 @@ class SenSR(InFairnessNet):
         If the module is already initialized and no parameter was changed, it
         will be left as is.
         """
+        self.initialize_criterion()
         kwargs = self.get_params_for('module')
         network = self.initialized_instance(self.module, kwargs)
 
