@@ -1,4 +1,3 @@
-from turtle import pen
 from aif360.detectors.mdss.ScoringFunctions.ScoringFunction import ScoringFunction
 from aif360.detectors.mdss.ScoringFunctions import optim
 
