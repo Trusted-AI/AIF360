@@ -50,6 +50,7 @@ Get in touch with us on [Slack](https://aif360.slack.com) (invitation
 * Exponentiated Gradient Reduction ([Agarwal et al., 2018](https://arxiv.org/abs/1803.02453))
 * Grid Search Reduction ([Agarwal et al., 2018](https://arxiv.org/abs/1803.02453), [Agarwal et al., 2019](https://arxiv.org/abs/1905.12843))
 * Fair Data Adaptation ([Plečko and Meinshausen, 2020](https://www.jmlr.org/papers/v21/19-966.html), [Plečko et al., 2021](https://arxiv.org/abs/2110.10200))
+* Sensitive Set Invariance/Sensitive Subspace Robustness ([Yurochkin and Sun, 2020](https://arxiv.org/abs/2006.14168), [Yurochkin et al., 2019](https://arxiv.org/abs/1907.00020))
 
 ## Supported fairness metrics
 
@@ -75,9 +76,9 @@ Supported Python Configurations:
 
 | OS      | Python version |
 | ------- | -------------- |
-| macOS   | 3.7, 3.8, 3.9  |
-| Ubuntu  | 3.7, 3.8, 3.9  |
-| Windows | 3.7, 3.8, 3.9  |
+| macOS   | 3.7 – 3.10     |
+| Ubuntu  | 3.7 – 3.10     |
+| Windows | 3.7 – 3.10     |
 
 ### (Optional) Create a virtual environment
 

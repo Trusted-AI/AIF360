@@ -200,6 +200,8 @@ In-processors
    inprocessing.AdversarialDebiasing
    inprocessing.ExponentiatedGradientReduction
    inprocessing.GridSearchReduction
+   inprocessing.SenSeI
+   inprocessing.SenSR
 
 :mod:`aif360.sklearn.postprocessing`: Post-processing algorithms
 ================================================================
