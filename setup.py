@@ -20,7 +20,8 @@ extras = {
     'LIME': ['lime'],
     'ART': ['adversarial-robustness-toolbox>=1.0.0'],
     'Reductions': ['fairlearn~=0.7'],
-    'FairAdapt':['rpy2'],
+    'FairAdapt': ['rpy2'],
+    'inFairness': ['skorch', 'inFairness>=0.2.2'],
     'notebooks': ['jupyter', 'tqdm', 'igraph[plotting]', 'lightgbm', 'seaborn', 'ipympl'],
     'LawSchoolGPA': ['tempeh'],
 }
