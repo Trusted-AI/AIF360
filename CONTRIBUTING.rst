@@ -10,15 +10,17 @@ on `Slack <https://aif360.slack.com>`_ first.
 Setup for development
 =====================
 Only maintainers with write access are able to create branches in the main
-repository. All other contributors must create a
-`fork <https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/about-forks>`_
-of the repository from their personal GitHub account and make a
+repository. All other contributors must create a fork of the repository from their
+personal GitHub account and make a
 `pull request back upstream <https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-a-pull-request-from-a-fork>`_.
+See the GitHub docs for instructions on how to
+`Fork a repo <https://docs.github.com/en/get-started/quickstart/fork-a-repo>`_.
+Running ``git remote -v`` should look like this::
 
-You should set up the ``origin`` repository of your code to point to your fork and
-the ``upstream`` to be ``https://github.com/Trusted-AI/AIF360.git``. See
-`Configuring a remote repository for a fork <https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/configuring-a-remote-repository-for-a-fork>`_
-for instructions.
+    origin  https://github.com/<username>/AIF360.git (fetch)
+    origin  https://github.com/<username>/AIF360.git (push)
+    upstream        https://github.com/Trusted-AI/AIF360.git (fetch)
+    upstream        https://github.com/Trusted-AI/AIF360.git (push)
 
 Then, you may install the local version of AIF360 as editable so you can test
 changes you make without reinstalling by navigating to the project root and
@@ -45,8 +47,8 @@ problem and suggest a fix that is especially helpful. If you're willing to
 implement the change and submit a PR that is best!
 
 If you're interested in contributing but don't know where to start, try filtering
-the issues by tag: ``"good first issue"``, ``"help wanted"``, or
-``"contribution welcome"``.
+the issues by tag: ``"good first issue"``, ``"help wanted"``,
+``"contribution welcome"``, or ``"easy"``.
 
 Documentation
 =============
@@ -99,6 +101,11 @@ popular external library instead of writing custom functions is cleaner, go ahea
 (just remember to add it to the notebook requirements in ``setup.py``) -- but
 thorough.
 
+Examples should be placed in the ``examples/`` or ``examples/sklearn/`` directory
+depending on if they apply to the original or scikit-learn compatible API,
+respectively. They should be named as ``demo_<class_name>.ipynb`` according to the
+feature they demonstrate.
+
 Tests
 =====
 Tests should be fast (< 15s) and deterministic but avoid overfitting to a random
@@ -119,6 +126,12 @@ Coverage for new code should exceed 80%. This can be checked using
 ``pytest-cov``::
 
     pytest tests/ --cov=aif360
+
+Tests live in the ``tests/`` or ``tests/sklearn/`` directory (**not** with the
+source files) depending on the version of interface they target. ``conftest.py``
+containts fixtures that may be used by any test within that directory (see the
+`pytest docs <https://docs.pytest.org/en/stable/reference/fixtures.html#conftest-py-sharing-fixtures-across-multiple-files>`_
+for details).
 
 Datasets
 ========
