@@ -15,6 +15,7 @@ Algorithms
    :toctree: generated/
    :template: class.rst
 
+   algorithms.preprocessing.DEMV
    algorithms.preprocessing.DisparateImpactRemover
    algorithms.preprocessing.LFR
    algorithms.preprocessing.OptimPreproc

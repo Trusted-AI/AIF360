@@ -38,3 +38,4 @@ Common datasets
    datasets.CompasDataset
    datasets.GermanDataset
    datasets.LawSchoolGPADataset
+   datasets.CmcDataset

@@ -139,8 +139,7 @@ class DEMV(Transformer):
 
         Returns
         -------
-         StructuredDataset:
-            Balanced dataset
+         StructuredDataset: Balanced dataset
         """
         protected_attrs = dataset.protected_attribute_names
         label_name = dataset.label_names[0]
@@ -150,20 +149,21 @@ class DEMV(Transformer):
                                              self.debug, 0, [], True)
         self.iter = iters
         self.disparities = disparities
-        new_data = StructuredDataset(df_new, label_names=dataset.label_names,
-                                     protected_attribute_names=dataset.protected_attribute_names,
-                                     unprivileged_protected_attributes=dataset.unprivileged_protected_attributes,
-                                     privileged_protected_attributes=dataset.privileged_protected_attributes)
+        new_data = dataset.copy()
+        new_data.features = df_new.drop(columns=label_name).values
+        new_data.labels = np.expand_dims(df_new[label_name].values, axis=1)
+        # new_data = StructuredDataset(df_new, label_names=dataset.label_names,
+        #                              protected_attribute_names=dataset.protected_attribute_names,
+        #                              unprivileged_protected_attributes=dataset.unprivileged_protected_attributes,
+        #                              privileged_protected_attributes=dataset.privileged_protected_attributes)
         return new_data
 
     def get_iters(self):
         """
         Gets the maximum number of iterations
 
-        Returns
-        -------
-        int:
-            maximum number of iterations
+        Returns:
+        int: maximum number of iterations
         """
         return self.iter
 
@@ -171,9 +171,7 @@ class DEMV(Transformer):
         """
         Returns the list of w_exp/w_obs
 
-        Returns
-        -------
-        list:
-            list of disparities values
+        Returns:
+        list: list of disparities values
         """
         return np.array(self.disparities)
