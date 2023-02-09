@@ -3,6 +3,8 @@ import pandas as pd
 
 from aif360.algorithms import Transformer
 from aif360.datasets import StructuredDataset
+from aif360.datasets import BinaryLabelDataset
+from aif360.datasets.multiclass_label_dataset import MulticlassLabelDataset
 
 
 def _balance_set(w_exp, w_obs, df: pd.DataFrame, tot_df, round_level=None, debug=False, k=-1):
@@ -143,15 +145,29 @@ class DEMV(Transformer):
         """
         protected_attrs = dataset.protected_attribute_names
         label_name = dataset.label_names[0]
+        unpriv_prot_attr = dataset.unprivileged_protected_attributes[0]
+        priv_prot_attr = dataset.privileged_protected_attributes[0]
+
         df, _ = dataset.convert_to_dataframe()
         df_new, disparities, iters = _sample(df, protected_attrs,
                                              label_name, self.round_level,
                                              self.debug, 0, [], True)
         self.iter = iters
         self.disparities = disparities
-        new_data = dataset.copy()
-        new_data.features = df_new.drop(columns=label_name).values
-        new_data.labels = np.expand_dims(df_new[label_name].values, axis=1)
+        #new_data = dataset.copy()
+
+        new_data = StructuredDataset(df_new, label_names=[label_name],protected_attribute_names=protected_attrs,
+                                    unprivileged_protected_attributes=unpriv_prot_attr,privileged_protected_attributes=priv_prot_attr)
+
+        new_data = BinaryLabelDataset(favorable_label=priv_prot_attr, unfavorable_label=unpriv_prot_attr, df=df_new ,label_names=[label_name],protected_attribute_names=protected_attrs,
+                                    unprivileged_protected_attributes=unpriv_prot_attr,privileged_protected_attributes=priv_prot_attr)
+
+        #new_data = MulticlassLabelDataset(favorable_label=priv_prot_attr, unfavorable_label=unpriv_prot_attr, df=df_new ,label_names=[label_name],protected_attribute_names=protected_attrs,
+        #                            unprivileged_protected_attributes=unpriv_prot_attr,privileged_protected_attributes=priv_prot_attr)
+
+        newdata = dataset.align_datasets(new_data)
+        #new_data.features = df_new.drop(columns=label_name).values
+        #new_data.labels = np.expand_dims(df_new[label_name].values, axis=1)
         # new_data = StructuredDataset(df_new, label_names=dataset.label_names,
         #                              protected_attribute_names=dataset.protected_attribute_names,
         #                              unprivileged_protected_attributes=dataset.unprivileged_protected_attributes,
