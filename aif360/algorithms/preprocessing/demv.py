@@ -154,24 +154,15 @@ class DEMV(Transformer):
                                              self.debug, 0, [], True)
         self.iter = iters
         self.disparities = disparities
-        #new_data = dataset.copy()
-
-        new_data = StructuredDataset(df_new, label_names=[label_name],protected_attribute_names=protected_attrs,
-                                    unprivileged_protected_attributes=unpriv_prot_attr,privileged_protected_attributes=priv_prot_attr)
-
-        new_data = BinaryLabelDataset(favorable_label=priv_prot_attr, unfavorable_label=unpriv_prot_attr, df=df_new ,label_names=[label_name],protected_attribute_names=protected_attrs,
-                                    unprivileged_protected_attributes=unpriv_prot_attr,privileged_protected_attributes=priv_prot_attr)
-
-        #new_data = MulticlassLabelDataset(favorable_label=priv_prot_attr, unfavorable_label=unpriv_prot_attr, df=df_new ,label_names=[label_name],protected_attribute_names=protected_attrs,
-        #                            unprivileged_protected_attributes=unpriv_prot_attr,privileged_protected_attributes=priv_prot_attr)
-
-        newdata = dataset.align_datasets(new_data)
-        #new_data.features = df_new.drop(columns=label_name).values
-        #new_data.labels = np.expand_dims(df_new[label_name].values, axis=1)
-        # new_data = StructuredDataset(df_new, label_names=dataset.label_names,
-        #                              protected_attribute_names=dataset.protected_attribute_names,
-        #                              unprivileged_protected_attributes=dataset.unprivileged_protected_attributes,
-        #                              privileged_protected_attributes=dataset.privileged_protected_attributes)
+        if len(df_new[label_name].unique()) == 2:
+            new_data = BinaryLabelDataset(favorable_label=priv_prot_attr, unfavorable_label=unpriv_prot_attr, 
+            df=df_new,
+            label_names=[label_name],
+            protected_attribute_names=protected_attrs,
+            unprivileged_protected_attributes=unpriv_prot_attr,privileged_protected_attributes=priv_prot_attr)
+        else:
+            new_data = MulticlassLabelDataset(favorable_label=priv_prot_attr, unfavorable_label=unpriv_prot_attr, df=df_new ,label_names=[label_name],protected_attribute_names=protected_attrs,
+            unprivileged_protected_attributes=unpriv_prot_attr,privileged_protected_attributes=priv_prot_attr)
         return new_data
 
     def get_iters(self):
