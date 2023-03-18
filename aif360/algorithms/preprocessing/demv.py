@@ -8,6 +8,8 @@ from aif360.datasets.multiclass_label_dataset import MulticlassLabelDataset
 
 
 def _balance_set(w_exp, w_obs, df: pd.DataFrame, tot_df, round_level=None, debug=False, k=-1):
+    if w_obs == 0:
+        return df, 0, 0
     disp = round(w_exp / w_obs, round_level) if round_level else w_exp / w_obs
     disparity = [disp]
     i = 0
@@ -155,13 +157,15 @@ class DEMV(Transformer):
         self.iter = iters
         self.disparities = disparities
         if len(df_new[label_name].unique()) == 2:
-            new_data = BinaryLabelDataset(favorable_label=priv_prot_attr, unfavorable_label=unpriv_prot_attr, 
+            new_data = BinaryLabelDataset(favorable_label=dataset.favorable_label,
+            unfavorable_label=dataset.unfavorable_label,
             df=df_new,
             label_names=[label_name],
             protected_attribute_names=protected_attrs,
             unprivileged_protected_attributes=unpriv_prot_attr,privileged_protected_attributes=priv_prot_attr)
         else:
-            new_data = MulticlassLabelDataset(favorable_label=priv_prot_attr, unfavorable_label=unpriv_prot_attr, df=df_new ,label_names=[label_name],protected_attribute_names=protected_attrs,
+            new_data = MulticlassLabelDataset(favorable_label=dataset.favorable_label, 
+                                              df=df_new, label_names=[label_name],protected_attribute_names=protected_attrs,
             unprivileged_protected_attributes=unpriv_prot_attr,privileged_protected_attributes=priv_prot_attr)
         return new_data
 
