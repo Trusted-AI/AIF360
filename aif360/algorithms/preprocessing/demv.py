@@ -25,11 +25,13 @@ def _balance_set(w_exp, w_obs, df: pd.DataFrame, tot_df, round_level=None, debug
         if debug:
             print(w_exp / w_obs)
         i += 1
+    if i == k:
+        print('Warning: max iterations reached')
     return df, disparity, i
 
 
 def _sample(d: pd.DataFrame, s_vars: list, label: str, round_level: float, debug: bool = False,
-            i: int = 0, G=None, cond: bool = True, stop=-1):
+            i: int = 0, G=None, cond: bool = True, stop: int = 10000):
     if G is None:
         G = []
     d = d.copy()
@@ -85,17 +87,20 @@ class DEMV(Transformer):
     Based on the code from: https://github.com/giordanoDaloisio/demv
     """
 
-    def __init__(self, round_level=1, debug=False):
+    def __init__(self, round_level=1, stop=10000, debug=False):
         """
         Parameters
         ----------
         round_level : float, optional
-            Tolerance value to balance the sensitive groups (default is None)
+            Tolerance value to balance the sensitive groups (default is 1)
+        stop : int, optional
+            Maximum number of iterations to balance the sensitive groups (default is 10000)
         debug : bool, optional
             Prints w_exp/w_obs, useful for debugging (default is False)
         """
         self.disparities = []
         self.round_level = round_level
+        self.stop = stop
         self.debug = debug
         self.iter = 0
         super(DEMV, self).__init__()
@@ -153,20 +158,66 @@ class DEMV(Transformer):
         df, _ = dataset.convert_to_dataframe()
         df_new, disparities, iters = _sample(df, protected_attrs,
                                              label_name, self.round_level,
-                                             self.debug, 0, [], True)
+                                             self.debug, 0, [], True, stop=self.stop)
         self.iter = iters
         self.disparities = disparities
         if len(df_new[label_name].unique()) == 2:
-            new_data = BinaryLabelDataset(favorable_label=dataset.favorable_label,
-            unfavorable_label=dataset.unfavorable_label,
-            df=df_new,
-            label_names=[label_name],
-            protected_attribute_names=protected_attrs,
-            unprivileged_protected_attributes=unpriv_prot_attr,privileged_protected_attributes=priv_prot_attr)
+            if dataset.favorable_label and dataset.unfavorable_label:
+                new_data = BinaryLabelDataset(favorable_label=dataset.favorable_label,
+                unfavorable_label=dataset.unfavorable_label,
+                df=df_new,
+                label_names=[label_name],
+                protected_attribute_names=protected_attrs,
+                unprivileged_protected_attributes=unpriv_prot_attr,privileged_protected_attributes=priv_prot_attr)
+            elif dataset.favorable_label:
+                new_data = BinaryLabelDataset(
+                favorable_label=dataset.favorable_label,
+                df=df_new,
+                label_names=[label_name],
+                protected_attribute_names=protected_attrs,
+                unprivileged_protected_attributes=unpriv_prot_attr,privileged_protected_attributes=priv_prot_attr)
+            elif dataset.unfavorable_label:
+                new_data = BinaryLabelDataset(
+                unfavorable_label=dataset.unfavorable_label,
+                df=df_new,
+                label_names=[label_name],
+                protected_attribute_names=protected_attrs,
+                unprivileged_protected_attributes=unpriv_prot_attr,privileged_protected_attributes=priv_prot_attr)
+            else:
+                new_data = BinaryLabelDataset(
+                df=df_new,
+                label_names=[label_name],
+                protected_attribute_names=protected_attrs,
+                unprivileged_protected_attributes=unpriv_prot_attr,privileged_protected_attributes=priv_prot_attr)
         else:
-            new_data = MulticlassLabelDataset(favorable_label=dataset.favorable_label, 
-                                              df=df_new, label_names=[label_name],protected_attribute_names=protected_attrs,
-            unprivileged_protected_attributes=unpriv_prot_attr,privileged_protected_attributes=priv_prot_attr)
+            if dataset.favorable_label and dataset.unfavorable_label:
+                new_data = MulticlassLabelDataset(
+                    favorable_label=dataset.favorable_label, 
+                    unfavorable_label=dataset.unfavorable_label,
+                    df=df_new, 
+                    label_names=[label_name],
+                    protected_attribute_names=protected_attrs,
+                    unprivileged_protected_attributes=unpriv_prot_attr,privileged_protected_attributes=priv_prot_attr)
+            elif dataset.favorable_label:
+                new_data = MulticlassLabelDataset(
+                favorable_label=dataset.favorable_label, 
+                df=df_new, 
+                label_names=[label_name],
+                protected_attribute_names=protected_attrs,
+                unprivileged_protected_attributes=unpriv_prot_attr,privileged_protected_attributes=priv_prot_attr)
+            elif dataset.unfavorable_label:
+                new_data = MulticlassLabelDataset(
+                unfavorable_label=dataset.unfavorable_label,
+                df=df_new, 
+                label_names=[label_name],
+                protected_attribute_names=protected_attrs,
+                unprivileged_protected_attributes=unpriv_prot_attr,privileged_protected_attributes=priv_prot_attr)
+            else:
+                new_data = MulticlassLabelDataset(
+                    df=df_new, 
+                    label_names=[label_name],
+                    protected_attribute_names=protected_attrs,
+                    unprivileged_protected_attributes=unpriv_prot_attr,privileged_protected_attributes=priv_prot_attr)
         return new_data
 
     def get_iters(self):
