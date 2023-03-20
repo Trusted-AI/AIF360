@@ -42,3 +42,8 @@ def test_adult_no_drop():
         features_to_keep=['age', 'education-num'])
     bldm = BinaryLabelDatasetMetric(ad)
     assert bldm.num_instances() == 48842
+
+def test_bank():
+    ''' Check for errors during default loading '''
+    bd = BankDataset()
+
