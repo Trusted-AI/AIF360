@@ -13,7 +13,7 @@ class BankDataset(StandardDataset):
 
     def __init__(self, label_name='y', favorable_classes=['yes'],
                  protected_attribute_names=['age'],
-                 privileged_classes=[lambda x: x >= 25],
+                 privileged_classes=[lambda x: x >= 25 and x < 60],
                  instance_weights_name=None,
                  categorical_features=['job', 'marital', 'education', 'default',
                      'housing', 'loan', 'contact', 'month', 'day_of_week',
@@ -24,8 +24,15 @@ class BankDataset(StandardDataset):
         """See :obj:`StandardDataset` for a description of the arguments.
 
         By default, this code converts the 'age' attribute to a binary value
-        where privileged is `age >= 25` and unprivileged is `age < 25` as in
-        :obj:`GermanDataset`.
+        where privileged is `25 <= age < 60` and unprivileged is `age < 25` or `age >= 60`
+        as suggested in Le Quy, Tai, et al. [1].
+
+        References:
+            .. [1] Le Quy, Tai, et al. "A survey on datasets for fairness‐aware machine 
+            learning." Wiley Interdisciplinary Reviews: Data Mining and Knowledge 
+            Discovery 12.3 (2022): e1452.
+
+
         """
 
         filepath = os.path.join(os.path.dirname(os.path.abspath(__file__)),
