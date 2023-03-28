@@ -51,7 +51,7 @@ def explain_statistical_parity(
     result = fairXplainer.get_top_k_weights(k=k)
 
     if(verbose):
-        print("Exact statistical parity", fairXplainer.statistical_parity_sample())
+        print("\nc Exact statistical parity", fairXplainer.statistical_parity_sample())
 
     return result, fairXplainer.statistical_parity_sample()
 
