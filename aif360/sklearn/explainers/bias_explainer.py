@@ -1,5 +1,3 @@
-import sys
-sys.path.append("../../../script_fairXplainer_public/")
 from fairxplainer.fair_explainer import FairXplainer
 from fairxplainer.fair_explainer import plot as fif_plot
 import numpy as np
