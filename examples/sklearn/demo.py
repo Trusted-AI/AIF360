@@ -10,17 +10,7 @@ import pandas as pd
 import numpy as np
 
 dataset = "german"
-if(dataset == "adult"):
-    X, y, sample_weight = fetch_adult(numeric_only=True)
-elif(dataset == "compas"):
-    X, y = fetch_compas(numeric_only=True, binary_race=True)
-elif(dataset == "german"):
-    X, y = fetch_german(numeric_only=True, binary_age=True)
-else:
-    raise ValueError("Unknown dataset")
-
-# configuration of sensitive features
-sensitive_features_config = 0
+sensitive_features_config = 2 # configuration of sensitive features
 sensitive_features_config_dic = {
     "adult": {
         0 : ['race'],
@@ -34,10 +24,25 @@ sensitive_features_config_dic = {
     },
     "german": {
         0 : ['sex'],
+        1 : ['age'],
+        2 : ['age', 'sex']
     }
 }
 
 sensitive_features = sensitive_features_config_dic[dataset][sensitive_features_config]
+
+if(dataset == "adult"):
+    X, y, sample_weight = fetch_adult(numeric_only=True)
+elif(dataset == "compas"):
+    X, y = fetch_compas(numeric_only=True, binary_race=True)
+elif(dataset == "german"):
+    X, y = fetch_german(numeric_only=True)
+    # make age binary if age is used as sensitive feature
+    if('age' in sensitive_features):
+        X['age'] = X['age'] > 25
+else:
+    raise ValueError("Unknown dataset")
+
 
 
 X.index = pd.MultiIndex.from_arrays(X.index.codes, names=X.index.names)
