@@ -8,9 +8,13 @@ from sklearn.preprocessing import MinMaxScaler
 # from aif360.metrics import statistical_parity_difference
 import pandas as pd
 
-
-# X, y, sample_weight = fetch_adult(numeric_only=True)
-X, y = fetch_compas(numeric_only=True, binary_race=True)
+dataset = "compas"
+if(dataset == "adult"):
+    X, y, sample_weight = fetch_adult(numeric_only=True)
+elif(dataset == "compas"):
+    X, y = fetch_compas(numeric_only=True, binary_race=True)
+else:
+    raise ValueError("Unknown dataset")
 
 
 X.index = pd.MultiIndex.from_arrays(X.index.codes, names=X.index.names)
@@ -32,9 +36,83 @@ clf = LogisticRegression(solver='liblinear').fit(X_train, y_train)
 y_pred = clf.predict(X_test)
 print(accuracy_score(y_test, y_pred))
 
-# print(statistical_parity_difference(y_test, y_pred, prot_attr='sex'))
 
-from aif360.sklearn.explainers.bias_explainer import explain_statistical_parity
-explain_statistical_parity(clf, X_train, sensitive_features=['race'], maxorder=2, draw_plot=True, verbose=True)
 
+from aif360.sklearn.explainers.bias_explainer import explain_statistical_parity, explain_equalized_odds, explain_predictive_parity, draw_plot
+
+if(True):
+    result, fairXplainer = explain_statistical_parity(clf, X_train, 
+                sensitive_features=['race'], maxorder=1, 
+                verbose=True)
+
+
+    plt = draw_plot(result, 
+                    draw_waterfall=True, 
+                    fontsize=22, 
+                    labelsize=18, 
+                    figure_size=(10, 6), 
+                    title="Exact statistical parity: {}".format(round(fairXplainer.statistical_parity_sample(), 3)), 
+                    xlim=None,
+                    x_label="Influence on statistical parity", 
+                    text_x_pad=0.02, 
+                    text_y_pad=0.1, 
+                    result_x_pad=0.02, 
+                    result_y_location=0.5, 
+                    delete_zero_weights=False
+        )
+    # plt.show()
+    plt.clf()
+
+if(False):
+    results, fairXplainers = explain_equalized_odds(clf, X_train, y_train, sensitive_features=['race'], maxorder=1, verbose=True)
+    print(results)
+    print(fairXplainers)
+
+    index_max_unfairness = 0
+    if(fairXplainers[0].statistical_parity_sample() < fairXplainers[1].statistical_parity_sample()):
+        index_max_unfairness = 1
+
+    plt = draw_plot(results[index_max_unfairness], 
+                    draw_waterfall=True, 
+                    fontsize=22, 
+                    labelsize=18, 
+                    figure_size=(10, 6), 
+                    title="Exact equalized odds: {}".format(round(fairXplainers[index_max_unfairness].statistical_parity_sample(), 3)), 
+                    xlim=None,
+                    x_label="Influence on equalized odds", 
+                    text_x_pad=0.02, 
+                    text_y_pad=0.1, 
+                    result_x_pad=0.02, 
+                    result_y_location=0.5, 
+                    delete_zero_weights=False
+    )
+    # plt.show()
+    plt.clf()
+
+if(False):
+    results, fairXplainers = explain_predictive_parity(clf, X_train, y_train, sensitive_features=['race'], maxorder=1, verbose=True)
+    print(results)
+    print(fairXplainers)
+
+    index_max_unfairness = 0
+    if(fairXplainers[0].statistical_parity_sample() < fairXplainers[1].statistical_parity_sample()):
+        index_max_unfairness = 1
+
+    plt = draw_plot(results[index_max_unfairness],
+                    draw_waterfall=True,
+                    fontsize=22,
+                    labelsize=18,
+                    figure_size=(10, 6),
+                    title="Exact predictive parity: {}".format(round(fairXplainers[index_max_unfairness].statistical_parity_sample(), 3)),
+                    xlim=None,
+                    x_label="Influence on predictive parity",
+                    text_x_pad=0.02,
+                    text_y_pad=0.1,
+                    result_x_pad=0.02,
+                    result_y_location=0.5,
+                    delete_zero_weights=False
+    )
+
+    plt.show()
+    plt.clf()
 
