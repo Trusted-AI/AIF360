@@ -40,7 +40,6 @@ class DEMV(TransformerMixin, BaseEstimator):
         self.debug = verbose
         self.iter = 0
         self.label = 'y'
-        super(DEMV, self).__init__()
 
     def fit(self, x: pd.DataFrame, y):
         """
@@ -86,7 +85,7 @@ class DEMV(TransformerMixin, BaseEstimator):
         Args
         ----------
         x : pd.DataFrame
-            Dataset to be balanced
+            Dataset to be balanced. The sensitive variables must be the index of the dataframe
         y : array-like
             Labels of the dataset
 
@@ -96,13 +95,16 @@ class DEMV(TransformerMixin, BaseEstimator):
          y: Balanced labels of the dataset
         """
         x, y, _ = check_inputs(x, y)
+        x = x.copy()
         x[self.label] = y
-        if self.sensitive_vars in x.index:
-            x = x.reset_index()
+        x.reset_index(inplace=True)
         x_new, disparities, iters = sample(x, self.sensitive_vars, self.label, self.round_level, self.debug, 0, [], True, self.stop)
         self.disparities = disparities
         self.iter = iters
-        return x_new.drop(self.label, axis=1), x_new[self.label]
+        x_new.set_index(self.sensitive_vars, inplace=True)
+        y_new = x_new[self.label]
+        x_new = x_new.drop(self.label, axis=1)
+        return x_new, y_new
         
 
     def get_iters(self):
