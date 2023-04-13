@@ -7,7 +7,7 @@ def _balance_set(w_exp, w_obs, df: pd.DataFrame, tot_df, round_level=None, debug
     disp = round(w_exp / w_obs, round_level) if round_level else w_exp / w_obs
     disparity = [disp]
     i = 0
-    while disp != 1 and i != k:
+    while disp != 1 and i != k and w_obs != 0:
         if w_exp / w_obs > 1:
             df = pd.concat([df, df.sample()])
         elif w_exp / w_obs < 1:

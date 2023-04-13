@@ -123,4 +123,4 @@ class DEMV(TransformerMixin, BaseEstimator):
         Returns:
         list: list of disparities values
         """
-        return np.array(self.disparities)
+        return self.disparities[0][0]
