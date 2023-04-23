@@ -3,14 +3,14 @@ from fairxplainer.fair_explainer import plot as fif_plot
 import numpy as np
 
 
-def explain_statistical_parity(
+def fairxplain_statistical_parity(
         clf, 
         X, 
-        sensitive_features, 
+        prot_attr, 
         maxorder=2, 
         spline_intervals=5,
         k=7,
-        seed=22, 
+        seed=None, 
         cpu_time=300, 
         verbose=False):
     """
@@ -18,13 +18,13 @@ def explain_statistical_parity(
 
     Args:
         clf: the trained model to explain
-            clf.predict() should be implemented
+        clf.predict() should be implemented
         X (pandas.DataFrame): the dataset (containing the features) to measure the bias on
-        sensitive_features (list): list of sensitive attributes
+        prot_attr (list): list of protected or sensitive attributes
         maxorder (int): maximum order of the intersectionality of features
         spline_intervals (int): number of intervals to use for the cubic spline approximation
         k (int): number of top feature interactions to show
-        seed (int): seed for the random number generator
+        seed (int or None): seed for the random number generator
         cpu_time (int): maximum time to run the algorithm
         verbose (bool): whether to print the results
 
@@ -36,7 +36,7 @@ def explain_statistical_parity(
     fairXplainer = FairXplainer(
             clf, 
             X, 
-            sensitive_features)
+            prot_attr)
     
     fairXplainer.compute(
             maxorder=maxorder, 
@@ -53,15 +53,15 @@ def explain_statistical_parity(
 
     return result, fairXplainer.statistical_parity_sample()
 
-def explain_equalized_odds(
+def fairxplain_equalized_odds(
         clf,
         X,
         y_true,
-        sensitive_features,
+        prot_attr,
         maxorder=2,
         spline_intervals=5,
         k=7,
-        seed=22,
+        seed=None,
         cpu_time=300,
         verbose=False):
     
@@ -70,19 +70,19 @@ def explain_equalized_odds(
 
     Args:
         clf: the trained model to explain
-            clf.predict() should be implemented
+        clf.predict() should be implemented
         X (pandas.DataFrame): the dataset (containing the features) to measure the bias on
         y_true (pandas.Series): the labels of the dataset
-        sensitive_features (list): list of sensitive attributes
+        prot_attr (list): list of protected or sensitive attributes
         maxorder (int): maximum order of the intersectionality of features
         spline_intervals (int): number of intervals to use for the cubic spline approximation
         k (int): number of top feature interactions to show
-        seed (int): seed for the random number generator
+        seed (int or None): seed for the random number generator
         cpu_time (int): maximum time to run the algorithm
         verbose (bool): whether to print the results
 
     Returns:
-        pandas.DataFrame : the bias weights as list for y_true = 0 and y_true = 1
+        list of pandas.DataFrame : the bias weights as list for y_true = 0 and y_true = 1
 
     """
 
@@ -92,10 +92,10 @@ def explain_equalized_odds(
     for y_val in y_values:
         if(verbose):
             print("\nc Explaining for label", y_val)
-        result, bias = explain_statistical_parity(
+        result, bias = fairxplain_statistical_parity(
             clf,
             X[y_true == y_val],
-            sensitive_features,
+            prot_attr,
             maxorder=maxorder,
             spline_intervals=spline_intervals,
             k=k,
@@ -110,15 +110,15 @@ def explain_equalized_odds(
     return results, bias_values
 
 
-def explain_predictive_parity(
+def fairxplain_predictive_parity(
         clf,
         X,
         y_true,
-        sensitive_features,
+        prot_attr,
         maxorder=2,
         spline_intervals=5,
         k=7,
-        seed=22,
+        seed=None,
         cpu_time=300,
         verbose=False):
     """
@@ -126,19 +126,19 @@ def explain_predictive_parity(
 
     Args:
         clf: the trained model to explain
-            clf.predict() should be implemented
+        clf.predict() should be implemented
         X (pandas.DataFrame): the dataset (containing the features) to measure the bias on
         y_true (pandas.Series): the labels of the dataset
-        sensitive_features (list): list of sensitive attributes
+        prot_attr (list): list of protected or sensitive attributes
         maxorder (int): maximum order of the intersectionality of features
         spline_intervals (int): number of intervals to use for the cubic spline approximation
         k (int): number of top feature interactions to show
-        seed (int): seed for the random number generator
+        seed (int or None): seed for the random number generator
         cpu_time (int): maximum time to run the algorithm
         verbose (bool): whether to print the results
 
     Returns:
-        pandas.DataFrame : the bias weights as list for y_predicted = 0 and y_predicted = 1
+        list of pandas.DataFrame : the bias weights as list for y_predicted = 0 and y_predicted = 1
     """
 
     y_predicted = clf.predict(X)
@@ -151,7 +151,7 @@ def explain_predictive_parity(
         fairXplainer = FairXplainer(
             None, 
             X[y_predicted == y_val],
-            sensitive_features,
+            prot_attr,
             label=y_true[y_predicted == y_val]
         )
     
@@ -172,20 +172,56 @@ def explain_predictive_parity(
     return results, bias_values
 
 
-def draw_plot(result, **kwargs):
+def draw_plot(
+        result,
+        draw_waterfall=True, 
+        fontsize=22, 
+        labelsize=18, 
+        figure_size=(10, 5), 
+        title="", 
+        xlim=None,
+        x_label="Influence", 
+        text_x_pad=0.02, 
+        text_y_pad=0.1, 
+        result_x_pad=0.02, 
+        result_y_location=0.5, 
+        delete_zero_weights=False
+    ):
     """
         Draw the plot of the bias weights
 
     Args:
         result (pandas.DataFrame): the bias weights
-        kwargs: arguments to pass to the plot function
+        draw_waterfall (bool): whether to draw the waterfall plot
+        fontsize (int): the fontsize of the title
+        labelsize (int): the fontsize of the labels
+        figure_size (tuple): the size of the figure
+        title (str): the title of the plot
+        xlim (tuple): the limits of the x-axis
+        x_label (str): the label of the x-axis
+        text_x_pad (float): the padding of the text on the bar along the x-axis
+        text_y_pad (float): the padding of the text on the bar along the y-axis
+        result_x_pad (float): the padding of the metric value along the x-axis
+        result_y_location (float): the location of the metric value along the y-axis
+        delete_zero_weights (bool): whether to delete the zero weights
 
     Returns:
         matplotlib.pyplot : the plot
     """
 
     plt = fif_plot(result, 
-            **kwargs
+        draw_waterfall=draw_waterfall,
+        fontsize=fontsize,
+        labelsize=labelsize,
+        figure_size=figure_size,
+        title=title,
+        xlim=xlim,
+        x_label=x_label,
+        text_x_pad=text_x_pad,
+        text_y_pad=text_y_pad,
+        result_x_pad=result_x_pad,
+        result_y_location=result_y_location,
+        delete_zero_weights=delete_zero_weights
     )
     plt.tight_layout()
     return plt
