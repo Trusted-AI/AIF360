@@ -12,7 +12,8 @@ def fairxplain_statistical_parity(
         k=7,
         seed=None, 
         cpu_time=300, 
-        verbose=False):
+        verbose=False,
+        return_bias=False):
     """
         Explain the statistical parity of a classifier given a dataset
 
@@ -27,6 +28,7 @@ def fairxplain_statistical_parity(
         seed (int or None): seed for the random number generator
         cpu_time (int): maximum time to run the algorithm
         verbose (bool): whether to print the results
+        return_bias (bool): whether to return the bias value
 
     Returns:
         pandas.DataFrame : the bias weights
@@ -51,7 +53,10 @@ def fairxplain_statistical_parity(
     if(verbose):
         print("\nc Exact statistical parity", fairXplainer.statistical_parity_sample())
 
-    return result, fairXplainer.statistical_parity_sample()
+    if(return_bias):
+        return result, fairXplainer.statistical_parity_sample()
+    else:
+        return result
 
 def fairxplain_equalized_odds(
         clf,
@@ -63,7 +68,8 @@ def fairxplain_equalized_odds(
         k=7,
         seed=None,
         cpu_time=300,
-        verbose=False):
+        verbose=False,
+        return_bias=False):
     
     """
         Explain the equalized odds of a classifier given a dataset
@@ -80,6 +86,7 @@ def fairxplain_equalized_odds(
         seed (int or None): seed for the random number generator
         cpu_time (int): maximum time to run the algorithm
         verbose (bool): whether to print the results
+        return_bias (bool): whether to return the bias value
 
     Returns:
         list of pandas.DataFrame : the bias weights as list for y_true = 0 and y_true = 1
@@ -101,13 +108,17 @@ def fairxplain_equalized_odds(
             k=k,
             seed=seed,
             cpu_time=cpu_time,
-            verbose=verbose
+            verbose=verbose,
+            return_bias=True
         )
 
         results.append(result)
         bias_values.append(bias)
 
-    return results, bias_values
+    if(return_bias):
+        return results, bias_values
+    else:
+        return results
 
 
 def fairxplain_predictive_parity(
@@ -120,7 +131,8 @@ def fairxplain_predictive_parity(
         k=7,
         seed=None,
         cpu_time=300,
-        verbose=False):
+        verbose=False,
+        return_bias=False):
     """
         Explain the predictive parity of a classifier given a dataset
 
@@ -136,6 +148,7 @@ def fairxplain_predictive_parity(
         seed (int or None): seed for the random number generator
         cpu_time (int): maximum time to run the algorithm
         verbose (bool): whether to print the results
+        return_bias (bool): whether to return the bias value
 
     Returns:
         list of pandas.DataFrame : the bias weights as list for y_predicted = 0 and y_predicted = 1
@@ -169,8 +182,10 @@ def fairxplain_predictive_parity(
         results.append(result)
         bias_values.append(fairXplainer.statistical_parity_sample())
 
-    return results, bias_values
-
+    if(return_bias):
+        return results, bias_values
+    else:
+        return results
 
 def draw_plot(
         result,
