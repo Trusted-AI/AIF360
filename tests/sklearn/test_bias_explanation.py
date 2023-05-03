@@ -1,7 +1,6 @@
 import sys
 sys.path.append('../..')
 from aif360.sklearn.datasets import fetch_adult, fetch_compas, fetch_german
-from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
 from aif360.sklearn.explainers import fairxplain_statistical_parity, fairxplain_equalized_odds, fairxplain_predictive_parity
 from aif360.sklearn.metrics import intersection, selection_rate
