@@ -101,13 +101,16 @@ class DeterministicReranking(Transformer):
                     candidates_bmin = [c for c in candidates if c[s] in below_min]
                     next_item = max(candidates_bmin, key = lambda x: x['score'])
                 else:
+                    # if Greedy, add the highest scoring candidate among the groups
                     if rerank_type == 'Greedy':
                         candidates_bmax = [c for c in candidates if c[s] in below_max]
                         next_item = max(candidates_bmax, key = lambda x: x['score'])
+                    # if Conservative, add the candidate from the group least represented so far
                     elif rerank_type == 'Conservative':
                         next_attr = min(below_max, key=lambda ai:
                                         np.ceil(k*target_prop_[ai])/target_prop_[ai])
                         next_item = self._item_groups[next_attr].iloc[counts_a[next_attr]]
+                    # if Relaxed, relax the conservative requirements
                     elif rerank_type == 'Relaxed':
                         next_attr_set = min(below_max, key=lambda ai:
                                             np.ceil(np.ceil(k*target_prop_[ai])/target_prop_[ai]))
