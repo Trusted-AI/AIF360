@@ -85,7 +85,7 @@ class DeterministicReranking(Transformer):
        
         rankedItems = []
         if rerank_type != 'Constrained':
-            for k in range(1, rec_size):
+            for k in range(1, rec_size+1):
                 below_min = []
                 below_max = []
                 candidates = [
@@ -117,39 +117,6 @@ class DeterministicReranking(Transformer):
                         # best item among best items for each attribute in next_attr_set
                         next_item = max(candidates_rel, key=lambda x: x['score'])
 
-                rankedItems.append(next_item)
-                counts_a[next_item[s]] += 1
-        
-        elif rerank_type == 'Relaxed' or rerank_type == 'Conservative':
-            for k in range(1, rec_size):
-                below_min = []
-                below_max = []
-                candidates = [
-                    candidates_ai.iloc[counts_a[ai]] for ai, candidates_ai in self._item_groups.items()
-                    ]
-                for ai in s_vals:
-                    # best unranked items for each sensitive attribute
-                    if counts_a[ai] < np.floor(k*target_prop_[ai]):
-                        below_min.append((ai))
-                    elif counts_a[ai] < np.ceil(k*target_prop_[ai]):
-                        below_max.append((ai))
-                if len(below_min) != 0:
-                    candidates_bmin = [c for c in candidates if c[s] in below_min]
-                    next_item = max(candidates_bmin, key = lambda x: x['score'])
-                else:
-                    # sort by scores if tie in lambda?
-                    if rerank_type == 'Relaxed':
-                        next_attr_set = min(below_max, key=lambda ai:
-                                            np.ceil(np.ceil(k*target_prop_[ai])/target_prop_[ai]))
-                        if not isinstance(next_attr_set, list):
-                            next_attr_set = [next_attr_set]
-                        candidates_rel = [c for c in candidates if c[s] in next_attr_set]
-                        # best item among best items for each attribute in next_attr_set
-                        next_item = max(candidates_rel, key=lambda x: x['score'])
-                    else:
-                        next_attr = min(below_max, key=lambda ai:
-                                        np.ceil(k*target_prop_[ai])/target_prop_[ai])
-                        next_item = self._item_groups[next_attr].iloc[counts_a[next_attr]]
                 rankedItems.append(next_item)
                 counts_a[next_item[s]] += 1
 
