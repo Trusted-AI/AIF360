@@ -84,7 +84,7 @@ class DeterministicReranking(Transformer):
         counts_a = {a: 0 for a in s_vals}
        
         rankedItems = []
-        if rerank_type == 'Greedy':
+        if rerank_type != 'Constrained':
             for k in range(1, rec_size):
                 below_min = []
                 below_max = []
@@ -101,8 +101,22 @@ class DeterministicReranking(Transformer):
                     candidates_bmin = [c for c in candidates if c[s] in below_min]
                     next_item = max(candidates_bmin, key = lambda x: x['score'])
                 else:
-                    candidates_bmax = [c for c in candidates if c[s] in below_max]
-                    next_item = max(candidates_bmax, key = lambda x: x['score'])
+                    if rerank_type == 'Greedy':
+                        candidates_bmax = [c for c in candidates if c[s] in below_max]
+                        next_item = max(candidates_bmax, key = lambda x: x['score'])
+                    elif rerank_type == 'Conservative':
+                        next_attr = min(below_max, key=lambda ai:
+                                        np.ceil(k*target_prop_[ai])/target_prop_[ai])
+                        next_item = self._item_groups[next_attr].iloc[counts_a[next_attr]]
+                    elif rerank_type == 'Relaxed':
+                        next_attr_set = min(below_max, key=lambda ai:
+                                            np.ceil(np.ceil(k*target_prop_[ai])/target_prop_[ai]))
+                        if not isinstance(next_attr_set, list):
+                            next_attr_set = [next_attr_set]
+                        candidates_rel = [c for c in candidates if c[s] in next_attr_set]
+                        # best item among best items for each attribute in next_attr_set
+                        next_item = max(candidates_rel, key=lambda x: x['score'])
+
                 rankedItems.append(next_item)
                 counts_a[next_item[s]] += 1
         
