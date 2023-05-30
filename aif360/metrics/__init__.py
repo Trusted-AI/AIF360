@@ -4,3 +4,4 @@ from aif360.metrics.binary_label_dataset_metric import BinaryLabelDatasetMetric
 from aif360.metrics.classification_metric import ClassificationMetric
 from aif360.metrics.sample_distortion_metric import SampleDistortionMetric
 from aif360.metrics.mdss_classification_metric import MDSSClassificationMetric 
+from aif360.metrics.regression_metric import RegressionDatasetMetric

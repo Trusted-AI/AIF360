@@ -53,7 +53,6 @@ class RegressionDatasetMetric(DatasetMetric):
         if set(list(target_prop.keys())) != set(pr_attr_values):
             raise ValueError()
         
-        # print(pr_attr_values)
         ranking = np.column_stack((self.dataset.scores, self.dataset.protected_attributes))
         if k is None:
             k = len(self.dataset.scores)
@@ -62,7 +61,6 @@ class RegressionDatasetMetric(DatasetMetric):
         for k in range(1, k+1):
             r = ranking[:k]
             for ai in pr_attr_values:
-                # print(ai)
                 count_ai = r[r[:,1] == ai].shape[0]
                 if count_ai < int(target_prop[ai]*k):
                     ii+=1
@@ -71,7 +69,6 @@ class RegressionDatasetMetric(DatasetMetric):
     
     def discounted_cum_gain(self, normalized = False):
         scores = np.ravel(self.dataset.scores)
-        print(scores)
         z = self._dcg(scores)
         if normalized:
             sorted = np.sort(scores)[::-1]
