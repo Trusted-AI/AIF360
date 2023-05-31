@@ -14,4 +14,4 @@ def test_deterministic_reranking():
         for err in errors:
             for tbi in err['traceback']:
                 print(tbi)
-        raise AssertionError("errors in notebook tconda estcases")
+        raise AssertionError("errors in notebook testcases")
