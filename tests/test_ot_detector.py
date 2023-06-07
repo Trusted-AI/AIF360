@@ -20,7 +20,6 @@ if _e_ < 0:
 _d1_ /= np.sum(d1)
 _d2_ /= np.sum(d2)
 dist = np.array([abs(i - _d2_) for i in _d1_], dtype=float)
-dist /= np.max(dist)
 
 def compute_w1(a, b):
     # helper function
@@ -35,8 +34,6 @@ class TestInputChecks(TestCase):
     def test_wrong_mode(self):
         with self.assertRaises(Exception):
             ot_bias_scan(sd1, sd2, mode="Categorical")
-    def test_wrong_fav(self):
-        pass
 
 class TestInternalFuncs(TestCase):
     def test_normalization(self):
@@ -64,27 +61,32 @@ class TestInternalFuncs(TestCase):
         # check if ot_bias_scan raises an error when getting wrong input types
         p = np.zeros(4)
         q = np.zeros(4)
-        with self.assertRaises(TypeError):
-            ot_bias_scan(p, q)
+        C = pd.DataFrame()
+        with self.assertRaises(AssertionError):
+            ot_bias_scan(p, pd.Series(q))
+        with self.assertRaises(AssertionError):
+            ot_bias_scan(pd.Series(p), q)
+        with self.assertRaises(AssertionError):
+            ot_bias_scan(pd.Series(p), pd.Series(q), C)
 
 class TestResults():
     def test_quant(self):
         # check against example in https://python.quantecon.org/opt_transport.html
-        # with precalculated cost matrix
-        p = np.array([50, 100, 150])
-        q = np.array([25, 115, 60, 30, 70])
+        # with normalization
+        p = pd.Series([50, 100, 150])
+        q = pd.Series([25, 115, 60, 30, 70])
         C = np.array([[10, 15, 20, 20, 40], 
                       [20, 40, 15, 30, 30], 
                       [30, 35, 40, 55, 25]])
-        expected = 24.08
-        pass
+        expected = 24.083333
+        actual = ot_bias_scan(p, q, cost_matrix=C)
+        assert abs(expected - actual) < 1e-6
 
     def test_values_normal(self):
         # check against PyOptimalTransport's EMD2
         a_ = d1/np.sum(d1)
         b_ = d2/np.sum(d2)
         dist = np.array([abs(i - b_) for i in a_], dtype=float)
-        dist /= np.max(dist)
         expected = emd2(a_, b_, dist)
         actual = ot_bias_scan(sd1, sd2, num_iters = 100000)
         assert abs(expected-actual) < 1e-3, f"EMD must be {expected}, got {actual}"
