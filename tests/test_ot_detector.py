@@ -53,8 +53,6 @@ class TestInternalFuncs(TestCase):
         assert isinstance(d2_, np.ndarray), f"_transform must return ndarrays, got {type(d2_)}"
         s1, s2 = np.sum(d1_), np.sum(d2_)
         assert abs(s1 - s2) < 1e-6, f"_transform must return arrays with equal sums, got {s1} and {s2}"
-        print(dist)
-        print(dist_)
         assert np.all(np.abs(dist - dist_)) < 1e-6, "_transform distance matrix not calculated correctly"
 
     def test_ot_bias_scan(self):
