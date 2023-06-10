@@ -25,24 +25,24 @@ def _normalize(distribution1, distribution2):
     total_of_distribution2 = np.sum(distribution2)
     distribution2 /= total_of_distribution2
 
-def _transform(golden_standart, classifier, data, cost_matrix=None):
+def _transform(golden_standard, classifier, data, cost_matrix=None):
     """
     Transoform given distributions from pandas type to numpy arrays, and _normalize them.
     Rearanges distributions, with totall data allocated of one.
-    Generates matrix distance with respect to (golden_standart[i] - classifier[j])^2.
+    Generates matrix distance with respect to (golden_standard[i] - classifier[j])^2.
 
     Args:
-        golden_standart (series): ground truth (correct) target values
+        golden_standard (series): ground truth (correct) target values
         classifier (series,  dataframe, optional): pandas series estimated targets
             as returned by a model for binary, continuous and ordinal modes.
         data (dataframe): the dataset (containing the features) the model was trained on
 
     Returns:
-        initial_distribution, which is an processed golden_standart (numpy array)
+        initial_distribution, which is an processed golden_standard (numpy array)
         required_distribution, which is an processed classifier (numpy array)
         matrix_distance, which stores the distances between the cells of distributions (2d numpy array)
     """
-    initial_distribution = (pd.Series.to_numpy(golden_standart)).astype(float)
+    initial_distribution = (pd.Series.to_numpy(golden_standard)).astype(float)
     required_distribution = (pd.Series.to_numpy(classifier)).astype(float)
 
     _normalize(initial_distribution, required_distribution)
@@ -54,14 +54,14 @@ def _transform(golden_standart, classifier, data, cost_matrix=None):
     return initial_distribution, required_distribution, matrix_distance
 
 def ot_bias_scan(
-    golden_standart: pd.Series,
+    golden_standard: pd.Series,
     classifier: Union[pd.Series, pd.DataFrame],
     cost_matrix: np.array = None,
     data: pd.DataFrame = None,
     favorable_value: Union[str, float] = None,
     overpredicted: bool = True,
     scoring: str = "Optimal Transport",
-    num_iters: int = 15,
+    num_iters: int = 50,
     penalty: float = 1e-17,
     mode: str = "ordinal",
     **kwargs,
@@ -72,7 +72,7 @@ def ot_bias_scan(
     After all, solves the optimal transport problem.
 
     Args:
-        golden_standart (series): ground truth (correct) target values
+        golden_standard (series): ground truth (correct) target values
         classifier (series,  dataframe, optional): pandas series estimated targets
             as returned by a model for binary, continuous and ordinal modes.
             If mode is nominal, this is a dataframe with columns containing classifier for each nominal class.
@@ -80,9 +80,9 @@ def ot_bias_scan(
                     or 1/(num of categories) for nominal mode.
         data (dataframe): the dataset (containing the features) the model was trained on
         favorable_value(str, float, optional): Should be high or low or float if the mode in [binary, ordinal, or continuous].
-                If float, value has to be minimum or maximum in the golden_standart column. Defaults to high if None for these modes.
+                If float, value has to be minimum or maximum in the golden_standard column. Defaults to high if None for these modes.
                 Support for float left in to keep the intuition clear in binary classification tasks.
-                If mode is nominal, favorable values should be one of the unique categories in the golden_standart.
+                If mode is nominal, favorable values should be one of the unique categories in the golden_standard.
                 Defaults to a one-vs-all scan if None for nominal mode.
         overpredicted (bool, optional): flag for group to scan for.
             True means we scan for a group whose classifier/predictions are systematically higher than observed.
@@ -102,21 +102,21 @@ def ot_bias_scan(
         ot.emd2 (float): Earth mover's distance
 
     Raises:
-        AssertionError: If golden_standart is the type pandas.Series and classifier is the type pandas.Series or pandas.DataFrame
-        AssertionError: If cost_matrix is the type numpy.array
+        AssertionError: If golden_standard is the type pandas.Series and classifier is the type pandas.Series or pandas.DataFrame
+        AssertionError: If cost_matrix is the type numpy.ndarray
         AssertionError: If scoring variable is not "Optimal Transport"
         AssertionError: If type mode does not belong to any, of the possible options 
                         ["binary", "continuous", "nominal", "ordinal"].
         AssertionError: If favorable_value does not belong to any, of the possible options 
                         [min_val, max_val, "flag-all", *uniques].
     """
-    # Inspect whether the types are correct for golden_standart and classifier
-    assert isinstance(golden_standart, pd.Series) and (isinstance(classifier, pd.Series) or isinstance(classifier, pd.DataFrame)), \
-        f"The type of golden_standart should be pandas.Series and classifier should be pandas.Series or pandas.DataFrame, but obtained {type(golden_standart)}, {type(classifier)}."
+    # Inspect whether the types are correct for golden_standard and classifier
+    assert isinstance(golden_standard, pd.Series) and (isinstance(classifier, pd.Series) or isinstance(classifier, pd.DataFrame)), \
+        f"The type of golden_standard should be pandas.Series and classifier should be pandas.Series or pandas.DataFrame, but obtained {type(golden_standard)}, {type(classifier)}."
     
     if cost_matrix is not None:
         # Inspect whether the type is correct for cost_matrix
-        assert isinstance(cost_matrix, np.array), \
+        assert isinstance(cost_matrix, np.ndarray), \
             f"The type of cost_matrix should be numpy.array, but obtained {type(cost_matrix)}"
     
     # Check whether scoring correspond to "Optimal Transport"
@@ -129,11 +129,11 @@ def ot_bias_scan(
     
     # Set classifier to mean targets for non-nominal modes
     if classifier is None and mode != "nominal":
-        classifier = pd.Series(golden_standart.mean(), index=golden_standart.index)
+        classifier = pd.Series(golden_standard.mean(), index=golden_standard.index)
 
     # Set correct favorable value (this tells us if higher or lower is better)
-    min_val, max_val = golden_standart.min(), golden_standart.max()
-    uniques = list(golden_standart.unique())
+    min_val, max_val = golden_standard.min(), golden_standard.max()
+    uniques = list(golden_standard.unique())
 
     if favorable_value == 'high':
         favorable_value = max_val
@@ -148,34 +148,34 @@ def ot_bias_scan(
     assert favorable_value in [min_val, max_val, "flag-all", *uniques,], \
         f"Favorable_value should be high, low, or one of categories {uniques}, got {favorable_value}."
 
-    if mode == "binary": # Flip golden_standart if favorable_value is 0 in binary mode.
-        golden_standart = pd.Series(golden_standart == favorable_value, dtype=int)
+    if mode == "binary": # Flip golden_standard if favorable_value is 0 in binary mode.
+        golden_standard = pd.Series(golden_standard == favorable_value, dtype=int)
     elif mode == "nominal":
-        unique_outs = set(sorted(golden_standart.unique()))
+        unique_outs = set(sorted(golden_standard.unique()))
         size_unique_outs = len(unique_outs)
         if classifier is None: # Set classifier to 1/(num of categories) for nominal mode
-            classifier = pd.Series(1 / golden_standart.nunique(), index=golden_standart.index)
+            classifier = pd.Series(1 / golden_standard.nunique(), index=golden_standard.index)
 
         if favorable_value != "flag-all": # If favorable flag is set, use one-vs-others strategy to scan, else use one-vs-all strategy
-            golden_standart = golden_standart.map({favorable_value: 1})
-            golden_standart = golden_standart.fillna(0)
+            golden_standard = golden_standard.map({favorable_value: 1})
+            golden_standard = golden_standard.fillna(0)
             if isinstance(classifier, pd.DataFrame):
                 classifier = classifier[favorable_value]
         else:
             results = {}
-            orig_golden_standart = golden_standart.copy()
+            orig_golden_standard = golden_standard.copy()
             orig_classifier = classifier.copy()
             for unique in uniques:
-                golden_standart = orig_golden_standart.map({unique: 1})
-                golden_standart = golden_standart.fillna(0)
+                golden_standard = orig_golden_standard.map({unique: 1})
+                golden_standard = golden_standard.fillna(0)
 
                 if isinstance(classifier, pd.DataFrame):
                     classifier = orig_classifier[unique]
 
-                initial_distribution, required_distribution, matrix_distance = _transform(golden_standart, classifier, data)
+                initial_distribution, required_distribution, matrix_distance = _transform(golden_standard, classifier, data)
                 result = ot.emd2(a=initial_distribution, b=required_distribution, M=matrix_distance, numItermax=num_iters)
                 results[unique] = result
             return results
     
-    initial_distribution, required_distribution, matrix_distance = _transform(golden_standart, classifier, data, cost_matrix)
+    initial_distribution, required_distribution, matrix_distance = _transform(golden_standard, classifier, data, cost_matrix)
     return ot.emd2(a=initial_distribution, b=required_distribution, M=matrix_distance, numItermax=num_iters)

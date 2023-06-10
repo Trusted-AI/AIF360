@@ -28,7 +28,7 @@ def ot_bias_scan(
     After all, solves the optimal transport problem.
 
     Args:
-        golden_standart (series): ground truth (correct) target values
+        golden_standard (series): ground truth (correct) target values
         classifier (series,  dataframe, optional): pandas series estimated targets
             as returned by a model for binary, continuous and ordinal modes.
             If mode is nominal, this is a dataframe with columns containing classifier for each nominal class.
@@ -36,9 +36,9 @@ def ot_bias_scan(
                     or 1/(num of categories) for nominal mode.
         data (dataframe): the dataset (containing the features) the model was trained on
         favorable_value(str, float, optional): Should be high or low or float if the mode in [binary, ordinal, or continuous].
-                If float, value has to be minimum or maximum in the golden_standart column. Defaults to high if None for these modes.
+                If float, value has to be minimum or maximum in the golden_standard column. Defaults to high if None for these modes.
                 Support for float left in to keep the intuition clear in binary classification tasks.
-                If mode is nominal, favorable values should be one of the unique categories in the golden_standart.
+                If mode is nominal, favorable values should be one of the unique categories in the golden_standard.
                 Defaults to a one-vs-all scan if None for nominal mode.
         overpredicted (bool, optional): flag for group to scan for.
             True means we scan for a group whose classifier/predictions are systematically higher than observed.
@@ -58,7 +58,7 @@ def ot_bias_scan(
         ot.emd2 (float): Earth mover's distance
 
     Raises:
-        AssertionError: If golden_standart is the type pandas.Series and classifier is the type pandas.Series or pandas.DataFrame
+        AssertionError: If golden_standard is the type pandas.Series and classifier is the type pandas.Series or pandas.DataFrame
         AssertionError: If cost_matrix is the type numpy.array
         AssertionError: If scoring variable is not "Optimal Transport"
         AssertionError: If type mode does not belong to any, of the possible options 
@@ -67,7 +67,7 @@ def ot_bias_scan(
                         [min_val, max_val, "flag-all", *uniques].
     """
     return ot_bias_scan(
-        golden_standart=y_true,
+        golden_standard=y_true,
         classifier=y_pred,
         cost_matrix=cost_matrix,
         data=X,
