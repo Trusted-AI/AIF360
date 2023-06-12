@@ -10,10 +10,9 @@ import pandas as pd
 import numpy as np
 
 def ot_bias_scan(
+    X: pd.DataFrame = None,
     y_true: pd.Series,
     y_pred: Union[pd.Series, pd.DataFrame] = None,
-    X: pd.DataFrame = None,
-    cost_matrix: np.array = None,
     pos_label: Union[str, float] = None,
     overpredicted: bool = True,
     scoring: str = "Optimal Transport",
@@ -28,14 +27,14 @@ def ot_bias_scan(
     After all, solves the optimal transport problem.
 
     Args:
-        golden_standard (series): ground truth (correct) target values
-        classifier (series,  dataframe, optional): pandas series estimated targets
+        X (dataframe): the dataset (containing the features) the model was trained on
+        y_true (series): ground truth (correct) target values
+        y_pred (series,  dataframe, optional): pandas series estimated targets
             as returned by a model for binary, continuous and ordinal modes.
             If mode is nominal, this is a dataframe with columns containing classifier for each nominal class.
             If None, model is assumed to be a dumb model that predicts the mean of the targets
                     or 1/(num of categories) for nominal mode.
-        data (dataframe): the dataset (containing the features) the model was trained on
-        favorable_value(str, float, optional): Should be high or low or float if the mode in [binary, ordinal, or continuous].
+        pos_label (str, float, optional): Should be high or low or float if the mode in [binary, ordinal, or continuous].
                 If float, value has to be minimum or maximum in the golden_standard column. Defaults to high if None for these modes.
                 Support for float left in to keep the intuition clear in binary classification tasks.
                 If mode is nominal, favorable values should be one of the unique categories in the golden_standard.
@@ -48,9 +47,8 @@ def ot_bias_scan(
         scoring (str or class): Only 'Optimal Transport'
         num_iters (int, optional): number of iterations (random restarts). Should be positive.
         penalty (float, optional): penalty term. Should be positive. The penalty term as with any regularization parameter may need to be
-            tuned for ones use case. The higher the penalty, the less complex (number of features and feature values) the
-            highest scoring subset that gets returned is.
-        mode: one of ['binary', 'continuous', 'nominal', 'ordinal']. Defaults to binary.
+            tuned for ones use case. The higher the penalty, the higher the influence of entropy regualizer.
+        mode: one of ['binary', 'continuous', 'nominal', 'ordinal']. Defaults to ordinal.
                 In nominal mode, up to 10 categories are supported by default.
                 To increase this, pass in keyword argument max_nominal = integer value.
 
