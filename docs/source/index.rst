@@ -7,6 +7,12 @@ AI Fairness 360 documentation
 =============================
 
 .. toctree::
+   :maxdepth: 1
+
+   Getting Started
+   CONTRIBUTING
+
+.. toctree::
    :maxdepth: 2
    :caption: Modules
 
