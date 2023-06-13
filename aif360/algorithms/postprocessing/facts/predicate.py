@@ -162,28 +162,6 @@ class Predicate:
         d2 = other.to_dict()
         return all(feat in d1 and d1[feat] == val for feat, val in d2.items())
 
-
-def featureCostPred(
-    p1: Predicate, p2: Predicate, params: ParameterProxy = ParameterProxy()
-):
-    """
-    Calculates the feature cost between two predicates.
-
-    Args:
-        p1: The first Predicate.
-        p2: The second Predicate.
-        params: The ParameterProxy object containing feature costs.
-
-    Returns:
-        The feature cost between the two predicates.
-    """
-    ret = 0
-    for i, f in enumerate(p1.features):
-        if p1.values[i] != p2.values[i]:
-            ret += params.featureCosts[f]
-    return ret
-
-
 def featureChangePred(
     p1: Predicate, p2: Predicate, params: ParameterProxy = ParameterProxy()
 ):
@@ -205,17 +183,6 @@ def featureChangePred(
         costChange = params.featureChanges[f](val1, val2)
         total += costChange
     return total
-
-
-# def recIsValid(p1: Predicate, p2: Predicate) -> bool:
-#     n1 = len(p1.features)
-#     n2 = len(p2.features)
-#     if n1 != n2:
-#         return False
-#     featuresMatch = all(map(operator.eq, p1.features, p2.features))
-#     existsChange = any(map(operator.ne, p1.values, p2.values))
-#     return featuresMatch and existsChange
-
 
 def recIsValid(
     p1: Predicate, p2: Predicate, X: DataFrame, drop_infeasible: bool

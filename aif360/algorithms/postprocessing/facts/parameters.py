@@ -6,15 +6,6 @@ from dataclasses import dataclass, field
 from pandas import DataFrame
 
 
-def make_default_featureCosts():
-    """Creates a defaultdict with a default value of 1 for feature costs.
-
-    Returns:
-        defaultdict: The default dictionary of feature costs.
-    """
-    return defaultdict(lambda: 1)
-
-
 def default_change(v1, v2):
     """Compares two values and returns 0 if they are equal, and 1 if they are different.
 
@@ -172,23 +163,9 @@ def feature_change_builder(
 class ParameterProxy:
     """Proxy class for managing recourse parameters."""
 
-    featureCosts: Dict[str, int] = field(default_factory=make_default_featureCosts)
     featureChanges: Dict[str, Callable[[Any, Any], int]] = field(
         default_factory=make_default_featureChanges
     )
-    lambda_cover: int = 1
-    lambda_correctness: int = 1
-    lambda_featureCost: int = 1
-    lambda_featureChange: int = 1
-
-    ##### Utility methods for setting the parameters
-    def setFeatureCost(self, fc: Dict):
-        """Sets the feature costs.
-
-        Args:
-            fc (Dict): A dictionary mapping feature names to their costs.
-        """
-        self.featureCosts.update(fc)
 
     def setFeatureChange(self, fc: Dict):
         """Set the feature changes.
@@ -197,28 +174,3 @@ class ParameterProxy:
             fc (Dict): A dictionary mapping feature names to their change functions.
         """
         self.featureChanges.update(fc)
-
-    def set_lambdas(self, l1=1, l2=1, l3=1, l4=1):
-        """Set the lambda for different components.
-
-        Args:
-            l1 (int, optional): Lambda for the cover. Defaults to 1.
-            l2 (int, optional): Lambda for the correctness. Defaults to 1.
-            l3 (int, optional): Lambda for the feature cost. Defaults to 1.
-            l4 (int, optional): Lambda for the feature change. Defaults to 1.
-        """
-        self.lambda_cover = l1
-        self.lambda_correctness = l2
-        self.lambda_featureCost = l3
-        self.lambda_featureChange = l4
-
-    ##### Utility methods for setting the parameters
-
-
-##### Unused parameters
-epsilon1 = 20
-epsilon2 = 7
-epsilon3 = 10
-C_max = 1  # max(featureCosts.values())
-M_max = 1
-##### Unused parameters
