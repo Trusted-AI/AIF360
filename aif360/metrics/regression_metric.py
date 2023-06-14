@@ -31,13 +31,13 @@ class RegressionDatasetMetric(DatasetMetric):
             unprivileged_groups=unprivileged_groups,
             privileged_groups=privileged_groups)
         
-    def infeasible_index(self, target_prop: dict, k: int = None):
+    def infeasible_index(self, target_prop: dict, r: int = None):
         """
         Infeasible Index metric, as described in [1]_.
 
         Args:
             target_prop (dict): desired proportion of groups.
-            k: size of the candidate list over which the metric is calculated.
+            r (int): size of the candidate list over which the metric is calculated.
             Defaults to the size of the dataset.
         
         Returns:
@@ -54,20 +54,29 @@ class RegressionDatasetMetric(DatasetMetric):
             raise ValueError()
         
         ranking = np.column_stack((self.dataset.scores, self.dataset.protected_attributes))
-        if k is None:
-            k = len(self.dataset.scores)
+        if r is None:
+            r = len(self.dataset.scores)
         ii = 0
-        ks = set()
-        for k in range(1, k+1):
-            r = ranking[:k]
+        k_viol = set()
+        for k in range(1, r):
+            rk = ranking[:k]
             for ai in pr_attr_values:
-                count_ai = r[r[:,1] == ai].shape[0]
+                count_ai = rk[rk[:,1] == ai].shape[0]
                 if count_ai < int(target_prop[ai]*k):
                     ii+=1
-                    ks.add(k)
-        return ii, list(ks)
+                    k_viol.add(k-1)
+        return ii, list(k_viol)
     
     def discounted_cum_gain(self, normalized = False):
+        """
+        Discounted Cumulative Gain metric.
+
+        Args:
+            normalized (bool): whether to normalize the value against the value of the strictly score-based ordering.
+            
+        Returns:
+            The calculated DCG (NCDG if normalized).
+        """
         scores = np.ravel(self.dataset.scores)
         z = self._dcg(scores)
         if normalized:

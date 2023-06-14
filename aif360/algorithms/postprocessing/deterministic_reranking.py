@@ -56,7 +56,7 @@ class DeterministicReranking(Transformer):
                     target_prop: dict,
                     rerank_type: str='Constrained',
                     renormalize_scores: bool=False
-                    ):
+                    ) -> RegressionDataset:
         """Construct a ranking of candidates in the dataset according to specified proportions of groups.
 
         Args:
@@ -177,7 +177,7 @@ class DeterministicReranking(Transformer):
                     target_prop: dict,
                     rerank_type: str='Constrained',
                     renormalize_scores: bool=False
-                    ):
+                    ) -> RegressionDataset:
         self.fit(dataset=dataset)
         return self.predict(dataset=dataset, 
                             rec_size=rec_size, 

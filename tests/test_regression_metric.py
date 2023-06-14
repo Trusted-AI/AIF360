@@ -25,7 +25,7 @@ m = RegressionDatasetMetric(dataset=dataset,
                             unprivileged_groups=[{'s': 0}])
 
 def test_infeasible_index():
-    actual = m.infeasible_index(target_prop={1: 0.5, 0: 0.5}, k=10)
+    actual = m.infeasible_index(target_prop={1: 0.5, 0: 0.5}, r=10)
     expected = (5, [2, 3, 4, 5, 6])
     assert actual == expected, f'Infeasible Index calculated wrong, got {actual}, expected {expected}'
 
