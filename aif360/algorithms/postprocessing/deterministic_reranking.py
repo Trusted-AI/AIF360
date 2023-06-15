@@ -29,6 +29,7 @@ class DeterministicReranking(Transformer):
         
         self.unprivileged_groups = unprivileged_groups
         self.privileged_groups = privileged_groups
+        self.n_groups = len(unprivileged_groups) + len(privileged_groups)
         self.s = list(unprivileged_groups[0].keys())[0]
         self.s_vals = set(self.unprivileged_groups[0].values()).union(set(self.privileged_groups[0].values()))
 
@@ -45,8 +46,20 @@ class DeterministicReranking(Transformer):
         if self.s not in items.columns:
             raise ValueError("The dataset must contain the protected attribute.")
         
-        self._item_groups = {ai: it for ai, it in zip(
-            self.s_vals, [items[items[self.s] == ai] for ai in self.s_vals])}
+        # if we have just 1 protected attribute
+        if not isinstance(self.s, list) and False:
+            self._item_groups = [items[items[self.s] == ai] for ai in self.s_vals]
+        else:
+            self._item_groups = []
+            for group in self.unprivileged_groups + self.privileged_groups:
+                q = ' & '.join(
+                    [f'{s_i}=="{v_i}"' if isinstance(v_i, str) else f'{s_i}=={v_i}' 
+                     for s_i, v_i in group.items()]
+                     )
+                self._item_groups.append(items.query(q))
+
+        # self._item_groups = {ai: it for ai, it in zip(
+        #     self.s_vals, [items[items[self.s] == ai] for ai in self.s_vals])}
         
         return self
 
@@ -84,7 +97,7 @@ class DeterministicReranking(Transformer):
         if rerank_type not in ['Greedy', 'Conservative', 'Relaxed', 'Constrained']:
             raise ValueError(f'`rerank_type` must be one of `Greedy`, `Conservative`, `Relaxed`, `Constrained`; got {rerank_type}')
         
-        counts_a = {a: 0 for a in self.s_vals}
+        group_counts = {a: 0 for a in self.s_vals}
         rankedItems = []
         score_label = dataset.label_names[0]
 
@@ -92,13 +105,13 @@ class DeterministicReranking(Transformer):
             for k in range(1, rec_size+1):
                 below_min, below_max = [], []
                 candidates = [
-                    candidates_ai.iloc[counts_a[ai]] for ai, candidates_ai in self._item_groups.items()
+                    candidates_ai.iloc[group_counts[ai]] for ai, candidates_ai in self._item_groups.items()
                     ]
                 for ai in self.s_vals:
                     # best unranked items for each sensitive attribute
-                    if counts_a[ai] < np.floor(k*target_prop[ai]):
+                    if group_counts[ai] < np.floor(k*target_prop[ai]):
                         below_min.append((ai))
-                    elif counts_a[ai] < np.ceil(k*target_prop[ai]):
+                    elif group_counts[ai] < np.ceil(k*target_prop[ai]):
                         below_max.append((ai))
                 if len(below_min) != 0:
                     candidates_bmin = [c for c in candidates if c[self.s] in below_min]
@@ -112,7 +125,7 @@ class DeterministicReranking(Transformer):
                     elif rerank_type == 'Conservative':
                         next_attr = min(below_max, key=lambda ai:
                                         np.ceil(k*target_prop[ai])/target_prop[ai])
-                        next_item = self._item_groups[next_attr].iloc[counts_a[next_attr]]
+                        next_item = self._item_groups[next_attr].iloc[group_counts[next_attr]]
                     # if Relaxed, relax the conservative requirements
                     elif rerank_type == 'Relaxed':
                         next_attr_set = min(below_max, key=lambda ai:
@@ -124,11 +137,11 @@ class DeterministicReranking(Transformer):
                         next_item = max(candidates_rel, key=lambda x: x[score_label])
 
                 rankedItems.append(next_item)
-                counts_a[next_item[self.s]] += 1
+                group_counts[next_item[self.s]] += 1
 
         elif rerank_type == 'Constrained':
             rankedItems, maxIndices = [], []
-            counts_a, min_counts = {a: 0 for a in self.s_vals}, {a: 0 for a in self.s_vals}
+            group_counts, min_counts = {a: 0 for a in self.s_vals}, {a: 0 for a in self.s_vals}
             lastEmpty, k = 0, 0
             while lastEmpty < rec_size:
                 k+=1
@@ -145,7 +158,7 @@ class DeterministicReranking(Transformer):
                     # get the list of candidates to insert and sort them by their score
                     changed_items = []
                     for ai in changed_mins:
-                        changed_items.append(self._item_groups[ai].iloc[counts_a[ai]])
+                        changed_items.append(self._item_groups[ai].iloc[group_counts[ai]])
                     changed_items.sort(key=lambda x: x[score_label])
 
                     # add the items, starting with the best score
@@ -158,7 +171,7 @@ class DeterministicReranking(Transformer):
                             rankedItems[start-1], rankedItems[start] = rankedItems[start], rankedItems[start-1]
                             start -= 1
                         lastEmpty+=1
-                        counts_a[newitem[self.s]] += 1
+                        group_counts[newitem[self.s]] += 1
                     min_counts = min_counts_at_k
 
         res_df = pd.DataFrame(rankedItems, columns=dataset.feature_names + [score_label])
