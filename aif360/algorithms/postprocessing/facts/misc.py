@@ -5,29 +5,22 @@ import functools
 import numpy as np
 from pandas import DataFrame
 
-from mlxtend.preprocessing import minmax_scaling
-
 from .parameters import *
 from .models import ModelAPI
 from .predicate import Predicate, recIsValid, featureChangePred, drop_two_above
 from .frequent_itemsets import runApriori, preprocessDataset, aprioriout2predicateList
-from .recourse_sets import TwoLevelRecourseSet
 from .metrics import (
     incorrectRecoursesIfThen,
-    if_group_cost_mean_with_correctness,
     if_group_cost_min_change_correctness_threshold,
-    if_group_cost_mean_change_correctness_threshold,
     if_group_cost_recoursescount_correctness_threshold,
     if_group_total_correctness,
     calculate_all_if_subgroup_costs,
     calculate_all_if_subgroup_costs_cumulative,
     if_group_cost_min_change_correctness_cumulative_threshold,
     if_group_cost_change_cumulative_threshold,
-    if_group_average_recourse_cost_cinf,
-    if_group_average_recourse_cost_conditional,
+    if_group_average_recourse_cost_conditional
 )
 from .optimization import (
-    optimize_vanilla,
     sort_triples_by_max_costdiff,
     sort_triples_by_max_costdiff_ignore_nans,
     sort_triples_by_max_costdiff_ignore_nans_infs,
@@ -73,108 +66,6 @@ def split_dataset(X: DataFrame, attr: str):
     vals = X[attr].unique()
     grouping = X.groupby(attr)
     return {val: grouping.get_group(val) for val in vals}
-
-
-def global_counterfactuals_ares(
-    X: DataFrame,
-    model: ModelAPI,
-    sensitive_attribute: str,
-    subsample_size=400,
-    freqitem_minsupp=0.01,
-):
-    """
-    Generate global counterfactuals for ARES.
-
-    Args:
-        X (DataFrame):
-            The input dataset.
-        model (ModelAPI):
-            The machine learning model used for prediction.
-        sensitive_attribute (str):
-            The name of the sensitive attribute in the dataset.
-        subsample_size (int, optional):
-            The size of the subsample to use for counterfactual generation. Defaults to 400.
-        freqitem_minsupp (float, optional):
-            The minimum support threshold for frequent itemsets mining. Defaults to 0.01.
-
-    Returns:
-        TwoLevelRecourseSet:
-            A set of global counterfactuals represented as a TwoLevelRecourseSet object.
-    """
-    X_aff_idxs = np.where(model.predict(X) == 0)[0]
-    X_aff = X.iloc[X_aff_idxs, :]
-
-    d = X.drop([sensitive_attribute], axis=1)
-    freq_itemsets = runApriori(preprocessDataset(d), min_support=freqitem_minsupp)
-    freq_itemsets.reset_index()
-
-    RL = aprioriout2predicateList(freq_itemsets)
-
-    SD = list(
-        map(
-            Predicate.from_dict,
-            [{sensitive_attribute: val} for val in X[sensitive_attribute].unique()],
-        )
-    )
-
-    ifthen_triples = np.random.choice(RL, subsample_size, replace=False)  # type: ignore
-    affected_sample = X_aff.iloc[
-        np.random.choice(X_aff.shape[0], size=subsample_size, replace=False), :
-    ]
-    final_rules = optimize_vanilla(SD, ifthen_triples, affected_sample, model)
-
-    return TwoLevelRecourseSet.from_triples(final_rules[0])
-
-
-def global_counterfactuals_threshold(
-    X: DataFrame,
-    model: ModelAPI,
-    sensitive_attribute: str,
-    threshold_coverage=0.7,
-    threshold_correctness=0.8,
-) -> Dict[str, List[Tuple[Predicate, Predicate, float, float]]]:
-    """
-    Generate counterfactuals based on coverage and correctness thresholds.
-
-    Args:
-        X (DataFrame):
-            The input dataset.
-        model (ModelAPI):
-            The machine learning model used for prediction.
-        sensitive_attribute (str):
-            The name of the sensitive attribute in the dataset.
-        threshold_coverage (float, optional):
-            The threshold for minimum coverage. Defaults to 0.7.
-        threshold_correctness (float, optional):
-            The threshold for minimum correctness. Defaults to 0.8.
-
-    Returns:
-        Dict[str, List[Tuple[Predicate, Predicate, float, float]]]:
-            A dictionary where the keys are the subgroups based on the sensitive attribute,
-            and the values are lists of tuples representing the counterfactuals. Each tuple
-            contains the if-then predicates, coverage, and correctness.
-    """
-
-    # call function to calculate all valid triples along with coverage and correctness metrics
-    ifthens_with_correctness = valid_ifthens_with_coverage_correctness(
-        X, model, sensitive_attribute
-    )
-
-    # all we need now is which are the subgroups (e.g. Male-Female)
-    subgroups = np.unique(X[sensitive_attribute])
-
-    # finally, keep triples whose coverage and correct recourse percentage is at least a given threshold
-    ifthens_filtered = {sg: [] for sg in subgroups}
-    for h, s, ifsupps, thencorrs in ifthens_with_correctness:
-        for sg in subgroups:
-            if (
-                ifsupps[sg] >= threshold_coverage
-                and thencorrs[sg] >= threshold_correctness
-            ):
-                ifthens_filtered[sg].append((h, s, ifsupps[sg], thencorrs[sg]))
-
-    return ifthens_filtered
-
 
 def intersect_predicate_lists(
     acc: List[Tuple[Dict[Any, Any], Dict[str, float]]],
@@ -636,12 +527,8 @@ def select_rules_subset(
     metrics: Dict[
         str, Callable[[Predicate, List[Tuple[Predicate, float]], ParameterProxy], float]
     ] = {
-        "weighted-average": if_group_cost_mean_with_correctness,
         "min-above-thr": functools.partial(
             if_group_cost_min_change_correctness_threshold, cor_thres=cor_threshold
-        ),
-        "mean-above-thr": functools.partial(
-            if_group_cost_mean_change_correctness_threshold, cor_thres=cor_threshold
         ),
         "num-above-thr": functools.partial(
             if_group_cost_recoursescount_correctness_threshold, cor_thres=cor_threshold
@@ -777,19 +664,7 @@ def select_rules_subset_cumulative(
         "max-upto-cost": functools.partial(
             if_group_cost_change_cumulative_threshold, cost_thres=cost_threshold
         ),
-        "fairness-of-mean-recourse-cinf": functools.partial(
-            if_group_average_recourse_cost_cinf,
-            correctness_caps={
-                ifc: max(
-                    corr
-                    for _sg, (_cov, thens) in thencs.items()
-                    for _then, corr, _cost in thens
-                )
-                for ifc, thencs in rulesbyif.items()
-            },
-            c_infty_coeff=c_inf,
-        ),
-        "fairness-of-mean-recourse-conditional": if_group_average_recourse_cost_conditional,
+        "fairness-of-mean-recourse-conditional": if_group_average_recourse_cost_conditional
     }
     sorting_functions = {
         "generic-sorting": functools.partial(
