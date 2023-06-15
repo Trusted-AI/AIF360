@@ -8,13 +8,11 @@ from pandas import DataFrame
 from .parameters import ParameterProxy
 from .predicate import Predicate, featureChangePred
 from .metrics import (
-    if_group_cost_mean_with_correctness,
     if_group_cost_min_change_correctness_threshold,
     if_group_cost_recoursescount_correctness_threshold,
     if_group_total_correctness,
     if_group_cost_change_cumulative_threshold,
     if_group_cost_min_change_correctness_cumulative_threshold,
-    if_group_average_recourse_cost_cinf,
     if_group_average_recourse_cost_conditional,
     calculate_if_subgroup_costs,
     calculate_if_subgroup_costs_cumulative,

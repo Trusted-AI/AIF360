@@ -1,4 +1,4 @@
-from typing import List, Dict, Tuple, Any, Optional
+from typing import List, Dict, Tuple, Optional
 
 import matplotlib.pyplot as plt
 
@@ -7,66 +7,6 @@ from colorama import Fore, Style
 from .predicate import Predicate
 
 ASSUME_ZERO = 10 ** (-7)
-
-
-def recourse_report_preprocessed(
-    groups: List[str], rules: Dict[str, List[Tuple[Predicate, Predicate, float, float]]]
-) -> str:
-    """Generate a recourse report for preprocessed rules and subgroups.
-
-    Args:
-        groups: A list of subgroup names.
-        rules: A dictionary mapping subgroup names to a list of tuples containing if-clauses, then-clauses, coverage, and incorrectness.
-
-    Returns:
-        The recourse report as a string.
-
-    """
-    ret = []
-    for val in groups:
-        ret.append(f"For subgroup '{val}':\n")
-        rules_subgroup = rules[val]
-        for h, s, coverage, incorrectness in rules_subgroup:
-            ret.append(f"\tIf {h},\n\tThen {s}.\n")
-
-            ret.append(
-                f"\t\tCoverage: {coverage:.3%} of those in the subgroup that are affected.\n"
-            )
-            ret.append(
-                f"\t\tIncorrect recourses: {incorrectness:.3%} over all individuals covered by this rule.\n"
-            )
-    return "".join(ret)
-
-
-def to_bold_str(s: Any) -> str:
-    return f"\033[1m{s}\033[0m"
-
-
-def to_blue_str(s: Any) -> str:
-    return f"\033[0;34m{s}\033[0m"
-
-
-def to_green_str(s: Any) -> str:
-    return f"\033[0;32m{s}\033[0m"
-
-
-def to_red_str(s: Any) -> str:
-    return f"\033[0;31m{s}\033[0m"
-
-
-class ifgroup:
-    """
-    Represents an if-then group.
-
-    Attributes:
-        ifclause (Predicate): The if-clause of the if-then group.
-        allthens (Dict[str, Tuple[float, List[Tuple[Predicate, float]]]]): The collection of then-clauses
-            associated with different subgroups.
-    """
-
-    ifclause: Predicate
-    allthens: Dict[str, Tuple[float, List[Tuple[Predicate, float]]]]
-
 
 def recourse_report_reverse(
     rules: Dict[Predicate, Dict[str, Tuple[float, List[Tuple[Predicate, float]]]]],
