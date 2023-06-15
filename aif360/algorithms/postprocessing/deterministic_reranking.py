@@ -29,7 +29,7 @@ class DeterministicReranking(Transformer):
         
         self.unprivileged_groups = unprivileged_groups
         self.privileged_groups = privileged_groups
-        self.n_groups = len(unprivileged_groups) + len(privileged_groups)
+        self._n_groups = len(unprivileged_groups) + len(privileged_groups)
         self.s = list(unprivileged_groups[0].keys())[0]
         self.s_vals = set(self.unprivileged_groups[0].values()).union(set(self.privileged_groups[0].values()))
 
@@ -89,55 +89,63 @@ class DeterministicReranking(Transformer):
         
         if rec_size <= 0:
             raise ValueError(f"Output size should be greater than 0, got {rec_size}.")
-        if np.any(set(target_prop.keys()) != set(self.s_vals)):
-            raise ValueError("""Proportion specifications do not match. \
-                `target_prop` should have sensitive attribute values as keys.""")
+        # if np.any(set(target_prop.keys()) != set(self.s_vals)):
+        #     raise ValueError("""Proportion specifications do not match. \
+        #         `target_prop` should have sensitive attribute values as keys.""")
         if len(dataset.label_names) != 1:
             raise ValueError(f"Dataset must have exactly one label, got {len(dataset.label_names)}.")
         if rerank_type not in ['Greedy', 'Conservative', 'Relaxed', 'Constrained']:
             raise ValueError(f'`rerank_type` must be one of `Greedy`, `Conservative`, `Relaxed`, `Constrained`; got {rerank_type}')
         
-        group_counts = {a: 0 for a in self.s_vals}
+        # group_counts = {a: 0 for a in self.s_vals}
+        group_counts = [0] * self._n_groups
         rankedItems = []
         score_label = dataset.label_names[0]
 
         if rerank_type != 'Constrained':
             for k in range(1, rec_size+1):
                 below_min, below_max = [], []
+                # get the best-scoring candidate item from each group
                 candidates = [
-                    candidates_ai.iloc[group_counts[ai]] for ai, candidates_ai in self._item_groups.items()
+                    candidates_gi.iloc[group_counts[g_i]] for g_i, candidates_gi in enumerate(self._item_groups)
                     ]
-                for ai in self.s_vals:
-                    # best unranked items for each sensitive attribute
-                    if group_counts[ai] < np.floor(k*target_prop[ai]):
-                        below_min.append((ai))
-                    elif group_counts[ai] < np.ceil(k*target_prop[ai]):
-                        below_max.append((ai))
+                for gi in range(self._n_groups):
+                    # best unranked items for each group
+                    if group_counts[gi] < np.floor(k*target_prop[gi]):
+                        below_min.append(gi)
+                    elif group_counts[gi] < np.ceil(k*target_prop[gi]):
+                        below_max.append(gi)
+                # if some groups are currently underrepresented
                 if len(below_min) != 0:
-                    candidates_bmin = [c for c in candidates if c[self.s] in below_min]
-                    next_item = max(candidates_bmin, key = lambda x: x[score_label])
+                    # choose the best next item among currently underrepresented groups
+                    candidates_bmin = [candidates[group] for group in below_min]
+                    next_group, next_item = max(enumerate(candidates_bmin), key = lambda x: x[1][score_label])
+                # if minimal representation requirements are satisfied
                 else:
                     # if Greedy, add the highest scoring candidate among the groups
                     if rerank_type == 'Greedy':
-                        candidates_bmax = [c for c in candidates if c[self.s] in below_max]
-                        next_item = max(candidates_bmax, key = lambda x: x[score_label])
+                        candidates_bmax = [candidates[group] for group in below_max]
+                        next_group, next_item = max(enumerate(candidates_bmax), key = lambda x: x[1][score_label])
                     # if Conservative, add the candidate from the group least represented so far
                     elif rerank_type == 'Conservative':
-                        next_attr = min(below_max, key=lambda ai:
-                                        np.ceil(k*target_prop[ai])/target_prop[ai])
-                        next_item = self._item_groups[next_attr].iloc[group_counts[next_attr]]
+                        # group_rep = [np.ceil(k*target_prop[group])/target_prop[group] for group in below_max]
+                        # sort by close the group are to violating the condition, in case of tie sort by best element score
+                        next_group = min(below_max, key=lambda group:
+                                        (np.ceil(k*target_prop[group])/target_prop[group],
+                                         -self._item_groups[group].iloc[group_counts[group]][score_label]))
+                        next_item = self._item_groups[next_group].iloc[group_counts[next_group]]
                     # if Relaxed, relax the conservative requirements
                     elif rerank_type == 'Relaxed':
-                        next_attr_set = min(below_max, key=lambda ai:
-                                            np.ceil(np.ceil(k*target_prop[ai])/target_prop[ai]))
-                        if not isinstance(next_attr_set, list):
-                            next_attr_set = [next_attr_set]
-                        candidates_rel = [c for c in candidates if c[self.s] in next_attr_set]
+                        possible_next_groups = min(below_max, key=lambda group:
+                                            np.ceil(np.ceil(k*target_prop[group])/target_prop[group]))
+                        if not isinstance(possible_next_groups, list):
+                            possible_next_groups = [possible_next_groups]
+                        candidates_relaxed = [candidates[group] for group in possible_next_groups]
                         # best item among best items for each attribute in next_attr_set
-                        next_item = max(candidates_rel, key=lambda x: x[score_label])
+                        next_group, next_item = max(enumerate(candidates_relaxed), key=lambda x: x[1][score_label])
 
                 rankedItems.append(next_item)
-                group_counts[next_item[self.s]] += 1
+                group_counts[next_group] += 1
 
         elif rerank_type == 'Constrained':
             rankedItems, maxIndices = [], []
