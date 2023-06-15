@@ -129,26 +129,26 @@ class DeterministicReranking(Transformer):
                     # if Conservative, add the candidate from the group least represented so far
                     elif rerank_type == 'Conservative':
                         # group_rep = [np.ceil(k*target_prop[group])/target_prop[group] for group in below_max]
-                        # sort by close the group are to violating the condition, in case of tie sort by best element score
+                        # sort by how close the groups are to violating the condition, in case of tie sort by best element score
                         next_group = min(below_max, key=lambda group:
                                         (np.ceil(k*target_prop[group])/target_prop[group],
-                                         -self._item_groups[group].iloc[group_counts[group]][score_label]))
-                        next_item = self._item_groups[next_group].iloc[group_counts[next_group]]
+                                         -candidates[group][score_label]))
+                        next_item = candidates[next_group]
                     # if Relaxed, relax the conservative requirements
                     elif rerank_type == 'Relaxed':
-                        possible_next_groups = min(below_max, key=lambda group:
-                                            np.ceil(np.ceil(k*target_prop[group])/target_prop[group]))
-                        if not isinstance(possible_next_groups, list):
-                            possible_next_groups = [possible_next_groups]
-                        candidates_relaxed = [candidates[group] for group in possible_next_groups]
-                        # best item among best items for each attribute in next_attr_set
-                        next_group, next_item = max(enumerate(candidates_relaxed), key=lambda x: x[1][score_label])
+                        next_group = min(below_max, key=lambda group:
+                                            (np.ceil(np.ceil(k*target_prop[group])/target_prop[group]),
+                                             -candidates[group][score_label])
+                                             )
+                        next_item = candidates[next_group]
 
                 rankedItems.append(next_item)
                 group_counts[next_group] += 1
 
         elif rerank_type == 'Constrained':
             rankedItems, maxIndices = [], []
+            # group_counts, min_counts = [0] * self._n_groups, [0] * self._n_groups
+
             group_counts, min_counts = {a: 0 for a in self.s_vals}, {a: 0 for a in self.s_vals}
             lastEmpty, k = 0, 0
             while lastEmpty < rec_size:
