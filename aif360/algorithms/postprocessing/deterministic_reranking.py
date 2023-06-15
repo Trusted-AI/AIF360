@@ -44,7 +44,7 @@ class DeterministicReranking(Transformer):
         items = items.sort_values(axis=0, by=dataset.label_names[0], ascending=False)
 
         if self.s not in items.columns:
-            raise ValueError("The dataset must contain the protected attribute.")
+            raise ValueError(f"The dataset must contain the protected attribute: '{self.s}'.")
         
         # if we have just 1 protected attribute
         if not isinstance(self.s, list) and False:
@@ -109,36 +109,36 @@ class DeterministicReranking(Transformer):
                 candidates = [
                     candidates_gi.iloc[group_counts[g_i]] for g_i, candidates_gi in enumerate(self._item_groups)
                     ]
-                for gi in range(self._n_groups):
+                for group_idx in range(self._n_groups):
                     # best unranked items for each group
-                    if group_counts[gi] < np.floor(k*target_prop[gi]):
-                        below_min.append(gi)
-                    elif group_counts[gi] < np.ceil(k*target_prop[gi]):
-                        below_max.append(gi)
+                    if group_counts[group_idx] < np.floor(k*target_prop[group_idx]):
+                        below_min.append(group_idx)
+                    elif group_counts[group_idx] < np.ceil(k*target_prop[group_idx]):
+                        below_max.append(group_idx)
                 # if some groups are currently underrepresented
                 if len(below_min) != 0:
                     # choose the best next item among currently underrepresented groups
-                    candidates_bmin = [candidates[group] for group in below_min]
+                    candidates_bmin = [candidates[group_idx] for group_idx in below_min]
                     next_group, next_item = max(enumerate(candidates_bmin), key = lambda x: x[1][score_label])
                 # if minimal representation requirements are satisfied
                 else:
                     # if Greedy, add the highest scoring candidate among the groups
                     if rerank_type == 'Greedy':
-                        candidates_bmax = [candidates[group] for group in below_max]
+                        candidates_bmax = [candidates[group_idx] for group_idx in below_max]
                         next_group, next_item = max(enumerate(candidates_bmax), key = lambda x: x[1][score_label])
                     # if Conservative, add the candidate from the group least represented so far
                     elif rerank_type == 'Conservative':
                         # group_rep = [np.ceil(k*target_prop[group])/target_prop[group] for group in below_max]
                         # sort by how close the groups are to violating the condition, in case of tie sort by best element score
-                        next_group = min(below_max, key=lambda group:
-                                        (np.ceil(k*target_prop[group])/target_prop[group],
-                                         -candidates[group][score_label]))
+                        next_group = min(below_max, key=lambda group_idx:
+                                        (np.ceil(k*target_prop[group_idx])/target_prop[group_idx],
+                                         -candidates[group_idx][score_label]))
                         next_item = candidates[next_group]
                     # if Relaxed, relax the conservative requirements
                     elif rerank_type == 'Relaxed':
-                        next_group = min(below_max, key=lambda group:
-                                            (np.ceil(np.ceil(k*target_prop[group])/target_prop[group]),
-                                             -candidates[group][score_label])
+                        next_group = min(below_max, key=lambda group_idx:
+                                            (np.ceil(np.ceil(k*target_prop[group_idx])/target_prop[group_idx]),
+                                             -candidates[group_idx][score_label])
                                              )
                         next_item = candidates[next_group]
 
@@ -147,39 +147,41 @@ class DeterministicReranking(Transformer):
 
         elif rerank_type == 'Constrained':
             rankedItems, maxIndices = [], []
-            # group_counts, min_counts = [0] * self._n_groups, [0] * self._n_groups
+            group_counts, min_counts = [0] * self._n_groups, [0] * self._n_groups
 
-            group_counts, min_counts = {a: 0 for a in self.s_vals}, {a: 0 for a in self.s_vals}
+            # group_counts, min_counts = {a: 0 for a in self.s_vals}, {a: 0 for a in self.s_vals}
             lastEmpty, k = 0, 0
             while lastEmpty < rec_size:
                 k+=1
                 # determine the minimum feasible counts of each group at current rec. list size
-                min_counts_at_k = {ai: int(pai*k) for ai, pai in target_prop.items()}
+                min_counts_at_k = [int(p_gi*k) for p_gi in target_prop]
+                # min_counts_at_k = {ai: int(pai*k) for ai, pai in target_prop.items()}
                 # get sensitive attr. values for which the current minimum count has increased
                 # since last one
                 changed_mins = []
-                for ai in self.s_vals:
-                    if min_counts_at_k[ai] > min_counts[ai]:
-                        changed_mins.append(ai)
+                for group_idx in range(self._n_groups):
+                    if min_counts_at_k[group_idx] > min_counts[group_idx]:
+                        changed_mins.append(group_idx)
                     
                 if len(changed_mins) > 0:
                     # get the list of candidates to insert and sort them by their score
                     changed_items = []
-                    for ai in changed_mins:
-                        changed_items.append(self._item_groups[ai].iloc[group_counts[ai]])
-                    changed_items.sort(key=lambda x: x[score_label])
+                    # save the candidate AND the index of the group it belongs to
+                    for group_idx in changed_mins:
+                        changed_items.append((group_idx, self._item_groups[group_idx].iloc[group_counts[group_idx]]))
+                    changed_items.sort(key=lambda x: x[1][score_label])
 
-                    # add the items, starting with the best score
+                    # add the candidate items, starting with the best score
                     for newitem in changed_items:
                         maxIndices.append(k)
-                        rankedItems.append(newitem)
+                        rankedItems.append(newitem[1])
                         start = lastEmpty
                         while start > 0 and maxIndices[start-1] >= start and rankedItems[start-1][score_label] < rankedItems[start][score_label]:
                             maxIndices[start-1], maxIndices[start] = maxIndices[start], maxIndices[start-1]
                             rankedItems[start-1], rankedItems[start] = rankedItems[start], rankedItems[start-1]
                             start -= 1
                         lastEmpty+=1
-                        group_counts[newitem[self.s]] += 1
+                        group_counts[newitem[0]] += 1
                     min_counts = min_counts_at_k
 
         res_df = pd.DataFrame(rankedItems, columns=dataset.feature_names + [score_label])
