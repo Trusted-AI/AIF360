@@ -85,7 +85,7 @@ def naive_feature_change_builder(
 
 
 def feature_change_builder(
-    X: DataFrame,
+    X: Optional[DataFrame],
     num_cols: List[str],
     cate_cols: List[str],
     ord_cols: List[str],
@@ -122,20 +122,26 @@ def feature_change_builder(
         return abs(t[v1] - t[v2]) * weight
 
     ### normalization of numeric features
-    max_vals = X.max(axis=0)
-    min_vals = X.min(axis=0)
-    weight_multipliers = {}
-    for col in num_cols:
-        weight_multipliers[col] = 1
-    for col in cate_cols:
-        weight_multipliers[col] = 1
     if num_normalization:
+        if X is None:
+            raise ValueError("Cannot perform numeric normalization without a dataset!")
+        
+        max_vals = X.max(axis=0)
+        min_vals = X.min(axis=0)
+        weight_multipliers = {}
+        for col in num_cols:
+            weight_multipliers[col] = 1
+        for col in cate_cols:
+            weight_multipliers[col] = 1
+
         if feats_to_normalize is not None:
             for col in feats_to_normalize:
                 weight_multipliers[col] = 1 / (max_vals[col] - min_vals[col])
         else:
             for col in num_cols:
                 weight_multipliers[col] = 1 / (max_vals[col] - min_vals[col])
+    else:
+        weight_multipliers = defaultdict(lambda : 1)
 
     ret_cate = {
         col: functools.partial(feature_change_cate, weight=feature_weights.get(col, 1))
@@ -148,15 +154,22 @@ def feature_change_builder(
         )
         for col in num_cols
     }
-    ret_ord = {
-        col: functools.partial(
-            feature_change_ord,
-            weight=feature_weights.get(col, 1),
-            t={name: code for code, name in enumerate(X[col].cat.categories)},
-        )
-        for col in ord_cols
-    }
-    return {**ret_cate, **ret_num, **ret_ord}
+
+    if ord_cols != []:
+        if X is None:
+            raise ValueError("Cannot handle ordinal columns without a dataframe!")
+        ret_ord = {
+            col: functools.partial(
+                feature_change_ord,
+                weight=feature_weights.get(col, 1),
+                t={name: code for code, name in enumerate(X[col].cat.categories)},
+            )
+            for col in ord_cols
+        }
+        
+        return {**ret_cate, **ret_num, **ret_ord}
+    
+    return {**ret_cate, **ret_num}
 
 
 @dataclass
