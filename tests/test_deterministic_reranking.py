@@ -29,12 +29,12 @@ class TestInputValidation(unittest.TestCase):
         with self.assertRaises(Exception):
             d = DeterministicReranking([{'a': 0}], [{'b': 0}])
             d.fit(dataset)
-            d.predict(dataset, rec_size=-1, target_prop={'a': 0.5, 'b': 0.5})
-    def test_prop_keys(self):
+            d.predict(dataset, rec_size=-1, target_prop=[0.5, 0.5])
+    def test_prop_len(self):
         with self.assertRaises(Exception):
             d = DeterministicReranking([{'a': 0}], [{'b': 0}])
             d.fit(dataset)
-            d.predict(dataset, rec_size=1, target_prop={'a': 0.5})
+            d.predict(dataset, rec_size=1, target_prop=[0.5])
 
 class TestValues(unittest.TestCase):
     def __init__(self, methodName: str = "runTest") -> None:
@@ -46,32 +46,32 @@ class TestValues(unittest.TestCase):
     def test_wrong_type(self):
         with self.assertRaises(ValueError):
             self.d.predict(
-                dataset, rec_size=6, target_prop={1: 0.5, 0: 0.5}, rerank_type='WRONG').convert_to_dataframe()[0]
+                dataset, rec_size=6, target_prop=[0.5, 0.5], rerank_type='WRONG').convert_to_dataframe()[0]
 
     def test_greedy(self):
         ds = self.d.predict(
-            dataset, rec_size=6, target_prop={1: 0.5, 0: 0.5}, rerank_type='Greedy').convert_to_dataframe()[0]
+            dataset, rec_size=6, target_prop=[0.5, 0.5], rerank_type='Greedy').convert_to_dataframe()[0]
         actual = len(ds[ds['s'] == 1])/len(ds)
         expected = 0.5
         assert actual == expected
 
     def test_conserv(self):
         ds = self.d.predict(
-            dataset, rec_size=6, target_prop={1: 0.5, 0: 0.5}, rerank_type='Conservative').convert_to_dataframe()[0]
+            dataset, rec_size=6, target_prop=[0.5, 0.5], rerank_type='Conservative').convert_to_dataframe()[0]
         actual = len(ds[ds['s'] == 1])/len(ds)
         expected = 0.5
         assert actual == expected
     
     def test_relaxed(self):
         ds = self.d.predict(
-            dataset, rec_size=6, target_prop={1: 0.5, 0: 0.5}, rerank_type='Relaxed').convert_to_dataframe()[0]
+            dataset, rec_size=6, target_prop=[0.5, 0.5], rerank_type='Relaxed').convert_to_dataframe()[0]
         actual = len(ds[ds['s'] == 1])/len(ds)
         expected = 0.5
         assert actual == expected
 
     def test_constrained(self):
         ds = self.d.predict(
-            dataset, rec_size=6, target_prop={1: 0.5, 0: 0.5}, rerank_type='Constrained').convert_to_dataframe()[0]
+            dataset, rec_size=6, target_prop=[0.5, 0.5], rerank_type='Constrained').convert_to_dataframe()[0]
         actual = len(ds[ds['s'] == 1])/len(ds)
         expected = 0.5
         assert actual == expected
