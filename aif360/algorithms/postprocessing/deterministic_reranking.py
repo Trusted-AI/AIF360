@@ -173,6 +173,8 @@ class DeterministicReranking(Transformer):
 
                     # add the candidate items, starting with the best score
                     for newitem in changed_items:
+                        if len(rankedItems) == rec_size:
+                            break
                         maxIndices.append(k)
                         rankedItems.append(newitem[1])
                         start = lastEmpty
