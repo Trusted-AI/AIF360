@@ -45,55 +45,7 @@ from .rule_filters import (
 
 # Re-exporting
 from .formatting import plot_aggregate_correctness, print_recourse_report
-
 # Re-exporting
-
-
-def split_dataset(X: DataFrame, attr: str):
-    """
-    Split the dataset into groups based on the unique values of the specified attribute.
-
-    Args:
-        X (DataFrame):
-            The input dataset.
-        attr (str):
-            The attribute to split the dataset on.
-
-    Returns:
-        Dict:
-            A dictionary where each key-value pair represents a group, where the key is the attribute value and the value is the corresponding subset of the DataFrame.
-    """
-    vals = X[attr].unique()
-    grouping = X.groupby(attr)
-    return {val: grouping.get_group(val) for val in vals}
-
-def intersect_predicate_lists(
-    acc: List[Tuple[Dict[Any, Any], Dict[str, float]]],
-    l2: List[Tuple[Dict[Any, Any], float]],
-    l2_sg: str,
-):
-    """
-    Intersect two lists of predicates and update support values.
-
-    Args:
-        acc (List[Tuple[Dict[Any, Any], Dict[str, float]]]):
-            The first list of predicates and support values.
-        l2 (List[Tuple[Dict[Any, Any], float]]):
-            The second list of predicates and support values.
-        l2_sg (str):
-            The subgroup associated with the second list.
-
-    Returns:
-        List[Tuple[Dict[Any, Any], Dict[str, float]]]:
-            A list of tuples containing the intersected predicates and updated support values.
-    """
-    ret = []
-    for i, (pred1, supps) in enumerate(acc):
-        for j, (pred2, supp2) in enumerate(l2):
-            if pred1 == pred2:
-                supps[l2_sg] = supp2
-                ret.append((pred1, supps))
-    return ret
 
 
 def affected_unaffected_split(
@@ -184,47 +136,6 @@ def calculate_correctnesses(
 
     return ifthens_with_correctness
 
-
-def aff_intersection_version_1(RLs_and_supports, subgroups):
-    """
-    Compute the intersection of multiple sets of predicates and their corresponding supports.
-
-    Args:
-        RLs_and_supports (Dict[str, List[Tuple[Dict[str, any], float]]]):
-            Dictionary of predicates and their supports for each subgroup.
-        subgroups (List[str]): List of subgroup names.
-
-    Returns:
-        List[Tuple[Predicate, Dict[str, float]]]:
-            List of tuples containing the intersected predicates and their supports.
-
-    Raises:
-        ValueError: If there are fewer than 2 subgroups.
-    """
-    RLs_supports_dict = {
-        sg: [(dict(zip(p.features, p.values)), supp) for p, supp in zip(*RL_sup)]
-        for sg, RL_sup in RLs_and_supports.items()
-    }
-
-    if len(RLs_supports_dict) < 1:
-        raise ValueError("There must be at least 2 subgroups.")
-    else:
-        sg = subgroups[0]
-        RLs_supports = RLs_supports_dict[sg]
-        aff_intersection = [(d, {sg: supp}) for d, supp in RLs_supports]
-    for sg, RLs in tqdm(RLs_supports_dict.items()):
-        if sg == subgroups[0]:
-            continue
-
-        aff_intersection = intersect_predicate_lists(aff_intersection, RLs, sg)
-
-    aff_intersection = [
-        (Predicate.from_dict(d), supps) for d, supps in aff_intersection
-    ]
-
-    return aff_intersection
-
-
 def aff_intersection_version_2(RLs_and_supports, subgroups):
     """
     Compute the intersection of multiple sets of predicates and their corresponding supports.
@@ -275,13 +186,6 @@ def aff_intersection_version_2(RLs_and_supports, subgroups):
     ]
 
     return aff_intersection
-
-
-# def check_list_eq(l1, l2):
-#     set1 = {(p, tuple(d.items()) if isinstance(d, dict) else d) for p, d in l1}
-#     set2 = {(p, tuple(d.items()) if isinstance(d, dict) else d) for p, d in l2}
-#     return set1 == set2
-
 
 def valid_ifthens_with_coverage_correctness(
     X: DataFrame,
@@ -339,14 +243,7 @@ def valid_ifthens_with_coverage_correctness(
         flush=True,
     )
 
-    # aff_intersection_1 = aff_intersection_version_1(RLs_and_supports, subgroups)
-    aff_intersection_2 = aff_intersection_version_2(RLs_and_supports, subgroups)
-
-    # print(len(aff_intersection_1), len(aff_intersection_2))
-    # if check_list_eq(aff_intersection_1, aff_intersection_2):
-    #     print("ERRRROOROROROROROROROROROR")
-
-    aff_intersection = aff_intersection_2
+    aff_intersection = aff_intersection_version_2(RLs_and_supports, subgroups)
 
     # Frequent itemsets for the unaffacted (to be used in the then clauses)
     freq_unaffected, _ = freqitemsets_with_supports(
@@ -359,13 +256,6 @@ def valid_ifthens_with_coverage_correctness(
         flush=True,
     )
 
-    # ifthens_1 = [
-    #     (h, s, ifsupps)
-    #     for h, ifsupps in tqdm(aff_intersection)
-    #     for s in freq_unaffected
-    #     if recIsValid(h, s, affected_subgroups[subgroups[0]], drop_infeasible)
-    # ]
-
     # we want to create a dictionary for freq_unaffected key: features in tuple, value: list(values)
     # for each Predicate in aff_intersection we loop through the list from dictionary
     # create dictionary:
@@ -377,7 +267,7 @@ def valid_ifthens_with_coverage_correctness(
         else:
             freq_unaffected_dict[tuple(predicate_.features)] = [predicate_.values]
 
-    ifthens_2 = []
+    ifthens = []
     for predicate_, supps_dict in tqdm(aff_intersection):
         candidates = freq_unaffected_dict.get(tuple(predicate_.features))
         if candidates == None:
@@ -390,18 +280,14 @@ def valid_ifthens_with_coverage_correctness(
                 affected_subgroups[subgroups[0]],
                 drop_infeasible,
             ):
-                ifthens_2.append(
+                ifthens.append(
                     (
                         predicate_,
                         Predicate(predicate_.features, candidate_values),
                         supps_dict,
                     )
                 )
-    # print(len(ifthens_1), len(ifthens_2))
-    # if ifthens_1 != ifthens_2:
-    #     print("ERORORORORORORO")
 
-    ifthens = ifthens_2
     # keep ifs that have change on features of max value 2
     if drop_above == True:
         age = [val.left for val in X.age.unique()]
@@ -449,7 +335,6 @@ def rules2rulesbyif(
 
     return rules_by_if
 
-
 def rulesbyif2rules(
     rules_by_if: Dict[Predicate, Dict[str, Tuple[float, List[Tuple[Predicate, float]]]]]
 ) -> List[Tuple[Predicate, Predicate, Dict[str, float], Dict[str, float]]]:
@@ -483,7 +368,7 @@ def rulesbyif2rules(
 
 def select_rules_subset(
     rulesbyif: Dict[Predicate, Dict[str, Tuple[float, List[Tuple[Predicate, float]]]]],
-    metric: str = "weighted-average",
+    metric: str = "num-above-thr",
     sort_strategy: str = "abs-diff-decr",
     top_count: int = 10,
     filter_sequence: List[str] = [],
@@ -609,7 +494,7 @@ def select_rules_subset_cumulative(
         Predicate, Dict[str, Tuple[float, List[Tuple[Predicate, float, float]]]]
     ],
     metric: str = "total-correctness",
-    sort_strategy: str = "abs-diff-decr",
+    sort_strategy: str = "generic-sorting",
     top_count: int = 10,
     filter_sequence: List[str] = [],
     cor_threshold: float = 0.5,
@@ -879,29 +764,29 @@ def cum_corr_costs_all(
     return ret
 
 
-def update_costs_cumulative(
-    rules: Dict[
-        Predicate, Dict[str, Tuple[float, List[Tuple[Predicate, float, float]]]]
-    ],
-    params: ParameterProxy = ParameterProxy(),
-) -> None:
-    """Update the costs of the then-clauses in cumulative rules.
+# def update_costs_cumulative(
+#     rules: Dict[
+#         Predicate, Dict[str, Tuple[float, List[Tuple[Predicate, float, float]]]]
+#     ],
+#     params: ParameterProxy = ParameterProxy(),
+# ) -> None:
+#     """Update the costs of the then-clauses in cumulative rules.
 
-    Args:
-        rules: A dictionary containing if-clause predicates as keys and a nested
-            dictionary as values. The nested dictionary contains subgroup names as
-            keys, and tuples of coverage and a list of then-clause predicates with
-            their corresponding correctness and costs as values.
-        params: Optional parameter proxy (default: ParameterProxy()).
+#     Args:
+#         rules: A dictionary containing if-clause predicates as keys and a nested
+#             dictionary as values. The nested dictionary contains subgroup names as
+#             keys, and tuples of coverage and a list of then-clause predicates with
+#             their corresponding correctness and costs as values.
+#         params: Optional parameter proxy (default: ParameterProxy()).
 
-    Returns:
-        None. The costs of the then-clauses in the input rules are updated in place.
+#     Returns:
+#         None. The costs of the then-clauses in the input rules are updated in place.
 
-    """
-    for ifc, allthens in rules.items():
-        for sg, (cov, sg_thens) in allthens.items():
-            for i, (then, corr, cost) in enumerate(sg_thens):
-                sg_thens[i] = (then, corr, featureChangePred(ifc, then, params))
+#     """
+#     for ifc, allthens in rules.items():
+#         for sg, (cov, sg_thens) in allthens.items():
+#             for i, (then, corr, cost) in enumerate(sg_thens):
+#                 sg_thens[i] = (then, corr, featureChangePred(ifc, then, params))
 
 
 def cum_corr_costs_all_minimal(
