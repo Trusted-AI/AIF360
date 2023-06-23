@@ -57,6 +57,7 @@ Algorithms
    algorithms.postprocessing.CalibratedEqOddsPostprocessing
    algorithms.postprocessing.EqOddsPostprocessing
    algorithms.postprocessing.RejectOptionClassification
+   algorithms.postprocessing.FairnessAwareSubgroupCounterfactuals
 
 :mod:`aif360.algorithms`
 ========================
