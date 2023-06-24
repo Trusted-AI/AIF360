@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from aif360.detectors.ot_detector import ot_bias_scan, _normalize, _transform
+from aif360.detectors.ot_detector import ot_bias_scan, _normalize, _transform, _evaluate
 from ot import emd2
 import unittest
 from unittest import TestCase
@@ -21,22 +21,8 @@ _d1_ /= np.sum(d1)
 _d2_ /= np.sum(d2)
 dist = np.array([abs(i - _d2_) for i in _d1_], dtype=float)
 
-def compute_w1(a, b):
-    # helper function
-    a = np.sort(a)
-    b = np.sort(b)
-    return np.mean(np.abs(a-b))
-
-class TestInputChecks(TestCase):
-    def test_wrong_scoring(self):
-        with self.assertRaises(Exception):
-            ot_bias_scan(sd1, sd2, scoring="Bernoulli")
-    def test_wrong_mode(self):
-        with self.assertRaises(Exception):
-            ot_bias_scan(sd1, sd2, mode="Categorical")
-
-class TestInternalFuncs(TestCase):
-    def test_normalization(self):
+class TestNormalizeTransform(TestCase):
+    def test_normalize(self):
         # test normalization: must make every value non-negative
         _normalize(d1, d2)
         assert isinstance(d1, np.ndarray), f"_normalize must keep inputs as ndarray, got {type(d1)}"
@@ -55,20 +41,9 @@ class TestInternalFuncs(TestCase):
         assert abs(s1 - s2) < 1e-6, f"_transform must return arrays with equal sums, got {s1} and {s2}"
         assert np.all(np.abs(dist - dist_)) < 1e-6, "_transform distance matrix not calculated correctly"
 
-    def test_ot_bias_scan(self):
-        # check if ot_bias_scan raises an error when getting wrong input types
-        p = np.zeros(4)
-        q = np.zeros(4)
-        C = pd.DataFrame()
-        with self.assertRaises(AssertionError):
-            ot_bias_scan(p, pd.Series(q))
-        with self.assertRaises(AssertionError):
-            ot_bias_scan(pd.Series(p), q)
-        with self.assertRaises(AssertionError):
-            ot_bias_scan(pd.Series(p), pd.Series(q), C)
+class TestEvaluate():
 
-class TestResults():
-    def test_quant(self):
+    def test_evaluate_quantecon(self):
         # check against example in https://python.quantecon.org/opt_transport.html
         # with normalization
         p = pd.Series([50, 100, 150])
@@ -77,36 +52,115 @@ class TestResults():
                       [20, 40, 15, 30, 30], 
                       [30, 35, 40, 55, 25]])
         expected = 24.083333
-        actual = ot_bias_scan(p, q, cost_matrix=C)
+        actual = _evaluate(p, q, cost_matrix=C)
         assert abs(expected - actual) < 1e-6
 
-    def test_values_normal(self):
+    def test_evaluate_normal(self):
         # check against PyOptimalTransport's EMD2
         a_ = d1/np.sum(d1)
         b_ = d2/np.sum(d2)
         dist = np.array([abs(i - b_) for i in a_], dtype=float)
         expected = emd2(a_, b_, dist)
-        actual = ot_bias_scan(sd1, sd2, num_iters = 100000)
+        actual = _evaluate(sd1, sd2, num_iters = 100000)
         assert abs(expected-actual) < 1e-3, f"EMD must be {expected}, got {actual}"
 
     # check properties of a metric
-    def test_same(self):
+    def test_evaluate_same(self):
         # emd(x, x) = 0
         expected = 0
-        actual = ot_bias_scan(sd1, sd1, num_iters = 1000)
+        actual = _evaluate(sd1, sd1, num_iters = 1000)
         assert abs(expected - actual) < 1e-8, f"EMD between two equal distributions must be 0, got {actual}"
 
-    def test_symmetry(self):
-        a = ot_bias_scan(sd1, sd2, num_iters = 1000)
-        b = ot_bias_scan(sd2, sd1, num_iters = 1000)
+    def test_evaluate_symmetry(self):
+        a = _evaluate(sd1, sd2, num_iters = 1000)
+        b = _evaluate(sd2, sd1, num_iters = 1000)
         assert abs(a - b) < 1e-8, f"EMD must be symmetric, got {a} and {b}"
 
-    def test_triangle(self):
+    def test_evaluate_triangle(self):
         d3 = pd.Series(rng.normal(loc=2, size=s))
-        a = ot_bias_scan(sd1, sd2, num_iters = 1000)
-        b = ot_bias_scan(sd2, d3, num_iters = 1000)
-        c = ot_bias_scan(sd1, d3, num_iters = 1000)
+        a = _evaluate(sd1, sd2, num_iters = 1000)
+        b = _evaluate(sd2, d3, num_iters = 1000)
+        c = _evaluate(sd1, d3, num_iters = 1000)
         assert a + b >= c, f"EMD must satisfy triangle inequality"
+    
+    def test_binary(self):
+        p = pd.Series([0,1,0,1])
+        q = pd.Series([0.7,0.7,0.3,0.3])
+        s = pd.Series([0,0,1,1])
+        expected = {sv: _evaluate(p[s==sv], q[s==sv]) for sv in s}
+        actual = _evaluate(p, q, s)
+        assert expected == actual
+
+class TestOtBiasScan(TestCase):
+    def test_scoring_checked(self):
+        with self.assertRaises(Exception):
+            ot_bias_scan(pd.Series(), pd.Series(), scoring="Bernoulli")
+    def test_scan_mode_checked(self):
+        with self.assertRaises(Exception):
+            ot_bias_scan(pd.Series(), pd.Series(), mode="Wrong")
+
+    def test_classifier_type_checked(self):
+        with self.assertRaises(Exception):
+            ot_bias_scan(pd.Series(), pd.Series(), mode="nominal")
+        with self.assertRaises(Exception):
+            ot_bias_scan(pd.Series(), pd.Series(), mode="ordinal")
+        with self.assertRaises(Exception):
+            ot_bias_scan(pd.Series(), pd.DataFrame(), mode="binary")
+        with self.assertRaises(Exception):
+            ot_bias_scan(pd.Series(), pd.DataFrame(), mode="continuous")
+
+    def test_data_requested_for_string(self):
+        with self.assertRaises(TypeError):
+            ot_bias_scan('a', pd.Series())
+        with self.assertRaises(TypeError):
+            ot_bias_scan(pd.Series(), 'b')
+        with self.assertRaises(TypeError):
+            ot_bias_scan(pd.Series(), pd.Series(), 'c')
+
+    def test_binary_nuniques_checked(self):
+        with self.assertRaises(Exception):
+            ot_bias_scan(pd.Series([1,2,3], pd.Series(), mode='binary'))
+    
+    def test_cost_matrix_type_checked(self):
+        with self.assertRaises(TypeError):
+            ot_bias_scan(pd.Series(), pd.Series(), cost_matrix=pd.DataFrame())
+
+    def test_cost_matrix_passed_correctly(self):
+        p = pd.Series([50, 100, 150])
+        q = pd.Series([25, 115, 60, 30, 70])
+        C = np.array([[10, 15, 20, 20, 40], 
+                      [20, 40, 15, 30, 30], 
+                      [30, 35, 40, 55, 25]])
+        expected = _evaluate(p, q, cost_matrix=C)
+        actual = ot_bias_scan(p, q, cost_matrix=C, mode="continuous")
+        assert expected == actual
+
+    def test_favorable_value_checked(self):
+        p = pd.Series([50, 100, 150])
+        q = pd.Series([25, 115, 60, 30, 70])
+        fav = 4
+        with self.assertRaises(ValueError):
+            ot_bias_scan(p, q, favorable_value=fav)
+
+    def test_nominal_classifier_shape_checked(self):
+        p = pd.Series([0,0,1,1])
+        q = pd.DataFrame([0.5,0.5,0.5,0.5])
+        with self.assertRaises(ValueError):
+            ot_bias_scan(p, q, mode='nominal')
+    
+    def test_ordinal_classifier_shape_checked(self):
+        p = pd.Series([0,0,1,1])
+        q = pd.DataFrame([0.5,0.5,0.5,0.5])
+        with self.assertRaises(ValueError):
+            ot_bias_scan(p, q, mode='ordinal')
+
+    def test_nominal(self):
+        p = pd.Series([0,0,1,1])
+        q = pd.DataFrame([[0.5,0.5],[0.5,0.5],[0.5,0.5],[0.5,0.5]])
+        expected = {cl: _evaluate(p, q[cl]) for cl in [0,1]}
+        actual = ot_bias_scan(p, q, mode="nominal")
+        assert expected == actual
+
 
 if __name__ == '__main__':
     unittest.main()
