@@ -54,7 +54,6 @@ def _transform(ground_truth, classifier, data, cost_matrix=None):
         matrix_distance = np.array([abs(i - required_distribution) for i in initial_distribution], dtype=float)
     return initial_distribution, required_distribution, matrix_distance
 
-# Leave this function in case we need more functionality
 def _evaluate(
         ground_truth: pd.Series,
         classifier: pd.Series,
@@ -77,23 +76,7 @@ def _evaluate(
     Returns:
         ot.emd2 (float, dict): Earth mover's distance or dictionary of optimal transports for each of option of classifier
     """
-    # If the input details are considered as string parameters, we should extract and make logic regression for golden_standart and classifier, 
-    # otherwise calculate the optimal transport between already given distributions
 
-
-    # if isinstance(ground_truth, str) and isinstance(classifier, str):
-    #     df = data.drop(ground_truth, axis = 1)
-    #     parameters = df.columns
-    #     vocabulary = {}
-    #     for param in parameters:
-    #         options = sorted(set(df[param]))
-    #         counter = 0
-    #         for opt in options:
-    #             if param == classifier:
-    #                 vocabulary[counter] = opt
-    #             df[param][df[param] == opt] = counter # Changing our data which can be "str"-string parameter into "int"-integer
-    #             counter += 1
-    
     # Calculate just the EMD between ground_truth and classifier
     if sensitive_attribute is None:
         initial_distribution, required_distribution, matrix_distance = _transform(ground_truth, classifier, data, kwargs.get("cost_matrix"))
@@ -115,9 +98,9 @@ def _evaluate(
 
 # Function called by the user
 def ot_bias_scan(
-    ground_truth: pd.Series | str,
-    classifier: pd.Series | str,
-    sensitive_attribute: pd.Series | str = None,
+    ground_truth: Union[pd.Series, str],
+    classifier: Union[pd.Series, str],
+    sensitive_attribute: Union[pd.Series, str] = None,
     data: pd.DataFrame = None,
     favorable_value: Union[str, float] = None,
     overpredicted: bool = True,
@@ -136,9 +119,9 @@ def ot_bias_scan(
             If `str`, denotes the column in `data` in which the ground truth target values are stored.
         classifier (pd.Series, pd.DataFrame, str): estimated target values.
             If `str`, must denote the column or columns in `data` in which the estimated target values are stored.
-            If `mode` is nominal, must be a dataframe with columns containing predictions for each nominal class,\
+            If `mode` is nominal, must be a dataframe with columns containing predictions for each nominal class,
                 or list of corresponding column names in `data`.
-            If `None`, model is assumed to be a dummy model that predicts the mean of the targets \
+            If `None`, model is assumed to be a dummy model that predicts the mean of the targets
                 or 1/(number of categories) for nominal mode.
         sensitive_attribute (pd.Series, str): sensitive attribute values.
             If `str`, must denote the column in `data` in which the sensitive attrbute values are stored.
@@ -150,11 +133,11 @@ def ot_bias_scan(
                 Support for float left in to keep the intuition clear in binary classification tasks.
                 If `mode` is nominal, favorable values should be one of the unique categories in the ground_truth.
                 Defaults to a one-vs-all scan if None for nominal mode.
-        overpredicted (bool, optional): flag for group to scan for. \
+        overpredicted (bool, optional): flag for group to scan for.
             `True` scans for overprediction, `False` scans for underprediction.
         scoring (str or class): only 'Optimal Transport'
         num_iters (int, optional): number of iterations (random restarts) for EMD. Should be positive.
-        penalty (float, optional): penalty term. Should be positive. The penalty term as with any regularization parameter \
+        penalty (float, optional): penalty term. Should be positive. The penalty term as with any regularization parameter
             may need to be tuned for a particular use case. The higher the penalty, the higher the influence of entropy regualizer.
         mode: one of ['binary', 'continuous', 'nominal', 'ordinal']. Defaults to binary.
                 In nominal mode, up to 10 categories are supported by default.
@@ -227,7 +210,7 @@ def ot_bias_scan(
             raise ValueError(f"Only 2 unique values allowed in ground_truth for binary mode, got {uniques}")
 
     # Encode variables
-    if not pd.api.types.is_any_real_numeric_dtype(grt.dtype):
+    if not np.issubdtype(grt.dtype, np.number):
         grt_encoder = LabelEncoder().fit(grt)
         grt = pd.Series(grt_encoder.transform(grt))
 
