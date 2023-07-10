@@ -43,8 +43,8 @@ def _transform(ground_truth, classifier, data, cost_matrix=None):
         required_distribution, which is an processed classifier (numpy array)
         matrix_distance, which stores the distances between the cells of distributions (2d numpy array)
     """
-    initial_distribution = (pd.Series.to_numpy(ground_truth)).astype(float)
-    required_distribution = (pd.Series.to_numpy(classifier)).astype(float)
+    initial_distribution = ground_truth.to_numpy().astype(float)
+    required_distribution = classifier.to_numpy().astype(float)
 
     _normalize(initial_distribution, required_distribution)
 
@@ -57,7 +57,7 @@ def _transform(ground_truth, classifier, data, cost_matrix=None):
 def _evaluate(
         ground_truth: pd.Series,
         classifier: pd.Series,
-        sensitive_attribute: pd.Series=None,
+        prot_attr: pd.Series=None,
         data: pd.DataFrame=None,
         num_iters=1e5,
         **kwargs):
@@ -68,9 +68,9 @@ def _evaluate(
     Args:
         ground_truth (pd.Series, str): ground truth (correct) target value
         classifier (pd.Series): estimated target values
-        sensitive_attribute (pd.Series, str): pandas series of sensitive attribute values
+        prot_attr (pd.Series, str): pandas series of sensitive attribute values
         data (dataframe): the dataset (containing the features) the model was trained on; \
-              None if `ground_truth`, `classifier` and `sensitive_attribute` are `pd.Series`
+              None if `ground_truth`, `classifier` and `prot_attr` are `pd.Series`
         num_iters (int, optional): number of iterations (random restarts). Should be positive.
 
     Returns:
@@ -78,7 +78,7 @@ def _evaluate(
     """
 
     # Calculate just the EMD between ground_truth and classifier
-    if sensitive_attribute is None:
+    if prot_attr is None:
         initial_distribution, required_distribution, matrix_distance = _transform(ground_truth, classifier, data, kwargs.get("cost_matrix"))
         return ot.emd2(a=initial_distribution, b=required_distribution, M=matrix_distance, numItermax=num_iters)
     
@@ -87,9 +87,9 @@ def _evaluate(
     
     # Calculate EMD between ground truth distribution and distribution of each group
     emds = {}
-    for sa_val in sorted(sensitive_attribute.unique()):
-        initial_distribution = ground_truth[sensitive_attribute == sa_val]
-        required_distribution = classifier[sensitive_attribute == sa_val]
+    for sa_val in sorted(prot_attr.unique()):
+        initial_distribution = ground_truth[prot_attr == sa_val]
+        required_distribution = classifier[prot_attr == sa_val]
         initial_distribution, required_distribution, matrix_distance = _transform(initial_distribution, required_distribution, data, kwargs.get("cost_matrix"))
         emds[sa_val] = ot.emd2(a=initial_distribution, b=required_distribution, M=matrix_distance, numItermax=num_iters)
 
@@ -100,10 +100,9 @@ def _evaluate(
 def ot_bias_scan(
     ground_truth: Union[pd.Series, str],
     classifier: Union[pd.Series, str],
-    sensitive_attribute: Union[pd.Series, str] = None,
+    prot_attr: Union[pd.Series, str] = None,
     data: pd.DataFrame = None,
     favorable_value: Union[str, float] = None,
-    overpredicted: bool = True,
     scoring: str = "Optimal Transport",
     num_iters: int = 1e5,
     penalty: float = 1e-17,
@@ -123,7 +122,7 @@ def ot_bias_scan(
                 or list of corresponding column names in `data`.
             If `None`, model is assumed to be a dummy model that predicts the mean of the targets
                 or 1/(number of categories) for nominal mode.
-        sensitive_attribute (pd.Series, str): sensitive attribute values.
+        prot_attr (pd.Series, str): sensitive attribute values.
             If `str`, must denote the column in `data` in which the sensitive attrbute values are stored.
             If `None`, assume all samples belong to the same protected group.
         data (dataframe, optional): the dataset (containing the features) the model was trained on.
@@ -154,7 +153,7 @@ def ot_bias_scan(
     if mode not in ['binary', 'continuous', 'nominal', 'ordinal']:
         raise ValueError(f"Expected one of {['binary', 'continuous', 'nominal', 'ordinal']}, got {mode}.")
     
-    # Assert correct types passed to ground_truth, classifier and sensitive_attribute
+    # Assert correct types passed to ground_truth, classifier and prot_attr
     if not isinstance(ground_truth, (pd.Series, str)):
         raise TypeError(f"ground_truth: expected pd.Series or str, got {type(ground_truth)}")
     if classifier is not None:
@@ -162,8 +161,8 @@ def ot_bias_scan(
             raise TypeError(f"classifier: expected pd.Series for {mode} mode, got {type(classifier)}")
         if mode in ["nominal", "ordinal"] and not isinstance(classifier, pd.DataFrame):
             raise TypeError(f"classifier: expected pd.DataFrame for {mode} mode, got {type(classifier)}")
-    if sensitive_attribute is not None and not isinstance(sensitive_attribute, (pd.Series, str)):
-        raise TypeError(f"sensitive_attribute: expected pd.Series or str, got {type(sensitive_attribute)}")
+    if prot_attr is not None and not isinstance(prot_attr, (pd.Series, str)):
+        raise TypeError(f"prot_attr: expected pd.Series or str, got {type(prot_attr)}")
     
     # Assert correct type passed to cost_matrix
     if kwargs.get("cost_matrix") is not None:
@@ -188,18 +187,18 @@ def ot_bias_scan(
         cls = data[classifier].copy()
     elif classifier is not None:
         cls = classifier.copy()
-        if sensitive_attribute is not None:
+        if prot_attr is not None:
             cls.index = grt.index
     else:
         cls = None
 
-    if isinstance(sensitive_attribute, str): # sensitive attribute
+    if isinstance(prot_attr, str): # sensitive attribute
         if not isinstance(data, pd.DataFrame):
-            raise TypeError(f"if sensitive_attribute is a string, data must be pd.DataFrame; got {type(data)}")
-        sat = data[sensitive_attribute].copy()
+            raise TypeError(f"if prot_attr is a string, data must be pd.DataFrame; got {type(data)}")
+        sat = data[prot_attr].copy()
         sat.index = grt.index
-    elif sensitive_attribute is not None:
-        sat = sensitive_attribute.copy()
+    elif prot_attr is not None:
+        sat = prot_attr.copy()
         sat.index = grt.index
     else:
         sat = None

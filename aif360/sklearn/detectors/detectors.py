@@ -9,7 +9,7 @@ import numpy as np
 def ot_bias_scan(
     y_true: Union[pd.Series, str],
     y_pred: Union[pd.Series, pd.DataFrame, str],
-    sensitive_attribute: Union[pd.Series, str] = None,
+    prot_attr: Union[pd.Series, str] = None,
     X: pd.DataFrame = None,
     pos_label: Union[str, float] = None,
     overpredicted: bool = True,
@@ -61,7 +61,7 @@ def ot_bias_scan(
     return ot_bias_scan(
         ground_truth=y_true,
         classifier=y_pred,
-        sensitive_attribute=sensitive_attribute,
+        prot_attr=prot_attr,
         data=X,
         favorable_value=pos_label,
         overpredicted=overpredicted,
