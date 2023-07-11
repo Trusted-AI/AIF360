@@ -97,7 +97,7 @@ def ot_bias_scan(
     classifier: Union[pd.Series, pd.DataFrame],
     prot_attr: pd.Series = None,
     favorable_value: Union[str, float] = None,
-    scoring: str = "Optimal Transport",
+    scoring: str = "Wasserstein1",
     num_iters: int = 1e5,
     penalty: float = 1e-17,
     mode: str = "binary",
@@ -120,7 +120,7 @@ def ot_bias_scan(
                 Support for float left in to keep the intuition clear in binary classification tasks.
                 If `mode` is nominal, favorable values should be one of the unique categories in the ground_truth.
                 Defaults to a one-vs-all scan if None for nominal mode.
-        scoring (str or class): only 'Optimal Transport'
+        scoring (str or class): only 'Wasserstein1'
         num_iters (int, optional): number of iterations (random restarts) for EMD. Should be positive.
         penalty (float, optional): penalty term. Should be positive. The penalty term as with any regularization parameter
             may need to be tuned for a particular use case. The higher the penalty, the higher the influence of entropy regualizer.
@@ -155,9 +155,9 @@ def ot_bias_scan(
     if cost_matrix is not None and not isinstance(cost_matrix, np.ndarray):
         raise TypeError(f"cost_matrix: expected numpy.ndarray, got {type(cost_matrix)}")
     
-    # Assert scoring is "Optimal Transport"
-    if not scoring == "Optimal Transport":
-        raise ValueError(f"Scoring mode can only be \"Optimal Transport\", got {scoring}")
+    # Assert scoring is "Wasserstein1"
+    if not scoring == "Wasserstein1":
+        raise ValueError(f"Scoring mode can only be \"Wasserstein1\", got {scoring}")
     
     grt = ground_truth.copy()
  

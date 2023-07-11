@@ -12,7 +12,7 @@ def ot_bias_scan(
     prot_attr: pd.Series = None,
     pos_label: Union[str, float] = None,
     overpredicted: bool = True,
-    scoring: str = "Optimal Transport",
+    scoring: str = "Wasserstein1",
     num_iters: int = 100,
     penalty: float = 1e-17,
     mode: str = "ordinal",
@@ -38,7 +38,7 @@ def ot_bias_scan(
                 Defaults to a one-vs-all scan if None for nominal mode.
         overpredicted (bool, optional): flag for group to scan for.
             `True` scans for overprediction, `False` scans for underprediction.
-        scoring (str or class): only 'Optimal Transport'
+        scoring (str or class): only 'Wasserstein1'
         num_iters (int, optional): number of iterations (random restarts) for EMD. Should be positive.
         penalty (float, optional): penalty term. Should be positive. The penalty term as with any regularization parameter
             may need to be tuned for a particular use case. The higher the penalty, the higher the influence of entropy regualizer.
