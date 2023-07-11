@@ -61,9 +61,7 @@ def _evaluate(
         data: pd.DataFrame=None,
         num_iters=1e5,
         **kwargs):
-    """If the given golden_standart and classifier are distributions, it returns the Wasserstein distance between them, 
-    otherwise it extract all neccessary information from data, makes logistic regression and 
-    compute optimal transport for all possible options for the given classifier.
+    """calculate Wasserstein distance between groups defined by `prot_attr` in `ground_truth` and `classifier`.
 
     Args:
         ground_truth (pd.Series, str): ground truth (correct) target value
@@ -109,13 +107,11 @@ def ot_bias_scan(
     mode: str = "binary",
     **kwargs,
 ):
-    """Calculated the Wasserstein distance for two given distributions.
-    Transforms pandas Series into numpy arrays, transofrms and normalize them.
-    After all, solves the optimal transport problem.
+    """Normalize and calculate Wasserstein distance between groups defined by `prot_attr` in `ground_truth` and `classifier`.
 
     Args:
         ground_truth (pd.Series, str): ground truth (correct) target values.
-            If `str`, denotes the column in `data` in which the ground truth target values are stored.
+            If `str`, must denote the column in `data` in which the ground truth target values are stored.
         classifier (pd.Series, pd.DataFrame, str): estimated target values.
             If `str`, must denote the column or columns in `data` in which the estimated target values are stored.
             If `mode` is nominal, must be a dataframe with columns containing predictions for each nominal class,
@@ -132,8 +128,6 @@ def ot_bias_scan(
                 Support for float left in to keep the intuition clear in binary classification tasks.
                 If `mode` is nominal, favorable values should be one of the unique categories in the ground_truth.
                 Defaults to a one-vs-all scan if None for nominal mode.
-        overpredicted (bool, optional): flag for group to scan for.
-            `True` scans for overprediction, `False` scans for underprediction.
         scoring (str or class): only 'Optimal Transport'
         num_iters (int, optional): number of iterations (random restarts) for EMD. Should be positive.
         penalty (float, optional): penalty term. Should be positive. The penalty term as with any regularization parameter
