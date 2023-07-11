@@ -109,14 +109,6 @@ class TestOtBiasScan(TestCase):
         with self.assertRaises(Exception):
             ot_bias_scan(pd.Series(), pd.DataFrame(), mode="continuous")
 
-    def test_data_requested_for_string(self):
-        with self.assertRaises(TypeError):
-            ot_bias_scan('a', pd.Series())
-        with self.assertRaises(TypeError):
-            ot_bias_scan(pd.Series(), 'b')
-        with self.assertRaises(TypeError):
-            ot_bias_scan(pd.Series(), pd.Series(), 'c')
-
     def test_binary_nuniques_checked(self):
         with self.assertRaises(Exception):
             ot_bias_scan(pd.Series([1,2,3], pd.Series(), mode='binary'))

@@ -10,7 +10,6 @@ def ot_bias_scan(
     y_true: Union[pd.Series, str],
     y_pred: Union[pd.Series, pd.DataFrame, str],
     prot_attr: Union[pd.Series, str] = None,
-    X: pd.DataFrame = None,
     pos_label: Union[str, float] = None,
     overpredicted: bool = True,
     scoring: str = "Optimal Transport",
@@ -25,17 +24,13 @@ def ot_bias_scan(
 
     Args:
         y_true (pd.Series, str): ground truth (correct) target values.
-            If `str`, denotes the column in `data` in which the ground truth target values are stored.
         y_pred (pd.Series, pd.DataFrame, str): estimated target values.
-            If `str`, must denote the column or columns in `data` in which the estimated target values are stored.
             If `mode` is nominal, must be a dataframe with columns containing predictions for each nominal class,
                 or list of corresponding column names in `data`.
             If `None`, model is assumed to be a dummy model that predicts the mean of the targets
                 or 1/(number of categories) for nominal mode.
         sensitive_attribute (pd.Series, str): sensitive attribute values.
-            If `str`, must denote the column in `data` in which the sensitive attrbute values are stored.
             If `None`, assume all samples belong to the same protected group.
-        X (dataframe, optional): the dataset (containing the features) the model was trained on.
         pos_label(str, float, optional): Either "high", "low" or a float value if the mode in [binary, ordinal, or continuous].
                 If float, value has to be the minimum or the maximum in the ground_truth column.
                 Defaults to high if None for these modes.
@@ -62,7 +57,6 @@ def ot_bias_scan(
         ground_truth=y_true,
         classifier=y_pred,
         prot_attr=prot_attr,
-        data=X,
         favorable_value=pos_label,
         overpredicted=overpredicted,
         scoring=scoring,

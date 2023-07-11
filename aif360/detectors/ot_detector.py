@@ -26,7 +26,7 @@ def _normalize(distribution1, distribution2):
     if total_of_distribution2 != 0:
         distribution2 /= total_of_distribution2
 
-def _transform(ground_truth, classifier, data, cost_matrix=None):
+def _transform(ground_truth, classifier, cost_matrix=None):
     """
     Transform given distributions from pandas type to numpy arrays, and _normalize them.
     Rearanges distributions, with totall data allocated of one.
@@ -36,7 +36,6 @@ def _transform(ground_truth, classifier, data, cost_matrix=None):
         ground_truth (series): ground truth (correct) target values
         classifier (series,  dataframe, optional): pandas series estimated targets
             as returned by a model for binary, continuous and ordinal modes.
-        data (dataframe): the dataset (containing the features) the model was trained on
 
     Returns:
         initial_distribution, which is an processed ground_truth (numpy array)
@@ -58,7 +57,6 @@ def _evaluate(
         ground_truth: pd.Series,
         classifier: pd.Series,
         prot_attr: pd.Series=None,
-        data: pd.DataFrame=None,
         num_iters=1e5,
         **kwargs):
     """calculate Wasserstein distance between groups defined by `prot_attr` in `ground_truth` and `classifier`.
@@ -67,8 +65,6 @@ def _evaluate(
         ground_truth (pd.Series, str): ground truth (correct) target value
         classifier (pd.Series): estimated target values
         prot_attr (pd.Series, str): pandas series of sensitive attribute values
-        data (dataframe): the dataset (containing the features) the model was trained on; \
-              None if `ground_truth`, `classifier` and `prot_attr` are `pd.Series`
         num_iters (int, optional): number of iterations (random restarts). Should be positive.
 
     Returns:
@@ -77,18 +73,18 @@ def _evaluate(
 
     # Calculate just the EMD between ground_truth and classifier
     if prot_attr is None:
-        initial_distribution, required_distribution, matrix_distance = _transform(ground_truth, classifier, data, kwargs.get("cost_matrix"))
+        initial_distribution, required_distribution, matrix_distance = _transform(ground_truth, classifier, kwargs.get("cost_matrix"))
         return ot.emd2(a=initial_distribution, b=required_distribution, M=matrix_distance, numItermax=num_iters)
     
     if not ground_truth.nunique() == 2:
-        raise ValueError(f"Expected to have exactly 2 target values, got {len(set(data[ground_truth]))}.")
+        raise ValueError(f"Expected to have exactly 2 target values, got {ground_truth.nunique()}.")
     
     # Calculate EMD between ground truth distribution and distribution of each group
     emds = {}
     for sa_val in sorted(prot_attr.unique()):
         initial_distribution = ground_truth[prot_attr == sa_val]
         required_distribution = classifier[prot_attr == sa_val]
-        initial_distribution, required_distribution, matrix_distance = _transform(initial_distribution, required_distribution, data, kwargs.get("cost_matrix"))
+        initial_distribution, required_distribution, matrix_distance = _transform(initial_distribution, required_distribution, kwargs.get("cost_matrix"))
         emds[sa_val] = ot.emd2(a=initial_distribution, b=required_distribution, M=matrix_distance, numItermax=num_iters)
 
     return emds
@@ -99,7 +95,6 @@ def ot_bias_scan(
     ground_truth: Union[pd.Series, str],
     classifier: Union[pd.Series, str],
     prot_attr: Union[pd.Series, str] = None,
-    data: pd.DataFrame = None,
     favorable_value: Union[str, float] = None,
     scoring: str = "Optimal Transport",
     num_iters: int = 1e5,
@@ -111,17 +106,12 @@ def ot_bias_scan(
 
     Args:
         ground_truth (pd.Series, str): ground truth (correct) target values.
-            If `str`, must denote the column in `data` in which the ground truth target values are stored.
         classifier (pd.Series, pd.DataFrame, str): estimated target values.
-            If `str`, must denote the column or columns in `data` in which the estimated target values are stored.
-            If `mode` is nominal, must be a dataframe with columns containing predictions for each nominal class,
-                or list of corresponding column names in `data`.
+            If `mode` is nominal, must be a dataframe with columns containing predictions for each nominal class.
             If `None`, model is assumed to be a dummy model that predicts the mean of the targets
                 or 1/(number of categories) for nominal mode.
         prot_attr (pd.Series, str): sensitive attribute values.
-            If `str`, must denote the column in `data` in which the sensitive attrbute values are stored.
             If `None`, assume all samples belong to the same protected group.
-        data (dataframe, optional): the dataset (containing the features) the model was trained on.
         favorable_value(str, float, optional): Either "high", "low" or a float value if the mode in [binary, ordinal, or continuous].
                 If float, value has to be the minimum or the maximum in the ground_truth column.
                 Defaults to high if None for these modes.
@@ -167,31 +157,16 @@ def ot_bias_scan(
     if not scoring == "Optimal Transport":
         raise ValueError(f"Scoring mode can only be \"Optimal Transport\", got {scoring}")
     
-    # If any of input data arguments passed as str, retrieve the values from data
-    if isinstance(ground_truth, str): # ground truth
-        if not isinstance(data, pd.DataFrame):
-            raise TypeError(f"if ground_truth is a string, data must be pd.DataFrame; got {type(data)}")
-        grt = data[ground_truth].copy()
-    else:
-        grt = ground_truth.copy()
+    grt = ground_truth.copy()
  
-    if isinstance(classifier, str): # classifier
-        if not isinstance(data, pd.DataFrame):
-            raise TypeError(f"if classifier is a string, data must be pd.DataFrame; got {type(data)}")
-        cls = data[classifier].copy()
-    elif classifier is not None:
+    if classifier is not None:
         cls = classifier.copy()
         if prot_attr is not None:
             cls.index = grt.index
     else:
         cls = None
 
-    if isinstance(prot_attr, str): # sensitive attribute
-        if not isinstance(data, pd.DataFrame):
-            raise TypeError(f"if prot_attr is a string, data must be pd.DataFrame; got {type(data)}")
-        sat = data[prot_attr].copy()
-        sat.index = grt.index
-    elif prot_attr is not None:
+    if prot_attr is not None:
         sat = prot_attr.copy()
         sat.index = grt.index
     else:
@@ -227,12 +202,12 @@ def ot_bias_scan(
         grt = pd.Series(grt == favorable_value, dtype=int)
         if cls is None:
             cls = pd.Series(grt.mean(), index=grt.index)
-        emds = _evaluate(grt, cls, sat, data, num_iters, **kwargs)
+        emds = _evaluate(grt, cls, sat, num_iters, **kwargs)
 
     elif mode == "continuous":
         if cls is None:
             cls = pd.Series(grt.mean(), index=grt.index)
-        emds = _evaluate(grt, cls, sat, data, num_iters, **kwargs)
+        emds = _evaluate(grt, cls, sat, num_iters, **kwargs)
 
     ## TODO: rework ordinal mode to take into account distance between pred and true
     elif mode in  ["nominal", "ordinal"]:
