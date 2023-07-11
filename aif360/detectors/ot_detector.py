@@ -74,7 +74,7 @@ def _evaluate(
 
     # Calculate just the EMD between ground_truth and classifier
     if prot_attr is None:
-        initial_distribution, required_distribution, matrix_distance = _transform(ground_truth, classifier, kwargs.get("cost_matrix"))
+        initial_distribution, required_distribution, matrix_distance = _transform(ground_truth, classifier, cost_matrix)
         return ot.emd2(a=initial_distribution, b=required_distribution, M=matrix_distance, numItermax=num_iters)
     
     if not ground_truth.nunique() == 2:
@@ -152,7 +152,7 @@ def ot_bias_scan(
         raise TypeError(f"prot_attr: expected pd.Series or str, got {type(prot_attr)}")
     
     # Assert correct type passed to cost_matrix
-    if not isinstance(cost_matrix, np.ndarray):
+    if cost_matrix is not None and not isinstance(cost_matrix, np.ndarray):
         raise TypeError(f"cost_matrix: expected numpy.ndarray, got {type(cost_matrix)}")
     
     # Assert scoring is "Optimal Transport"
@@ -204,12 +204,12 @@ def ot_bias_scan(
         grt = pd.Series(grt == favorable_value, dtype=int)
         if cls is None:
             cls = pd.Series(grt.mean(), index=grt.index)
-        emds = _evaluate(grt, cls, sat, num_iters, **kwargs)
+        emds = _evaluate(grt, cls, sat, num_iters, cost_matrix, **kwargs)
 
     elif mode == "continuous":
         if cls is None:
             cls = pd.Series(grt.mean(), index=grt.index)
-        emds = _evaluate(grt, cls, sat, num_iters, **kwargs)
+        emds = _evaluate(grt, cls, sat, num_iters,cost_matrix, **kwargs)
 
     ## TODO: rework ordinal mode to take into account distance between pred and true
     elif mode in  ["nominal", "ordinal"]:
@@ -222,6 +222,6 @@ def ot_bias_scan(
         for class_label in uniques:
             grt_cl = grt.map({class_label: 1}).fillna(0)
             cls_cl = cls[class_label]
-            emds[class_label] = _evaluate(grt_cl, cls_cl, sat, num_iters, **kwargs)
+            emds[class_label] = _evaluate(grt_cl, cls_cl, sat, num_iters, cost_matrix, **kwargs)
 
     return emds

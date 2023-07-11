@@ -22,13 +22,13 @@ def ot_bias_scan(
     """Normalize and calculate Wasserstein distance between groups defined by `prot_attr` in `y_true` and `y_pred`.
 
     Args:
-        y_true (pd.Series, str): ground truth (correct) target values.
-        y_pred (pd.Series, pd.DataFrame, str): estimated target values.
-            If `mode` is nominal, must be a dataframe with columns containing predictions for each nominal class,
+        y_true (pd.Series): ground truth (correct) target values.
+        y_pred (pd.Series, pd.DataFrame): estimated target values.
+            If `mode` is nominal, must be a `pd.DataFrame` with columns containing predictions for each nominal class,
                 or list of corresponding column names in `data`.
             If `None`, model is assumed to be a dummy model that predicts the mean of the targets
                 or 1/(number of categories) for nominal mode.
-        sensitive_attribute (pd.Series, str): sensitive attribute values.
+        sensitive_attribute (pd.Series): sensitive attribute values.
             If `None`, assume all samples belong to the same protected group.
         pos_label(str, float, optional): Either "high", "low" or a float value if the mode in [binary, ordinal, or continuous].
                 If float, value has to be the minimum or the maximum in the ground_truth column.
