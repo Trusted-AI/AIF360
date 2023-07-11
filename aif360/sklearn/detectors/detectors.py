@@ -7,20 +7,19 @@ import pandas as pd
 import numpy as np
 
 def ot_bias_scan(
-    y_true: Union[pd.Series, str],
-    y_pred: Union[pd.Series, pd.DataFrame, str],
-    prot_attr: Union[pd.Series, str] = None,
+    y_true: pd.Series,
+    y_pred: Union[pd.Series, pd.DataFrame],
+    prot_attr: pd.Series = None,
     pos_label: Union[str, float] = None,
     overpredicted: bool = True,
     scoring: str = "Optimal Transport",
     num_iters: int = 100,
     penalty: float = 1e-17,
     mode: str = "ordinal",
+    cost_matrix: np.ndarray=None,
     **kwargs,
 ):
-    """Calculated the Wasserstein distance for two given distributions.
-    Transforms pandas Series into numpy arrays, transofrms and normalize them.
-    After all, solves the optimal transport problem.
+    """Normalize and calculate Wasserstein distance between groups defined by `prot_attr` in `y_true` and `y_pred`.
 
     Args:
         y_true (pd.Series, str): ground truth (correct) target values.
@@ -46,6 +45,7 @@ def ot_bias_scan(
         mode: one of ['binary', 'continuous', 'nominal', 'ordinal']. Defaults to binary.
                 In nominal mode, up to 10 categories are supported by default.
                 To increase this, pass in keyword argument max_nominal = integer value.
+        cost_matrix (np.ndarray): cost matrix for the Wasserstein distance. Defaults to absolute difference between samples.
 
     Returns:
         ot.emd2 (float, dict): Earth mover's distance or dictionary of optimal transports for each of option of classifier
@@ -63,6 +63,7 @@ def ot_bias_scan(
         num_iters=num_iters,
         penalty=penalty,
         mode=mode,
+        cost_matrix=cost_matrix,
         kwargs=kwargs
     )
 

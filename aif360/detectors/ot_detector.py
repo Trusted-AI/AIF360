@@ -58,6 +58,7 @@ def _evaluate(
         classifier: pd.Series,
         prot_attr: pd.Series=None,
         num_iters=1e5,
+        cost_matrix: np.ndarray=None,
         **kwargs):
     """calculate Wasserstein distance between groups defined by `prot_attr` in `ground_truth` and `classifier`.
 
@@ -84,7 +85,7 @@ def _evaluate(
     for sa_val in sorted(prot_attr.unique()):
         initial_distribution = ground_truth[prot_attr == sa_val]
         required_distribution = classifier[prot_attr == sa_val]
-        initial_distribution, required_distribution, matrix_distance = _transform(initial_distribution, required_distribution, kwargs.get("cost_matrix"))
+        initial_distribution, required_distribution, matrix_distance = _transform(initial_distribution, required_distribution, cost_matrix)
         emds[sa_val] = ot.emd2(a=initial_distribution, b=required_distribution, M=matrix_distance, numItermax=num_iters)
 
     return emds
@@ -92,14 +93,15 @@ def _evaluate(
 
 # Function called by the user
 def ot_bias_scan(
-    ground_truth: Union[pd.Series, str],
-    classifier: Union[pd.Series, str],
-    prot_attr: Union[pd.Series, str] = None,
+    ground_truth: pd.Series,
+    classifier: Union[pd.Series, pd.DataFrame],
+    prot_attr: pd.Series = None,
     favorable_value: Union[str, float] = None,
     scoring: str = "Optimal Transport",
     num_iters: int = 1e5,
     penalty: float = 1e-17,
     mode: str = "binary",
+    cost_matrix: np.ndarray=None,
     **kwargs,
 ):
     """Normalize and calculate Wasserstein distance between groups defined by `prot_attr` in `ground_truth` and `classifier`.
@@ -125,6 +127,7 @@ def ot_bias_scan(
         mode: one of ['binary', 'continuous', 'nominal', 'ordinal']. Defaults to binary.
                 In nominal mode, up to 10 categories are supported by default.
                 To increase this, pass in keyword argument max_nominal = integer value.
+        cost_matrix (np.ndarray): cost matrix for the Wasserstein distance. Defaults to absolute difference between samples.
 
     Returns:
         ot.emd2 (float, dict): Earth mover's distance or dictionary of optimal transports for each of option of classifier
@@ -149,9 +152,8 @@ def ot_bias_scan(
         raise TypeError(f"prot_attr: expected pd.Series or str, got {type(prot_attr)}")
     
     # Assert correct type passed to cost_matrix
-    if kwargs.get("cost_matrix") is not None:
-        if not isinstance(kwargs.get("cost_matrix"), np.ndarray):
-            raise TypeError(f"cost_matrix: expected numpy.ndarray, got {type(kwargs.get('cost_matrix'))}")
+    if not isinstance(cost_matrix, np.ndarray):
+        raise TypeError(f"cost_matrix: expected numpy.ndarray, got {type(cost_matrix)}")
     
     # Assert scoring is "Optimal Transport"
     if not scoring == "Optimal Transport":
