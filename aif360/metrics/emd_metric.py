@@ -2,8 +2,7 @@ from typing import Union
 import pandas as pd
 import numpy as np
 import ot
-from sklearn.linear_model import LogisticRegression
-from sklearn.preprocessing import OrdinalEncoder, LabelEncoder
+from sklearn.preprocessing import LabelEncoder
 
 def _normalize(distribution1, distribution2):
     """
@@ -89,10 +88,9 @@ def _evaluate(
         emds[sa_val] = ot.emd2(a=initial_distribution, b=required_distribution, M=matrix_distance, numItermax=num_iters)
 
     return emds
-    
 
-# Function called by the user
-def ot_bias_scan(
+
+def earth_movers_distance(
     ground_truth: pd.Series,
     classifier: Union[pd.Series, pd.DataFrame],
     prot_attr: pd.Series = None,
