@@ -509,7 +509,7 @@ def ot_bias_scan(
     pos_label: Union[str, float] = None,
     overpredicted: bool = True,
     scoring: str = "Wasserstein1",
-    num_iters: int = 100,
+    num_iters: int = 1e5,
     penalty: float = 1e-17,
     mode: str = "binary",
     cost_matrix: np.ndarray=None,
