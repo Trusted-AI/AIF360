@@ -90,7 +90,7 @@ def _evaluate(
     return emds
 
 
-def earth_movers_distance(
+def ot_bias_scan(
     ground_truth: pd.Series,
     classifier: Union[pd.Series, pd.DataFrame],
     prot_attr: pd.Series = None,

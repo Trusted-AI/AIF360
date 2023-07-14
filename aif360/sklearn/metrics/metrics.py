@@ -11,7 +11,7 @@ from sklearn.neighbors import NearestNeighbors
 from sklearn.utils import check_X_y
 from sklearn.utils.deprecation import deprecated
 
-from aif360.metrics.emd_metric import earth_movers_distance
+from aif360.metrics import ot_metric
 from aif360.sklearn.utils import check_inputs, check_groups
 from aif360.detectors.mdss.ScoringFunctions import BerkJones, Bernoulli
 from aif360.detectors.mdss.MDSS import MDSS
@@ -27,7 +27,7 @@ __all__ = [
     'specificity_score', 'base_rate', 'selection_rate', 'smoothed_base_rate',
     'smoothed_selection_rate', 'generalized_fpr', 'generalized_fnr',
     # group fairness
-    'statistical_parity_difference', 'disparate_impact_ratio',
+    'ot_bias_scan', 'statistical_parity_difference', 'disparate_impact_ratio',
     'equal_opportunity_difference', 'average_odds_difference', 'average_predictive_value_difference',
     'average_odds_error', 'class_imbalance', 'kl_divergence',
     'conditional_demographic_disparity', 'smoothed_edf',
@@ -502,7 +502,7 @@ def generalized_fnr(y_true, probas_pred, *, pos_label=1, sample_weight=None,
 
 
 # ============================ GROUP FAIRNESS ==================================
-def earth_movers_distance(
+def ot_bias_scan(
     y_true: pd.Series,
     y_pred: Union[pd.Series, pd.DataFrame],
     prot_attr: pd.Series = None,
@@ -511,7 +511,7 @@ def earth_movers_distance(
     scoring: str = "Wasserstein1",
     num_iters: int = 100,
     penalty: float = 1e-17,
-    mode: str = "ordinal",
+    mode: str = "binary",
     cost_matrix: np.ndarray=None,
     **kwargs,
 ):
@@ -549,7 +549,7 @@ def earth_movers_distance(
     Raises:
         ValueError: if `mode` is 'binary' but `ground_truth` contains less than 1 or more than 2 unique values.
     """
-    return earth_movers_distance(
+    return ot_metric.ot_bias_scan(
         ground_truth=y_true,
         classifier=y_pred,
         prot_attr=prot_attr,
