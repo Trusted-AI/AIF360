@@ -143,29 +143,29 @@ class EqOddsPostprocessing(Transformer):
 
         sm_tn = np.logical_and(sflip,
             y_true[cond_vec_priv] == dataset_true.unfavorable_label,
-            dtype=np.float64)
+            ).astype(np.float64)
         sm_fn = np.logical_and(sflip,
             y_true[cond_vec_priv] == dataset_true.favorable_label,
-            dtype=np.float64)
+            ).astype(np.float64)
         sm_fp = np.logical_and(sconst,
             y_true[cond_vec_priv] == dataset_true.unfavorable_label,
-            dtype=np.float64)
+            ).astype(np.float64)
         sm_tp = np.logical_and(sconst,
             y_true[cond_vec_priv] == dataset_true.favorable_label,
-            dtype=np.float64)
+            ).astype(np.float64)
 
         om_tn = np.logical_and(oflip,
             y_true[cond_vec_unpriv] == dataset_true.unfavorable_label,
-            dtype=np.float64)
+            ).astype(np.float64)
         om_fn = np.logical_and(oflip,
             y_true[cond_vec_unpriv] == dataset_true.favorable_label,
-            dtype=np.float64)
+            ).astype(np.float64)
         om_fp = np.logical_and(oconst,
             y_true[cond_vec_unpriv] == dataset_true.unfavorable_label,
-            dtype=np.float64)
+            ).astype(np.float64)
         om_tp = np.logical_and(oconst,
             y_true[cond_vec_unpriv] == dataset_true.favorable_label,
-            dtype=np.float64)
+            ).astype(np.float64)
 
         # A_eq - 2-D array which, when matrix-multiplied by x,
         # gives the values of the equality constraints at x

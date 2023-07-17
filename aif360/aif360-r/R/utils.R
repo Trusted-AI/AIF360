@@ -20,7 +20,7 @@
 #'   only occur within RStudio).
 #'
 #' @param conda_python_version the python version installed in the created conda
-#'   environment. Python 3.6 is installed by default.
+#'   environment. Python 3.11 is installed by default.
 #'
 #' @param ... other arguments passed to [reticulate::conda_install()] or
 #'   [reticulate::virtualenv_install()].
@@ -33,13 +33,13 @@ install_aif360 <- function(method = c("auto", "virtualenv", "conda"),
                                envname = NULL,
                                extra_packages = NULL,
                                restart_session = TRUE,
-                               conda_python_version = "3.7",
+                               conda_python_version = "3.11",
                                ...) {
 
   method <- match.arg(method)
 
   reticulate::py_install(
-    packages       = c("aif360", "numba", "BlackBoxAuditing", "tensorflow>=1.13.1,<2", "pandas", 
+    packages       = c("aif360", "numba", "BlackBoxAuditing", "tensorflow>=1.13.1,<2", "pandas",
                        "fairlearn==0.4.6", "protobuf==3.20.1"),
     envname        = envname,
     method         = method,
