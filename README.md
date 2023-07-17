@@ -76,9 +76,9 @@ Supported Python Configurations:
 
 | OS      | Python version |
 | ------- | -------------- |
-| macOS   | 3.7 – 3.10     |
-| Ubuntu  | 3.7 – 3.10     |
-| Windows | 3.7 – 3.10     |
+| macOS   | 3.8 – 3.11     |
+| Ubuntu  | 3.8 – 3.11     |
+| Windows | 3.8 – 3.11     |
 
 ### (Optional) Create a virtual environment
 
@@ -95,10 +95,10 @@ is sufficient (see [the difference between Anaconda and
 Miniconda](https://conda.io/docs/user-guide/install/download.html#anaconda-or-miniconda)
 if you are curious) if you do not already have conda installed.
 
-Then, to create a new Python 3.7 environment, run:
+Then, to create a new Python 3.11 environment, run:
 
 ```bash
-conda create --name aif360 python=3.7
+conda create --name aif360 python=3.11
 conda activate aif360
 ```
 
@@ -109,9 +109,6 @@ The shell should now look like `(aif360) $`. To deactivate the environment, run:
 ```
 
 The prompt will return to `$ `.
-
-Note: Older versions of conda may use `source activate aif360` and `source
-deactivate` (`activate aif360` and `deactivate` on Windows).
 
 ### Install with `pip`
 

@@ -39,7 +39,7 @@ setup(name='aif360',
       long_description_content_type='text/markdown',
       license='Apache License 2.0',
       packages=[pkg for pkg in find_packages() if pkg.startswith('aif360')],
-      python_requires='>=3.7',
+      python_requires='>=3.8',
       install_requires=[
           'numpy>=1.16',
           'scipy>=1.2.0',
