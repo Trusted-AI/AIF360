@@ -27,7 +27,7 @@ __all__ = [
     'specificity_score', 'base_rate', 'selection_rate', 'smoothed_base_rate',
     'smoothed_selection_rate', 'generalized_fpr', 'generalized_fnr',
     # group fairness
-    'ot_bias_scan', 'statistical_parity_difference', 'disparate_impact_ratio',
+    'ot_distance', 'statistical_parity_difference', 'disparate_impact_ratio',
     'equal_opportunity_difference', 'average_odds_difference', 'average_predictive_value_difference',
     'average_odds_error', 'class_imbalance', 'kl_divergence',
     'conditional_demographic_disparity', 'smoothed_edf',
@@ -502,12 +502,11 @@ def generalized_fnr(y_true, probas_pred, *, pos_label=1, sample_weight=None,
 
 
 # ============================ GROUP FAIRNESS ==================================
-def ot_bias_scan(
+def ot_distance(
     y_true: pd.Series,
     y_pred: Union[pd.Series, pd.DataFrame],
     prot_attr: pd.Series = None,
     pos_label: Union[str, float] = None,
-    overpredicted: bool = True,
     scoring: str = "Wasserstein1",
     num_iters: int = 1e5,
     penalty: float = 1e-17,
@@ -524,7 +523,7 @@ def ot_bias_scan(
                 or list of corresponding column names in `data`.
             If `None`, model is assumed to be a dummy model that predicts the mean of the targets
                 or 1/(number of categories) for nominal mode.
-        sensitive_attribute (pd.Series): sensitive attribute values.
+        prot_attr (pd.Series): sensitive attribute values.
             If `None`, assume all samples belong to the same protected group.
         pos_label(str, float, optional): Either "high", "low" or a float value if the mode in [binary, ordinal, or continuous].
                 If float, value has to be the minimum or the maximum in the ground_truth column.
@@ -532,8 +531,6 @@ def ot_bias_scan(
                 Support for float left in to keep the intuition clear in binary classification tasks.
                 If `mode` is nominal, favorable values should be one of the unique categories in the ground_truth.
                 Defaults to a one-vs-all scan if None for nominal mode.
-        overpredicted (bool, optional): flag for group to scan for.
-            `True` scans for overprediction, `False` scans for underprediction.
         scoring (str or class): only 'Wasserstein1'
         num_iters (int, optional): number of iterations (random restarts) for EMD. Should be positive.
         penalty (float, optional): penalty term. Should be positive. The penalty term as with any regularization parameter
@@ -549,18 +546,17 @@ def ot_bias_scan(
     Raises:
         ValueError: if `mode` is 'binary' but `ground_truth` contains less than 1 or more than 2 unique values.
     """
-    return ot_metric.ot_bias_scan(
+    return ot_metric.ot_distance(
         ground_truth=y_true,
         classifier=y_pred,
         prot_attr=prot_attr,
         favorable_value=pos_label,
-        overpredicted=overpredicted,
         scoring=scoring,
         num_iters=num_iters,
         penalty=penalty,
         mode=mode,
         cost_matrix=cost_matrix,
-        kwargs=kwargs
+        **kwargs
     )
 
 def statistical_parity_difference(y_true, y_pred=None, *, prot_attr=None,

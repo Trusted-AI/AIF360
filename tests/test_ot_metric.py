@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 from aif360.metrics.ot_metric import _normalize, _transform, _evaluate
-from aif360.sklearn.metrics import ot_bias_scan
+from aif360.sklearn.metrics import ot_distance
 from ot import emd2
 import unittest
 from unittest import TestCase
@@ -95,28 +95,28 @@ class TestEvaluate():
 class TestOtBiasScan(TestCase):
     def test_scoring_checked(self):
         with self.assertRaises(Exception):
-            ot_bias_scan(pd.Series(), pd.Series(), scoring="Bernoulli")
+            ot_distance(pd.Series(), pd.Series(), scoring="Bernoulli")
     def test_scan_mode_checked(self):
         with self.assertRaises(Exception):
-            ot_bias_scan(pd.Series(), pd.Series(), mode="Wrong")
+            ot_distance(pd.Series(), pd.Series(), mode="Wrong")
 
     def test_classifier_type_checked(self):
         with self.assertRaises(Exception):
-            ot_bias_scan(pd.Series(), pd.Series(), mode="nominal")
+            ot_distance(pd.Series(), pd.Series(), mode="nominal")
         with self.assertRaises(Exception):
-            ot_bias_scan(pd.Series(), pd.Series(), mode="ordinal")
+            ot_distance(pd.Series(), pd.Series(), mode="ordinal")
         with self.assertRaises(Exception):
-            ot_bias_scan(pd.Series(), pd.DataFrame(), mode="binary")
+            ot_distance(pd.Series(), pd.DataFrame(), mode="binary")
         with self.assertRaises(Exception):
-            ot_bias_scan(pd.Series(), pd.DataFrame(), mode="continuous")
+            ot_distance(pd.Series(), pd.DataFrame(), mode="continuous")
 
     def test_binary_nuniques_checked(self):
         with self.assertRaises(Exception):
-            ot_bias_scan(pd.Series([1,2,3], pd.Series(), mode='binary'))
+            ot_distance(pd.Series([1,2,3], pd.Series(), mode='binary'))
     
     def test_cost_matrix_type_checked(self):
         with self.assertRaises(TypeError):
-            ot_bias_scan(pd.Series(), pd.Series(), cost_matrix=pd.DataFrame())
+            ot_distance(pd.Series(), pd.Series(), cost_matrix=pd.DataFrame())
 
     def test_cost_matrix_passed_correctly(self):
         p = pd.Series([50, 100, 150])
@@ -125,7 +125,7 @@ class TestOtBiasScan(TestCase):
                       [20, 40, 15, 30, 30], 
                       [30, 35, 40, 55, 25]])
         expected = _evaluate(p, q, cost_matrix=C)
-        actual = ot_bias_scan(p, q, cost_matrix=C, mode="continuous")
+        actual = ot_distance(p, q, cost_matrix=C, mode="continuous")
         assert expected == actual
 
     def test_favorable_value_checked(self):
@@ -133,25 +133,25 @@ class TestOtBiasScan(TestCase):
         q = pd.Series([25, 115, 60, 30, 70])
         fav = 4
         with self.assertRaises(ValueError):
-            ot_bias_scan(p, q, favorable_value=fav)
+            ot_distance(p, q, favorable_value=fav)
 
     def test_nominal_classifier_shape_checked(self):
         p = pd.Series([0,0,1,1])
         q = pd.DataFrame([0.5,0.5,0.5,0.5])
         with self.assertRaises(ValueError):
-            ot_bias_scan(p, q, mode='nominal')
+            ot_distance(p, q, mode='nominal')
     
     def test_ordinal_classifier_shape_checked(self):
         p = pd.Series([0,0,1,1])
         q = pd.DataFrame([0.5,0.5,0.5,0.5])
         with self.assertRaises(ValueError):
-            ot_bias_scan(p, q, mode='ordinal')
+            ot_distance(p, q, mode='ordinal')
 
     def test_nominal(self):
         p = pd.Series([0,0,1,1])
         q = pd.DataFrame([[0.5,0.5],[0.5,0.5],[0.5,0.5],[0.5,0.5]])
         expected = {cl: _evaluate(p, q[cl]) for cl in [0,1]}
-        actual = ot_bias_scan(p, q, mode="nominal")
+        actual = ot_distance(p, q, mode="nominal")
         assert expected == actual
 
 

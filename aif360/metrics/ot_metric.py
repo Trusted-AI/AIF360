@@ -90,7 +90,7 @@ def _evaluate(
     return emds
 
 
-def ot_bias_scan(
+def ot_distance(
     ground_truth: pd.Series,
     classifier: Union[pd.Series, pd.DataFrame],
     prot_attr: pd.Series = None,

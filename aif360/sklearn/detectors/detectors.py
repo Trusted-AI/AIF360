@@ -1,9 +1,10 @@
+from typing import Union
+
 from aif360.detectors import bias_scan
 from aif360.detectors.mdss.ScoringFunctions import ScoringFunction
 
-from typing import Union
 import pandas as pd
-import numpy as np
+
 
 def bias_scan(
     X: pd.DataFrame,
