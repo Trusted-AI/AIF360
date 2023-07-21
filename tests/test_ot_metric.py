@@ -133,7 +133,7 @@ class TestOtBiasScan(TestCase):
         q = pd.Series([25, 115, 60, 30, 70])
         fav = 4
         with self.assertRaises(ValueError):
-            ot_distance(p, q, favorable_value=fav)
+            ot_distance(p, q, pos_label=fav)
 
     def test_nominal_classifier_shape_checked(self):
         p = pd.Series([0,0,1,1])
