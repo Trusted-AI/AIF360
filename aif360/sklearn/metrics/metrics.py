@@ -1,4 +1,5 @@
 from itertools import permutations
+from typing import Union
 
 import numpy as np
 import pandas as pd
@@ -10,9 +11,11 @@ from sklearn.neighbors import NearestNeighbors
 from sklearn.utils import check_X_y
 from sklearn.utils.deprecation import deprecated
 
+from aif360.metrics import ot_metric
 from aif360.sklearn.utils import check_inputs, check_groups
 from aif360.detectors.mdss.ScoringFunctions import BerkJones, Bernoulli
 from aif360.detectors.mdss.MDSS import MDSS
+
 
 __all__ = [
     # meta-metrics
@@ -24,7 +27,7 @@ __all__ = [
     'specificity_score', 'base_rate', 'selection_rate', 'smoothed_base_rate',
     'smoothed_selection_rate', 'generalized_fpr', 'generalized_fnr',
     # group fairness
-    'statistical_parity_difference', 'disparate_impact_ratio',
+    'ot_distance', 'statistical_parity_difference', 'disparate_impact_ratio',
     'equal_opportunity_difference', 'average_odds_difference', 'average_predictive_value_difference',
     'average_odds_error', 'class_imbalance', 'kl_divergence',
     'conditional_demographic_disparity', 'smoothed_edf',
@@ -499,6 +502,63 @@ def generalized_fnr(y_true, probas_pred, *, pos_label=1, sample_weight=None,
 
 
 # ============================ GROUP FAIRNESS ==================================
+def ot_distance(
+    y_true: pd.Series,
+    y_pred: Union[pd.Series, pd.DataFrame],
+    prot_attr: pd.Series = None,
+    pos_label: Union[str, float] = None,
+    scoring: str = "Wasserstein1",
+    num_iters: int = 1e5,
+    penalty: float = 1e-17,
+    mode: str = "binary",
+    cost_matrix: np.ndarray=None,
+    **kwargs,
+):
+    """Normalize and calculate Wasserstein distance between groups defined by `prot_attr` in `y_true` and `y_pred`.
+
+    Args:
+        y_true (pd.Series): ground truth (correct) target values.
+        y_pred (pd.Series, pd.DataFrame): estimated target values.
+            If `mode` is nominal, must be a `pd.DataFrame` with columns containing predictions for each nominal class,
+                or list of corresponding column names in `data`.
+            If `None`, model is assumed to be a dummy model that predicts the mean of the targets
+                or 1/(number of categories) for nominal mode.
+        prot_attr (pd.Series): sensitive attribute values.
+            If `None`, assume all samples belong to the same protected group.
+        pos_label(str, float, optional): Either "high", "low" or a float value if the mode in [binary, ordinal, or continuous].
+                If float, value has to be the minimum or the maximum in the ground_truth column.
+                Defaults to high if None for these modes.
+                Support for float left in to keep the intuition clear in binary classification tasks.
+                If `mode` is nominal, favorable values should be one of the unique categories in the ground_truth.
+                Defaults to a one-vs-all scan if None for nominal mode.
+        scoring (str or class): only 'Wasserstein1'
+        num_iters (int, optional): number of iterations (random restarts) for EMD. Should be positive.
+        penalty (float, optional): penalty term. Should be positive. The penalty term as with any regularization parameter
+            may need to be tuned for a particular use case. The higher the penalty, the higher the influence of entropy regualizer.
+        mode: one of ['binary', 'continuous', 'nominal', 'ordinal']. Defaults to binary.
+                In nominal mode, up to 10 categories are supported by default.
+                To increase this, pass in keyword argument max_nominal = integer value.
+        cost_matrix (np.ndarray): cost matrix for the Wasserstein distance. Defaults to absolute difference between samples.
+
+    Returns:
+        ot.emd2 (float, dict): Earth mover's distance or dictionary of optimal transports for each of option of classifier
+
+    Raises:
+        ValueError: if `mode` is 'binary' but `ground_truth` contains less than 1 or more than 2 unique values.
+    """
+    return ot_metric.ot_distance(
+        ground_truth=y_true,
+        classifier=y_pred,
+        prot_attr=prot_attr,
+        favorable_value=pos_label,
+        scoring=scoring,
+        num_iters=num_iters,
+        penalty=penalty,
+        mode=mode,
+        cost_matrix=cost_matrix,
+        **kwargs
+    )
+
 def statistical_parity_difference(y_true, y_pred=None, *, prot_attr=None,
                                   priv_group=1, pos_label=1, sample_weight=None):
     r"""Difference in selection rates.
