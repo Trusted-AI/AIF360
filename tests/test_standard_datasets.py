@@ -52,11 +52,17 @@ def test_bank():
     bank_dataset = BankDataset()
     bank_dataset.validate_dataset()
 
-@patch("pandas.read_csv")
-def test_bank_priviliged_attributes(mock_read_csv):
-    ''' Test if priviliged attributes are correctly transformed '''
-    data = {'y': ['yes', 'no', 'no', 'yes'],
-        'age': [43, 18, 89, 25]}
-    mock_read_csv.return_value = pd.DataFrame(data)
-    bank_dataset = BankDataset(categorical_features=[])
-    assert bank_dataset.convert_to_dataframe()[0]["age"].tolist() == [1.0, 0.0, 0.0, 1.0]
+def test_bank_priviliged_attributes():
+    ''' Test if protected attribute age is correctly processed '''
+    # Bank Data Set
+    bank_dataset = BankDataset()
+    num_priv = bank_dataset.protected_attributes.sum()
+    # Raw data
+    bank_dataset_unpreproc = pd.read_csv("aif360/data/raw/bank/bank-additional-full.csv", sep = ";", na_values = ["unknown"])
+    bank_dataset_unpreproc = bank_dataset_unpreproc.dropna()
+    num_priv_raw = len(bank_dataset_unpreproc[(bank_dataset_unpreproc["age"] >= 25) & (bank_dataset_unpreproc["age"] < 60)])
+    assert num_priv == num_priv_raw
+
+
+
+    
