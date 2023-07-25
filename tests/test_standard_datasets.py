@@ -57,6 +57,7 @@ def test_bank_priviliged_attributes():
     # Bank Data Set
     bank_dataset = BankDataset()
     num_priv = bank_dataset.protected_attributes.sum()
+    
     # Raw data
     bank_dataset_unpreproc = pd.read_csv("aif360/data/raw/bank/bank-additional-full.csv", sep = ";", na_values = ["unknown"])
     bank_dataset_unpreproc = bank_dataset_unpreproc.dropna()

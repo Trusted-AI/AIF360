@@ -173,7 +173,7 @@ def fetch_bank(*, data_home=None, cache=True, binary_age=True, percent10=False,
     """Load the Bank Marketing Dataset.
 
     The protected attribute is 'age' (binarized by default as suggested by [#lequy22]: 
-    age >= 25 and age <60 is considered privilged and age< 25 or age >= 60 unpriviliged; 
+    age >= 25 and age <60 is considered privileged and age< 25 or age >= 60 unprivileged; 
     see the binary_age flag to keep this continuous). The outcome variable is 'deposit': 
     'yes' or 'no'.
 
@@ -237,8 +237,8 @@ def fetch_bank(*, data_home=None, cache=True, binary_age=True, percent10=False,
         ['primary', 'secondary', 'tertiary'], ordered=True)
     
     # binarize protected attribute (but not corresponding feature)
-    age = (pd.cut(df.age, [0, 25, 60, 100],
-                  labels=False if numeric_only else ['unpriv', 'priv', 'unpriv'])
+    age = (pd.cut(df.age, [0, 24, 60, 100], ordered=False,
+                  labels=[0, 1, 0] if numeric_only else ['<25 or >=60', '25-60', '<25 or >=60'])
            if binary_age else 'age')
 
     return standardize_dataset(df, prot_attr=[age], target='deposit',
