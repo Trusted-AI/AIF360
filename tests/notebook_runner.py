@@ -9,8 +9,11 @@ import nbformat
 
 def notebook_run(path):
     """Execute a notebook via nbconvert and collect output.
+    Reset cwd after execution. 
        :returns (parsed nb object, execution errors)
     """
+    old_cwd = os.getcwd()
+
     dirname, __ = os.path.split(path)
     os.chdir(dirname)
 
@@ -31,5 +34,7 @@ def notebook_run(path):
     errors = [output for cell in nb.cells if "outputs" in cell
                      for output in cell["outputs"]
                      if output.output_type == "error"]
+    
+    os.chdir(old_cwd)
 
     return nb, errors
