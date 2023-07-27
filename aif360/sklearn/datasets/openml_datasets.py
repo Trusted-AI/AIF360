@@ -238,9 +238,12 @@ def fetch_bank(*, data_home=None, cache=True, binary_age=True, percent10=False,
     
     # binarize protected attribute (but not corresponding feature)
     age = (pd.cut(df.age, [0, 24, 60, 100], ordered=False,
-                  labels=[0, 1, 0] if numeric_only else ['<25 or >=60', '25-60', '<25 or >=60'])
-           if binary_age else 'age')
-
+                labels=[0, 1, 0] if numeric_only 
+                else ['<25 or >=60', '25-60', '<25 or >=60'])
+        if binary_age else 'age')
+    age = age.cat.reorder_categories([0, 1] if numeric_only 
+                                    else ['<25 or >=60', '25-60'])
+    
     return standardize_dataset(df, prot_attr=[age], target='deposit',
                                usecols=usecols, dropcols=dropcols,
                                numeric_only=numeric_only, dropna=dropna)
