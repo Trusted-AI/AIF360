@@ -57,6 +57,7 @@ jobs:
           wget ${UCI_DB}/statlog/german/german.data -P aif360/data/raw/german/
           wget ${UCI_DB}/statlog/german/german.doc -P aif360/data/raw/german/
           wget ${PROPUBLICA_GH}/compas-scores-two-years.csv -P aif360/data/raw/compas/
+          wget ${UCI_DB}/00222/bank-additional.zip -P aif360/data/raw/bank/ && unzip -j aif360/data/raw/bank/bank-additional.zip -d aif360/data/raw/bank/ && rm aif360/data/raw/bank/bank-additional.zip
           (cd aif360/data/raw/meps;Rscript generate_data.R <<< y)
 
       - name: Lint with flake8

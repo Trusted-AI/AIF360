@@ -12,7 +12,7 @@ Additional information on dataset and features is available in `bank-additional-
 
 1. Download the file [bank-additional.zip](https://archive.ics.uci.edu/ml/machine-learning-databases/00222/bank-additional.zip).
 
-2. Extract files from the downloaded archive and place the files 'bank-additional.csv' and 'bank-additional-names.txt' into the current folder.
+2. Extract files from the downloaded archive and place the files 'bank-additional-full.csv' and 'bank-additional-names.txt' into the current folder.
 
 ## Relevant Papers
 
