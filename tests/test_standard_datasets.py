@@ -3,6 +3,7 @@
 from unittest.mock import patch
 import numpy as np
 import pandas as pd
+import os
 
 from aif360.datasets import AdultDataset
 from aif360.datasets import BankDataset
@@ -59,7 +60,11 @@ def test_bank_priviliged_attributes():
     num_priv = bank_dataset.protected_attributes.sum()
     
     # Raw data
-    bank_dataset_unpreproc = pd.read_csv("aif360/data/raw/bank/bank-additional-full.csv", sep = ";", na_values = ["unknown"])
+    # TO DO: add file path. 
+    filepath = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                            '..', 'aif360', 'data', 'raw', 'bank', 'bank-additional-full.csv')
+    
+    bank_dataset_unpreproc = pd.read_csv(filepath, sep = ";", na_values = ["unknown"])
     bank_dataset_unpreproc = bank_dataset_unpreproc.dropna()
     num_priv_raw = len(bank_dataset_unpreproc[(bank_dataset_unpreproc["age"] >= 25) & (bank_dataset_unpreproc["age"] < 60)])
     assert num_priv == num_priv_raw
