@@ -69,7 +69,7 @@ class WeightedBinaryCrossEntropy(tf.keras.losses.Loss):
 class AdversarialDebiasor:
     '''TODO: 
     
-    # Make train_step() faster
+    # 1. Make train_step() faster
     # 2. Make different types of adversaries.
         
         Depending on the definition of fairness being achieved, the adversary may have other inputs.
