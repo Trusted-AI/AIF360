@@ -1,8 +1,11 @@
 import tensorflow as tf
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 import os
 >>>>>>> fb46288 (MAAD algorithm)
+=======
+>>>>>>> 8acba61 (example notebook and tests)
 import numpy as np
 from aif360.metrics import BinaryLabelDatasetMetric
 from aif360.metrics import ClassificationMetric
@@ -23,9 +26,12 @@ class ClassifierModel(tf.keras.Model):
                                    kernel_initializer=glorot_uniform(seed=seed))
         self.output_logit_layer = Dense(1, activation=None)
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
         self.output_label_activation = Activation('sigmoid')
 >>>>>>> fb46288 (MAAD algorithm)
+=======
+>>>>>>> 8acba61 (example notebook and tests)
         
     def call(self, features):
         x = self.dense_layer_1(features)
@@ -33,9 +39,12 @@ class ClassifierModel(tf.keras.Model):
         x = self.dense_layer_2(x)
         pred_logit = self.output_logit_layer(x)
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
         pred_label = self.output_label_activation(pred_logit)
 >>>>>>> fb46288 (MAAD algorithm)
+=======
+>>>>>>> 8acba61 (example notebook and tests)
         return pred_logit
 
 
