@@ -119,9 +119,13 @@ class AdversarialDebiasor:
 
     def pretrain_classifier(self, features, labels, num_epochs, batch_size):
 <<<<<<< HEAD
+<<<<<<< HEAD
         ''''''
 =======
 >>>>>>> fb46288 (MAAD algorithm)
+=======
+        ''''''
+>>>>>>> ea0c71f (Update multi_attribute_adversarial_debiasing.py)
         num_samples = features.shape[0]
         for epoch in range(num_epochs):
             permuted_indices = np.random.permutation(num_samples)
@@ -153,9 +157,13 @@ class AdversarialDebiasor:
 
     def pretrain_adversary(self, features, labels, protected_attributes, num_epochs, batch_size):
 <<<<<<< HEAD
+<<<<<<< HEAD
         ''''''
 =======
 >>>>>>> fb46288 (MAAD algorithm)
+=======
+        ''''''
+>>>>>>> ea0c71f (Update multi_attribute_adversarial_debiasing.py)
         num_samples = features.shape[0]
         for epoch in range(num_epochs):
             permuted_indices = np.random.permutation(num_samples)
@@ -176,6 +184,7 @@ class AdversarialDebiasor:
             print(f"Pretraining Adversary - Epoch {epoch+1}, Loss: {adversary_loss.numpy()}")
 
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 =======
     #@tf.function
@@ -213,6 +222,8 @@ class AdversarialDebiasor:
 
 
 >>>>>>> fb46288 (MAAD algorithm)
+=======
+>>>>>>> ea0c71f (Update multi_attribute_adversarial_debiasing.py)
     
     def train_step(self, batch_features, batch_labels, batch_protected_attributes):
         ''' INFO: Training step for the model'''
@@ -275,6 +286,7 @@ class AdversarialDebiasor:
 
 
 <<<<<<< HEAD
+<<<<<<< HEAD
     def train(self, features, labels, protected_attributes, num_epochs, batch_size):
         ''''''
 =======
@@ -283,6 +295,10 @@ class AdversarialDebiasor:
 
     def train(self, features, labels, protected_attributes, num_epochs, batch_size):
 >>>>>>> fb46288 (MAAD algorithm)
+=======
+    def train(self, features, labels, protected_attributes, num_epochs, batch_size):
+        ''''''
+>>>>>>> ea0c71f (Update multi_attribute_adversarial_debiasing.py)
         num_samples = features.shape[0]
         for epoch in range(num_epochs):
             permuted_indices = np.random.permutation(num_samples)
@@ -299,24 +315,34 @@ class AdversarialDebiasor:
 
     def predict_proba(self, X):
 <<<<<<< HEAD
+<<<<<<< HEAD
         ''''''
 =======
 >>>>>>> fb46288 (MAAD algorithm)
+=======
+        ''''''
+>>>>>>> ea0c71f (Update multi_attribute_adversarial_debiasing.py)
         logits = self.classifier(X)
         return tf.nn.sigmoid(logits)
     
     def predict(self, X, threshold=.5):
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> ea0c71f (Update multi_attribute_adversarial_debiasing.py)
         ''''''
         return tf.cast(self.predict_proba(X) >= threshold, dtype=tf.int32)
     
     def transform_dataset(self, dataset):
         ''''''
+<<<<<<< HEAD
 =======
         return tf.cast(self.predict_proba(X) >= threshold, dtype=tf.int32)
     
     def transform_dataset(self, dataset):
 >>>>>>> fb46288 (MAAD algorithm)
+=======
+>>>>>>> ea0c71f (Update multi_attribute_adversarial_debiasing.py)
         preds = self.predict_proba(dataset.features)
         # Mutated, fairer dataset with new labels
         dataset_new = dataset.copy(deepcopy = True)
@@ -328,9 +354,13 @@ class AdversarialDebiasor:
     
     def get_dataset_metrics(self, dataset):
 <<<<<<< HEAD
+<<<<<<< HEAD
         ''''''
 =======
 >>>>>>> fb46288 (MAAD algorithm)
+=======
+        ''''''
+>>>>>>> ea0c71f (Update multi_attribute_adversarial_debiasing.py)
         metrics = {s:'' for s in dataset.protected_attribute_names}
         for attr in dataset.protected_attribute_names:
             unprivileged_group, privileged_group = {attr:0}, {attr:1}
@@ -342,9 +372,13 @@ class AdversarialDebiasor:
 
     def get_classification_metrics(self, dataset):
 <<<<<<< HEAD
+<<<<<<< HEAD
         ''''''
 =======
 >>>>>>> fb46288 (MAAD algorithm)
+=======
+        ''''''
+>>>>>>> ea0c71f (Update multi_attribute_adversarial_debiasing.py)
         metrics = {s:'' for s in dataset.protected_attribute_names}
         for attr in dataset.protected_attribute_names:
             unprivileged_group, privileged_group = {attr:0}, {attr:1}
