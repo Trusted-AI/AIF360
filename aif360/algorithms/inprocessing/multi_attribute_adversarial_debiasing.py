@@ -109,6 +109,7 @@ class AdversarialDebiasor:
         
 
     def pretrain_classifier(self, features, labels, num_epochs, batch_size):
+        ''''''
         num_samples = features.shape[0]
         for epoch in range(num_epochs):
             permuted_indices = np.random.permutation(num_samples)
@@ -139,6 +140,7 @@ class AdversarialDebiasor:
 
 
     def pretrain_adversary(self, features, labels, protected_attributes, num_epochs, batch_size):
+        ''''''
         num_samples = features.shape[0]
         for epoch in range(num_epochs):
             permuted_indices = np.random.permutation(num_samples)
@@ -157,40 +159,6 @@ class AdversarialDebiasor:
                 self.adversary_optimizer.apply_gradients(zip(grads, self.adversary.trainable_variables))
             
             print(f"Pretraining Adversary - Epoch {epoch+1}, Loss: {adversary_loss.numpy()}")
-
-
-    #@tf.function
-    def train_step_(self, batch_features, batch_labels, batch_protected_attributes):
-        with tf.GradientTape(persistent=True) as tape:
-            pred_logits = self.classifier(batch_features)
-            classifier_loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(labels=batch_labels, logits=pred_logits))
-            
-            if self.debias:
-                pred_protected_attribute_labels, pred_protected_attribute_logits = self.adversary(pred_logits, batch_labels)
-                adversary_loss = self.loss_fn(batch_protected_attributes, pred_protected_attribute_labels)
-
-        classifier_vars = self.classifier.trainable_variables
-        classifier_grads = tape.gradient(classifier_loss, classifier_vars)
-
-        if self.debias:
-            adversary_vars = self.adversary.trainable_variables
-            adversary_grads = tape.gradient(adversary_loss, classifier_vars)
-            adversary_grads_dict = {var.name: grad for (grad, var) in zip(adversary_grads, classifier_vars)}
-
-            normalize = lambda x: x / (tf.norm(x) + np.finfo(np.float32).tiny)
-            updated_classifier_grads = []
-            for (grad, var) in zip(classifier_grads, classifier_vars):
-                if var.name in adversary_grads_dict:
-                    unit_adversary_grad = normalize(adversary_grads_dict[var.name])
-                    grad -= tf.reduce_sum(grad * unit_adversary_grad) * unit_adversary_grad
-                    grad -= self.adversary_loss_weight * adversary_grads_dict[var.name]
-                updated_classifier_grads.append((grad, var))
-
-            self.classifier_optimizer.apply_gradients(updated_classifier_grads)
-            self.adversary_optimizer.apply_gradients(zip(adversary_grads, adversary_vars))
-
-        return classifier_loss, adversary_loss
-
 
 
     
@@ -254,10 +222,8 @@ class AdversarialDebiasor:
 
 
 
-
-
-
     def train(self, features, labels, protected_attributes, num_epochs, batch_size):
+        ''''''
         num_samples = features.shape[0]
         for epoch in range(num_epochs):
             permuted_indices = np.random.permutation(num_samples)
@@ -273,13 +239,16 @@ class AdversarialDebiasor:
 
 
     def predict_proba(self, X):
+        ''''''
         logits = self.classifier(X)
         return tf.nn.sigmoid(logits)
     
     def predict(self, X, threshold=.5):
+        ''''''
         return tf.cast(self.predict_proba(X) >= threshold, dtype=tf.int32)
     
     def transform_dataset(self, dataset):
+        ''''''
         preds = self.predict_proba(dataset.features)
         # Mutated, fairer dataset with new labels
         dataset_new = dataset.copy(deepcopy = True)
@@ -290,6 +259,7 @@ class AdversarialDebiasor:
     
     
     def get_dataset_metrics(self, dataset):
+        ''''''
         metrics = {s:'' for s in dataset.protected_attribute_names}
         for attr in dataset.protected_attribute_names:
             unprivileged_group, privileged_group = {attr:0}, {attr:1}
@@ -300,6 +270,7 @@ class AdversarialDebiasor:
         return metrics
 
     def get_classification_metrics(self, dataset):
+        ''''''
         metrics = {s:'' for s in dataset.protected_attribute_names}
         for attr in dataset.protected_attribute_names:
             unprivileged_group, privileged_group = {attr:0}, {attr:1}
