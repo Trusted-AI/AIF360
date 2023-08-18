@@ -1,11 +1,4 @@
 import tensorflow as tf
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-import os
->>>>>>> fb46288 (MAAD algorithm)
-=======
->>>>>>> 8acba61 (example notebook and tests)
 import numpy as np
 from aif360.metrics import BinaryLabelDatasetMetric
 from aif360.metrics import ClassificationMetric
@@ -25,26 +18,12 @@ class ClassifierModel(tf.keras.Model):
         self.dense_layer_2 = Dense(classifier_num_hidden_units, activation='relu',
                                    kernel_initializer=glorot_uniform(seed=seed))
         self.output_logit_layer = Dense(1, activation=None)
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-        self.output_label_activation = Activation('sigmoid')
->>>>>>> fb46288 (MAAD algorithm)
-=======
->>>>>>> 8acba61 (example notebook and tests)
         
     def call(self, features):
         x = self.dense_layer_1(features)
         x = self.dropout_layer(x)
         x = self.dense_layer_2(x)
         pred_logit = self.output_logit_layer(x)
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-        pred_label = self.output_label_activation(pred_logit)
->>>>>>> fb46288 (MAAD algorithm)
-=======
->>>>>>> 8acba61 (example notebook and tests)
         return pred_logit
 
 
@@ -127,14 +106,7 @@ class AdversarialDebiasor:
         
 
     def pretrain_classifier(self, features, labels, num_epochs, batch_size):
-<<<<<<< HEAD
-<<<<<<< HEAD
         ''''''
-=======
->>>>>>> fb46288 (MAAD algorithm)
-=======
-        ''''''
->>>>>>> ea0c71f (Update multi_attribute_adversarial_debiasing.py)
         num_samples = features.shape[0]
         for epoch in range(num_epochs):
             permuted_indices = np.random.permutation(num_samples)
@@ -165,14 +137,7 @@ class AdversarialDebiasor:
 
 
     def pretrain_adversary(self, features, labels, protected_attributes, num_epochs, batch_size):
-<<<<<<< HEAD
-<<<<<<< HEAD
         ''''''
-=======
->>>>>>> fb46288 (MAAD algorithm)
-=======
-        ''''''
->>>>>>> ea0c71f (Update multi_attribute_adversarial_debiasing.py)
         num_samples = features.shape[0]
         for epoch in range(num_epochs):
             permuted_indices = np.random.permutation(num_samples)
@@ -193,46 +158,6 @@ class AdversarialDebiasor:
             print(f"Pretraining Adversary - Epoch {epoch+1}, Loss: {adversary_loss.numpy()}")
 
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-    #@tf.function
-    def train_step_(self, batch_features, batch_labels, batch_protected_attributes):
-        with tf.GradientTape(persistent=True) as tape:
-            pred_logits = self.classifier(batch_features)
-            classifier_loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(labels=batch_labels, logits=pred_logits))
-            
-            if self.debias:
-                pred_protected_attribute_labels, pred_protected_attribute_logits = self.adversary(pred_logits, batch_labels)
-                adversary_loss = self.loss_fn(batch_protected_attributes, pred_protected_attribute_labels)
-
-        classifier_vars = self.classifier.trainable_variables
-        classifier_grads = tape.gradient(classifier_loss, classifier_vars)
-
-        if self.debias:
-            adversary_vars = self.adversary.trainable_variables
-            adversary_grads = tape.gradient(adversary_loss, classifier_vars)
-            adversary_grads_dict = {var.name: grad for (grad, var) in zip(adversary_grads, classifier_vars)}
-
-            normalize = lambda x: x / (tf.norm(x) + np.finfo(np.float32).tiny)
-            updated_classifier_grads = []
-            for (grad, var) in zip(classifier_grads, classifier_vars):
-                if var.name in adversary_grads_dict:
-                    unit_adversary_grad = normalize(adversary_grads_dict[var.name])
-                    grad -= tf.reduce_sum(grad * unit_adversary_grad) * unit_adversary_grad
-                    grad -= self.adversary_loss_weight * adversary_grads_dict[var.name]
-                updated_classifier_grads.append((grad, var))
-
-            self.classifier_optimizer.apply_gradients(updated_classifier_grads)
-            self.adversary_optimizer.apply_gradients(zip(adversary_grads, adversary_vars))
-
-        return classifier_loss, adversary_loss
-
-
-
->>>>>>> fb46288 (MAAD algorithm)
-=======
->>>>>>> ea0c71f (Update multi_attribute_adversarial_debiasing.py)
     
     def train_step(self, batch_features, batch_labels, batch_protected_attributes):
         ''' INFO: Training step for the model'''
@@ -294,20 +219,8 @@ class AdversarialDebiasor:
 
 
 
-<<<<<<< HEAD
-<<<<<<< HEAD
     def train(self, features, labels, protected_attributes, num_epochs, batch_size):
         ''''''
-=======
-
-
-
-    def train(self, features, labels, protected_attributes, num_epochs, batch_size):
->>>>>>> fb46288 (MAAD algorithm)
-=======
-    def train(self, features, labels, protected_attributes, num_epochs, batch_size):
-        ''''''
->>>>>>> ea0c71f (Update multi_attribute_adversarial_debiasing.py)
         num_samples = features.shape[0]
         for epoch in range(num_epochs):
             permuted_indices = np.random.permutation(num_samples)
@@ -323,35 +236,16 @@ class AdversarialDebiasor:
 
 
     def predict_proba(self, X):
-<<<<<<< HEAD
-<<<<<<< HEAD
         ''''''
-=======
->>>>>>> fb46288 (MAAD algorithm)
-=======
-        ''''''
->>>>>>> ea0c71f (Update multi_attribute_adversarial_debiasing.py)
         logits = self.classifier(X)
         return tf.nn.sigmoid(logits)
     
     def predict(self, X, threshold=.5):
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> ea0c71f (Update multi_attribute_adversarial_debiasing.py)
         ''''''
         return tf.cast(self.predict_proba(X) >= threshold, dtype=tf.int32)
     
     def transform_dataset(self, dataset):
         ''''''
-<<<<<<< HEAD
-=======
-        return tf.cast(self.predict_proba(X) >= threshold, dtype=tf.int32)
-    
-    def transform_dataset(self, dataset):
->>>>>>> fb46288 (MAAD algorithm)
-=======
->>>>>>> ea0c71f (Update multi_attribute_adversarial_debiasing.py)
         preds = self.predict_proba(dataset.features)
         # Mutated, fairer dataset with new labels
         dataset_new = dataset.copy(deepcopy = True)
@@ -362,14 +256,7 @@ class AdversarialDebiasor:
     
     
     def get_dataset_metrics(self, dataset):
-<<<<<<< HEAD
-<<<<<<< HEAD
         ''''''
-=======
->>>>>>> fb46288 (MAAD algorithm)
-=======
-        ''''''
->>>>>>> ea0c71f (Update multi_attribute_adversarial_debiasing.py)
         metrics = {s:'' for s in dataset.protected_attribute_names}
         for attr in dataset.protected_attribute_names:
             unprivileged_group, privileged_group = {attr:0}, {attr:1}
@@ -380,14 +267,7 @@ class AdversarialDebiasor:
         return metrics
 
     def get_classification_metrics(self, dataset):
-<<<<<<< HEAD
-<<<<<<< HEAD
         ''''''
-=======
->>>>>>> fb46288 (MAAD algorithm)
-=======
-        ''''''
->>>>>>> ea0c71f (Update multi_attribute_adversarial_debiasing.py)
         metrics = {s:'' for s in dataset.protected_attribute_names}
         for attr in dataset.protected_attribute_names:
             unprivileged_group, privileged_group = {attr:0}, {attr:1}
