@@ -67,7 +67,10 @@ Meta-metrics
 
    metrics.difference
    metrics.ratio
+   metrics.average
    metrics.intersection
+   metrics.max_difference
+   metrics.min_ratio
    metrics.one_vs_rest
 
 Scorers
@@ -94,6 +97,8 @@ Generic metrics
    metrics.sensitivity_score
    metrics.base_rate
    metrics.selection_rate
+   metrics.conditional_base_rate
+   metrics.conditional_selection_rate
    metrics.smoothed_base_rate
    metrics.smoothed_selection_rate
    metrics.generalized_fpr
@@ -113,6 +118,8 @@ Group fairness metrics
    metrics.equal_opportunity_difference
    metrics.average_odds_difference
    metrics.average_odds_error
+   metrics.average_predictive_value_difference
+   metrics.average_predictive_value_error
    metrics.class_imbalance
    metrics.kl_divergence
    metrics.conditional_demographic_disparity
