@@ -5,10 +5,11 @@ import pandas as pd
 from scipy.stats import gmean, hmean
 from scipy.special import rel_entr
 from sklearn.metrics import make_scorer as _make_scorer, recall_score, precision_score
-from sklearn.metrics import multilabel_confusion_matrix
+from sklearn.metrics import confusion_matrix, multilabel_confusion_matrix
 from sklearn.metrics._classification import _prf_divide, _check_zero_division
 from sklearn.neighbors import NearestNeighbors
 from sklearn.utils import check_X_y
+from sklearn.utils.multiclass import unique_labels
 from sklearn.utils.deprecation import deprecated
 
 from aif360.sklearn.utils import check_inputs, check_groups
@@ -17,16 +18,19 @@ from aif360.detectors.mdss.MDSS import MDSS
 
 __all__ = [
     # meta-metrics
-    'difference', 'ratio', 'intersection', 'one_vs_rest',
+    'difference', 'ratio', 'average', 'intersection', 'one_vs_rest',
+    'max_difference', 'min_ratio',
     # scorer factory
     'make_scorer',
     # helpers
     'num_samples', 'num_pos_neg',
     'specificity_score', 'base_rate', 'selection_rate', 'smoothed_base_rate',
+    'conditional_base_rate', 'conditional_selection_rate',
     'smoothed_selection_rate', 'generalized_fpr', 'generalized_fnr',
     # group fairness
     'statistical_parity_difference', 'disparate_impact_ratio',
-    'equal_opportunity_difference', 'average_odds_difference', 'average_predictive_value_difference',
+    'equal_opportunity_difference', 'average_odds_difference',
+    'average_predictive_value_difference', 'average_predictive_value_error',
     'average_odds_error', 'class_imbalance', 'kl_divergence',
     'conditional_demographic_disparity', 'smoothed_edf',
     'df_bias_amplification', 'mdss_bias_scan', 'mdss_bias_score',
@@ -237,6 +241,16 @@ def intersection(func, y_true, y_pred=None, prot_attr=None, sample_weight=None,
         return func_vals, unique_groups
     return func_vals
 
+def max_difference(func, y_true, y_pred, prot_attr=None, sample_weight=None, **kwargs):
+    vals = intersection(func, y_true, y_pred, prot_attr=prot_attr,
+                        sample_weight=sample_weight, **kwargs)
+    return np.amax(vals, axis=0) - np.amin(vals, axis=0)
+
+def min_ratio(func, y_true, y_pred, prot_attr=None, sample_weight=None, **kwargs):
+    vals = intersection(func, y_true, y_pred, prot_attr=prot_attr,
+                        sample_weight=sample_weight, **kwargs)
+    return np.amin(vals, axis=0) / np.amax(vals, axis=0)
+
 def one_vs_rest(func, y_true, y_pred=None, prot_attr=None, return_groups=False,
                 **kwargs):
     """Compute an arbitrary difference/ratio metric on all intersectional groups
@@ -441,6 +455,58 @@ def selection_rate(y_true, y_pred, *, pos_label=1, sample_weight=None):
     """
     return base_rate(y_pred, pos_label=pos_label, sample_weight=sample_weight)
 
+def conditional_base_rate(y_true, y_pred, *, pos_label=1, sample_weight=None):
+    # TODO:
+    # - labels, specifically missing labels
+    # - zero_division/nan_to_num
+    # - average, weighted->base_rate, None->conditional
+    r"""Compute the base rate conditioned on `y_pred`,
+    :math:`Pr(Y = \text{pos_label} | \hat{Y} = y) \forall y \in \text{labels}`.
+
+    If `labels=[pos_label]`, this is equivalent to `:func:~sklearn.metrics.precision_score`.
+    If `average='weighted'` this is equivalent to `:func:base_rate`.
+
+    Args:
+        y_true (array-like): Ground truth (correct) target values.
+        y_pred (array-like): Estimated targets as returned by a classifier.
+        pos_label (scalar): The label of the positive class.
+        labels (array-like): List of labels to index the matrix. This may be
+            used to reorder or select a subset of labels. If `None` is given,
+            those that appear at least once in `y_true` or `y_pred` are used in
+            sorted order.
+        sample_weight (array-like, optional): Sample weights.
+
+    Returns:
+        np.ndarray: Base rate conditioned on each label.
+    """
+    labels = unique_labels(y_true, y_pred).tolist()
+    cm = confusion_matrix(y_true, y_pred, sample_weight=sample_weight, normalize='pred')
+    return cm[labels.index(pos_label)]
+
+def conditional_selection_rate(y_true, y_pred, *, pos_label=1, sample_weight=None):
+    r"""Compute the selection rate conditioned on `y_true`,
+    :math:`Pr(\hat{Y} = \text{pos_label} | Y = y) \forall y \in \text{labels}`.
+
+    If `labels=[pos_label]`, this is equivalent to `:func:~sklearn.metrics.recall_score`.
+
+    Args:
+        y_true (array-like): Ground truth (correct) target values.
+        y_pred (array-like): Estimated targets as returned by a classifier.
+        pos_label (scalar): The label of the positive class.
+        labels (array-like): List of labels to index the matrix. This may be
+            used to reorder or select a subset of labels. If `None` is given,
+            those that appear at least once in `y_true` or `y_pred` are used in
+            sorted order.
+        sample_weight (array-like, optional): Sample weights.
+
+    Returns:
+        np.ndarray: Selection rate conditioned on each label.
+    """
+    return conditional_base_rate(y_pred, y_true, pos_label=pos_label, sample_weight=sample_weight)
+    # labels = unique_labels(y_true, y_pred).tolist()
+    # cm = confusion_matrix(y_true, y_pred, labels=labels, sample_weight=sample_weight, normalize='true')
+    # return cm[:, labels.index(pos_label)]
+
 def smoothed_base_rate(y_true, y_pred=None, *, concentration=1.0, pos_label=1,
                        sample_weight=None):
     r"""Compute the smoothed base rate,
@@ -565,7 +631,9 @@ def statistical_parity_difference(y_true, y_pred=None, *, prot_attr=None,
             classifier.
         prot_attr (array-like, keyword-only): Protected attribute(s). If
             ``None``, all protected attributes in y_true are used.
-        priv_group (scalar, optional): The label of the privileged group.
+        priv_group (scalar, optional): The label of the privileged group. If
+            ``None``, the maximum difference between any two subgroups is
+            returned.
         pos_label (scalar, optional): The label of the positive class.
         sample_weight (array-like, optional): Sample weights.
 
@@ -576,6 +644,9 @@ def statistical_parity_difference(y_true, y_pred=None, *, prot_attr=None,
         :func:`selection_rate`, :func:`base_rate`
     """
     rate = base_rate if y_pred is None else selection_rate
+    if priv_group is None:
+        return max_difference(rate, y_true, y_pred, prot_attr=prot_attr,
+                              pos_label=pos_label, sample_weight=sample_weight)
     return difference(rate, y_true, y_pred, prot_attr=prot_attr,
                       priv_group=priv_group, pos_label=pos_label,
                       sample_weight=sample_weight)
@@ -600,7 +671,8 @@ def disparate_impact_ratio(y_true, y_pred=None, *, prot_attr=None, priv_group=1,
             classifier.
         prot_attr (array-like, keyword-only): Protected attribute(s). If
             ``None``, all protected attributes in y_true are used.
-        priv_group (scalar, optional): The label of the privileged group.
+        priv_group (scalar, optional): The label of the privileged group. If
+            ``None``, the minimum ratio between any two subgroups is returned.
         pos_label (scalar, optional): The label of the positive class.
         sample_weight (array-like, optional): Sample weights.
         zero_division ('warn', 0 or 1): Sets the value to return when there is a
@@ -614,6 +686,10 @@ def disparate_impact_ratio(y_true, y_pred=None, *, prot_attr=None, priv_group=1,
         :func:`selection_rate`, :func:`base_rate`
     """
     rate = base_rate if y_pred is None else selection_rate
+    if priv_group is None:
+        return min_ratio(rate, y_true, y_pred, prot_attr=prot_attr,
+                         pos_label=pos_label, sample_weight=sample_weight,
+                         zero_division=zero_division)
     return ratio(rate, y_true, y_pred, prot_attr=prot_attr,
                  priv_group=priv_group, pos_label=pos_label,
                  sample_weight=sample_weight, zero_division=zero_division)
@@ -648,14 +724,14 @@ def average_odds_difference(y_true, y_pred, *, prot_attr=None, priv_group=1,
                             average_method='arithmetic', sample_weight=None):
     r"""A relaxed version of equality of odds.
 
-    Returns the average of the difference in TPR (recall) for the unprivileged
-    and privileged groups over all target classes. In the binary case with
-    average_method='arithmetic', this corresponds to:
+    Returns the average of the difference in selection rate for the unprivileged
+    and privileged groups conditioned on all target classes. In the binary case
+    with average_method='arithmetic', this corresponds to:
 
     .. math::
 
         \dfrac{(TPR_{D = \text{unprivileged}} - TPR_{D = \text{privileged}})
-        + (TNR_{D = \text{unprivileged}} - TNR_{D = \text{privileged}})}{2}
+        + (FPR_{D = \text{unprivileged}} - FPR_{D = \text{privileged}})}{2}
 
     A value of 0 indicates equality of odds.
 
@@ -674,8 +750,9 @@ def average_odds_difference(y_true, y_pred, *, prot_attr=None, priv_group=1,
     Returns:
         float: Average odds difference.
     """
-    diffs = difference(recall_score, y_true, y_pred, prot_attr=prot_attr,
-            priv_group=priv_group, sample_weight=sample_weight, average=None)
+    diffs = difference(conditional_selection_rate, y_true, y_pred,
+                       prot_attr=prot_attr, priv_group=priv_group,
+                       sample_weight=sample_weight)
     if average_method is None:
         return diffs
     # elif average_method not in ('harmonic', 'arithmetic'):
@@ -686,14 +763,14 @@ def average_odds_error(y_true, y_pred, *, prot_attr=None, priv_group=None,
                        average_method='arithmetic', sample_weight=None):
     r"""A relaxed version of equality of odds.
 
-    Returns the average of the absolute difference in TPR (recall) for the
-    unprivileged and privileged groups over all target classes. In the binary
-    case with average_method='arithmetic', this corresponds to:
+    Returns the average of the absolute difference in selection rate for the
+    unprivileged and privileged groups conditioned on all target classes. In the
+    binary case with average_method='arithmetic', this corresponds to:
 
     .. math::
 
         \dfrac{|TPR_{D = \text{unprivileged}} - TPR_{D = \text{privileged}}|
-        + |TNR_{D = \text{unprivileged}} - TNR_{D = \text{privileged}}|}{2}
+        + |FPR_{D = \text{unprivileged}} - FPR_{D = \text{privileged}}|}{2}
 
     A value of 0 indicates equality of odds.
 
@@ -702,8 +779,9 @@ def average_odds_error(y_true, y_pred, *, prot_attr=None, priv_group=None,
         y_pred (array-like): Estimated targets as returned by a classifier.
         prot_attr (array-like, keyword-only): Protected attribute(s). If
             ``None``, all protected attributes in y_true are used.
-        priv_group (scalar, optional): The label of the privileged group. If
-            prot_attr is binary, this may be ``None``.
+        priv_group (scalar, optional): The label of the privileged group.  If
+            ``None``, the maximum difference between any two subgroups is
+            returned.
         average_method (str, optional): How to compute the average. If ``None``,
             no average is performed and the array of differences is returned.
             See :func:`average` for details.
@@ -713,10 +791,12 @@ def average_odds_error(y_true, y_pred, *, prot_attr=None, priv_group=None,
         float: Average odds error.
     """
     if priv_group is None:
-        priv_group = check_groups(y_true, prot_attr=prot_attr,
-                                  ensure_binary=True)[0][0]
-    diffs = abs(difference(recall_score, y_true, y_pred, prot_attr=prot_attr,
-            priv_group=priv_group, sample_weight=sample_weight, average=None))
+        diffs = max_difference(conditional_selection_rate, y_true, y_pred,
+                            prot_attr=prot_attr, sample_weight=sample_weight)
+    else:
+        diffs = abs(difference(conditional_selection_rate, y_true, y_pred,
+                               prot_attr=prot_attr, priv_group=priv_group,
+                               sample_weight=sample_weight))
     if average_method is None:
         return diffs
     return average(diffs, average_method=average_method)
@@ -751,8 +831,9 @@ def average_predictive_value_difference(y_true, y_pred, *, prot_attr=None,
     Returns:
         float: Average predictive value difference.
     """
-    diffs = difference(precision_score, y_true, y_pred, prot_attr=prot_attr,
-            priv_group=priv_group, sample_weight=sample_weight, average=None)
+    diffs = difference(conditional_base_rate, y_true, y_pred,
+                       prot_attr=prot_attr, priv_group=priv_group,
+                       sample_weight=sample_weight)
     if average_method is None:
         return diffs
     return average(diffs, average_method=average_method)
@@ -777,7 +858,9 @@ def average_predictive_value_error(y_true, y_pred, *, prot_attr=None,
         y_pred (array-like): Estimated targets as returned by a classifier.
         prot_attr (array-like, keyword-only): Protected attribute(s). If
             ``None``, all protected attributes in y_true are used.
-        priv_group (scalar, optional): The label of the privileged group.
+        priv_group (scalar, optional): The label of the privileged group. If
+            ``None``, the maximum difference between any two subgroups is
+            returned.
         pos_label (scalar, optional): The label of the positive class.
         average_method (str, optional): How to compute the average. If ``None``,
             no average is performed and the array of differences is returned.
@@ -788,10 +871,12 @@ def average_predictive_value_error(y_true, y_pred, *, prot_attr=None,
         float: Average predictive value error.
     """
     if priv_group is None:
-        priv_group = check_groups(y_true, prot_attr=prot_attr,
-                                  ensure_binary=True)[0][0]
-    diffs = abs(difference(precision_score, y_true, y_pred, prot_attr=prot_attr,
-            priv_group=priv_group, sample_weight=sample_weight, average=None))
+        diffs = max_difference(conditional_base_rate, y_true, y_pred,
+                               prot_attr=prot_attr, sample_weight=sample_weight)
+    else:
+        diffs = abs(difference(conditional_base_rate, y_true, y_pred,
+                               prot_attr=prot_attr, priv_group=priv_group,
+                               sample_weight=sample_weight))
     if average_method is None:
         return diffs
     return average(diffs, average_method=average_method)
