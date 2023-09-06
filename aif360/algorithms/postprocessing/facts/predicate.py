@@ -1,43 +1,11 @@
 from dataclasses import dataclass, field
-from typing import List, Any, Dict
-from enum import Enum
+from typing import List, Any, Dict, Mapping
 import operator
 import functools
 
+import pandas as pd
 from pandas import DataFrame
 from .parameters import ParameterProxy
-
-
-class Operator(Enum):
-    """An enumeration representing comparison operators.
-
-    Attributes:
-        EQ: Represents the equality operator (==).
-        GEQ: Represents the greater than or equal to operator (>=).
-        LEQ: Represents the less than or equal to operator (<=).
-    """
-
-    EQ = "="
-    GEQ = ">="
-    LEQ = "<="
-
-    def eval(self, x, y) -> bool:
-        """
-        Evaluates the comparison operator.
-
-        Args:
-            x: The first operand.
-            y: The second operand.
-
-        Returns:
-            True if the comparison holds; False otherwise.
-        """
-        ops = {
-            Operator.EQ: operator.eq,
-            Operator.GEQ: operator.ge,
-            Operator.LEQ: operator.le,
-        }
-        return ops[self](x, y)
 
 
 @functools.total_ordering
@@ -47,7 +15,6 @@ class Predicate:
 
     features: List[str] = field(default_factory=list)
     values: List[Any] = field(default_factory=list)
-    operators: List[Operator] = field(default_factory=list, repr=False)
 
     def __eq__(self, __o: object) -> bool:
         """
@@ -87,17 +54,13 @@ class Predicate:
             ret.append(f"{f} = {v}")
         return "".join(ret)
 
-    def __post_init__(self, operators=None):
+    def __post_init__(self):
         """
         Initializes the predicate after the data class is created.
         """
-        feats, vals = zip(*sorted(zip(self.features, self.values)))
-        self.features = list(feats)
-        self.values = list(vals)
-        if operators is None:
-            self.operators = [Operator.EQ for _ in range(len(self.features))]
-        else:
-            self.operators = operators
+        pairs = sorted(zip(self.features, self.values))
+        self.features = [f for f, _v in pairs]
+        self.values = [v for _f, v in pairs]
 
     @staticmethod
     def from_dict(d: Dict[str, str]) -> "Predicate":
@@ -112,8 +75,7 @@ class Predicate:
         """
         feats = list(d.keys())
         vals = list(d.values())
-        ops = [Operator.EQ for _ in range(len(d))]
-        return Predicate(features=feats, values=vals, operators=ops)
+        return Predicate(features=feats, values=vals)
 
     def to_dict(self) -> Dict[str, str]:
         """
@@ -124,7 +86,7 @@ class Predicate:
         """
         return dict(zip(self.features, self.values))
 
-    def satisfies(self, x) -> bool:
+    def satisfies(self, x: Mapping[str, Any]) -> bool:
         """
         Checks if the predicate is satisfied by a given input.
 
@@ -135,9 +97,22 @@ class Predicate:
             True if the predicate is satisfied, False otherwise.
         """
         return all(
-            op.eval(x[feat], val)
-            for feat, val, op in zip(self.features, self.values, self.operators)
+            x[feat] == val
+            for feat, val in zip(self.features, self.values)
         )
+    
+    def satisfies_v(self, X: DataFrame) -> pd.Series:
+        """Vectorized version of the `satisfies` method.
+
+        Args:
+            X (DataFrame): a dataframe of instances (rows)
+
+        Returns:
+            pd.Series: boolean Series with value `True` if an instance satisfies the predicate and `False` otherwise
+        """
+        X_covered_bool = (X[self.features] == self.values).all(axis=1)
+
+        return X_covered_bool
 
     def width(self):
         """
