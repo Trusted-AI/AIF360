@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 from pandas import DataFrame
 
 
-def default_change(v1, v2):
+def default_change(v1, v2) -> float:
     """Compares two values and returns 0 if they are equal, and 1 if they are different.
 
     Args:
@@ -176,7 +176,7 @@ def feature_change_builder(
 class ParameterProxy:
     """Proxy class for managing recourse parameters."""
 
-    featureChanges: Dict[str, Callable[[Any, Any], int]] = field(
+    featureChanges: Dict[str, Callable[[Any, Any], float]] = field(
         default_factory=make_default_featureChanges
     )
 

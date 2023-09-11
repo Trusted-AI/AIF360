@@ -1,55 +1,38 @@
 from tqdm import tqdm
-from typing import List, Tuple, Dict, Optional
+from typing import List, Tuple, Dict
 import functools
 
 import numpy as np
 from pandas import DataFrame
 
 from .parameters import *
-from .models import ModelAPI
 from .predicate import Predicate, recIsValid, featureChangePred, drop_two_above
 from .frequent_itemsets import runApriori, preprocessDataset, aprioriout2predicateList
 from .metrics import (
     incorrectRecoursesIfThen,
     if_group_cost_min_change_correctness_threshold,
     if_group_cost_recoursescount_correctness_threshold,
-    if_group_total_correctness,
-    calculate_all_if_subgroup_costs,
-    calculate_all_if_subgroup_costs_cumulative,
-    if_group_cost_min_change_correctness_cumulative_threshold,
-    if_group_cost_change_cumulative_threshold,
-    if_group_average_recourse_cost_conditional
+    if_group_maximum_correctness,
+    if_group_cost_max_correctness_cost_budget,
+    if_group_average_recourse_cost_conditional,
+    calculate_all_if_subgroup_costs
 )
 from .optimization import (
     sort_triples_by_max_costdiff,
-    sort_triples_by_max_costdiff_ignore_nans,
-    sort_triples_by_max_costdiff_ignore_nans_infs,
-    sort_triples_by_max_costdiff_generic,
-    sort_triples_by_max_costdiff_generic_cumulative,
     sort_triples_KStest,
 )
 from .rule_filters import (
-    filter_by_correctness,
+    remove_rules_below_correctness_threshold,
+    keep_rules_until_correctness_threshold_reached,
+    remove_rules_above_cost_budget,
     filter_contained_rules_simple,
     filter_contained_rules_keep_max_bias,
     delete_fair_rules,
     keep_only_minimum_change,
-    filter_by_correctness_cumulative,
-    filter_contained_rules_simple_cumulative,
-    filter_contained_rules_keep_max_bias_cumulative,
-    filter_by_cost_cumulative,
-    delete_fair_rules_cumulative,
-    keep_only_minimum_change_cumulative,
-    keep_cheapest_rules_above_cumulative_correctness_threshold,
 )
 
-# Re-exporting
-from .formatting import plot_aggregate_correctness, print_recourse_report
-# Re-exporting
-
-
 def affected_unaffected_split(
-    X: DataFrame, model: ModelAPI
+    X: DataFrame, model
 ) -> Tuple[DataFrame, DataFrame]:
     """
     Split the input data into affected and unaffected individuals.
@@ -99,7 +82,7 @@ def calculate_correctnesses(
     ifthens_withsupp: List[Tuple[Predicate, Predicate, Dict[str, float]]],
     affected_by_subgroup: Dict[str, DataFrame],
     sensitive_attribute: str,
-    model: ModelAPI,
+    model,
 ) -> List[Tuple[Predicate, Predicate, Dict[str, float], Dict[str, float]]]:
     """
     Calculate the correctness of recourse actions for each subgroup in a list of if-then rules.
@@ -189,7 +172,7 @@ def aff_intersection_version_2(RLs_and_supports, subgroups):
 
 def valid_ifthens_with_coverage_correctness(
     X: DataFrame,
-    model: ModelAPI,
+    model,
     sensitive_attribute: str,
     freqitem_minsupp: float = 0.01,
     missing_subgroup_val: str = "N/A",
@@ -244,6 +227,7 @@ def valid_ifthens_with_coverage_correctness(
     )
 
     aff_intersection = aff_intersection_version_2(RLs_and_supports, subgroups)
+    print(f"Number of subgroups in the intersection: {len(aff_intersection)}", flush=True)
 
     # Frequent itemsets for the unaffacted (to be used in the then clauses)
     freq_unaffected, _ = freqitemsets_with_supports(
@@ -367,141 +351,16 @@ def rulesbyif2rules(
 
 
 def select_rules_subset(
-    rulesbyif: Dict[Predicate, Dict[str, Tuple[float, List[Tuple[Predicate, float]]]]],
-    metric: str = "num-above-thr",
-    sort_strategy: str = "abs-diff-decr",
-    top_count: int = 10,
-    filter_sequence: List[str] = [],
-    cor_threshold: float = 0.5,
-    secondary_sorting_objectives: List[str] = [],
-    params: ParameterProxy = ParameterProxy(),
-) -> Tuple[
-    Dict[Predicate, Dict[str, Tuple[float, List[Tuple[Predicate, float]]]]],
-    Dict[Predicate, Dict[str, float]],
-]:
-    """
-    Select a subset of rules based on specified criteria.
-
-    Args:
-        rulesbyif (Dict[Predicate, Dict[str, Tuple[float, List[Tuple[Predicate, float]]]]]):
-            Dictionary of rules grouped by If clauses.
-        metric (str):
-            The metric to use for sorting the rules.
-            Defaults to "weighted-average".
-        sort_strategy (str):
-            The sorting strategy to use for ranking the rules.
-            Defaults to "abs-diff-decr".
-        top_count (int):
-            The number of top rules to keep. Defaults to 10.
-        filter_sequence (List[str]):
-            The sequence of filters to apply to the rules.
-            Defaults to an empty list.
-        cor_threshold (float):
-            The correctness threshold used by the "remove-below-thr" filter. Defaults to 0.5.
-        secondary_sorting_objectives (List[str]):
-            The list of secondary sorting objectives used by the "generic-sorting" sorting strategy.
-            Defaults to an empty list.
-        params (ParameterProxy): The parameter proxy object. Defaults to ParameterProxy().
-
-    Returns:
-        Tuple[Dict[Predicate, Dict[str, Tuple[float, List[Tuple[Predicate, float]]]]], Dict[Predicate, Dict[str, float]]]:
-            A tuple containing the selected subset of rules and the costs of the then-blocks of the top rules.
-
-    """
-    # step 1: sort according to metric
-    metrics: Dict[
-        str, Callable[[Predicate, List[Tuple[Predicate, float]], ParameterProxy], float]
-    ] = {
-        "min-above-thr": functools.partial(
-            if_group_cost_min_change_correctness_threshold, cor_thres=cor_threshold
-        ),
-        "num-above-thr": functools.partial(
-            if_group_cost_recoursescount_correctness_threshold, cor_thres=cor_threshold
-        ),
-    }
-    secondary_sort_min_group_cost = "min-group-cost" in secondary_sorting_objectives
-    sorting_functions = {
-        "abs-diff-decr": sort_triples_by_max_costdiff,
-        "abs-diff-decr-ignore-forall-subgroups-empty": functools.partial(
-            sort_triples_by_max_costdiff_ignore_nans,
-            use_secondary_objective=secondary_sort_min_group_cost,
-        ),
-        "abs-diff-decr-ignore-exists-subgroup-empty": functools.partial(
-            sort_triples_by_max_costdiff_ignore_nans_infs,
-            use_secondary_objective=secondary_sort_min_group_cost,
-        ),
-        "generic-sorting": functools.partial(
-            sort_triples_by_max_costdiff_generic,
-            ignore_nans=False,
-            ignore_infs=False,
-            secondary_objectives=secondary_sorting_objectives,
-        ),
-        "generic-sorting-ignore-forall-subgroups-empty": functools.partial(
-            sort_triples_by_max_costdiff_generic,
-            ignore_nans=True,
-            ignore_infs=False,
-            secondary_objectives=secondary_sorting_objectives,
-        ),
-        "generic-sorting-ignore-exists-subgroup-empty": functools.partial(
-            sort_triples_by_max_costdiff_generic,
-            ignore_nans=True,
-            ignore_infs=True,
-            secondary_objectives=secondary_sorting_objectives,
-        ),
-    }
-    metric_fn = metrics[metric]
-    sort_fn = sorting_functions[sort_strategy]
-    rules_sorted = sort_fn(rulesbyif, group_calculator=metric_fn, params=params)
-
-    # step 2: keep only top k rules
-    top_rules = dict(rules_sorted[:top_count])
-
-    # keep also the aggregate costs of the then-blocks of the top rules
-    costs = calculate_all_if_subgroup_costs(
-        list(rulesbyif.keys()),
-        list(rulesbyif.values()),
-        group_calculator=metric_fn,
-        params=params,
-    )
-
-    # step 3 (optional): filtering
-    filters: Dict[
-        str,
-        Callable[
-            [Dict[Predicate, Dict[str, Tuple[float, List[Tuple[Predicate, float]]]]]],
-            Dict[Predicate, Dict[str, Tuple[float, List[Tuple[Predicate, float]]]]],
-        ],
-    ] = {
-        "remove-contained": functools.partial(
-            filter_contained_rules_keep_max_bias, subgroup_costs=costs
-        ),
-        "remove-below-thr": functools.partial(
-            filter_by_correctness, threshold=cor_threshold
-        ),
-        "remove-fair-rules": functools.partial(delete_fair_rules, subgroup_costs=costs),
-        "keep-only-min-change": functools.partial(
-            keep_only_minimum_change, params=params
-        ),
-    }
-    for single_filter in filter_sequence:
-        top_rules = filters[single_filter](top_rules)
-
-    return top_rules, costs
-
-
-def select_rules_subset_cumulative(
     rulesbyif: Dict[
         Predicate, Dict[str, Tuple[float, List[Tuple[Predicate, float, float]]]]
     ],
     metric: str = "total-correctness",
-    sort_strategy: str = "generic-sorting",
+    sort_strategy: str = "max-cost-diff-decr",
     top_count: int = 10,
     filter_sequence: List[str] = [],
     cor_threshold: float = 0.5,
     cost_threshold: float = 0.5,
-    c_inf: float = 2,
     secondary_sorting_objectives: List[str] = [],
-    params: ParameterProxy = ParameterProxy(),
 ) -> Tuple[
     Dict[Predicate, Dict[str, Tuple[float, List[Tuple[Predicate, float, float]]]]],
     Dict[Predicate, Dict[str, float]],
@@ -541,31 +400,35 @@ def select_rules_subset_cumulative(
     metrics: Dict[
         str, Callable[[Predicate, List[Tuple[Predicate, float, float]]], float]
     ] = {
-        "total-correctness": if_group_total_correctness,
         "min-above-corr": functools.partial(
-            if_group_cost_min_change_correctness_cumulative_threshold,
-            cor_thres=cor_threshold,
+            if_group_cost_min_change_correctness_threshold,
+            cor_thres=cor_threshold
         ),
+        "num-above-corr": functools.partial(
+            if_group_cost_recoursescount_correctness_threshold,
+            cor_thres=cor_threshold
+        ),
+        "total-correctness": if_group_maximum_correctness,
         "max-upto-cost": functools.partial(
-            if_group_cost_change_cumulative_threshold, cost_thres=cost_threshold
+            if_group_cost_max_correctness_cost_budget, cost_thres=cost_threshold
         ),
         "fairness-of-mean-recourse-conditional": if_group_average_recourse_cost_conditional
     }
     sorting_functions = {
-        "generic-sorting": functools.partial(
-            sort_triples_by_max_costdiff_generic_cumulative,
+        "max-cost-diff-decr": functools.partial(
+            sort_triples_by_max_costdiff,
             ignore_nans=False,
             ignore_infs=False,
             secondary_objectives=secondary_sorting_objectives,
         ),
-        "generic-sorting-ignore-forall-subgroups-empty": functools.partial(
-            sort_triples_by_max_costdiff_generic_cumulative,
+        "max-cost-diff-decr-ignore-forall-subgroups-empty": functools.partial(
+            sort_triples_by_max_costdiff,
             ignore_nans=True,
             ignore_infs=False,
             secondary_objectives=secondary_sorting_objectives,
         ),
-        "generic-sorting-ignore-exists-subgroup-empty": functools.partial(
-            sort_triples_by_max_costdiff_generic_cumulative,
+        "max-cost-diff-decr-ignore-exists-subgroup-empty": functools.partial(
+            sort_triples_by_max_costdiff,
             ignore_nans=True,
             ignore_infs=True,
             secondary_objectives=secondary_sorting_objectives,
@@ -573,17 +436,16 @@ def select_rules_subset_cumulative(
     }
     metric_fn = metrics[metric]
     sort_fn = sorting_functions[sort_strategy]
-    rules_sorted = sort_fn(rulesbyif, group_calculator=metric_fn, params=params)
+    rules_sorted = sort_fn(rulesbyif, group_calculator=metric_fn)
 
     # step 2: keep only top k rules
     top_rules = dict(rules_sorted[:top_count])
 
     # keep also the aggregate costs of the then-blocks of the top rules
-    costs = calculate_all_if_subgroup_costs_cumulative(
+    costs = calculate_all_if_subgroup_costs(
         list(rulesbyif.keys()),
         list(rulesbyif.values()),
         group_calculator=metric_fn,
-        params=params,
     )
 
     # step 3 (optional): filtering
@@ -602,24 +464,22 @@ def select_rules_subset_cumulative(
         ],
     ] = {
         "remove-contained": functools.partial(
-            filter_contained_rules_keep_max_bias_cumulative, subgroup_costs=costs
+            filter_contained_rules_keep_max_bias, subgroup_costs=costs
         ),
-        "remove-below-thr": functools.partial(
-            filter_by_correctness_cumulative, threshold=cor_threshold
+        "remove-below-thr-corr": functools.partial(
+            remove_rules_below_correctness_threshold, threshold=cor_threshold
         ),
         "remove-above-thr-cost": functools.partial(
-            filter_by_cost_cumulative, threshold=cost_threshold
+            remove_rules_above_cost_budget, threshold=cost_threshold
         ),
-        "keep-cheap-rules-above-thr-cor": functools.partial(
-            keep_cheapest_rules_above_cumulative_correctness_threshold,
+        "keep-rules-until-thr-corr-reached": functools.partial(
+            keep_rules_until_correctness_threshold_reached,
             threshold=cor_threshold,
         ),
         "remove-fair-rules": functools.partial(
-            delete_fair_rules_cumulative, subgroup_costs=costs
+            delete_fair_rules, subgroup_costs=costs
         ),
-        "keep-only-min-change": functools.partial(
-            keep_only_minimum_change_cumulative, params=params
-        ),
+        "keep-only-min-change": keep_only_minimum_change,
     }
     for single_filter in filter_sequence:
         top_rules = filters[single_filter](top_rules)
@@ -659,7 +519,7 @@ def select_rules_subset_KStest(
     top_rules = dict(rules_sorted[:top_count])
 
     if filter_contained:
-        top_rules = filter_contained_rules_simple_cumulative(top_rules)
+        top_rules = filter_contained_rules_simple(top_rules)
 
     return top_rules, unfairness
 
@@ -668,7 +528,7 @@ def cum_corr_costs(
     ifclause: Predicate,
     thenclauses: List[Tuple[Predicate, float]],
     X: DataFrame,
-    model: ModelAPI,
+    model,
     params: ParameterProxy = ParameterProxy(),
 ) -> List[Tuple[Predicate, float, float]]:
     """Calculate cumulative correctness and costs for the given if-then rules.
@@ -721,7 +581,7 @@ def cum_corr_costs(
 def cum_corr_costs_all(
     rulesbyif: Dict[Predicate, Dict[str, Tuple[float, List[Tuple[Predicate, float]]]]],
     X: DataFrame,
-    model: ModelAPI,
+    model,
     sensitive_attribute: str,
     params: ParameterProxy = ParameterProxy(),
 ) -> Dict[Predicate, Dict[str, Tuple[float, List[Tuple[Predicate, float, float]]]]]:
@@ -763,36 +623,10 @@ def cum_corr_costs_all(
         ret[ifclause] = all_thens_new
     return ret
 
-
-# def update_costs_cumulative(
-#     rules: Dict[
-#         Predicate, Dict[str, Tuple[float, List[Tuple[Predicate, float, float]]]]
-#     ],
-#     params: ParameterProxy = ParameterProxy(),
-# ) -> None:
-#     """Update the costs of the then-clauses in cumulative rules.
-
-#     Args:
-#         rules: A dictionary containing if-clause predicates as keys and a nested
-#             dictionary as values. The nested dictionary contains subgroup names as
-#             keys, and tuples of coverage and a list of then-clause predicates with
-#             their corresponding correctness and costs as values.
-#         params: Optional parameter proxy (default: ParameterProxy()).
-
-#     Returns:
-#         None. The costs of the then-clauses in the input rules are updated in place.
-
-#     """
-#     for ifc, allthens in rules.items():
-#         for sg, (cov, sg_thens) in allthens.items():
-#             for i, (then, corr, cost) in enumerate(sg_thens):
-#                 sg_thens[i] = (then, corr, featureChangePred(ifc, then, params))
-
-
 def cum_corr_costs_all_minimal(
     rulesbyif: Dict[Predicate, Dict[str, Tuple[float, List[Tuple[Predicate, float]]]]],
     X: DataFrame,
-    model: ModelAPI,
+    model,
     sensitive_attribute: str,
     params: ParameterProxy = ParameterProxy(),
 ) -> Dict[Predicate, Dict[str, List[Tuple[float, float]]]]:

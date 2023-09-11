@@ -11,7 +11,7 @@ from .parameters import ParameterProxy
 @functools.total_ordering
 @dataclass
 class Predicate:
-    """Represents a predicate with features, values, and comparison operators."""
+    """Represents a predicate with features and values."""
 
     features: List[str] = field(default_factory=list)
     values: List[Any] = field(default_factory=list)
@@ -31,6 +31,8 @@ class Predicate:
         """
         Compares the predicate with another predicate based on their representations.
         """
+        if not isinstance(__o, Predicate):
+            raise TypeError(f"Comparison not supported between instances of '{type(self)}' and '{type(__o)}'")
         return repr(self) < repr(__o)
 
     def __hash__(self) -> int:
