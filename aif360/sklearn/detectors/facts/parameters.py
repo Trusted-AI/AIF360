@@ -92,7 +92,7 @@ def feature_change_builder(
     feature_weights: Dict[str, int],
     num_normalization: bool = False,
     feats_to_normalize: Optional[List[str]] = None,
-) -> Dict[str, Callable[[Any, Any], int]]:
+) -> Dict[str, Callable[[Any, Any], float]]:
     """Constructs a dictionary of feature change functions based on the input parameters.
 
     Args:
