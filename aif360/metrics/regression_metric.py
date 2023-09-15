@@ -67,21 +67,21 @@ class RegressionDatasetMetric(DatasetMetric):
                     k_viol.add(k-1)
         return ii, list(k_viol)
     
-    def discounted_cum_gain(self, normalized = False):
+    def discounted_cum_gain(self, r: int = None, normalized=False):
         """
         Discounted Cumulative Gain metric.
 
         Args:
-            normalized (bool): whether to normalize the value against the value of the strictly score-based ordering.
+            r (int): position up to which to calculate the DCG. If not specified, is set to the size of the dataset.
+            normalized (bool): return normalized DCG.
             
         Returns:
-            The calculated DCG (NCDG if normalized).
+            The calculated DCG.
         """
-        scores = np.ravel(self.dataset.scores)
+        scores = np.ravel(self.dataset.scores)[:r]
         z = self._dcg(scores)
         if normalized:
-            sorted = np.sort(scores)[::-1]
-            return z / self._dcg(sorted)
+            z /= self._dcg(np.sort(scores)[::-1][:r])
         return z
     
     def _dcg(self, scores):
