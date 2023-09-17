@@ -51,7 +51,7 @@ class RegressionDatasetMetric(DatasetMetric):
         pr_attr_values = np.ravel(
             self.dataset.unprivileged_protected_attributes + self.dataset.privileged_protected_attributes)
         if set(list(target_prop.keys())) != set(pr_attr_values):
-            raise ValueError()
+            raise ValueError('Desired proportions must be specified for all values of the protected attributes!')
         
         ranking = np.column_stack((self.dataset.scores, self.dataset.protected_attributes))
         if r is None:
@@ -67,7 +67,7 @@ class RegressionDatasetMetric(DatasetMetric):
                     k_viol.add(k-1)
         return ii, list(k_viol)
     
-    def discounted_cum_gain(self, r: int = None, normalized=False):
+    def discounted_cum_gain(self, r: int = None, full_dataset: RegressionDataset=None, normalized=False):
         """
         Discounted Cumulative Gain metric.
 
@@ -78,10 +78,18 @@ class RegressionDatasetMetric(DatasetMetric):
         Returns:
             The calculated DCG.
         """
+        if r is None:
+            r = np.ravel(self.dataset.scores).shape[0]
+        if r < 0:
+            raise ValueError(f'r must be >= 0, got {r}')
+        if normalized == True and full_dataset is None:
+            raise ValueError('`normalized` is set to True, but `full_dataset` is not specified')
+        if not isinstance(full_dataset, RegressionDataset) and not (full_dataset is None):
+            raise TypeError(f'`full_datset`: expected `RegressionDataset`, got {type(full_dataset)}')
         scores = np.ravel(self.dataset.scores)[:r]
         z = self._dcg(scores)
         if normalized:
-            z /= self._dcg(np.sort(scores)[::-1][:r])
+            z /= self._dcg(np.sort(np.ravel(full_dataset.scores))[::-1][:r])
         return z
     
     def _dcg(self, scores):
