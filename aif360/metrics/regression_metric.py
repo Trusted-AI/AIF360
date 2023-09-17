@@ -55,14 +55,14 @@ class RegressionDatasetMetric(DatasetMetric):
         
         ranking = np.column_stack((self.dataset.scores, self.dataset.protected_attributes))
         if r is None:
-            r = len(self.dataset.scores)
+            r = np.ravel(self.dataset.scores).shape[0]
         ii = 0
         k_viol = set()
         for k in range(1, r):
             rk = ranking[:k]
             for ai in pr_attr_values:
                 count_ai = rk[rk[:,1] == ai].shape[0]
-                if count_ai < int(target_prop[ai]*k):
+                if count_ai < np.floor(target_prop[ai]*k):
                     ii+=1
                     k_viol.add(k-1)
         return ii, list(k_viol)

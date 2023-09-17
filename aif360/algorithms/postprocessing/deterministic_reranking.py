@@ -193,6 +193,7 @@ class DeterministicReranking(Transformer):
                                 privileged_classes=dataset.privileged_protected_attributes)
         if not renormalize_scores:
             res.labels = np.transpose([res_df[score_label]])
+            res.scores = np.transpose([res_df[score_label]])
         return res
     
 

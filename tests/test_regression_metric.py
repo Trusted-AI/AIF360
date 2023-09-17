@@ -5,15 +5,15 @@ import pandas as pd
 
 df = pd.DataFrame([
     ['r', 55],
-    ['r', 65],
-    ['r', 85],
-    ['r', 70],
-    ['b', 60],
-    ['b', 50],
-    ['b', 40],
+    ['b', 65],
+    ['b', 85],
+    ['b', 70],
+    ['r', 60],
+    ['r', 50],
+    ['r', 40],
     ['b', 30],
-    ['b', 20],
-    ['r', 10],
+    ['r', 20],
+    ['b', 10],
 ], columns=['s', 'score'])
 
 dataset = RegressionDataset(df, dep_var_name='score', protected_attribute_names=['s'], privileged_classes=[['r']])
@@ -26,7 +26,7 @@ m = RegressionDatasetMetric(dataset=dataset,
 
 def test_infeasible_index():
     actual = m.infeasible_index(target_prop={1: 0.5, 0: 0.5}, r=10)
-    expected = (5, [2, 3, 4, 5, 6])
+    expected = (1, [3])
     assert actual == expected, f'Infeasible Index calculated wrong, got {actual}, expected {expected}'
 
 def test_dcg():
@@ -35,5 +35,5 @@ def test_dcg():
     assert abs(actual - expected) < 1e-6
 
 def test_ndcg():
-    actual = m.discounted_cum_gain(normalized=True)
+    actual = m.discounted_cum_gain(normalized=True, full_dataset=dataset)
     expected = 0.9205433036318259
