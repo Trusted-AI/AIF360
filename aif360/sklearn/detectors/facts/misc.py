@@ -170,7 +170,7 @@ def aff_intersection_version_2(RLs_and_supports, subgroups):
 
     return aff_intersection
 
-def valid_ifthens_with_coverage_correctness(
+def valid_ifthens(
     X: DataFrame,
     model,
     sensitive_attribute: str,
@@ -290,6 +290,19 @@ def valid_ifthens_with_coverage_correctness(
 
     return ifthens_with_correctness
 
+def calc_costs(
+    rules: Dict[Predicate, Dict[str, Tuple[float, List[Tuple[Predicate, float]]]]],
+    params: ParameterProxy = ParameterProxy()
+) -> Dict[Predicate, Dict[str, Tuple[float, List[Tuple[Predicate, float, float]]]]]:
+    ret: Dict[Predicate, Dict[str, Tuple[float, List[Tuple[Predicate, float, float]]]]] = dict()
+    for ifclause, thenclauses in rules.items():
+        newthenclauses: Dict[str, Tuple[float, List[Tuple[Predicate, float, float]]]] = dict()
+        for sg, (cov, thens) in thenclauses.items():
+            # TODO: make featureChangePred return a float, if possible
+            newthens = [(then, cor, float(featureChangePred(ifclause, then, params))) for then, cor in thens]
+            newthenclauses[sg] = (cov, newthens)
+        ret[ifclause] = newthenclauses
+    return ret
 
 def rules2rulesbyif(
     rules: List[Tuple[Predicate, Predicate, Dict[str, float], Dict[str, float]]]
