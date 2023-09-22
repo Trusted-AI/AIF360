@@ -61,7 +61,7 @@ def fetch_adult(subset='all', *, data_home=None, cache=True, binary_race=True,
     if subset not in {'train', 'test', 'all'}:
         raise ValueError("subset must be either 'train', 'test', or 'all'; "
                          "cannot be {}".format(subset))
-    df = fetch_openml(data_id=1590, data_home=data_home or DATA_HOME_DEFAULT,
+    df = fetch_openml(data_id=data_id if data_id else 1590, data_home=data_home or DATA_HOME_DEFAULT,
                       cache=cache, as_frame=True).frame
     if subset == 'train':
         df = df.iloc[16281:]
@@ -221,11 +221,7 @@ def fetch_bank(*, data_home=None, cache=True, binary_age=True, percent10=False,
         >>> bank_num.X.shape
         (45211, 6)
     """
-    # TODO: this seems to be an old version
-    # df = fetch_openml(data_id=1558 if percent10 else 1461, data_home=data_home
-    #                   or DATA_HOME_DEFAULT, cache=cache, as_frame=True).frame
-
-    store = OpenMLStore
+    store = open_ml_store()
     df = store.download(None, None)
     df.columns = ['age', 'job', 'marital', 'education', 'default', 'balance',
                   'housing', 'loan', 'contact', 'day', 'month', 'duration',
@@ -260,7 +256,7 @@ class OpenMLStore(ABC):
         pass
 
     def download(self, data_id, data_home):
-        df = fetch_openml(data_id=1590, data_home=data_home or DATA_HOME_DEFAULT,
+        df = fetch_openml(data_id=data_id if data_id else 1590, data_home=data_home or DATA_HOME_DEFAULT,
                       cache=cache, as_frame=True).frame
         return df
 
