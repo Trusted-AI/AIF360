@@ -221,8 +221,8 @@ def fetch_bank(*, data_home=None, cache=True, binary_age=True, percent10=False,
         >>> bank_num.X.shape
         (45211, 6)
     """
-    store = open_ml_store()
-    df = store.download(None, None)
+    store = OpenMLStore()
+    df = store.download(data_id=1558 if percent10 else 1461, data_home=data_home)
     df.columns = ['age', 'job', 'marital', 'education', 'default', 'balance',
                   'housing', 'loan', 'contact', 'day', 'month', 'duration',
                   'campaign', 'pdays', 'previous', 'poutcome', 'deposit']
@@ -252,12 +252,12 @@ def fetch_bank(*, data_home=None, cache=True, binary_age=True, percent10=False,
 
 class OpenMLStore(ABC):
     @abstractmethod
-    def init(self, **kwargs):
+    def init(self):
         pass
 
     def download(self, data_id, data_home):
         df = fetch_openml(data_id=data_id if data_id else 1590, data_home=data_home or DATA_HOME_DEFAULT,
-                      cache=cache, as_frame=True).frame
+                      as_frame=True).frame
         return df
 
     def upload(self, **kwargs):
