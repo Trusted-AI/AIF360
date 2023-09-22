@@ -3,15 +3,15 @@
 Following is the current list of maintainers on this project
 
 The maintainers are listed in alphabetical order.
-- Michael Hind ([michaelhind](https://github.com/michaelhind))
-- Sam Hoffman ([hoffmansc](https://github.com/hoffmansc))
-- Karthi Natesan Ramamurthy ([nrkarthikeyan](https://github.com/nrkarthikeyan))
-- Stacey Ronaghan ([srnghn](https://github.com/srnghn))
-- Prasanna Sattigeri ([pronics2004](https://github.com/pronics2004))
 - Animesh Singh ([animeshsingh](https://github.com/animeshsingh))
-- Saishruthi Swaminathan ([SSaishruthi](https://github.com/SSaishruthi))
-- Kush Varshney ([krvarshney](https://github.com/krvarshney))
 - Gabriela de Queiroz ([gdequeiroz](https://github.com/gdequeiroz))
+- Karthi Natesan Ramamurthy ([nrkarthikeyan](https://github.com/nrkarthikeyan))
+- Kush Varshney ([krvarshney](https://github.com/krvarshney))
+- Michael Hind ([michaelhind](https://github.com/michaelhind))
+- Prasanna Sattigeri ([pronics2004](https://github.com/pronics2004))
+- Saishruthi Swaminathan ([SSaishruthi](https://github.com/SSaishruthi))
+- Sam Hoffman ([hoffmansc](https://github.com/hoffmansc))
+- Stacey Ronaghan ([srnghn](https://github.com/srnghn))
 
 ## Methodology
 
