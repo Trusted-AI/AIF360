@@ -527,8 +527,8 @@ def generalized_tpr(y_true, probas_pred, *, pos_label=1, sample_weight=None,
 
     idx = (y_true == pos_label)
     gtp = np.array([np.dot(probas_pred[idx], sample_weight[idx])])
-    neg = np.array([sample_weight[idx].sum()])
-    return _prf_divide(gtp, neg, 'generalized TPR', 'positive', None,
+    pos = np.array([sample_weight[idx].sum()])
+    return _prf_divide(gtp, pos, 'generalized TPR', 'positive', None,
                        ('generalized TPR',), zero_division).item()
 
 # ============================ GROUP FAIRNESS ==================================
