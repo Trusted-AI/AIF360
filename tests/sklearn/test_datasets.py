@@ -16,6 +16,10 @@ from aif360.sklearn.datasets import (
     standardize_dataset, NumericConversionWarning, fetch_adult, fetch_bank,
     fetch_german, fetch_compas, fetch_lawschool_gpa, fetch_meps, OpenMLStore)
 
+from aif360.sklearn.datasets.openml_datasets import DATA_HOME_DEFAULT
+
+from sklearn.datasets import fetch_openml
+
 
 df = pd.DataFrame([[1, 2, 3, 'a'], [5, 6, 7, 'b'], [np.NaN, 10, 11, 'c']],
                   columns=['X1', 'X2', 'y', 'Z'])
@@ -278,8 +282,8 @@ def test_onehot_transformer():
 
 def test_openML_store():
     """Test to verify if the new class OpenMLStore returns the same df as before"""
+    OpenMLStore.__abstractmethods__ = set()
     store = OpenMLStore()
-    df_new = store.download(None, None)
-    df_old = fetch_openml(data_id=1558 if percent10 else 1461, data_home=data_home
-                      or DATA_HOME_DEFAULT, cache=cache, as_frame=True).frame
-    assert df_old == df_new
+    df_new = store.download(1461, DATA_HOME_DEFAULT)
+    df_old = fetch_openml(data_id=1461, data_home=DATA_HOME_DEFAULT, as_frame=True).frame
+    assert df_old.equals(df_new)
