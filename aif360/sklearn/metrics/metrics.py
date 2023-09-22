@@ -25,13 +25,14 @@ __all__ = [
     # helpers
     'num_samples', 'num_pos_neg',
     'specificity_score', 'base_rate', 'selection_rate', 'smoothed_base_rate',
-    'smoothed_selection_rate', 'generalized_fpr', 'generalized_fnr',
+    'smoothed_selection_rate', 'generalized_fpr', 'generalized_fnr', 'generalized_tpr',
     # group fairness
     'ot_distance', 'statistical_parity_difference', 'disparate_impact_ratio',
     'equal_opportunity_difference', 'average_odds_difference', 'average_predictive_value_difference',
     'average_odds_error', 'class_imbalance', 'kl_divergence',
     'conditional_demographic_disparity', 'smoothed_edf',
-    'df_bias_amplification', 'mdss_bias_scan', 'mdss_bias_score',
+    'df_bias_amplification', 'mdss_bias_scan', 'mdss_bias_score', 'equalized_odds_diff',
+    'generalized_equalized_odds_diff',
     # individual fairness
     'generalized_entropy_index', 'generalized_entropy_error',
     'between_group_generalized_entropy_error', 'theil_index',
@@ -500,6 +501,35 @@ def generalized_fnr(y_true, probas_pred, *, pos_label=1, sample_weight=None,
     return _prf_divide(gfn, pos, 'generalized FNR', 'positive', None,
                        ('generalized FNR',), zero_division).item()
 
+def generalized_tpr(y_true, probas_pred, *, pos_label=1, sample_weight=None,
+                    zero_division='warn'):
+    r"""Return the ratio of generalized true positives to positive examples in
+    the dataset, :math:`GTPR = \tfrac{GTP}{N}`.
+
+    Generalized confusion matrix measures such as this are calculated by summing
+    the probabilities of the positive class instead of the hard predictions.
+
+    Args:
+        y_true (array-like): Ground-truth (correct) target values.
+        probas_pred (array-like): Probability estimates of the positive class.
+        pos_label (scalar, optional): The label of the positive class.
+        sample_weight (array-like, optional): Sample weights.
+        zero_division ('warn', 0 or 1): Sets the value to return when there is a
+            zero division. If set to “warn”, this acts as 0, but warnings are
+            also raised.
+
+    Returns:
+        float: Generalized true positive rate.
+    """
+    _check_zero_division(zero_division)
+    y_true, probas_pred, sample_weight = check_inputs(y_true, probas_pred,
+                                                      sample_weight, False)
+
+    idx = (y_true == pos_label)
+    gtp = np.array([np.dot(probas_pred[idx], sample_weight[idx])])
+    neg = np.array([sample_weight[idx].sum()])
+    return _prf_divide(gtp, neg, 'generalized TPR', 'positive', None,
+                       ('generalized TPR',), zero_division).item()
 
 # ============================ GROUP FAIRNESS ==================================
 def ot_distance(
@@ -1069,6 +1099,81 @@ def mdss_bias_scan(y_true, probas_pred, X=None, *, pos_label=1,
     scanner = MDSS(scoring_function)
 
     return scanner.scan(X, expected, outcomes, penalty, n_iter)
+
+def equalized_odds_diff(y_true, y_pred, *, prot_attr=None, priv_group=1,
+                            pos_label=1, sample_weight=None):
+    """Equalized odds difference
+
+    Returns the maximum of the absolute difference in FPR and TPR for the
+    unprivileged and privileged groups:
+
+    .. math::
+
+        \dmax{|FPR_{D = \text{unprivileged}} - FPR_{D = \text{privileged}}|
+        + |TPR_{D = \text{unprivileged}} - TPR_{D = \text{privileged}}|}{2}
+
+    A value of 0 indicates no difference in equality of odds.
+
+    Args:
+        y_true (pandas.Series): Ground truth (correct) target values.
+        y_pred (array-like): Estimated targets as returned by a classifier.
+        prot_attr (array-like, keyword-only): Protected attribute(s). If
+            ``None``, all protected attributes in y_true are used.
+        priv_group (scalar, optional): The label of the privileged group. If
+            prot_attr is binary, this may be ``None``.
+        pos_label (scalar, optional): The label of the positive class.
+        sample_weight (array-like, optional): Sample weights.
+    Returns:
+
+    """
+    if priv_group is None:
+        priv_group = check_groups(y_true, prot_attr=prot_attr,
+                                  ensure_binary=True)[0][0]
+    fpr_diff = difference(specificity_score, y_true, y_pred,
+                           prot_attr=prot_attr, priv_group=priv_group,
+                           pos_label=pos_label, sample_weight=sample_weight)
+    tpr_diff = difference(recall_score, y_true, y_pred, prot_attr=prot_attr,
+                          priv_group=priv_group, pos_label=pos_label,
+                          sample_weight=sample_weight)
+    return max(abs(fpr_diff), abs(tpr_diff))
+
+def generalized_equalized_odds_diff(y_true, y_pred, *, prot_attr=None, priv_group=1,
+                            pos_label=1, sample_weight=None):
+    """Generalized equalized odds difference
+
+    Returns the maximum of the absolute difference in FPR and TPR for the
+    unprivileged and privileged groups:
+
+    .. math::
+
+        \dmax{|GFPR_{D = \text{unprivileged}} - GFPR_{D = \text{privileged}}|
+        + |GTPR_{D = \text{unprivileged}} - GTPR_{D = \text{privileged}}|}{2}
+
+    A value of 0 indicates no difference in generalized equality of odds.
+
+    Args:
+        y_true (pandas.Series): Ground truth (correct) target values.
+        y_pred (array-like): Estimated targets as returned by a classifier.
+        prot_attr (array-like, keyword-only): Protected attribute(s). If
+            ``None``, all protected attributes in y_true are used.
+        priv_group (scalar, optional): The label of the privileged group. If
+            prot_attr is binary, this may be ``None``.
+        pos_label (scalar, optional): The label of the positive class.
+        sample_weight (array-like, optional): Sample weights.
+    Returns:
+
+    """
+    if priv_group is None:
+        priv_group = check_groups(y_true, prot_attr=prot_attr,
+                                  ensure_binary=True)[0][0]
+    gen_fpr_diff = difference(generalized_fpr, y_true, y_pred,
+                           prot_attr=prot_attr, priv_group=priv_group,
+                           pos_label=pos_label, sample_weight=sample_weight)
+    gen_tpr_diff = difference(generalized_tpr, y_true, y_pred, prot_attr=prot_attr,
+                          priv_group=priv_group, pos_label=pos_label,
+                          sample_weight=sample_weight)
+    return max(abs(gen_fpr_diff), abs(gen_tpr_diff))
+
 
 
 # ========================== INDIVIDUAL FAIRNESS ===============================
