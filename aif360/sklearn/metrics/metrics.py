@@ -504,7 +504,7 @@ def generalized_fnr(y_true, probas_pred, *, pos_label=1, sample_weight=None,
 def generalized_tpr(y_true, probas_pred, *, pos_label=1, sample_weight=None,
                     zero_division='warn'):
     r"""Return the ratio of generalized true positives to positive examples in
-    the dataset, :math:`GTPR = \tfrac{GTP}{N}`.
+    the dataset, :math:`GTPR = \tfrac{GTP}{P}`.
 
     Generalized confusion matrix measures such as this are calculated by summing
     the probabilities of the positive class instead of the hard predictions.
