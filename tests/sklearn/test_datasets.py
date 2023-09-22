@@ -14,7 +14,7 @@ from aif360.datasets import (
     MEPSDataset19, MEPSDataset20, MEPSDataset21)
 from aif360.sklearn.datasets import (
     standardize_dataset, NumericConversionWarning, fetch_adult, fetch_bank,
-    fetch_german, fetch_compas, fetch_lawschool_gpa, fetch_meps)
+    fetch_german, fetch_compas, fetch_lawschool_gpa, fetch_meps, OpenMLStore)
 
 
 df = pd.DataFrame([[1, 2, 3, 'a'], [5, 6, 7, 'b'], [np.NaN, 10, 11, 'c']],
@@ -275,3 +275,11 @@ def test_onehot_transformer():
     dum = pd.get_dummies(X)
     assert ohe.fit_transform(X).shape[1] == dum.shape[1] == 63
     assert dum.columns.symmetric_difference(ohe.get_feature_names_out()).empty
+
+def test_openML_store():
+    """Test to verify if the new class OpenMLStore returns the same df as before"""
+    store = OpenMLStore()
+    df_new = store.download(None, None)
+    df_old = fetch_openml(data_id=1558 if percent10 else 1461, data_home=data_home
+                      or DATA_HOME_DEFAULT, cache=cache, as_frame=True).frame
+    assert df_old == df_new
