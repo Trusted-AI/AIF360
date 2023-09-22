@@ -8,6 +8,8 @@
 The AI Fairness 360 toolkit is an extensible open-source library containing techniques developed by the
 research community to help detect and mitigate bias in machine learning models throughout the AI application lifecycle. AI Fairness 360 package is available in both Python and R.
 
+
+
 The AI Fairness 360 package includes
 1) a comprehensive set of metrics for datasets and models to test for biases,
 2) explanations for these metrics, and
