@@ -5,6 +5,8 @@ from sklearn.datasets import fetch_openml
 
 from aif360.sklearn.datasets.utils import standardize_dataset
 
+from abc import ABC, abstractmethod
+
 
 # cache location
 DATA_HOME_DEFAULT = os.path.join(os.path.dirname(os.path.abspath(__file__)),
@@ -220,8 +222,11 @@ def fetch_bank(*, data_home=None, cache=True, binary_age=True, percent10=False,
         (45211, 6)
     """
     # TODO: this seems to be an old version
-    df = fetch_openml(data_id=1558 if percent10 else 1461, data_home=data_home
-                      or DATA_HOME_DEFAULT, cache=cache, as_frame=True).frame
+    # df = fetch_openml(data_id=1558 if percent10 else 1461, data_home=data_home
+    #                   or DATA_HOME_DEFAULT, cache=cache, as_frame=True).frame
+
+    store = OpenMLStore
+    df = store.download(None, None)
     df.columns = ['age', 'job', 'marital', 'education', 'default', 'balance',
                   'housing', 'loan', 'contact', 'day', 'month', 'duration',
                   'campaign', 'pdays', 'previous', 'poutcome', 'deposit']
@@ -247,3 +252,17 @@ def fetch_bank(*, data_home=None, cache=True, binary_age=True, percent10=False,
     return standardize_dataset(df, prot_attr=[age], target='deposit',
                                usecols=usecols, dropcols=dropcols,
                                numeric_only=numeric_only, dropna=dropna)
+
+
+class OpenMLStore(ABC):
+    @abstractmethod
+    def init(self, **kwargs):
+        pass
+
+    def download(self, data_id, data_home):
+        df = fetch_openml(data_id=1590, data_home=data_home or DATA_HOME_DEFAULT,
+                      cache=cache, as_frame=True).frame
+        return df
+
+    def upload(self, **kwargs):
+        pass
