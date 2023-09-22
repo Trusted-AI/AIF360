@@ -3,59 +3,55 @@ import numpy as np
 
 import pytest
 
-from aif360.algorithms.postprocessing.facts.optimization import (
+from aif360.sklearn.detectors.facts.optimization import (
     sort_triples_by_max_costdiff,
-    sort_triples_by_max_costdiff_ignore_nans,
-    sort_triples_by_max_costdiff_ignore_nans_infs,
-    sort_triples_by_max_costdiff_generic,
-    sort_triples_by_max_costdiff_generic_cumulative,
     sort_triples_KStest
 )
-from aif360.algorithms.postprocessing.facts.predicate import Predicate
-from aif360.algorithms.postprocessing.facts.parameters import ParameterProxy, feature_change_builder
-from aif360.algorithms.postprocessing.facts.metrics import if_group_cost_min_change_correctness_threshold, if_group_cost_min_change_correctness_cumulative_threshold
+from aif360.sklearn.detectors.facts.predicate import Predicate
+from aif360.sklearn.detectors.facts.parameters import ParameterProxy, feature_change_builder
+from aif360.sklearn.detectors.facts.metrics import if_group_cost_min_change_correctness_threshold
 
 
-def test_sort_triples_by_max_costdiff() -> None:
+def test_sort_triples_by_max_costdiff_simple() -> None:
     ifthens = {
         Predicate.from_dict({"a": 13}):
         {"Male": (0.2, [
-            (Predicate.from_dict({"a": 15}), 0.35),
-            (Predicate.from_dict({"a": 17}), 0.7),
-            (Predicate.from_dict({"a": 19}), 0.5),
-            (Predicate.from_dict({"a": 23}), 0.2),
+            (Predicate.from_dict({"a": 15}), 0.35, 6.),
+            (Predicate.from_dict({"a": 17}), 0.7, 12.),
+            (Predicate.from_dict({"a": 19}), 0.5, 18.),
+            (Predicate.from_dict({"a": 23}), 0.2, 30.),
         ]),
         "Female": (0.25, [
-            (Predicate.from_dict({"a": 15}), 0.3),
-            (Predicate.from_dict({"a": 17}), 0.5),
-            (Predicate.from_dict({"a": 19}), 0.2),
-            (Predicate.from_dict({"a": 23}), 0.),
+            (Predicate.from_dict({"a": 15}), 0.3, 6.),
+            (Predicate.from_dict({"a": 17}), 0.5, 12.),
+            (Predicate.from_dict({"a": 19}), 0.2, 18.),
+            (Predicate.from_dict({"a": 23}), 0., 30.),
         ])},
         Predicate.from_dict({"a": 13, "b": 45}):
         {"Male": (0.2, [
-            (Predicate.from_dict({"a": 15, "b": 40}), 0.5),
-            (Predicate.from_dict({"a": 17, "b": 38}), 0.99),
-            (Predicate.from_dict({"a": 19, "b": 35}), 0.75),
-            (Predicate.from_dict({"a": 23, "b": 33}), 0.45),
+            (Predicate.from_dict({"a": 15, "b": 40}), 0.5, 6. + 25.),
+            (Predicate.from_dict({"a": 17, "b": 38}), 0.99, 12. + 35.),
+            (Predicate.from_dict({"a": 19, "b": 35}), 0.75, 18. + 50.),
+            (Predicate.from_dict({"a": 23, "b": 33}), 0.45, 30. + 60.),
         ]),
         "Female": (0.25, [
-            (Predicate.from_dict({"a": 15, "b": 40}), 0.45),
-            (Predicate.from_dict({"a": 17, "b": 38}), 0.8),
-            (Predicate.from_dict({"a": 19, "b": 35}), 0.7),
-            (Predicate.from_dict({"a": 23, "b": 33}), 0.5),
+            (Predicate.from_dict({"a": 15, "b": 40}), 0.45, 6. + 25.),
+            (Predicate.from_dict({"a": 17, "b": 38}), 0.8, 12. + 35.),
+            (Predicate.from_dict({"a": 19, "b": 35}), 0.7, 18. + 50.),
+            (Predicate.from_dict({"a": 23, "b": 33}), 0.5, 30. + 60.),
         ])},
         Predicate.from_dict({"b": 45}):
         {"Male": (0.2, [
-            (Predicate.from_dict({"b": 40}), 0.5),
-            (Predicate.from_dict({"b": 38}), 0.75),
-            (Predicate.from_dict({"b": 35}), 0.55),
-            (Predicate.from_dict({"b": 33}), 0.3),
+            (Predicate.from_dict({"b": 40}), 0.5, 25.),
+            (Predicate.from_dict({"b": 38}), 0.75, 35.),
+            (Predicate.from_dict({"b": 35}), 0.55, 50.),
+            (Predicate.from_dict({"b": 33}), 0.3, 60.),
         ]),
         "Female": (0.25, [
-            (Predicate.from_dict({"b": 40}), 0.35),
-            (Predicate.from_dict({"b": 38}), 0.55),
-            (Predicate.from_dict({"b": 35}), 0.3),
-            (Predicate.from_dict({"b": 33}), 0.05),
+            (Predicate.from_dict({"b": 40}), 0.35, 25.),
+            (Predicate.from_dict({"b": 38}), 0.55, 35.),
+            (Predicate.from_dict({"b": 35}), 0.3, 50.),
+            (Predicate.from_dict({"b": 33}), 0.05, 60.),
         ])},
     }
     comparators = feature_change_builder(None, num_cols=["a", "b"], cate_cols=[], ord_cols=[], feature_weights={"a": 3, "b": 5})
@@ -63,8 +59,7 @@ def test_sort_triples_by_max_costdiff() -> None:
 
     sort_result = sort_triples_by_max_costdiff(
         rulesbyif=ifthens,
-        group_calculator=partial(if_group_cost_min_change_correctness_threshold, cor_thres=0.5),
-        params=params
+        group_calculator=partial(if_group_cost_min_change_correctness_threshold, cor_thres=0.5)
     )
     assert [ifthen[0] for ifthen in sort_result] == [
         Predicate.from_dict({"a": 13, "b": 45}),
@@ -77,51 +72,51 @@ def test_sort_triples_by_max_costdiff_ignore_nans() -> None:
     ifthens = {
         Predicate.from_dict({"a": 13}):
         {"Male": (0.2, [
-            (Predicate.from_dict({"a": 15}), 0.35),
-            (Predicate.from_dict({"a": 17}), 0.58),
-            (Predicate.from_dict({"a": 19}), 0.5),
-            (Predicate.from_dict({"a": 23}), 0.2),
+            (Predicate.from_dict({"a": 15}), 0.35, 6.),
+            (Predicate.from_dict({"a": 17}), 0.58, 12.),
+            (Predicate.from_dict({"a": 19}), 0.5, 18.),
+            (Predicate.from_dict({"a": 23}), 0.2, 30.),
         ]),
         "Female": (0.25, [
-            (Predicate.from_dict({"a": 15}), 0.3),
-            (Predicate.from_dict({"a": 17}), 0.5),
-            (Predicate.from_dict({"a": 19}), 0.2),
-            (Predicate.from_dict({"a": 23}), 0.),
+            (Predicate.from_dict({"a": 15}), 0.3, 6.),
+            (Predicate.from_dict({"a": 17}), 0.5, 12.),
+            (Predicate.from_dict({"a": 19}), 0.2, 18.),
+            (Predicate.from_dict({"a": 23}), 0., 30.),
         ])},
         Predicate.from_dict({"a": 13, "b": 45}):
         {"Male": (0.2, [
-            (Predicate.from_dict({"a": 15, "b": 40}), 0.5),
-            (Predicate.from_dict({"a": 17, "b": 38}), 0.99),
-            (Predicate.from_dict({"a": 19, "b": 35}), 0.75),
-            (Predicate.from_dict({"a": 23, "b": 33}), 0.45),
+            (Predicate.from_dict({"a": 15, "b": 40}), 0.5, 6. + 25.),
+            (Predicate.from_dict({"a": 17, "b": 38}), 0.99, 12. + 35.),
+            (Predicate.from_dict({"a": 19, "b": 35}), 0.75, 18. + 50.),
+            (Predicate.from_dict({"a": 23, "b": 33}), 0.45, 30. + 60.),
         ]),
         "Female": (0.25, [
-            (Predicate.from_dict({"a": 15, "b": 40}), 0.45),
-            (Predicate.from_dict({"a": 17, "b": 38}), 0.8),
-            (Predicate.from_dict({"a": 19, "b": 35}), 0.7),
-            (Predicate.from_dict({"a": 23, "b": 33}), 0.5),
+            (Predicate.from_dict({"a": 15, "b": 40}), 0.45, 6. + 25.),
+            (Predicate.from_dict({"a": 17, "b": 38}), 0.8, 12. + 35.),
+            (Predicate.from_dict({"a": 19, "b": 35}), 0.7, 18. + 50.),
+            (Predicate.from_dict({"a": 23, "b": 33}), 0.5, 30. + 60.),
         ])},
         Predicate.from_dict({"b": 45}):
         {"Male": (0.2, [
-            (Predicate.from_dict({"b": 40}), 0.5),
-            (Predicate.from_dict({"b": 38}), 0.75),
-            (Predicate.from_dict({"b": 35}), 0.55),
-            (Predicate.from_dict({"b": 33}), 0.3),
+            (Predicate.from_dict({"b": 40}), 0.5, 25.),
+            (Predicate.from_dict({"b": 38}), 0.75, 35.),
+            (Predicate.from_dict({"b": 35}), 0.55, 50.),
+            (Predicate.from_dict({"b": 33}), 0.3, 60.),
         ]),
         "Female": (0.25, [
-            (Predicate.from_dict({"b": 40}), 0.35),
-            (Predicate.from_dict({"b": 38}), 0.55),
-            (Predicate.from_dict({"b": 35}), 0.3),
-            (Predicate.from_dict({"b": 33}), 0.05),
+            (Predicate.from_dict({"b": 40}), 0.35, 25.),
+            (Predicate.from_dict({"b": 38}), 0.55, 35.),
+            (Predicate.from_dict({"b": 35}), 0.3, 50.),
+            (Predicate.from_dict({"b": 33}), 0.05, 60.),
         ])},
     }
     comparators = feature_change_builder(None, num_cols=["a", "b"], cate_cols=[], ord_cols=[], feature_weights={"a": 3, "b": 5})
     params = ParameterProxy(featureChanges=comparators)
 
-    sort_result = sort_triples_by_max_costdiff_ignore_nans(
+    sort_result = sort_triples_by_max_costdiff(
         rulesbyif=ifthens,
         group_calculator=partial(if_group_cost_min_change_correctness_threshold, cor_thres=0.6),
-        params=params
+        ignore_nans=True
     )
     assert [ifthen[0] for ifthen in sort_result] == [
         Predicate.from_dict({"b": 45}),
@@ -134,51 +129,52 @@ def test_sort_triples_by_max_costdiff_ignore_nans_infs() -> None:
     ifthens = {
         Predicate.from_dict({"a": 13}):
         {"Male": (0.2, [
-            (Predicate.from_dict({"a": 15}), 0.35),
-            (Predicate.from_dict({"a": 17}), 0.58),
-            (Predicate.from_dict({"a": 19}), 0.5),
-            (Predicate.from_dict({"a": 23}), 0.2),
+            (Predicate.from_dict({"a": 15}), 0.35, 6.),
+            (Predicate.from_dict({"a": 17}), 0.58, 12.),
+            (Predicate.from_dict({"a": 19}), 0.5, 18.),
+            (Predicate.from_dict({"a": 23}), 0.2, 30.),
         ]),
         "Female": (0.25, [
-            (Predicate.from_dict({"a": 15}), 0.3),
-            (Predicate.from_dict({"a": 17}), 0.5),
-            (Predicate.from_dict({"a": 19}), 0.2),
-            (Predicate.from_dict({"a": 23}), 0.),
+            (Predicate.from_dict({"a": 15}), 0.3, 6.),
+            (Predicate.from_dict({"a": 17}), 0.5, 12.),
+            (Predicate.from_dict({"a": 19}), 0.2, 18.),
+            (Predicate.from_dict({"a": 23}), 0., 30.),
         ])},
         Predicate.from_dict({"a": 13, "b": 45}):
         {"Male": (0.2, [
-            (Predicate.from_dict({"a": 15, "b": 40}), 0.5),
-            (Predicate.from_dict({"a": 17, "b": 38}), 0.99),
-            (Predicate.from_dict({"a": 19, "b": 35}), 0.75),
-            (Predicate.from_dict({"a": 23, "b": 33}), 0.45),
+            (Predicate.from_dict({"a": 15, "b": 40}), 0.5, 6. + 25.),
+            (Predicate.from_dict({"a": 17, "b": 38}), 0.99, 12. + 35.),
+            (Predicate.from_dict({"a": 19, "b": 35}), 0.75, 18. + 50.),
+            (Predicate.from_dict({"a": 23, "b": 33}), 0.45, 30. + 60.),
         ]),
         "Female": (0.25, [
-            (Predicate.from_dict({"a": 15, "b": 40}), 0.45),
-            (Predicate.from_dict({"a": 17, "b": 38}), 0.8),
-            (Predicate.from_dict({"a": 19, "b": 35}), 0.7),
-            (Predicate.from_dict({"a": 23, "b": 33}), 0.5),
+            (Predicate.from_dict({"a": 15, "b": 40}), 0.45, 6. + 25.),
+            (Predicate.from_dict({"a": 17, "b": 38}), 0.8, 12. + 35.),
+            (Predicate.from_dict({"a": 19, "b": 35}), 0.7, 18. + 50.),
+            (Predicate.from_dict({"a": 23, "b": 33}), 0.5, 30. + 60.),
         ])},
         Predicate.from_dict({"b": 45}):
         {"Male": (0.2, [
-            (Predicate.from_dict({"b": 40}), 0.5),
-            (Predicate.from_dict({"b": 38}), 0.75),
-            (Predicate.from_dict({"b": 35}), 0.55),
-            (Predicate.from_dict({"b": 33}), 0.3),
+            (Predicate.from_dict({"b": 40}), 0.5, 25.),
+            (Predicate.from_dict({"b": 38}), 0.75, 35.),
+            (Predicate.from_dict({"b": 35}), 0.55, 50.),
+            (Predicate.from_dict({"b": 33}), 0.3, 60.),
         ]),
         "Female": (0.25, [
-            (Predicate.from_dict({"b": 40}), 0.35),
-            (Predicate.from_dict({"b": 38}), 0.55),
-            (Predicate.from_dict({"b": 35}), 0.3),
-            (Predicate.from_dict({"b": 33}), 0.05),
+            (Predicate.from_dict({"b": 40}), 0.35, 25.),
+            (Predicate.from_dict({"b": 38}), 0.55, 35.),
+            (Predicate.from_dict({"b": 35}), 0.3, 50.),
+            (Predicate.from_dict({"b": 33}), 0.05, 60.),
         ])},
     }
     comparators = feature_change_builder(None, num_cols=["a", "b"], cate_cols=[], ord_cols=[], feature_weights={"a": 3, "b": 5})
     params = ParameterProxy(featureChanges=comparators)
 
-    sort_result = sort_triples_by_max_costdiff_ignore_nans_infs(
+    sort_result = sort_triples_by_max_costdiff(
         rulesbyif=ifthens,
         group_calculator=partial(if_group_cost_min_change_correctness_threshold, cor_thres=0.6),
-        params=params
+        ignore_infs=True,
+        ignore_nans=True
     )
     assert [ifthen[0] for ifthen in sort_result] == [
         Predicate.from_dict({"a": 13, "b": 45}),
@@ -195,53 +191,52 @@ def test_sort_triples_by_max_costdiff_generic() -> None:
     ifthens = {
         Predicate.from_dict({"a": 13}):
         {"Male": (0.2, [
-            (Predicate.from_dict({"a": 15}), 0.35),
-            (Predicate.from_dict({"a": 17}), 0.58),
-            (Predicate.from_dict({"a": 19}), 0.5),
-            (Predicate.from_dict({"a": 23}), 0.2),
+            (Predicate.from_dict({"a": 15}), 0.35, 6.),
+            (Predicate.from_dict({"a": 17}), 0.58, 12.),
+            (Predicate.from_dict({"a": 19}), 0.5, 18.),
+            (Predicate.from_dict({"a": 23}), 0.2, 30.),
         ]),
         "Female": (0.25, [
-            (Predicate.from_dict({"a": 15}), 0.3),
-            (Predicate.from_dict({"a": 17}), 0.5),
-            (Predicate.from_dict({"a": 19}), 0.2),
-            (Predicate.from_dict({"a": 23}), 0.),
+            (Predicate.from_dict({"a": 15}), 0.3, 6.),
+            (Predicate.from_dict({"a": 17}), 0.5, 12.),
+            (Predicate.from_dict({"a": 19}), 0.2, 18.),
+            (Predicate.from_dict({"a": 23}), 0., 30.),
         ])},
         Predicate.from_dict({"a": 13, "b": 45}):
         {"Male": (0.2, [
-            (Predicate.from_dict({"a": 15, "b": 40}), 0.5),
-            (Predicate.from_dict({"a": 17, "b": 38}), 0.99),
-            (Predicate.from_dict({"a": 19, "b": 35}), 0.75),
-            (Predicate.from_dict({"a": 23, "b": 33}), 0.45),
+            (Predicate.from_dict({"a": 15, "b": 40}), 0.5, 6. + 25.),
+            (Predicate.from_dict({"a": 17, "b": 38}), 0.99, 12. + 35.),
+            (Predicate.from_dict({"a": 19, "b": 35}), 0.75, 18. + 50.),
+            (Predicate.from_dict({"a": 23, "b": 33}), 0.45, 30. + 60.),
         ]),
         "Female": (0.25, [
-            (Predicate.from_dict({"a": 15, "b": 40}), 0.45),
-            (Predicate.from_dict({"a": 17, "b": 38}), 0.8),
-            (Predicate.from_dict({"a": 19, "b": 35}), 0.7),
-            (Predicate.from_dict({"a": 23, "b": 33}), 0.5),
+            (Predicate.from_dict({"a": 15, "b": 40}), 0.45, 6. + 25.),
+            (Predicate.from_dict({"a": 17, "b": 38}), 0.8, 12. + 35.),
+            (Predicate.from_dict({"a": 19, "b": 35}), 0.7, 18. + 50.),
+            (Predicate.from_dict({"a": 23, "b": 33}), 0.5, 30. + 60.),
         ])},
         Predicate.from_dict({"b": 45}):
         {"Male": (0.2, [
-            (Predicate.from_dict({"b": 40}), 0.5),
-            (Predicate.from_dict({"b": 38}), 0.75),
-            (Predicate.from_dict({"b": 35}), 0.55),
-            (Predicate.from_dict({"b": 33}), 0.3),
+            (Predicate.from_dict({"b": 40}), 0.5, 25.),
+            (Predicate.from_dict({"b": 38}), 0.75, 35.),
+            (Predicate.from_dict({"b": 35}), 0.55, 50.),
+            (Predicate.from_dict({"b": 33}), 0.3, 60.),
         ]),
         "Female": (0.25, [
-            (Predicate.from_dict({"b": 40}), 0.35),
-            (Predicate.from_dict({"b": 38}), 0.55),
-            (Predicate.from_dict({"b": 35}), 0.3),
-            (Predicate.from_dict({"b": 33}), 0.05),
+            (Predicate.from_dict({"b": 40}), 0.35, 25.),
+            (Predicate.from_dict({"b": 38}), 0.55, 35.),
+            (Predicate.from_dict({"b": 35}), 0.3, 50.),
+            (Predicate.from_dict({"b": 33}), 0.05, 60.),
         ])},
     }
     comparators = feature_change_builder(None, num_cols=["a", "b"], cate_cols=[], ord_cols=[], feature_weights={"a": 3, "b": 5})
     params = ParameterProxy(featureChanges=comparators)
 
-    sort_result = sort_triples_by_max_costdiff_generic(
+    sort_result = sort_triples_by_max_costdiff(
         rulesbyif=ifthens,
         group_calculator=partial(if_group_cost_min_change_correctness_threshold, cor_thres=0.5),
         ignore_infs=False,
-        ignore_nans=False,
-        params=params
+        ignore_nans=False
     )
     assert [ifthen[0] for ifthen in sort_result] == [
         Predicate.from_dict({"a": 13, "b": 45}),
@@ -250,12 +245,11 @@ def test_sort_triples_by_max_costdiff_generic() -> None:
     ]
     assert all(ifthens[ifc] == thencs for ifc, thencs in sort_result)
 
-    sort_result = sort_triples_by_max_costdiff_generic(
+    sort_result = sort_triples_by_max_costdiff(
         rulesbyif=ifthens,
         group_calculator=partial(if_group_cost_min_change_correctness_threshold, cor_thres=0.6),
         ignore_infs=False,
         ignore_nans=True,
-        params=params
     )
     assert [ifthen[0] for ifthen in sort_result] == [
         Predicate.from_dict({"b": 45}),
@@ -264,12 +258,11 @@ def test_sort_triples_by_max_costdiff_generic() -> None:
     ]
     assert all(ifthens[ifc] == thencs for ifc, thencs in sort_result)
 
-    sort_result = sort_triples_by_max_costdiff_generic(
+    sort_result = sort_triples_by_max_costdiff(
         rulesbyif=ifthens,
         group_calculator=partial(if_group_cost_min_change_correctness_threshold, cor_thres=0.6),
         ignore_infs=True,
         ignore_nans=True,
-        params=params
     )
     assert [ifthen[0] for ifthen in sort_result] == [
         Predicate.from_dict({"a": 13, "b": 45}),
@@ -327,12 +320,11 @@ def test_sort_triples_by_max_costdiff_generic_cumulative() -> None:
     comparators = feature_change_builder(None, num_cols=["a", "b"], cate_cols=[], ord_cols=[], feature_weights={"a": 3, "b": 5})
     params = ParameterProxy(featureChanges=comparators)
 
-    sort_result = sort_triples_by_max_costdiff_generic_cumulative(
+    sort_result = sort_triples_by_max_costdiff(
         rulesbyif=ifthens,
-        group_calculator=partial(if_group_cost_min_change_correctness_cumulative_threshold, cor_thres=0.5),
+        group_calculator=partial(if_group_cost_min_change_correctness_threshold, cor_thres=0.5),
         ignore_infs=False,
         ignore_nans=False,
-        params=params
     )
     assert [ifthen[0] for ifthen in sort_result] == [
         Predicate.from_dict({"a": 13}),
@@ -345,12 +337,11 @@ def test_sort_triples_by_max_costdiff_generic_cumulative() -> None:
     ]
     assert all(ifthens[ifc] == thencs for ifc, thencs in sort_result)
 
-    sort_result = sort_triples_by_max_costdiff_generic_cumulative(
+    sort_result = sort_triples_by_max_costdiff(
         rulesbyif=ifthens,
-        group_calculator=partial(if_group_cost_min_change_correctness_cumulative_threshold, cor_thres=0.73),
+        group_calculator=partial(if_group_cost_min_change_correctness_threshold, cor_thres=0.73),
         ignore_infs=False,
         ignore_nans=True,
-        params=params
     )
     assert [ifthen[0] for ifthen in sort_result] == [
         Predicate.from_dict({"a": 13, "b": 45}),
@@ -359,12 +350,11 @@ def test_sort_triples_by_max_costdiff_generic_cumulative() -> None:
     ]
     assert all(ifthens[ifc] == thencs for ifc, thencs in sort_result)
 
-    sort_result = sort_triples_by_max_costdiff_generic_cumulative(
+    sort_result = sort_triples_by_max_costdiff(
         rulesbyif=ifthens,
-        group_calculator=partial(if_group_cost_min_change_correctness_cumulative_threshold, cor_thres=0.85),
+        group_calculator=partial(if_group_cost_min_change_correctness_threshold, cor_thres=0.85),
         ignore_infs=True,
         ignore_nans=True,
-        params=params
     )
     assert [ifthen[0] for ifthen in sort_result] == [
         Predicate.from_dict({"a": 13, "b": 45}),

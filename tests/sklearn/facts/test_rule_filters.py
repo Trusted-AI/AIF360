@@ -1,18 +1,14 @@
-from aif360.algorithms.postprocessing.facts.rule_filters import (
-    filter_by_correctness,
-    filter_by_correctness_cumulative,
-    filter_by_cost_cumulative,
+from aif360.sklearn.detectors.facts.rule_filters import (
+    remove_rules_below_correctness_threshold,
+    keep_rules_until_correctness_threshold_reached,
+    remove_rules_above_cost_budget,
+    filter_contained_rules_simple,
     filter_contained_rules_keep_max_bias,
     delete_fair_rules,
-    delete_fair_rules_cumulative,
-    filter_contained_rules_keep_max_bias_cumulative,
-    filter_contained_rules_simple,
-    filter_contained_rules_simple_cumulative,
-    keep_cheapest_rules_above_cumulative_correctness_threshold,
     keep_only_minimum_change,
-    keep_only_minimum_change_cumulative
 )
-from aif360.algorithms.postprocessing.facts.predicate import Predicate
+from aif360.sklearn.detectors.facts.predicate import Predicate
+from aif360.sklearn.detectors.facts.misc import calc_costs
 
 rules = {
     Predicate.from_dict({"a": 1, "b": 2, "c": 3}): {
@@ -93,41 +89,46 @@ sg_costs = {
     Predicate.from_dict({"c": 13, "d": 23}): {"Male": 7., "Female": 7.}
 }
 
-def test_filter_by_correctness() -> None:
+def test_remove_rules_below_correctness_threshold() -> None:
     ifclause = Predicate.from_dict({"a": 1, "b": 2, "c": 3})
+    rules_loc = calc_costs(rules)
 
-    res1 = filter_by_correctness(rules, 0.3)
+    res1 = remove_rules_below_correctness_threshold(rules_loc, 0.3)
     assert len(res1[ifclause]["Male"][1]) == 4
     assert len(res1[ifclause]["Female"][1]) == 7
 
-    res2 = filter_by_correctness(rules, 0.5)
+    res2 = remove_rules_below_correctness_threshold(rules_loc, 0.5)
     assert len(res2[ifclause]["Male"][1]) == 4
     assert len(res2[ifclause]["Female"][1]) == 4
 
-    res3 = filter_by_correctness(rules, 0.7)
+    res3 = remove_rules_below_correctness_threshold(rules_loc, 0.7)
     assert len(res3[ifclause]["Male"][1]) == 3
     assert len(res3[ifclause]["Female"][1]) == 2
 
 def test_filter_contained_rules_simple() -> None:
-    res = filter_contained_rules_simple(rules)
+    rules_loc = calc_costs(rules)
+    res = filter_contained_rules_simple(rules_loc)
     assert len(res.keys()) == 3
-    assert all(k in rules and rules[k] == v for k, v in res.items())
+    assert all(k in rules_loc and rules_loc[k] == v for k, v in res.items())
 
 def test_filter_contained_rules_keep_max_bias() -> None:
-    res = filter_contained_rules_keep_max_bias(rules, sg_costs)
+    rules_loc = calc_costs(rules)
+    res = filter_contained_rules_keep_max_bias(rules_loc, sg_costs)
     
     assert len(res.keys()) == 3
-    assert all(k in rules and rules[k] == v for k, v in res.items())
+    assert all(k in rules_loc and rules_loc[k] == v for k, v in res.items())
     assert Predicate.from_dict({"a": 1, "b": 2, "c": 3}) in res
     assert Predicate.from_dict({"a": 13, "b": 23, "c": 3}) in res
 
 def test_delete_fair_rules() -> None:
-    res = delete_fair_rules(rules, sg_costs)
+    rules_loc = calc_costs(rules)
+    res = delete_fair_rules(rules_loc, sg_costs)
 
     assert len(res.keys()) == 3
 
 def test_keep_only_minimum_change() -> None:
-    res = keep_only_minimum_change(rules)
+    rules_loc = calc_costs(rules)
+    res = keep_only_minimum_change(rules_loc)
 
     assert len(res[Predicate.from_dict({"c": 13, "d": 23})]["Male"][1]) == 2
     assert len(res[Predicate.from_dict({"c": 13, "d": 23})]["Female"][1]) == 1
@@ -207,70 +208,70 @@ rules_cumulative = {
     },
 }
 
-def test_filter_by_correctness_cumulative() -> None:
+def test_remove_rules_below_correctness_threshold() -> None:
     ifclause = Predicate.from_dict({"a": 1, "b": 2, "c": 3})
 
-    res1 = filter_by_correctness_cumulative(rules_cumulative, 0.3)
+    res1 = remove_rules_below_correctness_threshold(rules_cumulative, 0.3)
     assert len(res1[ifclause]["Male"][1]) == 5
     assert len(res1[ifclause]["Female"][1]) == 6
 
-    res2 = filter_by_correctness_cumulative(rules_cumulative, 0.5)
+    res2 = remove_rules_below_correctness_threshold(rules_cumulative, 0.5)
     assert len(res2[ifclause]["Male"][1]) == 3
     assert len(res2[ifclause]["Female"][1]) == 3
 
-    res3 = filter_by_correctness_cumulative(rules_cumulative, 0.7)
+    res3 = remove_rules_below_correctness_threshold(rules_cumulative, 0.7)
     assert len(res3[ifclause]["Male"][1]) == 2
     assert len(res3[ifclause]["Female"][1]) == 3
 
-def test_keep_cheapest_rules_above_cumulative_correctness_threshold() -> None:
+def test_keep_rules_until_correctness_threshold_reached() -> None:
     ifclause = Predicate.from_dict({"a": 1, "b": 2, "c": 3})
 
-    res1 = keep_cheapest_rules_above_cumulative_correctness_threshold(rules_cumulative, 0.3)
+    res1 = keep_rules_until_correctness_threshold_reached(rules_cumulative, 0.3)
     assert len(res1[ifclause]["Male"][1]) == 3
     assert len(res1[ifclause]["Female"][1]) == 2
 
-    res2 = keep_cheapest_rules_above_cumulative_correctness_threshold(rules_cumulative, 0.5)
+    res2 = keep_rules_until_correctness_threshold_reached(rules_cumulative, 0.5)
     assert len(res2[ifclause]["Male"][1]) == 5
     assert len(res2[ifclause]["Female"][1]) == 5
 
-    res3 = keep_cheapest_rules_above_cumulative_correctness_threshold(rules_cumulative, 0.7)
+    res3 = keep_rules_until_correctness_threshold_reached(rules_cumulative, 0.7)
     assert len(res3[ifclause]["Male"][1]) == 6
     assert len(res3[ifclause]["Female"][1]) == 5
 
-def test_filter_by_cost_cumulative() -> None:
+def test_remove_rules_above_cost_budget() -> None:
     ifclause = Predicate.from_dict({"a": 1, "b": 2, "c": 3})
 
-    res1 = filter_by_cost_cumulative(rules_cumulative, 3)
+    res1 = remove_rules_above_cost_budget(rules_cumulative, 3)
     assert len(res1[ifclause]["Male"][1]) == 2
     assert len(res1[ifclause]["Female"][1]) == 3
 
-    res2 = filter_by_cost_cumulative(rules_cumulative, 7)
+    res2 = remove_rules_above_cost_budget(rules_cumulative, 7)
     assert len(res2[ifclause]["Male"][1]) == 6
     assert len(res2[ifclause]["Female"][1]) == 4
 
-    res3 = filter_by_cost_cumulative(rules_cumulative, 17)
+    res3 = remove_rules_above_cost_budget(rules_cumulative, 17)
     assert len(res3[ifclause]["Male"][1]) == 7
     assert len(res3[ifclause]["Female"][1]) == 5
 
-def test_filter_contained_rules_simple_cumulative() -> None:
-    res = filter_contained_rules_simple_cumulative(rules_cumulative)
+def test_filter_contained_rules_simple() -> None:
+    res = filter_contained_rules_simple(rules_cumulative)
     assert len(res.keys()) == 3
     assert all(k in rules_cumulative and rules_cumulative[k] == v for k, v in res.items())
 
-def test_filter_contained_rules_keep_max_bias_cumulative() -> None:
-    res = filter_contained_rules_keep_max_bias_cumulative(rules_cumulative, sg_costs)
+def test_filter_contained_rules_keep_max_bias() -> None:
+    res = filter_contained_rules_keep_max_bias(rules_cumulative, sg_costs)
     assert len(res.keys()) == 3
     assert all(k in rules_cumulative and rules_cumulative[k] == v for k, v in res.items())
     assert Predicate.from_dict({"a": 1, "b": 2, "c": 3}) in res.keys()
     assert Predicate.from_dict({"a": 13, "b": 23, "c": 3}) in res.keys()
 
 def test_delete_fair_rules_cumulative() -> None:
-    res = delete_fair_rules_cumulative(rules_cumulative, sg_costs)
+    res = delete_fair_rules(rules_cumulative, sg_costs)
 
     assert len(res.keys()) == 3
 
-def test_keep_only_minimum_change_cumulative() -> None:
-    res = keep_only_minimum_change_cumulative(rules_cumulative)
+def test_keep_only_minimum_change() -> None:
+    res = keep_only_minimum_change(rules_cumulative)
 
-    assert len(res[Predicate.from_dict({"c": 13, "d": 23})]["Male"][1]) == 2
+    assert len(res[Predicate.from_dict({"c": 13, "d": 23})]["Male"][1]) == 1
     assert len(res[Predicate.from_dict({"c": 13, "d": 23})]["Female"][1]) == 1

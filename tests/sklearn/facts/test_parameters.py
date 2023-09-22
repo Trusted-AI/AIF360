@@ -4,7 +4,7 @@ from pandas.api.types import CategoricalDtype
 
 import pytest
 
-from aif360.algorithms.postprocessing.facts.parameters import (
+from aif360.sklearn.detectors.facts.parameters import (
     naive_feature_change_builder,
     feature_change_builder
 )

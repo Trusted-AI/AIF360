@@ -1,6 +1,6 @@
 import pandas as pd
 
-from aif360.algorithms.postprocessing.facts.clean import clean_dataset
+from aif360.sklearn.detectors.facts.clean import clean_dataset
 
 
 def test_clean_adult() -> None:
@@ -24,13 +24,13 @@ def test_clean_adult() -> None:
     cols = ["relationship", "hours-per-week", "age", "income"]
     res_adult = pd.DataFrame(
         [
-            [" Married", "MidTime", 10, 0],
-            [" Married", "OverTime", 20, 1],
-            [" Married", "FullTime", 30, 0],
-            [" Married", "PartTime", 40, 1],
-            [" Married", "OverTime", 50, 1],
-            [" Married", "FullTime", 60, 0],
-            [" Married", "BrainDrain", 70, 1],
+            ["Married", "MidTime", 10, 0],
+            ["Married", "OverTime", 20, 1],
+            ["Married", "FullTime", 30, 0],
+            ["Married", "PartTime", 40, 1],
+            ["Married", "OverTime", 50, 1],
+            ["Married", "FullTime", 60, 0],
+            ["Married", "BrainDrain", 70, 1],
         ],
         columns=cols
     )

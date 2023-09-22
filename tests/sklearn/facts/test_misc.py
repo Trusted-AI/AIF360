@@ -5,18 +5,17 @@ import pandas as pd
 
 import pytest
 
-from aif360.algorithms.postprocessing.facts.misc import (
-    valid_ifthens_with_coverage_correctness,
+from aif360.sklearn.detectors.facts.misc import (
+    valid_ifthens,
     rules2rulesbyif,
     rulesbyif2rules,
     select_rules_subset,
-    select_rules_subset_cumulative,
     select_rules_subset_KStest,
     cum_corr_costs_all,
     cum_corr_costs_all_minimal
 )
-from aif360.algorithms.postprocessing.facts.predicate import Predicate
-from aif360.algorithms.postprocessing.facts.parameters import ParameterProxy, feature_change_builder
+from aif360.sklearn.detectors.facts.predicate import Predicate
+from aif360.sklearn.detectors.facts.parameters import ParameterProxy, feature_change_builder
 
 class MockModel:
     def predict(self, X: pd.DataFrame) -> np.ndarray:
@@ -49,7 +48,7 @@ def test_rule_generation() -> None:
     )
     model = MockModel()
     
-    ifthens = valid_ifthens_with_coverage_correctness(
+    ifthens = valid_ifthens(
         df,
         model,
         sensitive_attribute="sex",
@@ -100,29 +99,29 @@ def test_select_rules_subset() -> None:
     ifthens = {
         Predicate.from_dict({"a": 13}):
         {"Male": (0.2, [
-            (Predicate.from_dict({"a": 15}), 0.35), # cost: 6.
-            (Predicate.from_dict({"a": 17}), 0.7), # cost: 12.
-            (Predicate.from_dict({"a": 19}), 0.5), # cost: 18.
-            (Predicate.from_dict({"a": 23}), 0.2), # cost: 30.
+            (Predicate.from_dict({"a": 15}), 0.35, 6.), # cost: 6.
+            (Predicate.from_dict({"a": 17}), 0.7, 12.), # cost: 12.
+            (Predicate.from_dict({"a": 19}), 0.5, 18.), # cost: 18.
+            (Predicate.from_dict({"a": 23}), 0.2, 30.), # cost: 30.
         ]),
         "Female": (0.25, [
-            (Predicate.from_dict({"a": 15}), 0.3), # cost: 6.
-            (Predicate.from_dict({"a": 17}), 0.5), # cost: 12.
-            (Predicate.from_dict({"a": 19}), 0.2), # cost: 18.
-            (Predicate.from_dict({"a": 23}), 0.), # cost: 30.
+            (Predicate.from_dict({"a": 15}), 0.3, 6.), # cost: 6.
+            (Predicate.from_dict({"a": 17}), 0.5, 12.), # cost: 12.
+            (Predicate.from_dict({"a": 19}), 0.2, 18.), # cost: 18.
+            (Predicate.from_dict({"a": 23}), 0., 30.), # cost: 30.
         ])},
         Predicate.from_dict({"a": 13, "b": 45}):
         {"Male": (0.2, [
-            (Predicate.from_dict({"a": 15, "b": 40}), 0.5), # cost: 31.
-            (Predicate.from_dict({"a": 17, "b": 38}), 0.99), # cost: 47.
-            (Predicate.from_dict({"a": 19, "b": 35}), 0.75), # cost: 68.
-            (Predicate.from_dict({"a": 23, "b": 33}), 0.45), # cost: 90.
+            (Predicate.from_dict({"a": 15, "b": 40}), 0.5, 31.), # cost: 31.
+            (Predicate.from_dict({"a": 17, "b": 38}), 0.99, 47.), # cost: 47.
+            (Predicate.from_dict({"a": 19, "b": 35}), 0.75, 68.), # cost: 68.
+            (Predicate.from_dict({"a": 23, "b": 33}), 0.45, 90.), # cost: 90.
         ]),
         "Female": (0.25, [
-            (Predicate.from_dict({"a": 15, "b": 40}), 0.45), # cost: 31.
-            (Predicate.from_dict({"a": 17, "b": 38}), 0.8), # cost: 47.
-            (Predicate.from_dict({"a": 19, "b": 35}), 0.7), # cost: 68.
-            (Predicate.from_dict({"a": 23, "b": 33}), 0.5), # cost: 90.
+            (Predicate.from_dict({"a": 15, "b": 40}), 0.45, 31.), # cost: 31.
+            (Predicate.from_dict({"a": 17, "b": 38}), 0.8, 47.), # cost: 47.
+            (Predicate.from_dict({"a": 19, "b": 35}), 0.7, 68.), # cost: 68.
+            (Predicate.from_dict({"a": 23, "b": 33}), 0.5, 90.), # cost: 90.
         ])},
     }
     comparators = feature_change_builder(None, num_cols=["a", "b"], cate_cols=[], ord_cols=[], feature_weights={"a": 3, "b": 5})
@@ -130,25 +129,26 @@ def test_select_rules_subset() -> None:
     
     rules, subgroup_costs = select_rules_subset(
         ifthens,
+        metric="num-above-corr",
         top_count=2,
         filter_sequence=["remove-fair-rules"],
-        cor_threshold=0.6,
-        params=params
+        cor_threshold=0.6
     )
+    # print(subgroup_costs)
 
     expected_rules = {
         Predicate.from_dict({"a": 13}):
         {"Male": (0.2, [
-            (Predicate.from_dict({"a": 15}), 0.35), # cost: 6.
-            (Predicate.from_dict({"a": 17}), 0.7), # cost: 12.
-            (Predicate.from_dict({"a": 19}), 0.5), # cost: 18.
-            (Predicate.from_dict({"a": 23}), 0.2), # cost: 30.
+            (Predicate.from_dict({"a": 15}), 0.35, 6.), # cost: 6.
+            (Predicate.from_dict({"a": 17}), 0.7, 12.), # cost: 12.
+            (Predicate.from_dict({"a": 19}), 0.5, 18.), # cost: 18.
+            (Predicate.from_dict({"a": 23}), 0.2, 30.), # cost: 30.
         ]),
         "Female": (0.25, [
-            (Predicate.from_dict({"a": 15}), 0.3), # cost: 6.
-            (Predicate.from_dict({"a": 17}), 0.5), # cost: 12.
-            (Predicate.from_dict({"a": 19}), 0.2), # cost: 18.
-            (Predicate.from_dict({"a": 23}), 0.), # cost: 30.
+            (Predicate.from_dict({"a": 15}), 0.3, 6.), # cost: 6.
+            (Predicate.from_dict({"a": 17}), 0.5, 12.), # cost: 12.
+            (Predicate.from_dict({"a": 19}), 0.2, 18.), # cost: 18.
+            (Predicate.from_dict({"a": 23}), 0., 30.), # cost: 30.
         ])}
     }
     expected_costs = {
@@ -159,7 +159,7 @@ def test_select_rules_subset() -> None:
     assert expected_rules == rules
     assert expected_costs == subgroup_costs
 
-def test_select_rules_subset_cumulative() -> None:
+def test_select_rules_subset_2() -> None:
     ifthens = {
         Predicate.from_dict({"a": 13}):
         {"Male": (0.2, [
@@ -191,12 +191,11 @@ def test_select_rules_subset_cumulative() -> None:
     comparators = feature_change_builder(None, num_cols=["a", "b"], cate_cols=[], ord_cols=[], feature_weights={"a": 3, "b": 5})
     params = ParameterProxy(featureChanges=comparators)
 
-    rules, sg_costs = select_rules_subset_cumulative(
+    rules, sg_costs = select_rules_subset(
         ifthens,
         metric="total-correctness",
         top_count=2,
         filter_sequence=["remove-fair-rules"],
-        params=params
     )
 
     expected_rules = {

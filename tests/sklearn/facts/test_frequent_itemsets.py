@@ -1,7 +1,7 @@
 import pandas as pd
 
-from aif360.algorithms.postprocessing.facts.frequent_itemsets import preprocessDataset, aprioriout2predicateList, runApriori
-from aif360.algorithms.postprocessing.facts.predicate import Predicate
+from aif360.sklearn.detectors.facts.frequent_itemsets import preprocessDataset, aprioriout2predicateList, runApriori
+from aif360.sklearn.detectors.facts.predicate import Predicate
 
 def test_frequent_itemset_pipeline() -> None:
     df = pd.DataFrame(

@@ -2,8 +2,8 @@ import numpy as np
 import pandas as pd
 import string
 
-from aif360.algorithms.postprocessing.facts.predicate import Predicate, featureChangePred, recIsValid, drop_two_above
-from aif360.algorithms.postprocessing.facts.parameters import ParameterProxy
+from aif360.sklearn.detectors.facts.predicate import Predicate, featureChangePred, recIsValid, drop_two_above
+from aif360.sklearn.detectors.facts.parameters import ParameterProxy
 
 
 def test_equal_different_order() -> None:
