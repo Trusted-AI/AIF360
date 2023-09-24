@@ -1,6 +1,6 @@
 import pandas as pd
 
-from aif360.sklearn.detectors.facts.frequent_itemsets import preprocessDataset, aprioriout2predicateList, runApriori
+from aif360.sklearn.detectors.facts.frequent_itemsets import preprocessDataset, fpgrowth_out_to_predicate_list, run_fpgrowth
 from aif360.sklearn.detectors.facts.predicate import Predicate
 
 def test_frequent_itemset_pipeline() -> None:
@@ -15,7 +15,7 @@ def test_frequent_itemset_pipeline() -> None:
     )
     df["a"] = df["a"].astype("category")
 
-    freq_itsets, supports = aprioriout2predicateList(runApriori(preprocessDataset(df), min_support=0.5))
+    freq_itsets, supports = fpgrowth_out_to_predicate_list(run_fpgrowth(preprocessDataset(df), min_support=0.5))
 
     assert supports == [1, 0.5, 0.5, 0.5, 0.5]
     assert set(freq_itsets) == set([
