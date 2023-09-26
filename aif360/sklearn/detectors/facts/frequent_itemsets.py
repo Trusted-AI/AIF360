@@ -69,7 +69,7 @@ def run_fpgrowth(data: DataFrame, min_support: float = 0.001) -> DataFrame:
     Args:
         data (DataFrame): The input DataFrame.
         min_support (float, optional): The minimum support threshold for
-            itemsets. Defaults to 0.001.
+            itemsets. Defaults to 0.001, i.e 0.1%.
 
     Returns:
         DataFrame: The DataFrame containing frequent itemsets sorted by

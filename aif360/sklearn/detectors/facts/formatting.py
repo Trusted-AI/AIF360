@@ -24,16 +24,19 @@ def print_recourse_report(
 ) -> None:
     """
     Prints a report detailing the recourses and fairness assessment for a given set of rules.
+    In our work, we generally refer to this representation as "Comparative Subgroup Counterfactuals".
 
     Args:
         rules (Dict[Predicate, Dict[str, Tuple[float, List[Tuple[Predicate, float, float]]]]]):
             The collection of rules with associated recourses, correctness, and costs.
         population_sizes (Optional[Dict[str, int]], optional):
-            A dictionary specifying the population sizes for the subgroups.
-            If provided, coverage statistics will be included in the report.
+            A dictionary specifying the population sizes for the protected and unprotected populations.
+            If provided, it is added to the coverage statistics included in the report.
             Defaults to None.
         missing_subgroup_val (str, optional):
-            The value to represent missing subgroups in the report.
+            In the case of records with missing values for the protected attribute (e.g. sex), this parameter
+            determines whether the "group" of individuals with unknown protected attribute will be shown
+            in the report or not. In other words, the group with this name is excluded altogether from the report.
             Defaults to "N/A".
         subgroup_costs (Optional[Dict[Predicate, Dict[str, float]]], optional):
             A dictionary specifying the aggregate costs for each subgroup in each rule.
@@ -54,9 +57,9 @@ def print_recourse_report(
             Only applicable when subgroup_costs is provided.
             Defaults to None.
         correctness_metric (bool, optional):
-            Indicates whether to use the correctness metric or the cost metric for assessing bias.
-            If False, the maximum cost difference will be used.
-            If True, the minimum cost difference will be used.
+            Indicates whether the metric to use for assessing bias is correctness or cost metric.
+            If False, it is a cost metric and the group with maximum value is the biased one.
+            If True, it is a correctness metric and the group with minimum value is the biased one.
             Only applicable when subgroup_costs is provided.
             Defaults to False.
         metric_name (str, optional):
@@ -173,17 +176,20 @@ def print_recourse_report_KStest_cumulative(
     metric_name="Fair Effectiveness-Cost Trade-Off",
 ) -> None:
     """
-    Prints a report detailing the recourses and fairness assessment for a given set of rules.
+    Specialized function to produce a report (Comparative Subgroup Counterfactuals) based on the
+    "Fair Effectiveness-Cost Trade-Off" fairness metric, for a given set of rules.
 
     Args:
         rules (Dict[Predicate, Dict[str, Tuple[float, List[Tuple[Predicate, float, float]]]]]):
             The collection of rules with associated recourses, correctness, and costs.
         population_sizes (Optional[Dict[str, int]], optional):
             A dictionary specifying the population sizes for the subgroups.
-            If provided, coverage statistics will be included in the report.
+            If provided, it is added to the coverage statistics included in the report.
             Defaults to None.
         missing_subgroup_val (str, optional):
-            The value to represent missing subgroups in the report.
+            In the case of records with missing values for the protected attribute (e.g. sex), this parameter
+            determines whether the "group" of individuals with unknown protected attribute will be shown
+            in the report or not. In other words, the group with this name is excluded altogether from the report.
             Defaults to "N/A".
         unfairness (Optional[Dict[Predicate, float]], optional):
             A dictionary specifying the unfairness scores for each rule.
@@ -278,11 +284,12 @@ def ifthen2str(
         ifclause (Predicate): The if-clause predicate.
         thenclause (Predicate): The then-clause predicate.
         show_same_feats (bool, optional):
-            Indicates whether to include features with the same values in the string representation.
+            Indicates whether to include features having the same values in both the
+            "if" clause and the "then" clause in the string representation.
             Defaults to False.
         same_col (str, optional):
             The color code to use for displaying features with the same values.
-            Set to "default" to use the default color.
+            Set to "default" to add no color (and hence use the default, if one is already chosen).
             Defaults to "default".
         different_col (str, optional):
             The color code to use for displaying features with different values.
@@ -291,9 +298,6 @@ def ifthen2str(
     Returns:
         Tuple[str, str]: A tuple containing the string representation of the if-clause and then-clause, respectively.
     """
-    # if not recIsValid(ifclause, thenclause,drop_infeasible):
-    #     raise ValueError("If and then clauses should be compatible.")
-
     ifstr = []
     thenstr = []
     first_rep = True

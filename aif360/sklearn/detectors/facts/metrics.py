@@ -3,11 +3,9 @@ from typing import List, Tuple, Dict, Callable
 import numpy as np
 from pandas import DataFrame
 
-from .predicate import Predicate, featureChangePred
-from .parameters import ParameterProxy
+from .predicate import Predicate
 
 ##### Metrics as guided by AReS paper.
-
 
 def incorrectRecoursesIfThen(
     ifclause: Predicate, thenclause: Predicate, X_aff: DataFrame, model
@@ -18,14 +16,13 @@ def incorrectRecoursesIfThen(
         ifclause: The if-clause predicate.
         thenclause: The then-clause predicate.
         X_aff: The affected DataFrame.
-        model: The model API.
+        model: The ML model under study. Expected to have a "predict" method.
 
     Returns:
         The number of incorrect recourses.
 
     Raises:
         ValueError: If there are no covered instances for the given if-clause.
-
     """
     X_aff_covered_bool = (X_aff[ifclause.features] == ifclause.values).all(axis=1)
     X_aff_covered = X_aff[X_aff_covered_bool].copy()

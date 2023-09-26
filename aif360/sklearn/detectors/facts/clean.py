@@ -90,6 +90,7 @@ def clean_compas(X: DataFrame) -> DataFrame:
 
 def clean_dataset(X: DataFrame, dataset: str) -> DataFrame:
     """Cleans and modifies the input DataFrame based on the specified dataset types.
+    Convenience function for calling the above functions specifying the dataset as an argument.
 
     Args:
         X (DataFrame): The input DataFrame to be cleaned.
@@ -101,8 +102,32 @@ def clean_dataset(X: DataFrame, dataset: str) -> DataFrame:
     Raises:
         None
 
-    Examples:
-        >>> df = clean_dataset(X, "adult")
+    Example:
+        >>> cols = ["fnlwgt", "education", "relationship", "hours-per-week", "age", "income"]
+        >>> mock_adult = pd.DataFrame(
+        ... [
+        ...     [13, "hello", " ?", 15, 30, " <=50K"],
+        ...     [13, "hello", " waifu", 15, " ?", " <=50K"],
+        ...     [13, "hello", " ?", 15, 30, " broke"],
+        ...     [" ?", "hello", " Husband", 30, 10, " <=50K"],
+        ...     [13, "hello", " Husband", 45, 20, " >50K"],
+        ...     [13, "hello", " Husband", 39.5, 30, " <=50K"],
+        ...     [13, "hello", " Husband", 15, 40, " >50K"],
+        ...     [13, "hello", " Wife", 45, 50, " >50K"],
+        ...     [13, "hello", " Wife", 39.5, 60, " <=50K"],
+        ...     [13, "hello", " Wife", 80, 70, " >50K"],
+        ... ],
+        ... columns=cols
+        ... )
+        >>> print(clean_dataset(mock_adult, "adult"))
+          relationship hours-per-week            age  income
+        3      Married        MidTime  (9.999, 22.0]       0
+        4      Married       OverTime  (9.999, 22.0]       1
+        5      Married       FullTime   (22.0, 34.0]       0
+        6      Married       PartTime   (34.0, 46.0]       1
+        7      Married       OverTime   (46.0, 58.0]       1
+        8      Married       FullTime   (58.0, 70.0]       0
+        9      Married     BrainDrain   (58.0, 70.0]       1
     """
 
     if dataset == "adult":
