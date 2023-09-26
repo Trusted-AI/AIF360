@@ -152,6 +152,7 @@ Bias scan
    :template: base.rst
 
    detectors.bias_scan
+   detectors.FACTS
 
 :mod:`aif360.sklearn.preprocessing`: Pre-processing algorithms
 ==============================================================
