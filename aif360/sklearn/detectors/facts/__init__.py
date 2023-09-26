@@ -82,24 +82,41 @@ class FACTS(BaseEstimator):
     
     def bias_scan(
         self,
-        metric: str = "atomic-total-correctness",
+        metric: str = "total-correctness",
+        viewpoint: str = "macro",
         sort_strategy: str = "max-cost-diff-decr",
         top_count: int = 10,
         filter_sequence: List[str] = [],
-        cor_threshold: float = 0.5,
-        cost_threshold: float = 0.5
+        phi: float = 0.5,
+        c: float = 0.5
     ):
-        viewpoint = metric.split("-")[0]
-        metric = "-".join(metric.split("-")[1:])
-        rules = self.rules_by_if if viewpoint == "atomic" else self.rules_with_cumulative
+        if viewpoint == "macro":
+            rules = self.rules_by_if
+        elif viewpoint == "micro":
+            rules = self.rules_with_cumulative
+        else:
+            raise ValueError("viewpoint parameter can be either 'macro' or 'micro'")
+        rules = self.rules_by_if if viewpoint == "macro" else self.rules_with_cumulative
+
+        easy2hard_name_map = {
+            "equal-effectiveness": "total-correctness",
+            "equal-choice-for-recourse": "num-above-corr",
+            "equal-effectiveness-within-budget": "max-upto-cost",
+            "equal-cost-of-effectiveness": "min-above-corr",
+            "equal-mean-recourse": "fairness-of-mean-recourse-conditional",
+            # TODO: integrate fair effectiveness-cost tradeoff with the rest of the framework
+            "fair-tradeoff": "..."
+        }
+        metric = easy2hard_name_map[metric]
+
         top_rules, subgroup_costs = select_rules_subset(
             rules,
             metric=metric,
             sort_strategy=sort_strategy,
             top_count=top_count,
             filter_sequence=filter_sequence,
-            cor_threshold=cor_threshold,
-            cost_threshold=cost_threshold
+            cor_threshold=phi,
+            cost_threshold=c
         )
 
         return top_rules, subgroup_costs

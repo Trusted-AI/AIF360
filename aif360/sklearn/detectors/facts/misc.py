@@ -7,7 +7,7 @@ from pandas import DataFrame
 
 from .parameters import *
 from .predicate import Predicate, recIsValid, featureChangePred, drop_two_above
-from .frequent_itemsets import runApriori, preprocessDataset, aprioriout2predicateList
+from .frequent_itemsets import run_fpgrowth, preprocessDataset, fpgrowth_out_to_predicate_list
 from .metrics import (
     incorrectRecoursesIfThen,
     if_group_cost_min_change_correctness_threshold,
@@ -72,8 +72,8 @@ def freqitemsets_with_supports(
         Tuple[List[Predicate], List[float]]:
             A tuple containing the list of frequent itemsets and their support values.
     """
-    ret = aprioriout2predicateList(
-        runApriori(preprocessDataset(X), min_support=min_support)
+    ret = fpgrowth_out_to_predicate_list(
+        run_fpgrowth(preprocessDataset(X), min_support=min_support)
     )
     return ret
 
@@ -212,33 +212,28 @@ def valid_ifthens(
 
     # calculate frequent itemsets for each subgroup and turn them into predicates
     print(
-        "Computing frequent itemsets for each subgroup of the affected instances.",
+        "Computing candidate subgroups.",
         flush=True,
     )
     RLs_and_supports = {
         sg: freqitemsets_with_supports(affected_sg, min_support=freqitem_minsupp)
-        for sg, affected_sg in tqdm(affected_subgroups.items())
+        for sg, affected_sg in tqdm(affected_subgroups.items(), leave=False)
     }
 
     # intersection of frequent itemsets of all sensitive subgroups
+    aff_intersection = aff_intersection_version_2(RLs_and_supports, subgroups)
+    print(f"Number of subgroups: {len(aff_intersection)}", flush=True)
+
     print(
-        "Computing the intersection between the frequent itemsets of each subgroup of the affected instances.",
+        "Computing candidate recourses for all subgroups.",
         flush=True,
     )
-
-    aff_intersection = aff_intersection_version_2(RLs_and_supports, subgroups)
-    print(f"Number of subgroups in the intersection: {len(aff_intersection)}", flush=True)
-
     # Frequent itemsets for the unaffacted (to be used in the then clauses)
     freq_unaffected, _ = freqitemsets_with_supports(
         X_unaff, min_support=freqitem_minsupp
     )
 
     # Filter all if-then pairs to keep only valid
-    print(
-        "Computing all valid if-then pairs between the common frequent itemsets of each subgroup of the affected instances and the frequent itemsets of the unaffacted instances.",
-        flush=True,
-    )
 
     # we want to create a dictionary for freq_unaffected key: features in tuple, value: list(values)
     # for each Predicate in aff_intersection we loop through the list from dictionary
@@ -283,7 +278,7 @@ def valid_ifthens(
         ]
 
     # Calculate incorrectness percentages
-    print("Computing correctenesses for all valid if-thens.", flush=True)
+    print("Computing percentages of individuals flipped.", flush=True)
     ifthens_with_correctness = calculate_correctnesses(
         ifthens, affected_subgroups, sensitive_attribute, model
     )
