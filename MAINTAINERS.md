@@ -64,7 +64,7 @@ request for them, and feel free to close the pull request once they confirm.
 
 ### Does the change introduce a new feature?
 
-For any given pull request, ask yourself "is this a new feature?" If so, does
+For any given pull request, ask yourself "Is this a new feature?" If so, does
 the pull request (or associated issue) contain narrative indicating the need
 for the feature? If not, ask them to provide that information.
 
