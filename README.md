@@ -158,13 +158,13 @@ pip install --editable '.[all]'
 
 ### For Windows machine:
 
-Install Conda use Windows exe from Conda Downloads website:
+1. Install Conda use Windows exe from Conda Downloads website:
 https://docs.conda.io/projects/miniconda/en/latest/
 
-Add PATH to Environment Variables
+2. Add PATH to Environment Variables
 Sample value to add:  C:\ProgramData\miniconda3\condabin
 
-To avoid error "Unable to determine R Home:
+To avoid error `Unable to determine R Home`:
 - Install R
 - Create R_HOME system variable
 - Add R_HOME\bin to the PATH, in order to execute R from python
