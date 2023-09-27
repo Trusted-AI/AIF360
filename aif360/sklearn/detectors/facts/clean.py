@@ -26,7 +26,7 @@ def clean_adult(X: DataFrame) -> DataFrame:
             return x.strip()
         else:
             return x
-    X = X.map(strip_str)
+    X = X.applymap(strip_str)
     X["relationship"] = X["relationship"].replace(["Husband", "Wife"], "Married")
     X["hours-per-week"] = pd.cut(
         x=X["hours-per-week"],

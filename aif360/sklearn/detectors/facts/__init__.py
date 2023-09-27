@@ -35,25 +35,25 @@ class FACTS(BaseEstimator):
         self,
         estimator,
         prot_attr,
-        cate_features=None,
+        categorical_features=None,
         freq_itemset_min_supp=0.1,
         feature_weights=defaultdict(lambda : 1),
     ):
         self.estimator = estimator
         self.prot_attr = prot_attr
         self.freq_itemset_min_supp = freq_itemset_min_supp
-        self.cate_features = cate_features
+        self.categorical_features = categorical_features
         self.feature_weights = feature_weights
 
     def fit(self, X):
-        if self.cate_features is None:
-            self.cate_features = X.select_dtypes(include=["object", "category"]).columns.to_list()
+        if self.categorical_features is None:
+            self.categorical_features = X.select_dtypes(include=["object", "category"]).columns.to_list()
         
-        num_features = list(set(X.columns) - set(self.cate_features))
+        num_features = list(set(X.columns) - set(self.categorical_features))
         comparators = feature_change_builder(
             X=X,
             num_cols=num_features,
-            cate_cols=self.cate_features,
+            cate_cols=self.categorical_features,
             ord_cols=[],
             feature_weights=self.feature_weights,
             num_normalization=False,
@@ -69,6 +69,7 @@ class FACTS(BaseEstimator):
 
         rules_by_if = rules2rulesbyif(ifthens_coverage_correctness)
 
+        print("Computing percentages of individuals flipped by any action with cost up to c, for every c", flush=True)
         self.rules_with_cumulative = cum_corr_costs_all(
             rulesbyif=rules_by_if,
             X=X,
@@ -119,5 +120,31 @@ class FACTS(BaseEstimator):
             cost_threshold=c
         )
 
-        return top_rules, subgroup_costs
+        self.top_rules = top_rules
+        self.subgroup_costs = subgroup_costs
+    
+    def print_recourse_report(
+        self,
+        population_sizes=None,
+        missing_subgroup_val="N/A",
+        show_subgroup_costs=False,
+        show_action_costs=False,
+        show_cumulative_plots=False,
+        show_bias=None,
+        correctness_metric=False,
+        metric_name=None,
+    ):
+        print_recourse_report(
+            self.top_rules,
+            population_sizes=population_sizes,
+            missing_subgroup_val=missing_subgroup_val,
+            subgroup_costs=self.subgroup_costs,
+            show_subgroup_costs=show_subgroup_costs,
+            show_then_costs=show_action_costs,
+            show_cumulative_plots=show_cumulative_plots,
+            show_bias=show_bias,
+            correctness_metric=correctness_metric,
+            metric_name=metric_name
+        )
+
 
