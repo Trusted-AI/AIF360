@@ -156,7 +156,7 @@ Then, navigate to the root directory of the project and run:
 pip install --editable '.[all]'
 ```
 
-###For Windows machine
+### For Windows machine:
 
 Install Conda use Windows exe from Conda Downloads website:
 https://docs.conda.io/projects/miniconda/en/latest/
