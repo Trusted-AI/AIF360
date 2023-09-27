@@ -20,7 +20,7 @@ def print_recourse_report(
     show_cumulative_plots: bool = False,
     show_bias: Optional[str] = None,
     correctness_metric: bool = False,
-    metric_name: str = "Equal Effectiveness",
+    metric_name: Optional[str] = None,
 ) -> None:
     """
     Prints a report detailing the recourses and fairness assessment for a given set of rules.
@@ -145,8 +145,9 @@ def print_recourse_report(
                     curr_subgroup_costs.items(), key=lambda p: p[1]
                 )
             if max_intergroup_cost_diff > 0:
+                metric_message = "" if metric_name is None else f" due to {metric_name}"
                 print(
-                    f"\t{Fore.MAGENTA}Bias against {biased_subgroup} due to {metric_name}. Unfairness score = {round(max_intergroup_cost_diff,3)}.{Fore.RESET}"
+                    f"\t{Fore.MAGENTA}Bias against {biased_subgroup}{metric_message}. Unfairness score = {round(max_intergroup_cost_diff,3)}.{Fore.RESET}"
                 )
             else:
                 print(f"\t{Fore.MAGENTA}No bias!{Fore.RESET}")

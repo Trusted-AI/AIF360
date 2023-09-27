@@ -277,8 +277,8 @@ def valid_ifthens(
             if drop_two_above(ifs, then, age)
         ]
 
-    # Calculate incorrectness percentages
-    print("Computing percentages of individuals flipped.", flush=True)
+    # Calculate correctness percentages
+    print("Computing percentages of individuals flipped by each action independently.", flush=True)
     ifthens_with_correctness = calculate_correctnesses(
         ifthens, affected_subgroups, sensitive_attribute, model
     )
