@@ -143,8 +143,8 @@ class MetricJSONExplainer(MetricTextExplainer):
         response = OrderedDict((
             ("metric", "Consistency"),
             ("message", outcome),
-            ("description", "Individual fairness metric from Zemel, Rich, et al. \"Learning fair representations.\", ICML 2013. "
-                            "Measures how similar the labels are for similar instances."),
+            ("description", "Individual fairness metric from Zemel, Rich, et al. \"Learning fair representations.\", ICML 2013. "),
+            ("Measures how similar the labels are for similar instances."),
             ("ideal", "The ideal value of this metric is 1.0")
         ))
         return json.dumps(response)
@@ -152,7 +152,7 @@ class MetricJSONExplainer(MetricTextExplainer):
     def disparate_impact(self):
         outcome = super(MetricJSONExplainer, self).disparate_impact()
         response = []
-        if type(self.metric) is BinaryLabelDatasetMetric:
+        if isinstance(self.metric, BinaryLabelDatasetMetric):
             response = OrderedDict((
                 ("metric", "Disparate Impact"),
                 ("message", outcome),
@@ -546,7 +546,7 @@ class MetricJSONExplainer(MetricTextExplainer):
     def statistical_parity_difference(self):
         outcome = super(MetricJSONExplainer, self).statistical_parity_difference()
         response = []
-        if type(self.metric) is BinaryLabelDatasetMetric:
+        if isinstance(self.metric, BinaryLabelDatasetMetric):
             response = OrderedDict((
                 ("metric", "Statistical Parity Difference"),
                 ("message", outcome),

@@ -1,12 +1,12 @@
-from ..notebook_runner import notebook_run
+from .notebook_runner import notebook_run
 import os
 
 
-def test_demo_exp_grad_red_sklearn():
+def test_demo_multi_attribute_adversarial_debiasing():
     nb, errors = notebook_run(os.path.join(
             os.path.dirname(os.path.abspath(__file__)),
-            '..', '..','examples', 'sklearn',
-            'demo_exponentiated_gradient_reduction_sklearn.ipynb'))
+            '..','examples',
+            'demo_multi_attribute_adversarial_debiasing.ipynb'))
 
     if len(errors) > 0:
         for err in errors:
