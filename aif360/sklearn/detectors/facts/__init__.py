@@ -10,9 +10,10 @@ from .misc import (
     calc_costs,
     rules2rulesbyif,
     select_rules_subset,
+    select_rules_subset_KStest,
     cum_corr_costs_all
 )
-from .formatting import print_recourse_report
+from .formatting import print_recourse_report, print_recourse_report_KStest_cumulative
 
 __all__ = ["FACTS", "print_recourse_report"]
 
@@ -96,6 +97,8 @@ class FACTS(BaseEstimator):
         )
         self.rules_by_if = calc_costs(rules_by_if)
 
+        self.dataset = X.copy(deep=True)
+
         return self
     
     def bias_scan(
@@ -122,23 +125,33 @@ class FACTS(BaseEstimator):
             "equal-effectiveness-within-budget": "max-upto-cost",
             "equal-cost-of-effectiveness": "min-above-corr",
             "equal-mean-recourse": "fairness-of-mean-recourse-conditional",
-            # TODO: integrate fair effectiveness-cost tradeoff with the rest of the framework
-            "fair-tradeoff": "..."
+            "fair-tradeoff": "fair-tradeoff",
         }
         metric = easy2hard_name_map[metric]
 
-        top_rules, subgroup_costs = select_rules_subset(
-            rules,
-            metric=metric,
-            sort_strategy=sort_strategy,
-            top_count=top_count,
-            filter_sequence=filter_sequence,
-            cor_threshold=phi,
-            cost_threshold=c
-        )
-
-        self.top_rules = top_rules
-        self.subgroup_costs = subgroup_costs
+        if metric == "fair-tradeoff":
+            preds_Xtest = self.estimator.predict(self.dataset)
+            pop_sizes = {
+                sg: ((self.dataset[self.prot_attr] == sg) & (preds_Xtest == 0)).sum()
+                for sg in self.dataset[self.prot_attr].unique()
+            }
+            self.top_rules, self.unfairness = select_rules_subset_KStest(
+                rulesbyif=rules,
+                affected_population_sizes=pop_sizes,
+                top_count=top_count
+            )
+            self.subgroup_costs = None
+        else:
+            self.top_rules, self.subgroup_costs = select_rules_subset(
+                rulesbyif=rules,
+                metric=metric,
+                sort_strategy=sort_strategy,
+                top_count=top_count,
+                filter_sequence=filter_sequence,
+                cor_threshold=phi,
+                cost_threshold=c
+            )
+            self.unfairness = None
     
     def print_recourse_report(
         self,
@@ -151,17 +164,29 @@ class FACTS(BaseEstimator):
         correctness_metric=False,
         metric_name=None,
     ):
-        print_recourse_report(
-            self.top_rules,
-            population_sizes=population_sizes,
-            missing_subgroup_val=missing_subgroup_val,
-            subgroup_costs=self.subgroup_costs,
-            show_subgroup_costs=show_subgroup_costs,
-            show_then_costs=show_action_costs,
-            show_cumulative_plots=show_cumulative_plots,
-            show_bias=show_bias,
-            correctness_metric=correctness_metric,
-            metric_name=metric_name
-        )
+        if self.unfairness is not None:
+            print_recourse_report_KStest_cumulative(
+                self.top_rules,
+                population_sizes=population_sizes,
+                missing_subgroup_val=missing_subgroup_val,
+                unfairness=self.unfairness,
+                show_then_costs=show_action_costs,
+                show_cumulative_plots=show_cumulative_plots,
+            )
+        elif self.subgroup_costs is not None:
+            print_recourse_report(
+                self.top_rules,
+                population_sizes=population_sizes,
+                missing_subgroup_val=missing_subgroup_val,
+                subgroup_costs=self.subgroup_costs,
+                show_subgroup_costs=show_subgroup_costs,
+                show_then_costs=show_action_costs,
+                show_cumulative_plots=show_cumulative_plots,
+                show_bias=show_bias,
+                correctness_metric=correctness_metric,
+                metric_name=metric_name
+            )
+        else:
+            raise RuntimeError("Something went wrong. Either subgroup_costs or simply unfairness should exist.")
 
 

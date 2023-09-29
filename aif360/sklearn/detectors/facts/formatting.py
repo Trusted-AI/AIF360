@@ -174,7 +174,6 @@ def print_recourse_report_KStest_cumulative(
     unfairness: Optional[Dict[Predicate, float]] = None,
     show_then_costs: bool = False,
     show_cumulative_plots: bool = False,
-    metric_name="Fair Effectiveness-Cost Trade-Off",
 ) -> None:
     """
     Specialized function to produce a report (Comparative Subgroup Counterfactuals) based on the
@@ -252,9 +251,9 @@ def print_recourse_report_KStest_cumulative(
                 print(".")
 
         if unfairness is not None:
-            curr_subgroup_costs = unfairness[ifclause]
+            curr_unfairness = unfairness[ifclause]
             print(
-                f"\t{Fore.MAGENTA} Unfairness based on the {metric_name} = {round(curr_subgroup_costs,2)}.{Fore.RESET}"
+                f"\t{Fore.MAGENTA} Unfairness based on \"Fair Effectiveness-Cost Trade-Off\" metric = {round(curr_unfairness,2)}.{Fore.RESET}"
             )
 
         if show_cumulative_plots:
