@@ -162,7 +162,7 @@ def featureChangePred(
     return total
 
 def recIsValid(
-    p1: Predicate, p2: Predicate, X: DataFrame, drop_infeasible: bool
+    p1: Predicate, p2: Predicate, X: DataFrame, drop_infeasible: bool, feats_not_allowed_to_change: List[str] = []
 ) -> bool:
     """
     Checks if the given pair of predicates is valid based on the provided conditions.
@@ -176,7 +176,6 @@ def recIsValid(
     Returns:
         True if the pair of predicates is valid, False otherwise.
     """
-    feat_change = True
     n1 = len(p1.features)
     n2 = len(p2.features)
     if n1 != n2:
@@ -185,42 +184,46 @@ def recIsValid(
     featuresMatch = all(map(operator.eq, p1.features, p2.features))
     existsChange = any(map(operator.ne, p1.values, p2.values))
 
+    if not (featuresMatch and existsChange):
+        return False
+
     if n1 == len(X.columns) and all(map(operator.ne, p1.values, p2.values)):
+        return False
+    
+    p1_d = p1.to_dict()
+    p2_d = p2.to_dict()
+    if any(f in feats_not_allowed_to_change and p1_d[f] != p2_d[f] for f in p1.features):
         return False
 
     if drop_infeasible == True:
-        if all(map(operator.eq, p1.features, p2.features)) and any(
-            map(operator.ne, p1.values, p2.values)
-        ):
-            for count, feat in enumerate(p1.features):
-                if p1.values[count] != "Unknown" and p2.values[count] == "Unknown":
-                    return False
-                if feat == "parents":
-                    parents_change = p1.values[count] <= p2.values[count]
-                    feat_change = feat_change and parents_change
-                if feat == "age":
-                    age_change = p1.values[count].left <= p2.values[count].left
-                    feat_change = feat_change and age_change
-                elif feat == "ages":
-                    age_change = p1.values[count] <= p2.values[count]
-                    feat_change = feat_change and age_change
-                elif feat == "education-num":
-                    edu_change = p1.values[count] <= p2.values[count]
-                    feat_change = feat_change and edu_change
-                elif feat == "PREDICTOR RAT AGE AT LATEST ARREST":
-                    age_change = p1.values[count] <= p2.values[count]
-                    feat_change = feat_change and age_change
-                elif feat == "age_cat":
-                    age_change = p1.values[count] <= p2.values[count]
-                    feat_change = feat_change and age_change
-                elif feat == "sex":
-                    race_change = p1.values[count] == p2.values[count]
-                    feat_change = feat_change and race_change
-            return feat_change
-        else:
-            return False
-    else:
-        return featuresMatch and existsChange
+        feat_change = True
+        for count, feat in enumerate(p1.features):
+            if p1.values[count] != "Unknown" and p2.values[count] == "Unknown":
+                return False
+            if feat == "parents":
+                parents_change = p1.values[count] <= p2.values[count]
+                feat_change = feat_change and parents_change
+            if feat == "age":
+                age_change = p1.values[count].left <= p2.values[count].left
+                feat_change = feat_change and age_change
+            elif feat == "ages":
+                age_change = p1.values[count] <= p2.values[count]
+                feat_change = feat_change and age_change
+            elif feat == "education-num":
+                edu_change = p1.values[count] <= p2.values[count]
+                feat_change = feat_change and edu_change
+            elif feat == "PREDICTOR RAT AGE AT LATEST ARREST":
+                age_change = p1.values[count] <= p2.values[count]
+                feat_change = feat_change and age_change
+            elif feat == "age_cat":
+                age_change = p1.values[count] <= p2.values[count]
+                feat_change = feat_change and age_change
+            elif feat == "sex":
+                race_change = p1.values[count] == p2.values[count]
+                feat_change = feat_change and race_change
+        return feat_change
+    
+    return True
 
 
 def drop_two_above(p1: Predicate, p2: Predicate, l: list) -> bool:

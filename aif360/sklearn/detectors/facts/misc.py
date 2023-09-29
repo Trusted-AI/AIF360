@@ -178,6 +178,7 @@ def valid_ifthens(
     missing_subgroup_val: str = "N/A",
     drop_infeasible: bool = True,
     drop_above: bool = True,
+    feats_not_allowed_to_change: List[str] = []
 ) -> List[Tuple[Predicate, Predicate, Dict[str, float], Dict[str, float]]]:
     """
     Compute valid if-then rules along with their coverage and correctness metrics.
@@ -258,6 +259,7 @@ def valid_ifthens(
                 Predicate(predicate_.features, candidate_values),
                 affected_subgroups[subgroups[0]],
                 drop_infeasible,
+                feats_not_allowed_to_change=feats_not_allowed_to_change
             ):
                 ifthens.append(
                     (

@@ -1,6 +1,7 @@
 from typing import List
 from collections import defaultdict
 
+from pandas import DataFrame
 from sklearn.base import BaseEstimator
 
 from .parameters import ParameterProxy, feature_change_builder
@@ -38,17 +39,32 @@ class FACTS(BaseEstimator):
         categorical_features=None,
         freq_itemset_min_supp=0.1,
         feature_weights=defaultdict(lambda : 1),
+        feats_allowed_to_change=None,
+        feats_not_allowed_to_change=None,
     ):
         self.estimator = estimator
         self.prot_attr = prot_attr
         self.freq_itemset_min_supp = freq_itemset_min_supp
         self.categorical_features = categorical_features
         self.feature_weights = feature_weights
+        self.feats_allowed_to_change = feats_allowed_to_change
+        self.feats_not_allowed_to_change = feats_not_allowed_to_change
 
-    def fit(self, X):
+    def fit(self, X: DataFrame):
         if self.categorical_features is None:
             self.categorical_features = X.select_dtypes(include=["object", "category"]).columns.to_list()
-        
+        all_feats = X.columns.tolist()
+        if self.feats_allowed_to_change is not None and self.feats_not_allowed_to_change is not None:
+            raise ValueError("Please specify only feats_allowed_to_change or feats_not_allowed_to_change, not both.")
+        elif self.feats_allowed_to_change is None and self.feats_not_allowed_to_change is None:
+            feats_not_allowed_to_change = set()
+        elif self.feats_allowed_to_change is not None:
+            feats_not_allowed_to_change = set(all_feats) - set(self.feats_allowed_to_change)
+        elif self.feats_not_allowed_to_change is not None:
+            feats_not_allowed_to_change = set(self.feats_not_allowed_to_change)
+        else:
+            raise Exception("Code should be unreachable.")
+
         num_features = list(set(X.columns) - set(self.categorical_features))
         comparators = feature_change_builder(
             X=X,
@@ -64,7 +80,8 @@ class FACTS(BaseEstimator):
             X=X,
             model=self.estimator,
             sensitive_attribute=self.prot_attr,
-            freqitem_minsupp=self.freq_itemset_min_supp
+            freqitem_minsupp=self.freq_itemset_min_supp,
+            feats_not_allowed_to_change=list(feats_not_allowed_to_change)
         )
 
         rules_by_if = rules2rulesbyif(ifthens_coverage_correctness)
