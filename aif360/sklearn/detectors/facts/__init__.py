@@ -35,7 +35,7 @@ class FACTS(BaseEstimator):
 
     def __init__(
         self,
-        estimator,
+        clf,
         prot_attr,
         categorical_features=None,
         freq_itemset_min_supp=0.1,
@@ -43,7 +43,40 @@ class FACTS(BaseEstimator):
         feats_allowed_to_change=None,
         feats_not_allowed_to_change=None,
     ):
-        self.estimator = estimator
+        """
+        Args:
+            clf (sklearn.base.BaseEstimator): A trained and ready to use
+                classifier, implementing method `predict(X)`, where `X` is
+                the matrix of features; predictions returned by `predict(X)`
+                are either 0 or 1 -- in other words, trained scikit-learn
+                classifiers.
+            prot_attr (str): the name of the column that represents the
+                protected attribute.
+            categorical_features (list(str), optional): the list of categorical
+                features. The default is to choose (dynamically, inside `fit`) the
+                columns of the dataset with types "object" or "category".
+            freq_itemset_min_supp (float, optional): minimum support for all the runs
+                of the frequent itemset mining algorithm (specifically, `FP Growth <https://en.wikipedia.org/wiki/Association_rule_learning#FP-growth_algorithm>`_).
+                We mine frequent itemsets to generate candidate subpopulation groups and candidate actions.
+                For more information, see paper [#FACTS23]_.
+                Defaults to 10%.
+            feature_weights (dict(str, float), optional): the weights for each feature. Used in the calculation
+                of the cost of a suggested change. Specifically, the term corresponding to each feature is
+                multiplied by this weight.
+                Defaults to 1, for all features.
+            feats_allowed_to_change (list(str), optional): if provided, only
+                allows these features to change value in the suggested recourses.
+                Default: no frozen features.
+                *Note*: providing both `feats_allowed_to_change` and
+                `feats_not_allowed_to_change` is currently treated as an error.
+            feats_not_allowed_to_change (list(str), optional): if provided,
+                prevents these features from changing at all in any given
+                recourse.
+                Default: no frozen features.
+                *Note*: providing both `feats_allowed_to_change` and
+                `feats_not_allowed_to_change` is currently treated as an error.
+        """
+        self.clf = clf
         self.prot_attr = prot_attr
         self.freq_itemset_min_supp = freq_itemset_min_supp
         self.categorical_features = categorical_features
@@ -52,6 +85,22 @@ class FACTS(BaseEstimator):
         self.feats_not_allowed_to_change = feats_not_allowed_to_change
 
     def fit(self, X: DataFrame):
+        """Calculates subpopulation groups, actions and respective effectiveness
+
+        Args:
+            X (DataFrame): Dataset given as a :class:`pandas.DataFrame`. As in
+                standard scikit-learn convention, it is expected to contain one
+                instance per row and one feature / explanatory variable per
+                column (labels not needed, we already have an ML model).
+
+        Raises:
+            ValueError: `feats_allowed_to_change` and `feats_not_allowed_to_change`
+                cannot be given simultaneously.
+            Exception: when unreachable code is executed.
+
+        Returns:
+            FACTS: Returns self.
+        """
         if self.categorical_features is None:
             self.categorical_features = X.select_dtypes(include=["object", "category"]).columns.to_list()
         all_feats = X.columns.tolist()
@@ -79,7 +128,7 @@ class FACTS(BaseEstimator):
         
         ifthens_coverage_correctness = valid_ifthens(
             X=X,
-            model=self.estimator,
+            model=self.clf,
             sensitive_attribute=self.prot_attr,
             freqitem_minsupp=self.freq_itemset_min_supp,
             feats_not_allowed_to_change=list(feats_not_allowed_to_change)
@@ -91,7 +140,7 @@ class FACTS(BaseEstimator):
         self.rules_with_cumulative = cum_corr_costs_all(
             rulesbyif=rules_by_if,
             X=X,
-            model=self.estimator,
+            model=self.clf,
             sensitive_attribute=self.prot_attr,
             params=params,
         )
@@ -103,7 +152,7 @@ class FACTS(BaseEstimator):
     
     def bias_scan(
         self,
-        metric: str = "total-correctness",
+        metric: str = "equal-effectiveness",
         viewpoint: str = "macro",
         sort_strategy: str = "max-cost-diff-decr",
         top_count: int = 10,
@@ -111,6 +160,80 @@ class FACTS(BaseEstimator):
         phi: float = 0.5,
         c: float = 0.5
     ):
+        """Examines generated subgroups and calculates the `top_count` most
+        unfair ones, with respect to the chosen metric.
+
+        Stores the final groups in instance variable `self.top_rules` and the
+        respective subgroup costs in `self.subgroup_costs` (or `self.unfairness`
+        for the "fair-tradeoff" metric).
+
+        Args:
+            metric (str, optional): one of the following choices
+            
+                - "equal-effectiveness"
+                - "equal-choice-for-recourse"
+                - "equal-effectiveness-within-budget"
+                - "equal-cost-of-effectiveness"
+                - "equal-mean-recourse"
+                - "fair-tradeoff"
+                
+                Defaults to "equal-effectiveness".
+
+                For explanation of each of those metrics, refer either to the
+                paper [#FACTS23]_ or the demo_FACTS notebook.
+
+            viewpoint (str, optional): "macro" or "micro". Defaults to "macro".
+
+            sort_strategy (str, optional): one of the following choices
+                
+                - `"max-cost-diff-decr"`: simply rank the groups in descending \
+                    order according to the unfairness metric.
+                - `"max-cost-diff-decr-ignore-forall-subgroups-empty"`: ignore \
+                    groups for which we have no available actions whatsoever.
+                - `"max-cost-diff-decr-ignore-exists-subgroup-empty"`: ignore \
+                    groups for which at least one protected subgroup has \
+                    no available actions.
+
+                Defaults to "max-cost-diff-decr".
+
+            top_count (int, optional): the number of subpopulation groups that
+                the algorithm will keep.
+                Defaults to 10.
+
+            filter_sequence (List[str], optional): List of various filters
+                applied on the groups and / or actions. Available filters are:
+
+                - `"remove-contained"`: does not show groups which are subsumed \
+                    by other shown groups. By "subsumed" we mean that the group \
+                    is defined by extra feature values, but those values are \
+                    not changed by any action.
+                - `"remove-below-thr-corr"`: does not show actions which are \
+                    below the given effectiveness threshold. Refer also to the \
+                    documentation of parameter `phi` below.
+                - `"remove-above-thr-cost"`: does not show action that cost more \
+                    than the given cost budget. Refer also to the documentation \
+                    of parameter `c` below.
+                - `"keep-rules-until-thr-corr-reached"`: 
+                - `"remove-fair-rules"`: do not show groups which do not exhibit \
+                    bias.
+                - `"keep-only-min-change"`: for each group shown, show only the \
+                    suggested actions that have minimum cost, ignore the others.
+                
+                Defaults to [].
+            
+            phi (float, optional): effectiveness threshold. Real number in [0, 1].
+                Applicable for "equal-choice-for-recourse" and
+                "equal-cost-of-effectiveness" metrics. For these two metrics, an
+                action is considered to achieve recourse for a subpopulation group
+                if at least `phi` % of the group's individuals achieve recourse.
+                Defaults to 0.5.
+
+            c (float, optional): cost budget. Real number. Applicable for
+                "equal-effectiveness-within-budget" metric. Specifies the maximum
+                cost that can be payed for an action (by the individual, by a
+                central authority etc.)
+                Defaults to 0.5.
+        """
         if viewpoint == "macro":
             rules = self.rules_by_if
         elif viewpoint == "micro":
@@ -130,7 +253,7 @@ class FACTS(BaseEstimator):
         metric = easy2hard_name_map[metric]
 
         if metric == "fair-tradeoff":
-            preds_Xtest = self.estimator.predict(self.dataset)
+            preds_Xtest = self.clf.predict(self.dataset)
             pop_sizes = {
                 sg: ((self.dataset[self.prot_attr] == sg) & (preds_Xtest == 0)).sum()
                 for sg in self.dataset[self.prot_attr].unique()
@@ -164,6 +287,45 @@ class FACTS(BaseEstimator):
         correctness_metric=False,
         metric_name=None,
     ):
+        """Prints a nicely formatted report of the results (subpopulation groups
+        and recourses) discovered by the `bias_scan` method.
+
+        Args:
+            population_sizes (dict(str, int), optional): Number of individuals that
+                are given the negative prediction by the model, for each subgroup.
+                If given, it is included in the report together with some
+                coverage percentages.
+            missing_subgroup_val (str, optional): Optionally specify a value of the
+                protected attribute which denotes that it is missing and should not be
+                included in the printed results.
+                Defaults to "N/A".
+            show_subgroup_costs (bool, optional): Whether to show the costs assigned
+                to each protected subgroup.
+                Defaults to False.
+            show_action_costs (bool, optional): Whether to show the costs assigned
+                to each specific action.
+                Defaults to False.
+            show_cumulative_plots (bool, optional): If true, shows, for each subgroup,
+                a graph of the `effectiveness cumulative distribution`, as it is
+                called in [#FACTS23]_.
+                Defaults to False.
+            show_bias (str, optional): Specify which value of the protected
+                attribute corresponds to the subgroup against which we want to find
+                unfairness. Mainly useful for when the protected attribute is not
+                binary (e.g. race).
+                Defaults to None.
+            correctness_metric (bool, optional): if True, the metric is considered
+                to quantify unfairness, i.e. the greater it is for a group, the
+                more beneficial it is for the individuals of the group.
+                Defaults to False.
+            metric_name (str, optional): If given, it is added to the the printed
+                message for unfairness in a subpopulation group, i.e. the method
+                prints "Bias against females due to <metric_name>".
+
+        Raises:
+            RuntimeError: if costs for groups and subgroups are empty. Most
+                likely the `bias_scan` method was not run.
+        """
         if self.unfairness is not None:
             print_recourse_report_KStest_cumulative(
                 self.top_rules,
@@ -187,6 +349,6 @@ class FACTS(BaseEstimator):
                 metric_name=metric_name
             )
         else:
-            raise RuntimeError("Something went wrong. Either subgroup_costs or simply unfairness should exist.")
+            raise RuntimeError("Something went wrong. Either subgroup_costs or unfairness should exist. Did you call `bias_scan`?")
 
 
