@@ -13,8 +13,8 @@ class DeterministicReranking(Transformer):
     """
 
     def __init__(self,
-            unprivileged_groups: list[dict],
-            privileged_groups: list[dict]):
+            unprivileged_groups,
+            privileged_groups):
         """
         Args:
             unprivileged_groups (list(dict)): Representation for the unprivileged
