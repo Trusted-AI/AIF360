@@ -44,9 +44,11 @@ class RegressionDatasetMetric(DatasetMetric):
             A tuple (int, set{int}): InfeasibleIndex and the positions at which the 
             feasibility condition is violated. 
         
-        References:
-        .. [1] KDD '19: Proceedings of the 25th ACM SIGKDD 
-           International Conference on Knowledge Discovery & Data Mining, July 2019, Pages 2221-2231.
+    References:
+        .. [1] Sahin Cem Geyik, Stuart Ambler, and Krishnaram Kenthapadi,
+            "Fairness-Aware Ranking in Search & Recommendation Systems with Application to LinkedIn Talent Search,"
+            KDD '19: Proceedings of the 25th ACM SIGKDD International Conference
+            on Knowledge Discovery & Data Mining, July 2019, Pages 2221-2231.
         """
         pr_attr_values = np.ravel(
             self.dataset.unprivileged_protected_attributes + self.dataset.privileged_protected_attributes)

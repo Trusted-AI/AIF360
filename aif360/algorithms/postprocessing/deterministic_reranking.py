@@ -8,8 +8,10 @@ class DeterministicReranking(Transformer):
     """A collection of algorithms for construction of fair ranked candidate lists. [1]_ .
 
     References:
-        .. [1] KDD '19: Proceedings of the 25th ACM SIGKDD 
-           International Conference on Knowledge Discovery & Data Mining, July 2019, Pages 2221-2231.
+        .. [1] Sahin Cem Geyik, Stuart Ambler, and Krishnaram Kenthapadi,
+            "Fairness-Aware Ranking in Search & Recommendation Systems with Application to LinkedIn Talent Search,"
+            KDD '19: Proceedings of the 25th ACM SIGKDD International Conference
+            on Knowledge Discovery & Data Mining, July 2019, Pages 2221-2231.
     """
 
     def __init__(self,
