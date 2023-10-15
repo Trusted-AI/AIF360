@@ -12,5 +12,4 @@ from aif360.sklearn.datasets.utils import standardize_dataset, NumericConversion
 from aif360.sklearn.datasets.openml_datasets import fetch_adult, fetch_german, fetch_bank
 from aif360.sklearn.datasets.compas_dataset import fetch_compas
 from aif360.sklearn.datasets.meps_datasets import fetch_meps
-from aif360.sklearn.datasets.tempeh_datasets import fetch_lawschool_gpa
-from aif360.sklearn.datasets.seaphe_datasets import load_lawschool_data
+from aif360.sklearn.datasets.seaphe_datasets import fetch_lawschool_gpa

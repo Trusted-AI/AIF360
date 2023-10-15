@@ -1,16 +1,4 @@
-"""Defines a class for the SEAPHE datasets.
-http://www.seaphe.org/databases.php
-"""
-import os
 import pandas as pd
-import numpy as np
-import tempfile
-import requests
-import zipfile
-from utils import standardize_dataset
-from sklearn.model_selection import train_test_split
-
-
 try:
     import tempeh.configurations as tc
 except ImportError as error:
@@ -21,54 +9,51 @@ except ImportError as error:
 from aif360.sklearn.datasets.utils import standardize_dataset
 
 
-def fetch_lawschool_gpa(target, subset="all", usecols=None, dropcols=None,
+def fetch_lawschool_gpa(subset="all", *, usecols=None, dropcols=None,
                         numeric_only=False, dropna=True):
-    """Downloads SEAPHE lawschool data from the SEAPHE webpage.
-    For more information, refer to http://www.seaphe.org/databases.php
+    """Load the Law School GPA dataset
 
-    :param target: the name of the target variable, either pass_bar or zfygpa
-    :type target: str
-    :return: pandas.DataFrame with columns
+    Note:
+        By default, the data is downloaded from tempeh. See
+        https://github.com/microsoft/tempeh for details.
+
+    Args:
+        subset ({'train', 'test', or 'all'}, optional): Select the dataset to
+            load: 'train' for the training set, 'test' for the test set, 'all'
+            for both.
+        usecols (single label or list-like, optional): Feature column(s) to
+            keep. All others are dropped.
+        dropcols (single label or list-like, optional): Feature column(s) to
+            drop.
+        numeric_only (bool): Drop all non-numeric feature columns.
+        dropna (bool): Drop rows with NAs. FIXME: NAs already dropped by tempeh
+
+    Returns:
+        namedtuple: Tuple containing X, y, and sample_weights for the Law School
+        GPA dataset accessible by index or name.
     """
-    if target not in ['pass_bar', 'zfygpa']:
-        raise ValueError("Only pass_bar and zfygpa are supported targets.")
-        
     if subset not in {'train', 'test', 'all'}:
         raise ValueError("subset must be either 'train', 'test', or 'all'; "
                          "cannot be {}".format(subset))
-        
 
-    with tempfile.TemporaryDirectory() as temp_dir:
-        response = requests.get("http://www.seaphe.org/databases/LSAC/LSAC_SAS.zip")
-        temp_file_name = os.path.join(temp_dir, "LSAC_SAS.zip")
-        with open(temp_file_name, "wb") as temp_file:
-            temp_file.write(response.content)
-        with zipfile.ZipFile(temp_file_name, 'r') as zip_ref:
-            zip_ref.extractall(temp_dir)
-        data = pd.read_sas(os.path.join(temp_dir, "lsac.sas7bdat"))
+    dataset = tc.datasets["lawschool_gpa"]()
+    X_train, X_test = dataset.get_X(format=pd.DataFrame)
+    y_train, y_test = dataset.get_y(format=pd.Series)
+    A_train, A_test = dataset.get_sensitive_features(name='race',
+                                                     format=pd.Series)
+    all_train = pd.concat([X_train, y_train, A_train], axis=1)
+    all_test = pd.concat([X_test, y_test, A_test], axis=1)
 
-        # Your data preprocessing steps here...
-    data = data[['lsat', 'ugpa', 'race', 'gender', target]]
-    
-
-    data = (standardize_dataset(data, prot_attr='race', target=target,
-                               usecols=usecols, dropcols=dropcols,
-                               numeric_only=numeric_only, dropna=dropna))
-    
-    All_features = pd.DataFrame(data.X)
-    All_labels = pd.DataFrame(data.y)
-    
-    X_train, X_test, y_train, y_test = train_test_split(
-        All_features, 
-        All_labels, 
-        test_size= 0.33,
-        random_state=123
-    )
-    
     if subset == "train":
-        return X_train, y_train
+        df = all_train
     elif subset == "test":
-        return X_test, y_test
+        df = all_test
     else:
-        return All_features, All_labels
+        df = pd.concat([all_train, all_test], axis=0)
 
+    df.race = df.race.astype('category').cat.set_categories(
+        ['black', 'white'], ordered=True)
+
+    return standardize_dataset(df, prot_attr='race', target='zfygpa',
+                               usecols=usecols, dropcols=dropcols,
+                               numeric_only=numeric_only, dropna=dropna)

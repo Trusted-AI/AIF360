@@ -10,11 +10,16 @@ import numpy as np
 import tempfile
 import requests
 import zipfile
-from utils import standardize_dataset
+from aif360.sklearn.datasets.utils import standardize_dataset, NumericConversionWarning
 from sklearn.model_selection import train_test_split
 
+# This method has code snippets from :- https://github.com/microsoft/tempeh/blob/main/tempeh/datasets/seaphe_datasets.py
+# But I made few changes according to our requirements.
 
-def load_lawschool_data(target, subset="all", usecols=None, dropcols=None,
+# This was mentioned on the issue assigned to me :- 359 (https://github.com/Trusted-AI/AIF360/issues/359)
+
+
+def fetch_lawschool_gpa(target, subset="all", usecols=None, dropcols=None,
                         numeric_only=False, dropna=True):
     """Downloads SEAPHE lawschool data from the SEAPHE webpage.
     For more information, refer to http://www.seaphe.org/databases.php
@@ -33,6 +38,13 @@ def load_lawschool_data(target, subset="all", usecols=None, dropcols=None,
 
     with tempfile.TemporaryDirectory() as temp_dir:
         response = requests.get("http://www.seaphe.org/databases/LSAC/LSAC_SAS.zip")
+        print("Response:-", response)
+        
+        if response.headers.get('content-type') == 'application/zip':
+            print("The response is a zip file.")
+        else:
+            print("The response is not a zip file.")
+        
         temp_file_name = os.path.join(temp_dir, "LSAC_SAS.zip")
         with open(temp_file_name, "wb") as temp_file:
             temp_file.write(response.content)
@@ -44,7 +56,7 @@ def load_lawschool_data(target, subset="all", usecols=None, dropcols=None,
     data = data[['lsat', 'ugpa', 'race', 'gender', target]]
     
 
-    data = (standardize_dataset(data, prot_attr='race', target='zfygpa',
+    data = (standardize_dataset(data, prot_attr='race', target=target,
                                usecols=usecols, dropcols=dropcols,
                                numeric_only=numeric_only, dropna=dropna))
     
@@ -64,3 +76,4 @@ def load_lawschool_data(target, subset="all", usecols=None, dropcols=None,
         return X_test, y_test
     else:
         return All_features, All_labels
+
