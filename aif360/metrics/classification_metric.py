@@ -585,6 +585,20 @@ class ClassificationMetric(BinaryLabelDatasetMetric):
         return 0.5 * (self.difference(self.positive_predictive_value)
                     + self.difference(self.false_omission_rate))
 
+    def equalized_odds_difference(self):
+        r"""Greater of the absolute difference in FPR and TPR for unprivileged and
+        privileged groups
+        """
+        return max(np.abs(self.difference(self.false_positive_rate)), 
+                        np.abs(self.difference(self.true_positive_rate)))
+    
+    def generalized_equalized_odds_difference(self):
+        r"""Greater of the absolute difference in generalized FPR and generalized TPR 
+        for unprivileged and privileged groups
+        """
+        return max(np.abs(self.difference(self.generalized_false_positive_rate)), 
+                    np.abs(self.difference(self.generalized_true_positive_rate)))
+
     def error_rate_difference(self):
         r"""Difference in error rates for unprivileged and privileged groups,
         :math:`ERR_{D = \text{unprivileged}} - ERR_{D = \text{privileged}}`.

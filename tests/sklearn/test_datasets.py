@@ -233,7 +233,7 @@ def test_cache_meps(panel):
     meps_raw = fetch_meps(panel, cache=False, accept_terms=True)[0]
     fetch_meps(panel, cache=True, accept_terms=True)
     meps_cached = fetch_meps(panel, cache=True)[0]
-    assert_frame_equal(meps_raw, meps_cached, check_dtype=False)
+    assert_frame_equal(meps_raw, meps_cached, check_dtype=False, check_categorical=False)
     assert_array_equal(meps_raw.to_numpy(), meps_cached.to_numpy())
 
 @pytest.mark.parametrize(

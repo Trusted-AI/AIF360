@@ -24,6 +24,7 @@ extras = {
     'inFairness': ['skorch', 'inFairness>=0.2.2'],
     'notebooks': ['jupyter', 'tqdm', 'igraph[plotting]', 'lightgbm', 'seaborn', 'ipympl'],
     'LawSchoolGPA': ['tempeh'],
+    'OptimalTransport': ['pot'],
 }
 extras['tests'] = reduce(lambda l1, l2: l1+l2, extras.values(), ['pytest>=3.5', 'pytest-cov>=2.8.1'])
 extras['docs'] = ['sphinx<2', 'jinja2<3.1.0', 'sphinx_rtd_theme']
@@ -39,7 +40,7 @@ setup(name='aif360',
       long_description_content_type='text/markdown',
       license='Apache License 2.0',
       packages=[pkg for pkg in find_packages() if pkg.startswith('aif360')],
-      python_requires='>=3.7',
+      python_requires='>=3.8',
       install_requires=[
           'numpy>=1.16',
           'scipy>=1.2.0',

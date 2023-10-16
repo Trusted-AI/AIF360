@@ -16,12 +16,12 @@ on:
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   build-py:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
 
     strategy:
       fail-fast: false
       matrix:
-        python-version: [3.7, 3.8, 3.9, '3.10']
+        python-version: [3.8, 3.9, '3.10', 3.11]
 
     env:
       UCI_DB: "https://archive.ics.uci.edu/ml/machine-learning-databases"
@@ -57,6 +57,7 @@ jobs:
           wget ${UCI_DB}/statlog/german/german.data -P aif360/data/raw/german/
           wget ${UCI_DB}/statlog/german/german.doc -P aif360/data/raw/german/
           wget ${PROPUBLICA_GH}/compas-scores-two-years.csv -P aif360/data/raw/compas/
+          wget ${UCI_DB}/00222/bank-additional.zip -P aif360/data/raw/bank/ && unzip -j aif360/data/raw/bank/bank-additional.zip -d aif360/data/raw/bank/ && rm aif360/data/raw/bank/bank-additional.zip
           (cd aif360/data/raw/meps;Rscript generate_data.R <<< y)
 
       - name: Lint with flake8
@@ -70,12 +71,12 @@ jobs:
         run: pytest tests --cov=aif360 --cov-report=term-missing
 
   build-r:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
 
     strategy:
       fail-fast: false
       matrix:
-        python-version: [3.7, 3.8, 3.9, '3.10']
+        python-version: [3.8, 3.9, '3.10', 3.11]
 
     steps:
       - name: Check out repo
