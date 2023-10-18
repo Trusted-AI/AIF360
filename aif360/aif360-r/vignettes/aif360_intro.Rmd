@@ -1,0 +1,140 @@
+---
+title: "Introduction to AI Fairness 360"
+output: rmarkdown::html_vignette
+description: >
+  Start here to learn the core concepts of the AIF360 R package. You'll be introduced to the primary components included in the package and how they can be used to detect and mitigate bias.
+vignette: >
+  %\VignetteIndexEntry{Introduction to AI Fairness 360}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+## Overview
+
+The AI Fairness 360 (AIF360) package provides a comprehensive set of tools to detect and mitigate bias in machine learning models. The package includes:
+
+*	Built-in datasets to understand concepts of fairness,  
+*	Metrics and models for testing biases, 
+* Explanations for these metrics, and
+*	Algorithms to mitigate bias in datasets and models.
+
+This vignette introduces the core components of the AIF360 package and demonstrates how the toolkit can be used to mitigate bias using a real-world dataset. To get started, you can run the following commands:  
+```{r}
+# Activate Python environment
+reticulate::use_condaenv(condaenv = "r-test", required = TRUE)
+```
+
+```{r}
+library(aif360)
+load_aif360_lib()
+```
+
+If any issues occur, refer to the installation and troubleshooting sections of the README in the [GitHub Repository](https://github.com/Trusted-AI/AIF360/tree/master/aif360/aif360-r). 
+
+## Data: Adult Census Income Dataset
+
+The Adult Census Income Dataset is one of four datasets included with the AIF360 package. Each record consists of census data for an individual and the goal is to predict whether an individual's income exceeds $50k per year. Details on this dataset are documented in `?adult_dataset`.
+
+```{r}
+# Assumes the Adult data files have been manually added to the correct path
+adult <- adult_dataset()
+```
+
+### Protected Attributes, Privileged Groups, and Unprivileged Groups
+For a given problem, we must tailor the bias detection and mitigation toolkit accordingly. This is done by defining a set of attributes referred to as *protected attributes* to indicate the particular bias (or biases) of interest. Additionally, the *privileged groups* and *unprivileged groups* specify the groups that have historically been at a systematic advantage or disadvantage respectively. 
+
+In our example, the protected attribute will be "sex", with "1" (male) and "0" (female) being the values for the privileged and unprivileged groups respectively. 
+
+```{r}
+# Protected attribute selection
+protected_attribute <- "sex"
+```
+
+```{r}
+# Privileged and Unprivileged Groups
+# The input is a list containing the protected attribute name and the value 
+# indicating the privileged or unprivileged group respectively
+
+# Privileged Group: Sex is the protected attribute and "1" indicates male 
+privileged_groups <- list(protected_attribute, 1) 
+
+# Unprivileged Group: Sex is the protected attribute and "0" indicates female 
+unprivileged_groups <- list(protected_attribute, 0) 
+```
+
+### Train-Test Split 
+Before applying bias detection and mitigation techniques, we will split the original dataset into training and testing datasets. You can do the train-test split via the `split` method provided by the AIF360 dataset object: 
+```{r}
+set.seed(1234)
+
+# Apply a 70-30 train-test split 
+adult_split <- adult$split(num_or_size_splits = list(0.70))
+adult_train <- adult_split[[1]]
+adult_test  <- adult_split[[2]]
+```
+
+We use only the training dataset in this tutorial, but in typical machine learning workflows the testing dataset should be used for assessing the model's accuracy and fairness.
+
+## Bias Detection
+We can now use AIF360 to detect bias in the dataset. To do so, the toolkit provides a wide selection of fairness metrics to choose from based on whether group fairness, individual fairness, or both group and individual fairness are desired for the given application. Explore the available metrics in the documentation via `?binary_label_dataset_metric`. 
+
+```{r}
+# Initialize binary label dataset metric class
+metric_train <- binary_label_dataset_metric(adult_train,
+                                            privileged_groups = privileged_groups,
+                                            unprivileged_groups = unprivileged_groups)
+```
+
+In this application, we are concerned with group fairness. This means that we want our statistical measure to be equal across the unprivileged group (females) and privileged group (males). In particular, we will use the Statistical Parity Difference metric, which is computed as the difference of the rate of favorable outcomes received by the unprivileged group to the privileged group. The ideal value of the Statistical Parity Difference metric is 0.0, with an acceptable range generally being between -0.1 and 0.1.
+
+```{r}
+# Access `Statistical Parity Difference` metric
+ metric_train$statistical_parity_difference()
+```
+
+In our example, the metric value is -0.1977357, which is outside the acceptable range for the Statistical Parity Difference metric. Thus, the privileged and unprivileged groups are *not* selected at equal rates. Meanwhile, the negative value indicates that the unprivileged group is at the disadvantage. 
+
+## Bias Mitigation
+Bias can be introduced into the system in three main ways:  
+
+* The training dataset may be biased,  
+* The algorithm that creates the model may be biased, and  
+* The testing dataset may be biased. 
+
+The AIF360 toolkit includes *pre-processing*, *in-processing*, and *post-processing* bias mitigation techniques to handle each of these three scenarios respectively. 
+
+In the previous "Bias Detection" stage of our example, we observed that the unprivileged group was at a disadvantage in the training dataset. In this step, we apply the Reweighing algorithm as documented in `?reweighing`. The Reweighing algorithm is a pre-processing technique that transforms the original dataset to achieve greater fairness between the privileged and unprivileged groups prior to the creation of the model. 
+
+```{r}
+# Pre-processing Algorithm: Reweighing
+mitigate_reweighing <- reweighing(privileged_groups = privileged_groups,
+                                  unprivileged_groups = unprivileged_groups)
+adult_transformed <- mitigate_reweighing$fit_transform(adult_train)
+```
+
+## Effect of Bias Mitigation Procedure
+We can now check how effective the Reweighing algorithm from the previous step was in mitigating bias in the training dataset.
+
+```{r}
+# Initialize binary label dataset metric class with the transformed dataset
+metric_train <- binary_label_dataset_metric(adult_transformed,
+                                            privileged_groups = privileged_groups,
+                                            unprivileged_groups = unprivileged_groups)
+
+# Access `Statistical Parity Difference` metric
+metric_train$statistical_parity_difference()
+```
+
+The bias mitigation step was very effective as the metric value is now -2.775558e-17, very close to 0.0. Thus, we went from a dataset where the unprivileged group was initially at a disadvantage to one of equality in terms of the Statistical Parity Difference metric. 
+
+## Summary
+This vignette provides an initial introduction to concepts of bias detection and mitigation in machine learning models using the AI Fairness 360 toolkit. 
+
+As we noted in the vignette, the AI Fairness toolkit provides a wide array of metrics and bias mitigation algorithms to choose from. Future vignettes along with the AIF360 website and documentation also discuss how to use some of these metrics and mitigation algorithms in further detail.
