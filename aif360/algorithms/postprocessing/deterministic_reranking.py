@@ -68,7 +68,7 @@ class DeterministicReranking(Transformer):
     def predict(self,
                     dataset: RegressionDataset,
                     rec_size: int,
-                    target_prop: dict,
+                    target_prop: list,
                     rerank_type: str='Constrained',
                     renormalize_scores: bool=False
                     ) -> RegressionDataset:
@@ -77,8 +77,7 @@ class DeterministicReranking(Transformer):
         Args:
             dataset (RegressionDataset): Dataset to rerank.
             rec_size (int): Number of candidates in the output.
-            target_prop (dict): Desired proportion of groups in the output. Format is \
-                {protected_attribute_value: proportion}.
+            target_prop (list): Desired proportion of each group in the output.
             rerank_type: Greedy, Conservative, Relaxed, or Constrained. Determines the type of algorithm \
                 as described in the original paper.
             renormalize_scores: renormalize label (score) values in the resulting ranking. If True, uses the default \
