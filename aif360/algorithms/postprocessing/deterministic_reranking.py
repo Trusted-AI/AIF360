@@ -32,21 +32,18 @@ class DeterministicReranking(Transformer):
         self.unprivileged_groups = unprivileged_groups
         self.privileged_groups = privileged_groups
         self._n_groups = len(unprivileged_groups) + len(privileged_groups)
-        self.s = list(unprivileged_groups[0].keys())[0]
+        self.s = set(unprivileged_groups[0].keys())
         self.s_vals = set(self.unprivileged_groups[0].values()).union(set(self.privileged_groups[0].values()))
 
     def fit(self, dataset: RegressionDataset):
-
-        if len(self.unprivileged_groups) != 1 or len(self.privileged_groups) != 1:
-            raise ValueError("Only one unprivileged group or privileged group supported.")
         if list(self.unprivileged_groups[0].keys())[0] != list(self.privileged_groups[0].keys())[0]:
             raise ValueError("Different sensitive attributes (not values) specified for unprivileged and privileged groups.")  
 
         items = dataset.convert_to_dataframe()[0]
         items = items.sort_values(axis=0, by=dataset.label_names[0], ascending=False)
 
-        if self.s not in items.columns:
-            raise ValueError(f"The dataset must contain the protected attribute: '{self.s}'.")
+        if not(self.s.issubset(items.columns)):
+            raise ValueError(f"The dataset must contain the protected attribute(s): '{self.s}'.")
         
         # if we have just 1 protected attribute
         if not isinstance(self.s, list) and False:
