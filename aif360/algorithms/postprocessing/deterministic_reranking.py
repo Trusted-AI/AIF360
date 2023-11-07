@@ -147,13 +147,11 @@ class DeterministicReranking(Transformer):
             rankedItems, maxIndices = [], []
             group_counts, min_counts = [0] * self._n_groups, [0] * self._n_groups
 
-            # group_counts, min_counts = {a: 0 for a in self.s_vals}, {a: 0 for a in self.s_vals}
             lastEmpty, k = 0, 0
             while lastEmpty < rec_size:
                 k+=1
                 # determine the minimum feasible counts of each group at current rec. list size
-                min_counts_at_k = [int(p_gi*k) for p_gi in target_prop]
-                # min_counts_at_k = {ai: int(pai*k) for ai, pai in target_prop.items()}
+                min_counts_at_k = [np.floor(p_gi*k) for p_gi in target_prop]
                 # get sensitive attr. values for which the current minimum count has increased
                 # since last one
                 changed_mins = []
@@ -167,19 +165,19 @@ class DeterministicReranking(Transformer):
                     # save the candidate AND the index of the group it belongs to
                     for group_idx in changed_mins:
                         changed_items.append((group_idx, self._item_groups[group_idx].iloc[group_counts[group_idx]]))
-                    changed_items.sort(key=lambda x: x[1][score_label])
+                    changed_items.sort(key=lambda x: -x[1][score_label])
 
                     # add the candidate items, starting with the best score
                     for newitem in changed_items:
                         if len(rankedItems) == rec_size:
                             break
-                        maxIndices.append(k)
+                        maxIndices.append(k-1)
                         rankedItems.append(newitem[1])
-                        start = lastEmpty
-                        while start > 0 and maxIndices[start-1] >= start and rankedItems[start-1][score_label] < rankedItems[start][score_label]:
-                            maxIndices[start-1], maxIndices[start] = maxIndices[start], maxIndices[start-1]
-                            rankedItems[start-1], rankedItems[start] = rankedItems[start], rankedItems[start-1]
-                            start -= 1
+                        swapInd = lastEmpty
+                        while swapInd > 0 and maxIndices[swapInd-1] >= swapInd and rankedItems[swapInd-1][score_label] < rankedItems[swapInd][score_label]:
+                            maxIndices[swapInd-1], maxIndices[swapInd] = maxIndices[swapInd], maxIndices[swapInd-1]
+                            rankedItems[swapInd-1], rankedItems[swapInd] = rankedItems[swapInd], rankedItems[swapInd-1]
+                            swapInd -= 1
                         lastEmpty+=1
                         group_counts[newitem[0]] += 1
                     min_counts = min_counts_at_k
