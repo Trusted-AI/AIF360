@@ -82,7 +82,7 @@ you wish to contribute to this, please reach out
 Website
 -------
 Any comments or suggestions regarding the
-`AIF360 homepage <https://aif360.mybluemix.net/>`_ may be posted to GitHub as
+`AIF360 homepage <https://aif360.res.ibm.com/>`_ may be posted to GitHub as
 well. This content may eventually be merged with the rest of the documentation.
 
 Example Notebooks

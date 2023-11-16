@@ -17,7 +17,7 @@ library(aif360)
 # AI Fairness 360 (AIF360) R Package
 
 <!-- badges: start -->
-[![CRAN_Status_Badge](http://www.r-pkg.org/badges/version/aif360)](https://cran.r-project.org/package=aif360)
+[![CRAN_Status_Badge](https://www.r-pkg.org/badges/version/aif360)](https://cran.r-project.org/package=aif360)
 <!-- badges: end -->
 
 ## Overview
@@ -52,9 +52,9 @@ install_aif360()
 AIF360 is distributed as a Python package and so needs to be installed within a Python environment on your system. By default, the install_aif360() function attempts to install AIF360 within an isolated Python environment (“r-reticulate”).
 
 You can check using `reticulate::conda_python()` and `reticulate::py_config()`
- 
+
 ### Suggested steps
- 
+
  1)  Install reticulate  and check if you have miniconda installed. If you do, go to step 2.
 
  ```r
@@ -63,13 +63,13 @@ You can check using `reticulate::conda_python()` and `reticulate::py_config()`
  ```
  If you get an error: `Error: Unable to find conda binary. Is Anaconda installed?`, please install
  miniconda
- 
+
 ```r
 reticulate::install_miniconda()
 ```
-If everything worked, you should get the message: 
+If everything worked, you should get the message:
 
-`* Miniconda has been successfully installed at '/home/rstudio/.local/share/r-miniconda'.` 
+`* Miniconda has been successfully installed at '/home/rstudio/.local/share/r-miniconda'.`
 
 You can double check:
 
@@ -130,14 +130,14 @@ formatted_dataset <- aif360::binary_label_dataset(data_path = data,
 
 ```
 
-## Troubleshooting 
+## Troubleshooting
 
 If you encounter any errors during the installation process, look for your issue here and try the solutions.
 
 ### Locked binding
-If you get an error: `cannot change value of locked binding`, please restart the R session. Then try reactivating your Python environment and running the following commands exactly once: 
+If you get an error: `cannot change value of locked binding`, please restart the R session. Then try reactivating your Python environment and running the following commands exactly once:
 ```r
-library(aif360) 
+library(aif360)
 load_aif360_lib()
 ```
 

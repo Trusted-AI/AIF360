@@ -1,9 +1,9 @@
 # AI Fairness 360 (AIF360)
 
 [![Continuous Integration](https://github.com/Trusted-AI/AIF360/actions/workflows/ci.yml/badge.svg)](https://github.com/Trusted-AI/AIF360/actions/workflows/ci.yml)
-[![Documentation](https://readthedocs.org/projects/aif360/badge/?version=latest)](http://aif360.readthedocs.io/en/latest/?badge=latest)
+[![Documentation](https://readthedocs.org/projects/aif360/badge/?version=latest)](https://aif360.readthedocs.io/en/latest/?badge=latest)
 [![PyPI version](https://badge.fury.io/py/aif360.svg)](https://badge.fury.io/py/aif360)
-[![CRAN\_Status\_Badge](http://www.r-pkg.org/badges/version/aif360)](https://cran.r-project.org/package=aif360)
+[![CRAN\_Status\_Badge](https://www.r-pkg.org/badges/version/aif360)](https://cran.r-project.org/package=aif360)
 
 The AI Fairness 360 toolkit is an extensible open-source library containing techniques developed by the
 research community to help detect and mitigate bias in machine learning models throughout the AI application lifecycle. AI Fairness 360 package is available in both Python and R.
@@ -15,7 +15,7 @@ The AI Fairness 360 package includes
 It is designed to translate algorithmic research from the lab into the actual practice of domains as wide-ranging
 as finance, human capital management, healthcare, and education. We invite you to use it and improve it.
 
-The [AI Fairness 360 interactive experience](http://aif360.mybluemix.net/data)
+The [AI Fairness 360 interactive experience](https://aif360.res.ibm.com/data)
 provides a gentle introduction to the concepts and capabilities. The [tutorials
 and other notebooks](./examples) offer a deeper, data scientist-oriented
 introduction. The complete API is also available.
@@ -23,7 +23,7 @@ introduction. The complete API is also available.
 Being a comprehensive set of capabilities, it may be confusing to figure out
 which metrics and algorithms are most appropriate for a given use case. To
 help, we have created some [guidance
-material](http://aif360.mybluemix.net/resources#guidance) that can be
+material](https://aif360.res.ibm.com/resources#guidance) that can be
 consulted.
 
 We have developed the package with extensibility in mind. This library is still

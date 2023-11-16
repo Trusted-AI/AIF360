@@ -1,6 +1,6 @@
 # AI Fairness 360 Examples (Tutorials and Demos)
 
-This directory contains a diverse collection of jupyter notebooks that use [AI Fairness 360](http://aif360.mybluemix.net/) in various ways.
+This directory contains a diverse collection of jupyter notebooks that use [AI Fairness 360](https://github.com/Trusted-AI/AIF360/) in various ways.
 Both tutorials and demos illustrate working code using AIF360.  Tutorials provide additional discussion that walks
 the user through the various steps of the notebook.
 
