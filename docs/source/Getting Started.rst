@@ -9,7 +9,7 @@ throughout the AI application lifecycle. This document will provide an overview 
 its features and conventions for users of the toolkit.
 
 Definitions of relevant terms may be found in the
-`Glossary <https://aif360.mybluemix.net/resources#glossary>`_ page.
+`Glossary <https://aif360.res.ibm.com/resources#glossary>`_ page.
 
 Installation
 ============
@@ -86,7 +86,7 @@ above. This is ongoing work to reduce friction between the libraries.
 
 Algorithms are divided into three classes based on how they mitigate bias. For
 guidance on choosing an algorithm, see the
-`Resources <https://aif360.mybluemix.net/resources#guidance>`_ page.
+`Resources <https://aif360.res.ibm.com/resources#guidance>`_ page.
 
 Pre-processing
 ^^^^^^^^^^^^^^

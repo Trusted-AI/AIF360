@@ -5,7 +5,7 @@
 
 <!-- badges: start -->
 
-[![CRAN_Status_Badge](http://www.r-pkg.org/badges/version/aif360)](https://cran.r-project.org/package=aif360)
+[![CRAN_Status_Badge](https://www.r-pkg.org/badges/version/aif360)](https://cran.r-project.org/package=aif360)
 <!-- badges: end -->
 
 ## Overview
@@ -141,7 +141,7 @@ restart the R session. Then try reactivating your Python environment and
 running the following commands exactly once:
 
 ``` r
-library(aif360) 
+library(aif360)
 load_aif360_lib()
 ```
 
