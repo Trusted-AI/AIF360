@@ -1,6 +1,6 @@
 from typing import Union
 
-from aif360.detectors import bias_scan
+from aif360.detectors import bias_scan as _bias_scan
 from aif360.detectors.mdss.ScoringFunctions import ScoringFunction
 
 import pandas as pd
@@ -50,7 +50,7 @@ def bias_scan(
      Returns:
         tuple: The highest scoring subset and the score or dict of the highest scoring subset and the score for each category in nominal mode
     """
-    return bias_scan(
+    return _bias_scan(
         data=X,
         observations=y_true,
         expectations=y_pred,
@@ -60,5 +60,5 @@ def bias_scan(
         num_iters=num_iters,
         penalty=penalty,
         mode=mode,
-        kwargs=kwargs
+        **kwargs
     )

@@ -7,7 +7,6 @@ from aif360.detectors.mdss.ScoringFunctions import Bernoulli, BerkJones, Scoring
 from aif360.detectors.mdss.MDSS import MDSS
 
 import pandas as pd
-from sklearn.utils.deprecation import deprecated
 
 
 class MDSSClassificationMetric(ClassificationMetric):
@@ -116,52 +115,3 @@ class MDSSClassificationMetric(ClassificationMetric):
         return scanner.score_current_subset(
             coordinates, expected, outcomes, dict(subset), penalty
         )
-
-    @deprecated('Change to new interface - aif360.detectors.mdss_detector.bias_scan by version 0.5.0.')
-    def bias_scan(self, privileged=True, num_iters=10, penalty=1e-17):
-        """
-        scan to find the highest scoring subset of records
-
-        :param privileged: flag for group to scan for - privileged group (True) or unprivileged group (False).
-        This abstract the need to explicitly specify the direction of bias to scan for which depends on what the favourable label is.
-        :param num_iters: number of iterations (random restarts)
-        :param penalty: penalty term. Should be positive. The penalty term as with any regularization parameter may need to be
-        tuned for ones use case. The higher the penalty, the less complex (number of features and feature values) the highest scoring
-        subset that gets returned is.
-
-        :returns: the highest scoring subset and the score
-        """
-
-        coordinates = pd.DataFrame(
-            self.classified_dataset.features,
-            columns=self.classified_dataset.feature_names,
-        )
-
-        expected = pd.Series(self.classified_dataset.scores.flatten())
-        outcomes = pd.Series(self.dataset.labels.flatten() == self.dataset.favorable_label, dtype=int)
-
-        # In MDSS, we look for subset whose observations systematically deviates from expectations.
-        # Positive direction means observations are systematically higher than expectations
-        # (or expectations are systematically lower than observations) while
-        # Negative direction means observatons are systematically lower than expectations
-        # (or expectations are systematically higher than observations)
-
-        # For a privileged group, we are looking for a subset whose expectations
-        # (where expectations is obtained from a model) is systematically higher than the observations.
-        # This means we scan in the negative direction.
-
-        # For an uprivileged group, we are looking for a subset whose expectations
-        # (where expectations is obtained from a model) is systematically lower the observations.
-        # This means we scan in the position direction.
-
-        self.kwargs['direction'] = "negative" if privileged else "positive"
-
-        if self.scoring == "Bernoulli":
-            scoring_function = Bernoulli(**self.kwargs)
-        elif self.scoring == "BerkJones":
-            scoring_function = BerkJones(**self.kwargs)
-        else:
-            scoring_function = self.scoring(**self.kwargs)
-
-        scanner = MDSS(scoring_function)
-        return scanner.scan(coordinates, expected, outcomes, penalty, num_iters)
