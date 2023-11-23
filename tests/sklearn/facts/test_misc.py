@@ -129,7 +129,7 @@ def test_select_rules_subset() -> None:
     
     rules, subgroup_costs = select_rules_subset(
         ifthens,
-        metric="num-above-corr",
+        metric="equal-choice-for-recourse",
         top_count=2,
         filter_sequence=["remove-fair-rules"],
         cor_threshold=0.6
@@ -193,7 +193,7 @@ def test_select_rules_subset_2() -> None:
 
     rules, sg_costs = select_rules_subset(
         ifthens,
-        metric="total-correctness",
+        metric="equal-effectiveness",
         top_count=2,
         filter_sequence=["remove-fair-rules"],
     )

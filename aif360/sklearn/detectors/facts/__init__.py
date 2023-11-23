@@ -242,16 +242,6 @@ class FACTS(BaseEstimator):
             raise ValueError("viewpoint parameter can be either 'macro' or 'micro'")
         rules = self.rules_by_if if viewpoint == "macro" else self.rules_with_cumulative
 
-        easy2hard_name_map = {
-            "equal-effectiveness": "total-correctness",
-            "equal-choice-for-recourse": "num-above-corr",
-            "equal-effectiveness-within-budget": "max-upto-cost",
-            "equal-cost-of-effectiveness": "min-above-corr",
-            "equal-mean-recourse": "fairness-of-mean-recourse-conditional",
-            "fair-tradeoff": "fair-tradeoff",
-        }
-        metric = easy2hard_name_map[metric]
-
         if metric == "fair-tradeoff":
             preds_Xtest = self.clf.predict(self.dataset)
             pop_sizes = {

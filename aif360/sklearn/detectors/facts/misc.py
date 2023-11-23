@@ -364,7 +364,7 @@ def select_rules_subset(
     rulesbyif: Dict[
         Predicate, Dict[str, Tuple[float, List[Tuple[Predicate, float, float]]]]
     ],
-    metric: str = "total-correctness",
+    metric: str = "equal-effectiveness",
     sort_strategy: str = "max-cost-diff-decr",
     top_count: int = 10,
     filter_sequence: List[str] = [],
@@ -382,7 +382,7 @@ def select_rules_subset(
             A dictionary mapping predicates to a dictionary of tuples containing
             cost, correctness, and cumulative cost values for each rule.
         metric:
-            The metric to use for sorting the rules (default: "total-correctness").
+            The metric to use for sorting the rules (default: "equal-effectiveness").
         sort_strategy:
             The strategy to use for sorting the rules (default: "abs-diff-decr").
         top_count:
@@ -410,19 +410,19 @@ def select_rules_subset(
     metrics: Dict[
         str, Callable[[Predicate, List[Tuple[Predicate, float, float]]], float]
     ] = {
-        "min-above-corr": functools.partial(
+        "equal-cost-of-effectiveness": functools.partial(
             if_group_cost_min_change_correctness_threshold,
             cor_thres=cor_threshold
         ),
-        "num-above-corr": functools.partial(
+        "equal-choice-for-recourse": functools.partial(
             if_group_cost_recoursescount_correctness_threshold,
             cor_thres=cor_threshold
         ),
-        "total-correctness": if_group_maximum_correctness,
-        "max-upto-cost": functools.partial(
+        "equal-effectiveness": if_group_maximum_correctness,
+        "equal-effectiveness-within-budget": functools.partial(
             if_group_cost_max_correctness_cost_budget, cost_thres=cost_threshold
         ),
-        "fairness-of-mean-recourse-conditional": if_group_average_recourse_cost_conditional
+        "equal-mean-recourse": if_group_average_recourse_cost_conditional
     }
     sorting_functions = {
         "max-cost-diff-decr": functools.partial(
