@@ -7,8 +7,8 @@ from typing import List, Tuple
 
 from mlxtend.preprocessing import TransactionEncoder
 from mlxtend.frequent_patterns import fpgrowth
-## removes nasty mlxtend bug: they set a global warning filter on Deprecation Warnings
-## which then hits even when importing matplotlib
+## removes nasty mlxtend-caused warning: they set a global warning filter on
+## Deprecation Warnings which then hits even when e.g. importing matplotlib.
 if warnings.filters[0] == ("always", None, DeprecationWarning, None, 0):
     warnings.filters.pop(0)
 
