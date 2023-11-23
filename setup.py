@@ -25,7 +25,7 @@ extras = {
     'notebooks': ['jupyter', 'tqdm', 'igraph[plotting]', 'lightgbm', 'seaborn', 'ipympl'],
     'LawSchoolGPA': ['tempeh'],
     'OptimalTransport': ['pot'],
-    'FACTS': ['mlxtend'],
+    'FACTS': ['mlxtend', 'colorama', 'tqdm'],
 }
 extras['tests'] = reduce(lambda l1, l2: l1+l2, extras.values(), ['pytest>=3.5', 'pytest-cov>=2.8.1'])
 extras['docs'] = ['sphinx<2', 'jinja2<3.1.0', 'sphinx_rtd_theme']
