@@ -83,6 +83,7 @@ def calculate_correctnesses(
     affected_by_subgroup: Dict[str, DataFrame],
     sensitive_attribute: str,
     model,
+    verbose: bool = True,
 ) -> List[Tuple[Predicate, Predicate, Dict[str, float], Dict[str, float]]]:
     """
     Calculate the correctness of recourse actions for each subgroup in a list of if-then rules.
@@ -95,6 +96,7 @@ def calculate_correctnesses(
         sensitive_attribute (str):
             Name of the sensitive attribute in the dataset.
         model (ModelAPI): The model used for making predictions.
+        verbose (bool): whether to print progress bar. Defaults to True.
 
     Returns:
         List[Tuple[Predicate, Predicate, Dict[str, float], Dict[str, float]]]:
@@ -102,7 +104,8 @@ def calculate_correctnesses(
     """
     subgroup_names = list(affected_by_subgroup.keys())
     ifthens_with_correctness = []
-    for h, s, ifsupps in tqdm(ifthens_withsupp):
+    ifthens_withsupp_iter = tqdm(ifthens_withsupp) if verbose else ifthens_withsupp
+    for h, s, ifsupps in ifthens_withsupp_iter:
         recourse_correctness = {}
         for sg in subgroup_names:
             incorrect_recourses_for_sg = incorrectRecoursesIfThen(
@@ -119,7 +122,7 @@ def calculate_correctnesses(
 
     return ifthens_with_correctness
 
-def aff_intersection_version_2(RLs_and_supports, subgroups):
+def aff_intersection_version_2(RLs_and_supports, subgroups, verbose=True):
     """
     Compute the intersection of multiple sets of predicates and their corresponding supports.
 
@@ -127,6 +130,7 @@ def aff_intersection_version_2(RLs_and_supports, subgroups):
         RLs_and_supports (Dict[str, List[Tuple[Dict[str, any], float]]]):
             Dictionary of predicates and their supports for each subgroup.
         subgroups (List[str]): List of subgroup names.
+        verbose (bool): whether to print progress bar. Defaults to True.
 
     Returns:
         List[Tuple[Predicate, Dict[str, float]]]:
@@ -147,7 +151,8 @@ def aff_intersection_version_2(RLs_and_supports, subgroups):
 
         _, sg1 = min((len(RLs_supports_dict[sg]), sg) for sg in subgroups)
 
-        for value, supp in tqdm(RLs_supports_dict[sg1].items()):
+        RLs_supports_dict_sg1_iter = tqdm(RLs_supports_dict[sg1].items()) if verbose else RLs_supports_dict[sg1].items()
+        for value, supp in RLs_supports_dict_sg1_iter:
             in_all = True
             supp_dict = {sg1: supp}
             for sg2 in subgroups:
@@ -178,7 +183,8 @@ def valid_ifthens(
     missing_subgroup_val: str = "N/A",
     drop_infeasible: bool = True,
     drop_above: bool = True,
-    feats_not_allowed_to_change: List[str] = []
+    feats_not_allowed_to_change: List[str] = [],
+    verbose: bool = True,
 ) -> List[Tuple[Predicate, Predicate, Dict[str, float], Dict[str, float]]]:
     """
     Compute valid if-then rules along with their coverage and correctness metrics.
@@ -191,6 +197,8 @@ def valid_ifthens(
         missing_subgroup_val (str): Value indicating missing or unknown subgroup.
         drop_infeasible (bool): Whether to drop infeasible if-then rules.
         drop_above (bool): Whether to drop if-then rules with feature changes above a certain threshold.
+        feats_not_allowed_to_change (list[str]): optionally, the user can provide some features which are not allowed to change at all (e.g. sex).
+        verbose (bool): whether to print intermediate messages and progress bar. Defaults to True.
 
     Returns:
         List[Tuple[Predicate, Predicate, Dict[str, float], Dict[str, float]]]:
@@ -212,23 +220,26 @@ def valid_ifthens(
     }
 
     # calculate frequent itemsets for each subgroup and turn them into predicates
-    print(
-        "Computing candidate subgroups.",
-        flush=True,
-    )
+    if verbose:
+        print(
+            "Computing candidate subgroups.",
+            flush=True,
+        )
+    affected_subgroups_iter = tqdm(affected_subgroups.items(), leave=False) if verbose else affected_subgroups.items()
     RLs_and_supports = {
         sg: freqitemsets_with_supports(affected_sg, min_support=freqitem_minsupp)
-        for sg, affected_sg in tqdm(affected_subgroups.items(), leave=False)
+        for sg, affected_sg in affected_subgroups_iter
     }
 
     # intersection of frequent itemsets of all sensitive subgroups
-    aff_intersection = aff_intersection_version_2(RLs_and_supports, subgroups)
-    print(f"Number of subgroups: {len(aff_intersection)}", flush=True)
+    aff_intersection = aff_intersection_version_2(RLs_and_supports, subgroups, verbose=verbose)
+    if verbose:
+        print(f"Number of subgroups: {len(aff_intersection)}", flush=True)
 
-    print(
-        "Computing candidate recourses for all subgroups.",
-        flush=True,
-    )
+        print(
+            "Computing candidate recourses for all subgroups.",
+            flush=True,
+        )
     # Frequent itemsets for the unaffacted (to be used in the then clauses)
     freq_unaffected, _ = freqitemsets_with_supports(
         X_unaff, min_support=freqitem_minsupp
@@ -248,7 +259,8 @@ def valid_ifthens(
             freq_unaffected_dict[tuple(predicate_.features)] = [predicate_.values]
 
     ifthens = []
-    for predicate_, supps_dict in tqdm(aff_intersection):
+    aff_intersection_iter = tqdm(aff_intersection) if verbose else aff_intersection
+    for predicate_, supps_dict in aff_intersection_iter:
         candidates = freq_unaffected_dict.get(tuple(predicate_.features))
         if candidates == None:
             continue
@@ -280,9 +292,10 @@ def valid_ifthens(
         ]
 
     # Calculate correctness percentages
-    print("Computing percentages of individuals flipped by each action independently.", flush=True)
+    if verbose:
+        print("Computing percentages of individuals flipped by each action independently.", flush=True)
     ifthens_with_correctness = calculate_correctnesses(
-        ifthens, affected_subgroups, sensitive_attribute, model
+        ifthens, affected_subgroups, sensitive_attribute, model, verbose=verbose
     )
 
     return ifthens_with_correctness
@@ -594,6 +607,7 @@ def cum_corr_costs_all(
     model,
     sensitive_attribute: str,
     params: ParameterProxy = ParameterProxy(),
+    verbose: bool = True,
 ) -> Dict[Predicate, Dict[str, Tuple[float, List[Tuple[Predicate, float, float]]]]]:
     """Calculate cumulative correctness and costs for all if-then rules.
 
@@ -606,6 +620,7 @@ def cum_corr_costs_all(
         model: The model API used for prediction.
         sensitive_attribute: The name of the sensitive attribute in the data.
         params: Optional parameter proxy (default: ParameterProxy()).
+        verbose: whether to print intermediate messages and progress bar. Defaults to True.
 
     Returns:
         A dictionary with if-clause predicates as keys. Each if-clause predicate
@@ -618,7 +633,8 @@ def cum_corr_costs_all(
     ret: Dict[
         Predicate, Dict[str, Tuple[float, List[Tuple[Predicate, float, float]]]]
     ] = {}
-    for ifclause, all_thens in tqdm(rulesbyif.items()):
+    rulesbyif_iter = tqdm(rulesbyif.items()) if verbose else rulesbyif.items()
+    for ifclause, all_thens in rulesbyif_iter:
         all_thens_new: Dict[
             str, Tuple[float, List[Tuple[Predicate, float, float]]]
         ] = {}

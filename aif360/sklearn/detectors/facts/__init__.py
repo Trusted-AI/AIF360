@@ -1,6 +1,7 @@
-from typing import List
+from typing import List, Dict, Optional
 from collections import defaultdict
 
+import pandas as pd
 from pandas import DataFrame
 from sklearn.base import BaseEstimator
 
@@ -15,7 +16,65 @@ from .misc import (
 )
 from .formatting import print_recourse_report, print_recourse_report_KStest_cumulative
 
-__all__ = ["FACTS", "print_recourse_report"]
+__all__ = ["FACTS", "print_recourse_report", "FACTS_bias_scan"]
+
+def FACTS_bias_scan(
+    X: pd.DataFrame,
+    clf: BaseEstimator,
+    prot_attr: str,
+    metric: str,
+    categorical_features: Optional[List[str]] = None,
+    freq_itemset_min_supp: float = 0.1,
+    feature_weights: Dict[str, float] = defaultdict(lambda : 1),
+    feats_allowed_to_change: Optional[List[str]] = None,
+    feats_not_allowed_to_change: Optional[List[str]] = None,
+    viewpoint: str = "macro",
+    sort_strategy: str = "max-cost-diff-decr",
+    top_count: int = 1,
+    phi: float = 0.5,
+    c: float = 0.5,
+    verbose: bool = True,
+    print_recourse_report: bool = False,
+    show_subgroup_costs: bool = False,
+    show_action_costs: bool = False,
+    is_correctness_metric: bool = False,
+):
+    detector = FACTS(
+        clf=clf,
+        prot_attr=prot_attr,
+        categorical_features=categorical_features,
+        freq_itemset_min_supp=freq_itemset_min_supp,
+        feature_weights=feature_weights, # type: ignore
+        feats_allowed_to_change=feats_allowed_to_change,
+        feats_not_allowed_to_change=feats_not_allowed_to_change,
+    )
+
+    detector = detector.fit(X=X, verbose=verbose)
+
+    detector.bias_scan(
+        metric=metric,
+        viewpoint=viewpoint,
+        sort_strategy=sort_strategy,
+        top_count=top_count,
+        phi=phi,
+        c=c,
+    )
+
+    if print_recourse_report:
+        detector.print_recourse_report(
+            show_subgroup_costs=show_subgroup_costs,
+            show_action_costs=show_action_costs,
+            correctness_metric=is_correctness_metric,
+        )
+    
+    if detector.subgroup_costs is None:
+        assert detector.unfairness is not None
+        scores = detector.unfairness
+    else:
+        scores = {sg: max(costs.values()) - min(costs.values()) for sg, costs in detector.subgroup_costs.items()}
+    
+    most_biased_subgroups = [(sg.to_dict(), score) for sg, score in scores.items() if sg in detector.top_rules.keys()]
+    return most_biased_subgroups
 
 class FACTS(BaseEstimator):
     """FACTS is an efficient, model-agnostic, highly parameterizable, and
@@ -84,7 +143,7 @@ class FACTS(BaseEstimator):
         self.feats_allowed_to_change = feats_allowed_to_change
         self.feats_not_allowed_to_change = feats_not_allowed_to_change
 
-    def fit(self, X: DataFrame):
+    def fit(self, X: DataFrame, verbose: bool = True):
         """Calculates subpopulation groups, actions and respective effectiveness
 
         Args:
@@ -92,6 +151,7 @@ class FACTS(BaseEstimator):
                 standard scikit-learn convention, it is expected to contain one
                 instance per row and one feature / explanatory variable per
                 column (labels not needed, we already have an ML model).
+            verbose (bool): whether to print intermediate messages and progress bar. Defaults to True.
 
         Raises:
             ValueError: `feats_allowed_to_change` and `feats_not_allowed_to_change`
@@ -131,18 +191,21 @@ class FACTS(BaseEstimator):
             model=self.clf,
             sensitive_attribute=self.prot_attr,
             freqitem_minsupp=self.freq_itemset_min_supp,
-            feats_not_allowed_to_change=list(feats_not_allowed_to_change)
+            feats_not_allowed_to_change=list(feats_not_allowed_to_change),
+            verbose=verbose,
         )
 
         rules_by_if = rules2rulesbyif(ifthens_coverage_correctness)
 
-        print("Computing percentages of individuals flipped by any action with cost up to c, for every c", flush=True)
+        if verbose:
+            print("Computing percentages of individuals flipped by any action with cost up to c, for every c", flush=True)
         self.rules_with_cumulative = cum_corr_costs_all(
             rulesbyif=rules_by_if,
             X=X,
             model=self.clf,
             sensitive_attribute=self.prot_attr,
             params=params,
+            verbose=verbose,
         )
         self.rules_by_if = calc_costs(rules_by_if)
 
@@ -305,7 +368,7 @@ class FACTS(BaseEstimator):
                 binary (e.g. race).
                 Defaults to None.
             correctness_metric (bool, optional): if True, the metric is considered
-                to quantify unfairness, i.e. the greater it is for a group, the
+                to quantify utility, i.e. the greater it is for a group, the
                 more beneficial it is for the individuals of the group.
                 Defaults to False.
             metric_name (str, optional): If given, it is added to the the printed
