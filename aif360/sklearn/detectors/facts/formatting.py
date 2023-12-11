@@ -145,7 +145,7 @@ def print_recourse_report(
                     curr_subgroup_costs.items(), key=lambda p: p[1]
                 )
             if max_intergroup_cost_diff > 0:
-                metric_message = "" if metric_name is None else f" due to {metric_name}"
+                metric_message = "" if metric_name is None else f" with respect to {metric_name}"
                 print(
                     f"\t{Fore.MAGENTA}Bias against {biased_subgroup}{metric_message}. Unfairness score = {round(max_intergroup_cost_diff,3)}.{Fore.RESET}"
                 )

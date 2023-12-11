@@ -15,6 +15,7 @@ from .misc import (
     cum_corr_costs_all
 )
 from .formatting import print_recourse_report, print_recourse_report_KStest_cumulative
+from .rule_filters import delete_fair_rules
 
 __all__ = ["FACTS", "print_recourse_report", "FACTS_bias_scan"]
 
@@ -297,6 +298,7 @@ class FACTS(BaseEstimator):
                 central authority etc.)
                 Defaults to 0.5.
         """
+        self._metric = metric
         if viewpoint == "macro":
             rules = self.rules_by_if
         elif viewpoint == "micro":
@@ -337,8 +339,8 @@ class FACTS(BaseEstimator):
         show_action_costs=False,
         show_cumulative_plots=False,
         show_bias=None,
+        show_unbiased_subgroups=True,
         correctness_metric=False,
-        metric_name=None,
     ):
         """Prints a nicely formatted report of the results (subpopulation groups
         and recourses) discovered by the `bias_scan` method.
@@ -380,8 +382,13 @@ class FACTS(BaseEstimator):
                 likely the `bias_scan` method was not run.
         """
         if self.unfairness is not None:
+            if not show_unbiased_subgroups:
+                mock_subgroup_costs = {sg: {"dummy": unfairness} for sg, unfairness in self.unfairness.items()}
+                rules_to_show = delete_fair_rules(self.top_rules, subgroup_costs=mock_subgroup_costs)
+            else:
+                rules_to_show = self.top_rules
             print_recourse_report_KStest_cumulative(
-                self.top_rules,
+                rules_to_show,
                 population_sizes=population_sizes,
                 missing_subgroup_val=missing_subgroup_val,
                 unfairness=self.unfairness,
@@ -389,8 +396,12 @@ class FACTS(BaseEstimator):
                 show_cumulative_plots=show_cumulative_plots,
             )
         elif self.subgroup_costs is not None:
+            if not show_unbiased_subgroups:
+                rules_to_show = delete_fair_rules(self.top_rules, subgroup_costs=self.subgroup_costs)
+            else:
+                rules_to_show = self.top_rules
             print_recourse_report(
-                self.top_rules,
+                rules_to_show,
                 population_sizes=population_sizes,
                 missing_subgroup_val=missing_subgroup_val,
                 subgroup_costs=self.subgroup_costs,
@@ -399,7 +410,7 @@ class FACTS(BaseEstimator):
                 show_cumulative_plots=show_cumulative_plots,
                 show_bias=show_bias,
                 correctness_metric=correctness_metric,
-                metric_name=metric_name
+                metric_name=self._metric,
             )
         else:
             raise RuntimeError("Something went wrong. Either subgroup_costs or unfairness should exist. Did you call `bias_scan`?")
