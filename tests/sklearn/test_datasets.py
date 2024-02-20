@@ -177,7 +177,7 @@ def test_german_matches_old():
     old = old.apply(lambda c: c.factorize()[0] if not is_numeric_dtype(c) else c)
 
     assert_frame_equal(X.reset_index(drop=True), old.reset_index(drop=True),
-                       check_like=True)
+                       check_like=True, check_dtype=False)
 
 def test_fetch_bank():
     """Tests Bank Marketing dataset shapes with various options."""

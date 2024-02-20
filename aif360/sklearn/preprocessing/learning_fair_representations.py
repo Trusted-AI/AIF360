@@ -149,7 +149,7 @@ class LearnedFairRepresentations(BaseEstimator, ClassifierMixin, TransformerMixi
         x0 = rng.random(w_size + self.n_prototypes*n_feat)
         bounds = [(0, 1)]*w_size + [(None, None)]*self.n_prototypes*n_feat
         res = optim.minimize(LFR_optim_objective, x0=x0, method='L-BFGS-B',
-                args=(torch.tensor(X.to_numpy()), torch.as_tensor(y), priv),
+                args=(torch.tensor(X.to_numpy(dtype=x0.dtype)), torch.as_tensor(y), priv),
                 jac=True, bounds=bounds, options={'gtol': self.tol,
                 'maxiter': self.max_iter})
 
