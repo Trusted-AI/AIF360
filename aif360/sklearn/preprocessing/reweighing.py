@@ -73,7 +73,7 @@ class Reweighing(BaseEstimator):
         """
         X, y, sample_weight = check_inputs(X, y, sample_weight)
 
-        sample_weight_t = np.empty_like(sample_weight)
+        sample_weight_t = np.empty_like(sample_weight, dtype=float)
         groups, self.prot_attr_ = check_groups(X, self.prot_attr)
         # TODO: maintain categorical ordering
         self.groups_ = np.unique(groups)
@@ -88,7 +88,7 @@ class Reweighing(BaseEstimator):
             for j, c in enumerate(self.classes_):
                 g_and_c = (groups == g) & (y == c)
                 if np.any(g_and_c):
-                    W_gc = N_(groups == g) * N_(y == c) / (N * N_(g_and_c))
+                    W_gc = N_(groups == g) / N * N_(y == c) / N_(g_and_c)
                     sample_weight_t[g_and_c] = W_gc * sample_weight[g_and_c]
                     self.reweigh_factors_[i, j] = W_gc
         return X, sample_weight_t
