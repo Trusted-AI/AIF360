@@ -23,7 +23,6 @@ extras = {
     'FairAdapt': ['rpy2'],
     'inFairness': ['skorch', 'inFairness>=0.2.2'],
     'notebooks': ['jupyter', 'tqdm', 'igraph[plotting]', 'lightgbm', 'seaborn', 'ipympl'],
-    'LawSchoolGPA': ['tempeh'],
     'OptimalTransport': ['pot'],
 }
 extras['tests'] = reduce(lambda l1, l2: l1+l2, extras.values(), ['pytest>=3.5', 'pytest-cov>=2.8.1'])
