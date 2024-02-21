@@ -168,19 +168,20 @@ def fetch_german(*, data_home=None, cache=True, binary_age=True, usecols=None,
                                dropcols=dropcols, numeric_only=numeric_only,
                                dropna=dropna)
 
-def fetch_bank(*, data_home=None, cache=True, binary_age=True, percent10=False, 
+def fetch_bank(*, data_home=None, cache=True, binary_age=True, percent10=False,
                usecols=None, dropcols=['duration'], numeric_only=False, dropna=False):
     """Load the Bank Marketing Dataset.
 
-    The protected attribute is 'age' (binarized by default as suggested by [#lequy22]: 
-    age >= 25 and age <60 is considered privileged and age< 25 or age >= 60 unprivileged; 
-    see the binary_age flag to keep this continuous). The outcome variable is 'deposit': 
+    The protected attribute is 'age' (binarized by default as suggested by [#lequy22]_:
+    age >= 25 and age <60 is considered privileged and age< 25 or age >= 60 unprivileged;
+    see the binary_age flag to keep this continuous). The outcome variable is 'deposit':
     'yes' or 'no'.
 
-        References:
-            .. [#lequy22] Le Quy, Tai, et al. "A survey on datasets for fairness‐aware machine 
-            learning." Wiley Interdisciplinary Reviews: Data Mining and Knowledge 
-            Discovery 12.3 (2022): e1452.
+    References:
+        .. [#lequy22] `Le Quy, Tai, et al. "A survey on datasets for fairness-
+           aware machine learning." Wiley Interdisciplinary Reviews: Data Mining
+           and Knowledge Discovery 12.3 (2022): e1452.
+           <https://wires.onlinelibrary.wiley.com/doi/pdf/10.1002/widm.1452>`_
 
     Note:
         By default, the data is downloaded from OpenML. See the `bank-marketing
@@ -235,15 +236,15 @@ def fetch_bank(*, data_home=None, cache=True, binary_age=True, percent10=False,
             df[col] = df[col].cat.remove_categories('unknown')
     df.education = df.education.astype('category').cat.reorder_categories(
         ['primary', 'secondary', 'tertiary'], ordered=True)
-    
+
     # binarize protected attribute (but not corresponding feature)
     age = (pd.cut(df.age, [0, 24, 60, 100], ordered=False,
-                labels=[0, 1, 0] if numeric_only 
+                labels=[0, 1, 0] if numeric_only
                 else ['<25 or >=60', '25-60', '<25 or >=60'])
         if binary_age else 'age')
-    age = age.cat.reorder_categories([0, 1] if numeric_only 
+    age = age.cat.reorder_categories([0, 1] if numeric_only
                                     else ['<25 or >=60', '25-60'])
-    
+
     return standardize_dataset(df, prot_attr=[age], target='deposit',
                                usecols=usecols, dropcols=dropcols,
                                numeric_only=numeric_only, dropna=dropna)

@@ -43,6 +43,7 @@ jobs:
 
       - name: Install dependencies
         run: |
+          sudo apt install libglpk-dev libxml2-dev
           python -m pip install --upgrade pip setuptools wheel
           pip install -e '.[all]'
           pip install flake8

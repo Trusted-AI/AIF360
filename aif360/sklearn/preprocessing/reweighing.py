@@ -1,6 +1,6 @@
 import numpy as np
 from sklearn.base import BaseEstimator, MetaEstimatorMixin, clone
-from sklearn.utils.metaestimators import if_delegate_has_method
+from sklearn.utils.metaestimators import available_if
 from sklearn.utils.validation import has_fit_parameter
 
 from aif360.sklearn.utils import check_inputs, check_groups
@@ -73,7 +73,7 @@ class Reweighing(BaseEstimator):
         """
         X, y, sample_weight = check_inputs(X, y, sample_weight)
 
-        sample_weight_t = np.empty_like(sample_weight)
+        sample_weight_t = np.empty_like(sample_weight, dtype=float)
         groups, self.prot_attr_ = check_groups(X, self.prot_attr)
         # TODO: maintain categorical ordering
         self.groups_ = np.unique(groups)
@@ -88,7 +88,7 @@ class Reweighing(BaseEstimator):
             for j, c in enumerate(self.classes_):
                 g_and_c = (groups == g) & (y == c)
                 if np.any(g_and_c):
-                    W_gc = N_(groups == g) * N_(y == c) / (N * N_(g_and_c))
+                    W_gc = N_(groups == g) / N * N_(y == c) / N_(g_and_c)
                     sample_weight_t[g_and_c] = W_gc * sample_weight[g_and_c]
                     self.reweigh_factors_[i, j] = W_gc
         return X, sample_weight_t
@@ -153,7 +153,7 @@ class ReweighingMeta(BaseEstimator, MetaEstimatorMixin):
         self.estimator_.fit(X, y, sample_weight=sample_weight)
         return self
 
-    @if_delegate_has_method('estimator_')
+    @available_if(lambda self: hasattr(self.estimator_, "predict"))
     def predict(self, X):
         """Predict class labels for the given samples using ``self.estimator_``.
 
@@ -165,7 +165,7 @@ class ReweighingMeta(BaseEstimator, MetaEstimatorMixin):
         """
         return self.estimator_.predict(X)
 
-    @if_delegate_has_method('estimator_')
+    @available_if(lambda self: hasattr(self.estimator_, "predict_proba"))
     def predict_proba(self, X):
         """Probability estimates from ``self.estimator_``.
 
@@ -181,7 +181,7 @@ class ReweighingMeta(BaseEstimator, MetaEstimatorMixin):
         """
         return self.estimator_.predict_proba(X)
 
-    @if_delegate_has_method('estimator_')
+    @available_if(lambda self: hasattr(self.estimator_, "predict_log_proba"))
     def predict_log_proba(self, X):
         """Log of probability estimates from ``self.estimator_``.
 
@@ -198,7 +198,7 @@ class ReweighingMeta(BaseEstimator, MetaEstimatorMixin):
         """
         return self.estimator_.predict_log_proba(X)
 
-    @if_delegate_has_method('estimator_')
+    @available_if(lambda self: hasattr(self.estimator_, "score"))
     def score(self, X, y, sample_weight=None):
         """Returns the output of the estimator's score function on the given
         test data and labels.
