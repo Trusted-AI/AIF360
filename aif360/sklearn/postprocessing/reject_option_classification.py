@@ -85,8 +85,6 @@ class RejectOptionClassifier(BaseEstimator, ClassifierMixin):
             margin (scalar): Half width of the critical region. Estimates within
                 the critical region are "rejected" and assigned according to
                 their group. Must be between 0 and min(threshold, 1-threshold).
-            metric ('statistical_parity', 'average_odds', 'equal_opportunity',
-                or callable):
         """
         self.prot_attr = prot_attr
         self.threshold = threshold

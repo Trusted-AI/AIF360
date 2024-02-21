@@ -17,30 +17,6 @@ from aif360.detectors.mdss.ScoringFunctions import BerkJones, Bernoulli
 from aif360.detectors.mdss.MDSS import MDSS
 
 
-__all__ = [
-    # meta-metrics
-    'difference', 'ratio', 'intersection', 'one_vs_rest',
-    # scorer factory
-    'make_scorer',
-    # helpers
-    'num_samples', 'num_pos_neg',
-    'specificity_score', 'base_rate', 'selection_rate', 'smoothed_base_rate',
-    'smoothed_selection_rate', 'generalized_fpr', 'generalized_fnr',
-    # group fairness
-    'ot_distance', 'statistical_parity_difference', 'disparate_impact_ratio',
-    'equal_opportunity_difference', 'average_odds_difference', 'average_predictive_value_difference',
-    'average_odds_error', 'class_imbalance', 'kl_divergence',
-    'conditional_demographic_disparity', 'smoothed_edf',
-    'df_bias_amplification', 'mdss_bias_score',
-    # individual fairness
-    'generalized_entropy_index', 'generalized_entropy_error',
-    'between_group_generalized_entropy_error', 'theil_index',
-    'coefficient_of_variation', 'consistency_score',
-    # aliases
-    'sensitivity_score', 'mean_difference', 'false_negative_rate_error',
-    'false_positive_rate_error'
-]
-
 # ============================= META-METRICS ===================================
 def difference(func, y_true, y_pred=None, prot_attr=None, priv_group=1,
                sample_weight=None, **kwargs):

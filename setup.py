@@ -1,5 +1,5 @@
 from setuptools import setup, find_packages
-from functools import reduce
+from itertools import chain
 
 long_description = """The AI Fairness 360 toolkit is an open-source library to help detect and mitigate bias in machine
 learning models. The AI Fairness 360 Python package includes a comprehensive set of metrics for datasets and models to
@@ -25,9 +25,9 @@ extras = {
     'notebooks': ['jupyter', 'tqdm', 'igraph[plotting]', 'lightgbm', 'seaborn', 'ipympl'],
     'OptimalTransport': ['pot'],
 }
-extras['tests'] = reduce(lambda l1, l2: l1+l2, extras.values(), ['pytest>=3.5', 'pytest-cov>=2.8.1'])
-extras['docs'] = ['sphinx<2', 'jinja2<3.1.0', 'sphinx_rtd_theme']
-extras['all'] = list(reduce(lambda s, l: s.union(l), extras.values(), set()))
+extras['tests'] = list(chain(*extras.values(), ['pytest>=3.5', 'pytest-cov>=2.8.1']))
+extras['docs'] = ['sphinx', 'jinja2<3.1.0', 'sphinx_rtd_theme']
+extras['all'] = list(set(chain(*extras.values())))
 
 setup(name='aif360',
       version=version,
