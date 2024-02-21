@@ -26,7 +26,7 @@ extras = {
     'OptimalTransport': ['pot'],
 }
 extras['tests'] = list(chain(*extras.values(), ['pytest>=3.5', 'pytest-cov>=2.8.1']))
-extras['docs'] = ['sphinx', 'jinja2<3.1.0', 'sphinx_rtd_theme']
+extras['docs'] = ['sphinx', 'jinja2>3.1.0', 'sphinx_rtd_theme']
 extras['all'] = list(set(chain(*extras.values())))
 
 setup(name='aif360',
