@@ -1,36 +1,24 @@
-import os
 import pandas as pd
+from sklearn.model_selection import train_test_split
 from aif360.datasets import RegressionDataset
-try:
-    import tempeh.configurations as tc
-except ImportError as error:
-    from logging import warning
-    warning("{}: LawSchoolGPADataset will be unavailable. To install, run:\n"
-            "pip install 'aif360[LawSchoolGPA]'".format(error))
+from aif360.sklearn.datasets.lawschool_dataset import LSAC_URL
 
 class LawSchoolGPADataset(RegressionDataset):
-    """Law School GPA dataset.
-
-    See https://github.com/microsoft/tempeh for details.
-    """
+    """Law School GPA dataset."""
 
     def __init__(self, dep_var_name='zfygpa',
-                 protected_attribute_names=['race'],
-                 privileged_classes=[['white']],
+                 protected_attribute_names=['race', 'gender'],
+                 privileged_classes=[['white'], ['male']],
                  instance_weights_name=None,
                  categorical_features=[],
                  na_values=[], custom_preprocessing=None,
                  metadata=None):
         """See :obj:`RegressionDataset` for a description of the arguments."""
-        dataset = tc.datasets["lawschool_gpa"]()
-        X_train,X_test = dataset.get_X(format=pd.DataFrame)
-        y_train, y_test = dataset.get_y(format=pd.Series)
-        A_train, A_test = dataset.get_sensitive_features(name='race',
-                                                         format=pd.Series)
-        all_train = pd.concat([X_train, y_train, A_train], axis=1)
-        all_test = pd.concat([X_test, y_test, A_test], axis=1)
-
-        df = pd.concat([all_train, all_test], axis=0)
+        df = pd.read_sas(LSAC_URL, encoding="utf-8")
+        df.race = df.race1.where(df.race1.isin(['black', 'white']))
+        df.gender = df.gender.fillna("female")
+        df = df[["race", "gender", "lsat", "ugpa", "zfygpa"]].dropna()
+        df = pd.concat(train_test_split(df, test_size=0.33, random_state=123))
 
         super(LawSchoolGPADataset, self).__init__(df=df,
             dep_var_name=dep_var_name,

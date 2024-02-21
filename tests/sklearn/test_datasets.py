@@ -214,9 +214,9 @@ def test_fetch_lawschool_gpa():
     """Tests Law School GPA dataset shapes with various options."""
     gpa = fetch_lawschool_gpa()
     assert len(gpa) == 2
-    assert gpa.X.shape == (22342, 3)
+    assert gpa.X.shape == (22342, 4)
     assert gpa.y.nunique() > 2  # regression
-    assert fetch_lawschool_gpa(numeric_only=True, dropna=False).X.shape == (22342, 3)
+    assert fetch_lawschool_gpa(numeric_only=True, dropna=False).X.shape == (27478, 4)
 
 def test_lawschool_matches_old():
     """Tests Law School GPA dataset matches original version."""
