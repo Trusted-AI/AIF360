@@ -7,7 +7,7 @@ from logging import warning
 import pandas as pd
 from sklearn.base import BaseEstimator, MetaEstimatorMixin, clone
 from sklearn.model_selection import train_test_split
-from sklearn.utils.metaestimators import if_delegate_has_method
+from sklearn.utils.metaestimators import available_if
 
 from aif360.sklearn.postprocessing.calibrated_equalized_odds import CalibratedEqualizedOdds
 from aif360.sklearn.postprocessing.reject_option_classification import RejectOptionClassifier, RejectOptionClassifierCV
@@ -132,7 +132,7 @@ class PostProcessingMeta(BaseEstimator, MetaEstimatorMixin):
                                 **fit_params)
         return self
 
-    @if_delegate_has_method('postprocessor_')
+    @available_if(lambda self: hasattr(self.postprocessor_, "predict"))
     def predict(self, X):
         """Predict class labels for the given samples.
 
@@ -151,7 +151,7 @@ class PostProcessingMeta(BaseEstimator, MetaEstimatorMixin):
         y_score = pd.DataFrame(y_score, index=X.index).squeeze('columns')
         return self.postprocessor_.predict(y_score)
 
-    @if_delegate_has_method('postprocessor_')
+    @available_if(lambda self: hasattr(self.postprocessor_, "predict_proba"))
     def predict_proba(self, X):
         """Probability estimates.
 
@@ -175,7 +175,7 @@ class PostProcessingMeta(BaseEstimator, MetaEstimatorMixin):
         y_score = pd.DataFrame(y_score, index=X.index).squeeze('columns')
         return self.postprocessor_.predict_proba(y_score)
 
-    @if_delegate_has_method('postprocessor_')
+    @available_if(lambda self: hasattr(self.postprocessor_, "predict_log_proba"))
     def predict_log_proba(self, X):
         """Log of probability estimates.
 
@@ -199,7 +199,7 @@ class PostProcessingMeta(BaseEstimator, MetaEstimatorMixin):
         y_score = pd.DataFrame(y_score, index=X.index).squeeze('columns')
         return self.postprocessor_.predict_log_proba(y_score)
 
-    @if_delegate_has_method('postprocessor_')
+    @available_if(lambda self: hasattr(self.postprocessor_, "score"))
     def score(self, X, y, sample_weight=None):
         """Returns the output of the post-processor's score function on the
         given test data and labels.

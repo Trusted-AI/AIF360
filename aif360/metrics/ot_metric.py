@@ -1,7 +1,12 @@
 from typing import Union
 import pandas as pd
 import numpy as np
-import ot
+try:
+    import ot
+except ImportError as error:
+    from logging import warning
+    warning("{}: ot_distance will be unavailable. To install, run:\n"
+            "pip install 'aif360[OptimalTransport]'".format(error))
 from sklearn.preprocessing import LabelEncoder
 
 def _normalize(distribution1, distribution2):
@@ -17,7 +22,7 @@ def _normalize(distribution1, distribution2):
         extra = -np.minimum(np.min(distribution1), np.min(distribution2))
         distribution1 += extra
         distribution2 += extra
-    
+
     total_of_distribution1 = np.sum(distribution1)
     if total_of_distribution1 != 0:
         distribution1 /= total_of_distribution1
@@ -75,10 +80,10 @@ def _evaluate(
     if prot_attr is None:
         initial_distribution, required_distribution, matrix_distance = _transform(ground_truth, classifier, cost_matrix)
         return ot.emd2(a=initial_distribution, b=required_distribution, M=matrix_distance, numItermax=num_iters)
-    
+
     if not ground_truth.nunique() == 2:
         raise ValueError(f"Expected to have exactly 2 target values, got {ground_truth.nunique()}.")
-    
+
     # Calculate EMD between ground truth distribution and distribution of each group
     emds = {}
     for sa_val in sorted(prot_attr.unique()):
@@ -137,7 +142,7 @@ def ot_distance(
     # Assert correct mode passed
     if mode not in ['binary', 'continuous', 'nominal', 'ordinal']:
         raise ValueError(f"Expected one of {['binary', 'continuous', 'nominal', 'ordinal']}, got {mode}.")
-    
+
     # Assert correct types passed to ground_truth, classifier and prot_attr
     if not isinstance(ground_truth, (pd.Series, str)):
         raise TypeError(f"ground_truth: expected pd.Series or str, got {type(ground_truth)}")
@@ -148,17 +153,17 @@ def ot_distance(
             raise TypeError(f"classifier: expected pd.DataFrame for {mode} mode, got {type(classifier)}")
     if prot_attr is not None and not isinstance(prot_attr, (pd.Series, str)):
         raise TypeError(f"prot_attr: expected pd.Series or str, got {type(prot_attr)}")
-    
+
     # Assert correct type passed to cost_matrix
     if cost_matrix is not None and not isinstance(cost_matrix, np.ndarray):
         raise TypeError(f"cost_matrix: expected numpy.ndarray, got {type(cost_matrix)}")
-    
+
     # Assert scoring is "Wasserstein1"
     if not scoring == "Wasserstein1":
         raise ValueError(f"Scoring mode can only be \"Wasserstein1\", got {scoring}")
-    
+
     grt = ground_truth.copy()
- 
+
     if classifier is not None:
         cls = classifier.copy()
         if prot_attr is not None:
@@ -171,7 +176,7 @@ def ot_distance(
         sat.index = grt.index
     else:
         sat = None
-    
+
     uniques = list(grt.unique())
     if mode == "binary":
         if len(uniques) > 2:

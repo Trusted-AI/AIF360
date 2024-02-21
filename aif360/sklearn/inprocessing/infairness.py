@@ -1,10 +1,16 @@
-from inFairness import fairalgo
+try:
+    from inFairness import fairalgo
+    from skorch import NeuralNet
+    from skorch.dataset import unpack_data, Dataset as Dataset_
+    from skorch.utils import is_pandas_ndframe
+except ImportError as error:
+    from logging import warning
+    warning("{}: SenSeI and SenSR will be unavailable. To install, run:\n"
+            "pip install 'aif360[inFairness]'".format(error))
+    Dataset_ = NeuralNet = object
 from sklearn.preprocessing import LabelBinarizer
 from sklearn.utils.multiclass import type_of_target
 from sklearn.exceptions import NotFittedError
-from skorch import NeuralNet
-from skorch.dataset import unpack_data, Dataset as Dataset_
-from skorch.utils import is_pandas_ndframe
 
 
 class Dataset(Dataset_):

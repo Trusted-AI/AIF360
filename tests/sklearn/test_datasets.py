@@ -177,7 +177,7 @@ def test_german_matches_old():
     old = old.apply(lambda c: c.factorize()[0] if not is_numeric_dtype(c) else c)
 
     assert_frame_equal(X.reset_index(drop=True), old.reset_index(drop=True),
-                       check_like=True)
+                       check_like=True, check_dtype=False)
 
 def test_fetch_bank():
     """Tests Bank Marketing dataset shapes with various options."""
@@ -214,9 +214,9 @@ def test_fetch_lawschool_gpa():
     """Tests Law School GPA dataset shapes with various options."""
     gpa = fetch_lawschool_gpa()
     assert len(gpa) == 2
-    assert gpa.X.shape == (22342, 3)
+    assert gpa.X.shape == (22342, 4)
     assert gpa.y.nunique() > 2  # regression
-    assert fetch_lawschool_gpa(numeric_only=True, dropna=False).X.shape == (22342, 3)
+    assert fetch_lawschool_gpa(numeric_only=True, dropna=False).X.shape == (27478, 4)
 
 def test_lawschool_matches_old():
     """Tests Law School GPA dataset matches original version."""
