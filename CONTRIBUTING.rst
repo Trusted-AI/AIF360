@@ -260,7 +260,7 @@ a draft and ask for help.
 First-time contributors require approval to run workflows with GitHub actions. CI
 should run unit tests for both Python and R for all supported versions as well as
 print linter warnings. See
-`ci.yml <https://github.com/Trusted-AI/AIF360/blob/master/.github/workflows/ci.yml>`_
+`ci.yml <https://github.com/Trusted-AI/AIF360/blob/main/.github/workflows/ci.yml>`_
 for the latest build script.
 
 Community
