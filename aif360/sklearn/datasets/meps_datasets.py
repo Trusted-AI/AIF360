@@ -1,9 +1,8 @@
 from io import BytesIO
 import os
-from zipfile import ZipFile
+import urllib
 
 import pandas as pd
-import requests
 
 from aif360.sklearn.datasets.utils import standardize_dataset
 
@@ -59,25 +58,21 @@ def fetch_meps(panel, *, accept_terms=None, data_home=None, cache=True,
     if panel not in {19, 20, 21}:
         raise ValueError("only panels 19, 20, and 21 are currently supported.")
 
-    fname = 'h192' if panel == 21 else 'h181'
-    cache_path = os.path.join(data_home or DATA_HOME_DEFAULT, fname + '.csv')
+    fname = 'h192ssp.zip' if panel == 21 else 'h181ssp.zip'
+    cache_path = os.path.join(data_home or DATA_HOME_DEFAULT, fname)
     if cache and os.path.isfile(cache_path):
-        df = pd.read_csv(cache_path)
+        df = pd.read_sas(cache_path, format="xport", encoding="utf-8")
     else:
         # skip prompt if user chooses
         accept = accept_terms or input(PROMPT)
-        if accept != 'y' and accept != True:
+        if accept != 'y' and accept is not True:
             raise PermissionError("Terms not agreed.")
-        rawz = requests.get(os.path.join(MEPS_URL, fname + 'ssp.zip')).content
-        with ZipFile(BytesIO(rawz)) as zf:
-            with zf.open(fname + '.ssp') as ssp:
-                df = pd.read_sas(ssp, format='xport')
-                # TODO: does this cause any differences?
-                # reduce storage size
-                df = df.apply(pd.to_numeric, errors='ignore', downcast='integer')
-                if cache:
-                    os.makedirs(os.path.dirname(cache_path), exist_ok=True)
-                    df.to_csv(cache_path, index=None)
+        rawz = urllib.request.urlopen(os.path.join(MEPS_URL, fname)).read()
+        df = pd.read_sas(BytesIO(rawz), format='xport', encoding="utf-8", compression="zip")
+        if cache:
+            os.makedirs(os.path.dirname(cache_path), exist_ok=True)
+            with open(cache_path, "wb") as f:
+                f.write(rawz)
     # restrict to correct panel
     df = df[df['PANEL'] == panel]
     # change all 15s to 16s if panel == 21
