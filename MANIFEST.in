@@ -1,2 +1,9 @@
-recursive-include aif360/data/ *
 include LICENSE
+recursive-include aif360/data/ *.md *.R
+recursive-include aif360/sklearn/ *.R
+graft docs
+prune docs/build
+prune docs/FAT2019-Tutorial
+prune docs/oreilly-tutorial-2019
+graft examples
+graft tests
