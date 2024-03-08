@@ -246,7 +246,22 @@ class FACTS(BaseEstimator):
                 For explanation of each of those metrics, refer either to the
                 paper [#FACTS23]_ or the demo_FACTS notebook.
 
-            viewpoint (str, optional): "macro" or "micro". Defaults to "macro".
+            viewpoint (str, optional): "macro" or "micro". It refers to the 
+                notions of "macro viewpoint" and "micro viewpoint" defined
+                in section 2.2 of the paper [#FACTS23]_.
+                
+                As a short explanation, consider a set of actions A and a
+                subgroup (cohort / set of individuals) G. Metrics with the
+                macro viewpoint interpretation are constrained to always apply
+                one action from A to the entire G, while metrics with the micro
+                interpretation are allowed to give each individual in G the
+                min-cost action from A which changes the individual's class.
+                
+                Note that not all combinations of `metric` and `viewpoint` are
+                valid, e.g. "Equal Choice for Recourse" only has a macro
+                interpretation.
+
+                Defaults to "macro".
 
             sort_strategy (str, optional): one of the following choices
                 
