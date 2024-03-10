@@ -163,6 +163,9 @@ Fairness Aware Subgroup Counterfactuals
 
    detectors.FACTS
 
+   :template: base.rst
+   detectors.FACTS_bias_scan
+
 :mod:`aif360.sklearn.preprocessing`: Pre-processing algorithms
 ==============================================================
 

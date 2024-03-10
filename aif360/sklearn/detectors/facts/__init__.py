@@ -40,6 +40,156 @@ def FACTS_bias_scan(
     show_action_costs: bool = False,
     is_correctness_metric: bool = False,
 ):
+    """FACTS is an efficient, model-agnostic, highly parameterizable, and
+    explainable framework for evaluating subgroup fairness through
+    counterfactual explanations [#FACTS23]_.
+
+    Note:
+        This function is a wrapper to run the FACTS framework from start to
+        finish. Its purpose is to provide an API which is both closer to the
+        `detectors` API and more succinct.
+
+        For more options and greater control (including the option to cache
+        some intermediate results and then apply more than one metric fast),
+        consider using the :class:`FACTS` class.
+
+    References:
+        .. [#FACTS23] `L. Kavouras, K. Tsopelas, G. Giannopoulos,
+           D. Sacharidis, E. Psaroudaki, N. Theologitis, D. Rontogiannis,
+           D. Fotakis, I. Emiris, "Fairness Aware Counterfactuals for
+           Subgroups", arXiv preprint, 2023.
+           <https://arxiv.org/abs/2306.14978>`_
+
+    Args:
+        X (DataFrame): Dataset given as a :class:`pandas.DataFrame`. As in
+            standard scikit-learn convention, it is expected to contain one
+            instance per row and one feature / explanatory variable per
+            column (labels not needed, we already have an ML model).
+
+        clf (sklearn.base.BaseEstimator): A trained and ready to use
+            classifier, implementing method `predict(X)`, where `X` is
+            the matrix of features; predictions returned by `predict(X)`
+            are either 0 or 1. In other words, fitted scikit-learn
+            classifiers.
+
+        prot_attr (str): the name of the column that represents the
+            protected attribute.
+
+        metric (str, optional): one of the following choices
+        
+            - "equal-effectiveness"
+            - "equal-choice-for-recourse"
+            - "equal-effectiveness-within-budget"
+            - "equal-cost-of-effectiveness"
+            - "equal-mean-recourse"
+            - "fair-tradeoff"
+            
+            Defaults to "equal-effectiveness".
+
+            For explanation of each of those metrics, refer either to the
+            paper [#FACTS23]_ or the demo_FACTS notebook.
+            
+        categorical_features (list(str), optional): the list of categorical
+            features. The default is to choose (dynamically, inside `fit`) the
+            columns of the dataset with types "object" or "category".
+        
+        freq_itemset_min_supp (float, optional): minimum support for all the runs
+            of the frequent itemset mining algorithm (specifically, `FP Growth <https://en.wikipedia.org/wiki/Association_rule_learning#FP-growth_algorithm>`_).
+            We mine frequent itemsets to generate candidate subpopulation groups and candidate actions.
+            For more information, see paper [#FACTS23]_.
+            Defaults to 10%.
+        
+        feature_weights (dict(str, float), optional): the weights for each feature. Used in the calculation
+            of the cost of a suggested change. Specifically, the term corresponding to each feature is
+            multiplied by this weight.
+            Defaults to 1, for all features.
+
+        feats_allowed_to_change (list(str), optional): if provided, only
+            allows these features to change value in the suggested recourses.
+            Default: no frozen features.
+            *Note*: providing both `feats_allowed_to_change` and
+            `feats_not_allowed_to_change` is currently treated as an error.
+
+        feats_not_allowed_to_change (list(str), optional): if provided,
+            prevents these features from changing at all in any given
+            recourse.
+            Default: no frozen features.
+            *Note*: providing both `feats_allowed_to_change` and
+            `feats_not_allowed_to_change` is currently treated as an error.
+
+        viewpoint (str, optional): "macro" or "micro". Refers to the 
+            notions of "macro viewpoint" and "micro viewpoint" defined
+            in section 2.2 of the paper [#FACTS23]_.
+            
+            As a short explanation, consider a set of actions A and a
+            subgroup (cohort / set of individuals) G. Metrics with the
+            macro viewpoint interpretation are constrained to always apply
+            one action from A to the entire G, while metrics with the micro
+            interpretation are allowed to give each individual in G the
+            min-cost action from A which changes the individual's class.
+            
+            Note that not all combinations of `metric` and `viewpoint` are
+            valid, e.g. "Equal Choice for Recourse" only has a macro
+            interpretation.
+
+            Defaults to "macro".
+
+        sort_strategy (str, optional): one of the following choices
+            
+            - `"max-cost-diff-decr"`: simply rank the groups in descending \
+                order according to the unfairness metric.
+            - `"max-cost-diff-decr-ignore-forall-subgroups-empty"`: ignore \
+                groups for which we have no available actions whatsoever.
+            - `"max-cost-diff-decr-ignore-exists-subgroup-empty"`: ignore \
+                groups for which at least one protected subgroup has \
+                no available actions.
+
+            Defaults to "max-cost-diff-decr".
+
+        top_count (int, optional): the number of subpopulation groups that
+            the algorithm will keep.
+            Defaults to 1, i.e. returns the most biased group.
+
+        phi (float, optional): effectiveness threshold. Real number in [0, 1].
+            Applicable for "equal-choice-for-recourse" and
+            "equal-cost-of-effectiveness" metrics. For these two metrics, an
+            action is considered to achieve recourse for a subpopulation group
+            if at least `phi` % of the group's individuals achieve recourse.
+            Defaults to 0.5.
+
+        c (float, optional): cost budget. Real number. Applicable for
+            "equal-effectiveness-within-budget" metric. Specifies the maximum
+            cost that can be payed for an action (by the individual, by a
+            central authority etc.)
+            Defaults to 0.5.
+
+        verbose (bool, optional): whether to print intermediate messages and
+            progress bar. Defaults to True.
+
+        print_recourse_report (bool, optional): whether to print a detailed
+            and annotated report of the most biased groups to stdout. If False,
+            the most biased groups are only computed and returned.
+            Defaults to False.
+
+        show_subgroup_costs (bool, optional): Whether to show the costs assigned
+            to each protected subgroup.
+            Defaults to False.
+        
+        show_action_costs (bool, optional): Whether to show the costs assigned
+            to each specific action.
+            Defaults to False.
+
+        is_correctness_metric (bool, optional): if True, the metric is considered
+            to quantify utility, i.e. the greater it is for a group, the
+            more beneficial it is for the individuals of the group.
+            Defaults to False.
+
+    Returns:
+        list(tuple(dict(str, str), float)): the most biased groups as a list \
+            of pairs. In each pair, the first element is the group description \
+            as a dict. The second element is the value of the chosen unfairness \
+            metric for this group.
+    """
     detector = FACTS(
         clf=clf,
         prot_attr=prot_attr,
@@ -108,7 +258,7 @@ class FACTS(BaseEstimator):
             clf (sklearn.base.BaseEstimator): A trained and ready to use
                 classifier, implementing method `predict(X)`, where `X` is
                 the matrix of features; predictions returned by `predict(X)`
-                are either 0 or 1 -- in other words, trained scikit-learn
+                are either 0 or 1. In other words, fitted scikit-learn
                 classifiers.
             prot_attr (str): the name of the column that represents the
                 protected attribute.
@@ -246,7 +396,7 @@ class FACTS(BaseEstimator):
                 For explanation of each of those metrics, refer either to the
                 paper [#FACTS23]_ or the demo_FACTS notebook.
 
-            viewpoint (str, optional): "macro" or "micro". It refers to the 
+            viewpoint (str, optional): "macro" or "micro". Refers to the 
                 notions of "macro viewpoint" and "micro viewpoint" defined
                 in section 2.2 of the paper [#FACTS23]_.
                 
