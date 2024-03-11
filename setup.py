@@ -24,6 +24,7 @@ extras = {
     'inFairness': ['skorch', 'inFairness>=0.2.2'],
     'notebooks': ['jupyter', 'tqdm', 'igraph[plotting]', 'lightgbm', 'seaborn', 'ipympl'],
     'OptimalTransport': ['pot'],
+    'FACTS': ['mlxtend', 'colorama', 'tqdm'],
 }
 extras['tests'] = list(chain(*extras.values(), ['pytest>=3.5', 'pytest-cov>=2.8.1']))
 extras['docs'] = ['sphinx', 'jinja2>3.1.0', 'sphinx_rtd_theme'] + extras['Reductions']

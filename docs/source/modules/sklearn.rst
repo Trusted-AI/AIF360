@@ -152,6 +152,19 @@ Bias scan
 
    detectors.bias_scan
 
+Fairness Aware Subgroup Counterfactuals
+---------------------------------------
+.. currentmodule:: aif360.sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   detectors.FACTS
+
+   :template: base.rst
+   detectors.FACTS_bias_scan
+
 :mod:`aif360.sklearn.preprocessing`: Pre-processing algorithms
 ==============================================================
 

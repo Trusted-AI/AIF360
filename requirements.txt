@@ -10,6 +10,8 @@ rpy2==3.4.5
 skorch==0.11.0
 inFairness>=0.2.2
 pot==0.9
+mlxtend
+colorama
 
 # notebooks
 jupyter
