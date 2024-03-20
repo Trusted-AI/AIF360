@@ -213,7 +213,7 @@ class LRwPRFittingType1Mixin(LRwPR):
         if itype == 0:
             # clear by zeros
             self.coef_ = np.zeros(self.n_sfv_ * self.n_features_,
-                                  dtype=np.float)
+                                  dtype=float)
         elif itype == 1:
             # at random
             self.coef_ = np.random.randn(self.n_sfv_ * self.n_features_)
@@ -221,7 +221,7 @@ class LRwPRFittingType1Mixin(LRwPR):
         elif itype == 2:
             # learned by standard LR
             self.coef_ = np.empty(self.n_sfv_ * self.n_features_,
-                                  dtype=np.float)
+                                  dtype=float)
             coef = self.coef_.reshape(self.n_sfv_, self.n_features_)
 
             clr = LogisticRegression(C=self.C, penalty='l2',
@@ -232,7 +232,7 @@ class LRwPRFittingType1Mixin(LRwPR):
         elif itype == 3:
             # learned by standard LR
             self.coef_ = np.empty(self.n_sfv_ * self.n_features_,
-                                  dtype=np.float)
+                                  dtype=float)
             coef = self.coef_.reshape(self.n_sfv_, self.n_features_)
 
             for i in range(self.n_sfv_):
@@ -276,7 +276,7 @@ class LRwPRFittingType1Mixin(LRwPR):
         # set instance variables
         self.n_s_ = ns
         self.n_sfv_ = np.max(s) + 1
-        self.c_s_ = np.array([np.sum(s == si).astype(np.float)
+        self.c_s_ = np.array([np.sum(s == si).astype(float)
                               for si in range(self.n_sfv_)])
         self.n_features_ = X.shape[1]
         self.n_samples_ = X.shape[0]
