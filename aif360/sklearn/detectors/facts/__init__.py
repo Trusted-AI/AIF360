@@ -5,17 +5,23 @@ import pandas as pd
 from pandas import DataFrame
 from sklearn.base import BaseEstimator
 
-from .parameters import ParameterProxy, feature_change_builder
-from .misc import (
-    valid_ifthens,
-    calc_costs,
-    rules2rulesbyif,
-    select_rules_subset,
-    select_rules_subset_KStest,
-    cum_corr_costs_all
-)
-from .formatting import print_recourse_report, print_recourse_report_KStest_cumulative
-from .rule_filters import delete_fair_rules
+try:
+    from .parameters import ParameterProxy, feature_change_builder
+    from .misc import (
+        valid_ifthens,
+        calc_costs,
+        rules2rulesbyif,
+        select_rules_subset,
+        select_rules_subset_KStest,
+        cum_corr_costs_all
+    )
+    from .formatting import print_recourse_report, print_recourse_report_KStest_cumulative
+    from .rule_filters import delete_fair_rules
+except ImportError as error:
+    from logging import warning
+    warning("{}: FACTS will be unavailable. To install, run:\n"
+            "pip install 'aif360[FACTS]'".format(error))
+    print_recourse_report = None
 
 __all__ = ["FACTS", "print_recourse_report", "FACTS_bias_scan"]
 
@@ -40,7 +46,9 @@ def FACTS_bias_scan(
     show_action_costs: bool = False,
     is_correctness_metric: bool = False,
 ):
-    """FACTS is an efficient, model-agnostic, highly parameterizable, and
+    """Identify the subgroups with the most difficulty achieving recourse.
+
+    FACTS is an efficient, model-agnostic, highly parameterizable, and
     explainable framework for evaluating subgroup fairness through
     counterfactual explanations [#FACTS23]_.
 
@@ -76,29 +84,29 @@ def FACTS_bias_scan(
             protected attribute.
 
         metric (str, optional): one of the following choices
-        
+
             - "equal-effectiveness"
             - "equal-choice-for-recourse"
             - "equal-effectiveness-within-budget"
             - "equal-cost-of-effectiveness"
             - "equal-mean-recourse"
             - "fair-tradeoff"
-            
+
             Defaults to "equal-effectiveness".
 
             For explanation of each of those metrics, refer either to the
             paper [#FACTS23]_ or the demo_FACTS notebook.
-            
+
         categorical_features (list(str), optional): the list of categorical
             features. The default is to choose (dynamically, inside `fit`) the
             columns of the dataset with types "object" or "category".
-        
+
         freq_itemset_min_supp (float, optional): minimum support for all the runs
             of the frequent itemset mining algorithm (specifically, `FP Growth <https://en.wikipedia.org/wiki/Association_rule_learning#FP-growth_algorithm>`_).
             We mine frequent itemsets to generate candidate subpopulation groups and candidate actions.
             For more information, see paper [#FACTS23]_.
             Defaults to 10%.
-        
+
         feature_weights (dict(str, float), optional): the weights for each feature. Used in the calculation
             of the cost of a suggested change. Specifically, the term corresponding to each feature is
             multiplied by this weight.
@@ -117,17 +125,17 @@ def FACTS_bias_scan(
             *Note*: providing both `feats_allowed_to_change` and
             `feats_not_allowed_to_change` is currently treated as an error.
 
-        viewpoint (str, optional): "macro" or "micro". Refers to the 
+        viewpoint (str, optional): "macro" or "micro". Refers to the
             notions of "macro viewpoint" and "micro viewpoint" defined
             in section 2.2 of the paper [#FACTS23]_.
-            
+
             As a short explanation, consider a set of actions A and a
             subgroup (cohort / set of individuals) G. Metrics with the
             macro viewpoint interpretation are constrained to always apply
             one action from A to the entire G, while metrics with the micro
             interpretation are allowed to give each individual in G the
             min-cost action from A which changes the individual's class.
-            
+
             Note that not all combinations of `metric` and `viewpoint` are
             valid, e.g. "Equal Choice for Recourse" only has a macro
             interpretation.
@@ -135,7 +143,7 @@ def FACTS_bias_scan(
             Defaults to "macro".
 
         sort_strategy (str, optional): one of the following choices
-            
+
             - `"max-cost-diff-decr"`: simply rank the groups in descending \
                 order according to the unfairness metric.
             - `"max-cost-diff-decr-ignore-forall-subgroups-empty"`: ignore \
@@ -174,7 +182,7 @@ def FACTS_bias_scan(
         show_subgroup_costs (bool, optional): Whether to show the costs assigned
             to each protected subgroup.
             Defaults to False.
-        
+
         show_action_costs (bool, optional): Whether to show the costs assigned
             to each specific action.
             Defaults to False.
@@ -217,18 +225,20 @@ def FACTS_bias_scan(
             show_action_costs=show_action_costs,
             correctness_metric=is_correctness_metric,
         )
-    
+
     if detector.subgroup_costs is None:
         assert detector.unfairness is not None
         scores = detector.unfairness
     else:
         scores = {sg: max(costs.values()) - min(costs.values()) for sg, costs in detector.subgroup_costs.items()}
-    
+
     most_biased_subgroups = [(sg.to_dict(), score) for sg, score in scores.items() if sg in detector.top_rules.keys()]
     return most_biased_subgroups
 
 class FACTS(BaseEstimator):
-    """FACTS is an efficient, model-agnostic, highly parameterizable, and
+    """Fairness aware counterfactuals for subgroups (FACTS) detector.
+
+    FACTS is an efficient, model-agnostic, highly parameterizable, and
     explainable framework for evaluating subgroup fairness through
     counterfactual explanations [#FACTS23]_.
 
@@ -336,7 +346,7 @@ class FACTS(BaseEstimator):
             num_normalization=False,
         )
         params = ParameterProxy(featureChanges=comparators)
-        
+
         ifthens_coverage_correctness = valid_ifthens(
             X=X,
             model=self.clf,
@@ -363,7 +373,7 @@ class FACTS(BaseEstimator):
         self.dataset = X.copy(deep=True)
 
         return self
-    
+
     def bias_scan(
         self,
         metric: str = "equal-effectiveness",
@@ -383,30 +393,30 @@ class FACTS(BaseEstimator):
 
         Args:
             metric (str, optional): one of the following choices
-            
+
                 - "equal-effectiveness"
                 - "equal-choice-for-recourse"
                 - "equal-effectiveness-within-budget"
                 - "equal-cost-of-effectiveness"
                 - "equal-mean-recourse"
                 - "fair-tradeoff"
-                
+
                 Defaults to "equal-effectiveness".
 
                 For explanation of each of those metrics, refer either to the
                 paper [#FACTS23]_ or the demo_FACTS notebook.
 
-            viewpoint (str, optional): "macro" or "micro". Refers to the 
+            viewpoint (str, optional): "macro" or "micro". Refers to the
                 notions of "macro viewpoint" and "micro viewpoint" defined
                 in section 2.2 of the paper [#FACTS23]_.
-                
+
                 As a short explanation, consider a set of actions A and a
                 subgroup (cohort / set of individuals) G. Metrics with the
                 macro viewpoint interpretation are constrained to always apply
                 one action from A to the entire G, while metrics with the micro
                 interpretation are allowed to give each individual in G the
                 min-cost action from A which changes the individual's class.
-                
+
                 Note that not all combinations of `metric` and `viewpoint` are
                 valid, e.g. "Equal Choice for Recourse" only has a macro
                 interpretation.
@@ -414,7 +424,7 @@ class FACTS(BaseEstimator):
                 Defaults to "macro".
 
             sort_strategy (str, optional): one of the following choices
-                
+
                 - `"max-cost-diff-decr"`: simply rank the groups in descending \
                     order according to the unfairness metric.
                 - `"max-cost-diff-decr-ignore-forall-subgroups-empty"`: ignore \
@@ -442,14 +452,14 @@ class FACTS(BaseEstimator):
                 - `"remove-above-thr-cost"`: does not show action that cost more \
                     than the given cost budget. Refer also to the documentation \
                     of parameter `c` below.
-                - `"keep-rules-until-thr-corr-reached"`: 
+                - `"keep-rules-until-thr-corr-reached"`:
                 - `"remove-fair-rules"`: do not show groups which do not exhibit \
                     bias.
                 - `"keep-only-min-change"`: for each group shown, show only the \
                     suggested actions that have minimum cost, ignore the others.
-                
+
                 Defaults to [].
-            
+
             phi (float, optional): effectiveness threshold. Real number in [0, 1].
                 Applicable for "equal-choice-for-recourse" and
                 "equal-cost-of-effectiveness" metrics. For these two metrics, an
@@ -495,7 +505,7 @@ class FACTS(BaseEstimator):
                 cost_threshold=c
             )
             self.unfairness = None
-    
+
     def print_recourse_report(
         self,
         population_sizes=None,
@@ -579,5 +589,3 @@ class FACTS(BaseEstimator):
             )
         else:
             raise RuntimeError("Something went wrong. Either subgroup_costs or unfairness should exist. Did you call `bias_scan`?")
-
-
