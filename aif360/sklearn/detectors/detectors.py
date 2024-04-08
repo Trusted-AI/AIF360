@@ -6,7 +6,7 @@ from aif360.detectors.mdss.ScoringFunctions import ScoringFunction
 import pandas as pd
 
 
-def bias_scan(
+def MDSS_bias_scan(
     X: pd.DataFrame,
     y_true: pd.Series,
     y_pred: Union[pd.Series, pd.DataFrame] = None,
