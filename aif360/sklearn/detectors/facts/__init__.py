@@ -342,6 +342,7 @@ class FACTS(BaseEstimator):
             model=self.clf,
             sensitive_attribute=self.prot_attr,
             freqitem_minsupp=self.freq_itemset_min_supp,
+            drop_infeasible=False,
             feats_not_allowed_to_change=list(feats_not_allowed_to_change),
             verbose=verbose,
         )
