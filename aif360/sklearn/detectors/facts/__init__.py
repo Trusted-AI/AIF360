@@ -359,7 +359,7 @@ class FACTS(BaseEstimator):
             params=params,
             verbose=verbose,
         )
-        self.rules_by_if = calc_costs(rules_by_if)
+        self.rules_by_if = calc_costs(rules_by_if, params=params)
 
         self.dataset = X.copy(deep=True)
 
