@@ -54,7 +54,6 @@ def test_rule_generation() -> None:
         sensitive_attribute="sex",
         freqitem_minsupp=0.5,
         drop_infeasible=False,
-        drop_above=True
     )
     ifthens = rules2rulesbyif(ifthens)
 
