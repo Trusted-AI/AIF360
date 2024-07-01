@@ -86,7 +86,10 @@ def test_FACTS_bias_scan():
             ret = []
             for i, r in X.iterrows():
                 if r["sex"] == "Female" and r["d"] < 15:
-                    ret.append(0)
+                    if r["c"] < 5:
+                        ret.append(1)
+                    else:
+                        ret.append(0)
                 elif r["a"] > 20:
                     ret.append(1)
                 elif r["c"] < 15:
@@ -101,7 +104,8 @@ def test_FACTS_bias_scan():
             [21, 13, 3, 19, "Male", pd.Interval(60, 70)],
             [25, 2, 7, 21, "Female", pd.Interval(60, 70)],
             [21, 2, 3, 4, "Male", pd.Interval(60, 70)],
-            [1, 2, 3, 4, "Male", pd.Interval(20, 30)],
+            [1, 2, 7, 4, "Male", pd.Interval(20, 30)],
+            [1, 2, 7, 40, "Female", pd.Interval(20, 30)],
             [1, 20, 30, 40, "Male", pd.Interval(40, 50)],
             [19, 2, 30, 43, "Male", pd.Interval(30, 40)],
             [19, 13, 30, 4, "Male", pd.Interval(10, 20)],
@@ -155,14 +159,14 @@ def test_FACTS_bias_scan():
                 (Predicate.from_dict({"a": 21, "c": 3}), 1., 290.)
             ]),
             "Female": (2/3, [
-                (Predicate.from_dict({"a": 21, "c": 3}), 0., 290.)
+                (Predicate.from_dict({"a": 21, "c": 3}), 1., 290.)
             ])
         },
     }
     expected_most_biased_subgroups = [
         ({"a": 19}, float("inf")),
-        ({"c": 30}, float("inf")),
-        ({"a": 19, "c": 30}, float("inf")),
+        ({"c": 30}, 40.),
+        ({"a": 19, "c": 30}, 0.),
     ]
 
     assert len(most_biased_subgroups) == len(expected_most_biased_subgroups)
