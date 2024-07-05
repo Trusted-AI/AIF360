@@ -352,6 +352,7 @@ class FACTS(BaseEstimator):
             model=self.clf,
             sensitive_attribute=self.prot_attr,
             freqitem_minsupp=self.freq_itemset_min_supp,
+            drop_infeasible=False,
             feats_not_allowed_to_change=list(feats_not_allowed_to_change),
             verbose=verbose,
         )
@@ -368,7 +369,7 @@ class FACTS(BaseEstimator):
             params=params,
             verbose=verbose,
         )
-        self.rules_by_if = calc_costs(rules_by_if)
+        self.rules_by_if = calc_costs(rules_by_if, params=params)
 
         self.dataset = X.copy(deep=True)
 

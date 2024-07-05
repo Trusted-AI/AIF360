@@ -6,7 +6,7 @@ import numpy as np
 from pandas import DataFrame
 
 from .parameters import *
-from .predicate import Predicate, recIsValid, featureChangePred, drop_two_above
+from .predicate import Predicate, recIsValid, featureChangePred
 from .frequent_itemsets import run_fpgrowth, preprocessDataset, fpgrowth_out_to_predicate_list
 from .metrics import (
     incorrectRecoursesIfThen,
@@ -182,7 +182,6 @@ def valid_ifthens(
     freqitem_minsupp: float = 0.01,
     missing_subgroup_val: str = "N/A",
     drop_infeasible: bool = True,
-    drop_above: bool = True,
     feats_not_allowed_to_change: List[str] = [],
     verbose: bool = True,
 ) -> List[Tuple[Predicate, Predicate, Dict[str, float], Dict[str, float]]]:
@@ -196,7 +195,6 @@ def valid_ifthens(
         freqitem_minsupp (float): Minimum support threshold for frequent itemset mining.
         missing_subgroup_val (str): Value indicating missing or unknown subgroup.
         drop_infeasible (bool): Whether to drop infeasible if-then rules.
-        drop_above (bool): Whether to drop if-then rules with feature changes above a certain threshold.
         feats_not_allowed_to_change (list[str]): optionally, the user can provide some features which are not allowed to change at all (e.g. sex).
         verbose (bool): whether to print intermediate messages and progress bar. Defaults to True.
 
@@ -280,16 +278,6 @@ def valid_ifthens(
                         supps_dict,
                     )
                 )
-
-    # keep ifs that have change on features of max value 2
-    if drop_above == True:
-        age = [val.left for val in X.age.unique()]
-        age.sort()
-        ifthens = [
-            (ifs, then, cov)
-            for ifs, then, cov in ifthens
-            if drop_two_above(ifs, then, age)
-        ]
 
     # Calculate correctness percentages
     if verbose:
