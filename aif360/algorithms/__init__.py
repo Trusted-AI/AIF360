@@ -1,1 +1,2 @@
 from aif360.algorithms.transformer import Transformer, addmetadata
+from aif360.algorithms.intersectional_fairness import IntersectionalFairness
