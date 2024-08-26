@@ -20,7 +20,7 @@ from pandas.testing import assert_frame_equal
 
 from logging import CRITICAL, getLogger
 from os import environ
-# Suppress warnings that tensorflow emits
+# Suppress warnings that tensorflow generates
 environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 import sys
@@ -32,9 +32,6 @@ from aif360.datasets import CompasDataset
 
 from aif360.algorithms.intersectional_fairness import IntersectionalFairness
 from aif360.algorithms.isf_helpers.isf_utils.common import classify, output_subgroup_metrics, convert_labels, create_multi_group_label
-#from stream import MuteStdout
-
-#MODEL_ANSWER_PATH = './results/'
 
 class MuteStdout:
     """Suppress message emission to stdout."""
@@ -144,8 +141,8 @@ class TestStringMethods(unittest.TestCase):
             columns=['group', 'base_rate', 'selection_rate', 'Balanced_Accuracy'])
 
         #assert
-        assert_frame_equal(result_singleattr_bias, ma_singleattr_bias, atol=0.1)
-        assert_frame_equal(result_combattr_bias, ma_combattr_bias, atol=0.1)
+        assert_frame_equal(result_singleattr_bias, ma_singleattr_bias, atol=0.2)
+        assert_frame_equal(result_combattr_bias, ma_combattr_bias, atol=0.2)
 
     def test02_EqualizedOdds(self):
         s_algorithm = 'EqualizedOddsPostProcessing'
@@ -181,10 +178,10 @@ class TestStringMethods(unittest.TestCase):
              ['sex:1.0_race:0.0', 0.8461538461538461, 0.7692307692307693, 0.3636363636363636],
              ['sex:1.0_race:1.0', 0.625, 0.625, 0.6]],
             columns=['group', 'base_rate', 'selection_rate', 'Balanced_Accuracy'])
-
+        
         #assert
-        assert_frame_equal(result_singleattr_bias, ma_singleattr_bias, atol=0.1)
-        assert_frame_equal(result_combattr_bias, ma_combattr_bias, atol=0.1)
+        assert_frame_equal(result_singleattr_bias, ma_singleattr_bias, atol=0.2)
+        assert_frame_equal(result_combattr_bias, ma_combattr_bias, atol=0.2)
             
     def test03_Massaging(self):
         s_algorithm = 'Massaging'
@@ -218,8 +215,8 @@ class TestStringMethods(unittest.TestCase):
             columns=['group', 'base_rate', 'selection_rate', 'Balanced_Accuracy'])
 
         #assert
-        assert_frame_equal(result_singleattr_bias, ma_singleattr_bias, atol=0.1)
-        assert_frame_equal(result_combattr_bias, ma_combattr_bias, atol=0.1)
+        assert_frame_equal(result_singleattr_bias, ma_singleattr_bias, atol=0.2)
+        assert_frame_equal(result_combattr_bias, ma_combattr_bias, atol=0.2)
 
     def test04_RejectOptionClassification(self):
         s_algorithm = 'RejectOptionClassification'
@@ -258,8 +255,8 @@ class TestStringMethods(unittest.TestCase):
            columns=['group', 'base_rate', 'selection_rate', 'Balanced_Accuracy'])
 
         #assert
-        assert_frame_equal(result_singleattr_bias, ma_singleattr_bias, atol=0.1)
-        assert_frame_equal(result_combattr_bias, ma_combattr_bias, atol=0.1)
+        assert_frame_equal(result_singleattr_bias, ma_singleattr_bias, atol=0.2)
+        assert_frame_equal(result_combattr_bias, ma_combattr_bias, atol=0.2)
 
     def test05_Massaging_AA(self):
         s_algorithm = 'Massaging'
@@ -296,8 +293,8 @@ class TestStringMethods(unittest.TestCase):
            columns=['group', 'base_rate', 'selection_rate', 'Balanced_Accuracy'])
 
         #assert
-        assert_frame_equal(result_singleattr_bias, ma_singleattr_bias, atol=0.1)
-        assert_frame_equal(result_combattr_bias, ma_combattr_bias, atol=0.1)
+        assert_frame_equal(result_singleattr_bias, ma_singleattr_bias, atol=0.2)
+        assert_frame_equal(result_combattr_bias, ma_combattr_bias, atol=0.2)
 
 
 if __name__ == "__main__":

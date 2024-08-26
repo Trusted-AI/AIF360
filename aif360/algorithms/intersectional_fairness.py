@@ -167,8 +167,6 @@ class IntersectionalFairness():
 
         self.logger.debug('fitting...')
 
-        # TODO need to fix sorting sensitive attributes
-        # thres_sort = sorted(thres.items(), key=lambda x:x[0])  # Fixed order of sensitive attributes
         if dataset_valid is None:
             if self.approach_type == 'PostProcessing':
                 dataset_valid = dataset_predicted.copy(deepcopy=True)
@@ -267,7 +265,6 @@ class IntersectionalFairness():
         group2_idx = ids[1]
         # Determine privileged/non-privileged group (necessary for some algorithms)
         # (used demographic parity)
-        # print('start: ' + str(group1_idx) + str(group2_idx))
         cl_metric = BinaryLabelDatasetMetric(self.dataset_actual,
                                              unprivileged_groups=self.group_protected_attrs[group2_idx],
                                              privileged_groups=self.group_protected_attrs[group1_idx])
@@ -534,8 +531,7 @@ class IntersectionalFairness():
             TNR = -1 if math.isnan(m_sg_mitig.true_negative_rate(privileged=True)) else m_sg_mitig.true_negative_rate(privileged=True)
             bal_acc = -1 if TPR == -1 or TNR == -1 else (TPR + TNR) * 0.5
             precision = -1 if math.isnan(m_sg_mitig.precision(privileged=True)) else m_sg_mitig.precision(privileged=True)
-            # TODO Warning if recall precision=0
-            f1 = -1 if precision == -1 or TPR == -1 else 2 * TPR * precision / (TPR + precision)
+            f1 = -1 if precision == -1 or TPR == -1 or (TPR + precision) == 0 else 2 * TPR * precision / (TPR + precision)
 
             metrics = [uf_t,
                        m_sg_mitig.num_positives(privileged=True),
@@ -553,7 +549,7 @@ class IntersectionalFairness():
                        f1,
                        m_sg_mitig.selection_rate(privileged=True),
                        difference,
-                       ratio]  # TODO Combine with selection_rate after classification
+                       ratio]
             stat_table.append(protected_attribute_values + metrics)
         return stat_table
 
@@ -732,8 +728,6 @@ class IntersectionalFairness():
             df=enable_df,
             label_names=dataset.label_names,
             protected_attribute_names=dataset.protected_attribute_names,
-#            privileged_protected_attributes=privileged_protected_attributes_keys,
-#            unprivileged_protected_attributes=unprivileged_protected_attributes_keys,
             favorable_label=dataset.favorable_label,
             unfavorable_label=dataset.unfavorable_label)
 
@@ -763,9 +757,6 @@ class IntersectionalFairness():
         for i1 in range(len(dataset.instance_names)):
             idx = sortlist.get(dataset.instance_names[i1])
             if idx is not None:
-                #disable_df['labels'][idx] = dataset.labels[i1]
-                #disable_df['scores'][idx] = dataset.scores[i1]
-                #disable_df['instance_weights'][idx] = dataset.instance_weights[i1]
                 disable_df.loc[idx,'labels'] = dataset.labels[i1]
                 disable_df.loc[idx,'scores'] = dataset.scores[i1]
                 disable_df.loc[idx,'instance_weights'] = dataset.instance_weights[i1]

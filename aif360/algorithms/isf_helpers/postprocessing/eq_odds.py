@@ -156,8 +156,6 @@ class Model(namedtuple('Model', 'pred label threshold')):
         self_fair_pred[p2n_indices] = 1 - self_fair_pred[p2n_indices]
 
         othr_fair_pred = othr.pred.copy()
-        # othr_pp_indices, = np.nonzero(othr.pred.round())
-        # othr_pn_indices, = np.nonzero(1 - othr.pred.round())
         othr_pp_indices, = np.nonzero(othr.pred > othr.threshold)
         othr_pn_indices, = np.nonzero(1 - (othr.pred <= othr.threshold))
         np.random.shuffle(othr_pp_indices)
