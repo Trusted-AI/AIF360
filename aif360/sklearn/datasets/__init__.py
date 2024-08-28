@@ -9,7 +9,7 @@ Warning:
     Pipeline, will cause errors.
 """
 from aif360.sklearn.datasets.utils import standardize_dataset, NumericConversionWarning
-from aif360.sklearn.datasets.openml_datasets import fetch_adult, fetch_german, fetch_bank
+from aif360.sklearn.datasets.openml_datasets import fetch_adult, fetch_german, fetch_bank, OpenMLStore
 from aif360.sklearn.datasets.compas_dataset import fetch_compas
 from aif360.sklearn.datasets.meps_datasets import fetch_meps
 from aif360.sklearn.datasets.lawschool_dataset import fetch_lawschool_gpa
