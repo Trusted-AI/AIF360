@@ -269,15 +269,15 @@ Maintainers
 -----------
 The maintainers with write access are listed below in alphabetical order:
 
-* Michael Hind (`michaelhind <https://github.com/michaelhind>`_)
-* Samuel Hoffman (`hoffmansc <https://github.com/hoffmansc>`_)
-* Anupama Murthi (`anupamamurthi <https://github.com/anupamamurthi>`_)
-* Manish Nagireddy (`mnagired <https://github.com/mnagired>`_)
-* Karthikeyan Natesan Ramamurthy (`nrkarthikeyan <https://github.com/nrkarthikeyan>`_)
-* Stacey Ronaghan (`srnghn <https://github.com/srnghn>`_)
 * Animesh Singh (`animeshsingh <https://github.com/animeshsingh>`_)
-* Saishruthi Swaminathan (`SSaishruthi <https://github.com/SSaishruthi>`_)
+* Anupama Murthi (`anupamamurthi <https://github.com/anupamamurthi>`_)
 * Gabriela de Queiroz (`gdequeiroz <https://github.com/gdequeiroz>`_)
+* Karthikeyan Natesan Ramamurthy (`nrkarthikeyan <https://github.com/nrkarthikeyan>`_)
+* Manish Nagireddy (`mnagired <https://github.com/mnagired>`_)
+* Michael Hind (`michaelhind <https://github.com/michaelhind>`_)
+* Saishruthi Swaminathan (`SSaishruthi <https://github.com/SSaishruthi>`_)
+* Samuel Hoffman (`hoffmansc <https://github.com/hoffmansc>`_)
+* Stacey Ronaghan (`srnghn <https://github.com/srnghn>`_)
 
 Slack
 -----
