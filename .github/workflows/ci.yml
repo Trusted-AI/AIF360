@@ -102,3 +102,24 @@ jobs:
 
       - name: Install R package
         run: R CMD INSTALL aif360/aif360-r
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Count lint errors
+        run: |
+          sudo apt install pylint -y
+          echo "::set-output name=LINT_COUNT::$(pylint * | wc -l)"
+        id: lint_check
+      - name: Print files that failed lint
+        if: ${{ steps.lint_check.outputs.LINT_COUNT > 0 }}
+        run: |
+          pylint *
+      - name: Fail job if lint fails
+        if: ${{ steps.lint_check.outputs.LINT_COUNT > 0 }}
+        uses: actions/github-script@v3
+        with:
+          script: |
+            core.setFailed('Lint failed!')
