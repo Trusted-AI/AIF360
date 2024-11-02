@@ -24,7 +24,8 @@ class InProcessing(metaclass=ABCMeta):
     """
     def __init__(self):
         super().__init__()
-        self.model = None
+        #the following line is need if we decide to expand support for more inprocessing algorithms besides adversarial debiasing
+        #self.model = None 
 
     @abstractmethod
     def fit(self, ds_train):

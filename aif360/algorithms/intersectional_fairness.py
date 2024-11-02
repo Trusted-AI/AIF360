@@ -38,6 +38,7 @@ from aif360.algorithms.isf_helpers.postprocessing.reject_option_based_classifica
 from aif360.algorithms.isf_helpers.postprocessing.equalized_odds_postprocessing import EqualizedOddsPostProcessing
 
 from logging import getLogger, StreamHandler, ERROR, Formatter
+from tqdm import tqdm
 
 class IntersectionalFairness():
     """
@@ -345,9 +346,10 @@ class IntersectionalFairness():
             for group2_idx in range(group1_idx + 1, len(self.group_protected_attrs)):
                 id_touples.append((group1_idx, group2_idx, enable_fit))
 
-        with concurrent.futures.ProcessPoolExecutor(max_workers=self.MAX_WORKERS) as excuter:
-            mitigation_results = list(excuter.map(self._worker, id_touples))
-            for r in mitigation_results:
+        with concurrent.futures.ProcessPoolExecutor(max_workers=self.MAX_WORKERS) as executor:
+            futures = [executor.submit(self._worker, id_tuple) for id_tuple in id_touples]
+            for future in tqdm(concurrent.futures.as_completed(futures), total=len(id_touples)):
+                r = future.result()
                 ds_pair_transf_list.append(r[0])
                 self.models[r[2]] = r[1]
 
