@@ -17,7 +17,7 @@ from aif360.sklearn.datasets import (
     fetch_german, fetch_compas, fetch_lawschool_gpa, fetch_meps)
 
 
-df = pd.DataFrame([[1, 2, 3, 'a'], [5, 6, 7, 'b'], [np.NaN, 10, 11, 'c']],
+df = pd.DataFrame([[1, 2, 3, 'a'], [5, 6, 7, 'b'], [np.nan, 10, 11, 'c']],
                   columns=['X1', 'X2', 'y', 'Z'])
 basic = partial(standardize_dataset, df=df, prot_attr='Z', target='y',
                 dropna=False)
