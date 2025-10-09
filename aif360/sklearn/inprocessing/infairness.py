@@ -46,15 +46,16 @@ class InFairnessNet(NeuralNet):
                          dataset=dataset, **kwargs)
         self.regression = regression
 
-    @property
-    def _estimator_type(self):
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
         if hasattr(self, "regression_"):
-            return 'regressor' if self.regression_ else 'classifier'
+            tags.estimator_type = 'regressor' if self.regression_ else 'classifier'
         elif self.regression != 'auto':
-            return 'regressor' if self.regression else 'classifier'
+            tags.estimator_type = 'regressor' if self.regression else 'classifier'
         else:
             raise NotFittedError("regression is set to 'auto'. Call 'fit' with "
                     "appropriate arguments or set regression manually.")
+        return tags
 
     def get_loss(self, y_pred, y_true, X=None, training=False):
         """Return the loss for this batch.

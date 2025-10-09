@@ -2,12 +2,20 @@
 Post-processing algorithms modify predictions to be more fair (predictions in,
 predictions out).
 """
+from dataclasses import dataclass
 from logging import warning
 
 import pandas as pd
 from sklearn.base import BaseEstimator, MetaEstimatorMixin, clone
 from sklearn.model_selection import train_test_split
 from sklearn.utils.metaestimators import available_if
+from sklearn.utils import get_tags, Tags
+
+
+@dataclass
+class PostProcessingTags(Tags):
+    requires_proba: bool = True
+
 
 from aif360.sklearn.postprocessing.calibrated_equalized_odds import CalibratedEqualizedOdds
 from aif360.sklearn.postprocessing.reject_option_classification import RejectOptionClassifier, RejectOptionClassifierCV
@@ -54,9 +62,10 @@ class PostProcessingMeta(BaseEstimator, MetaEstimatorMixin):
         self.val_size = val_size
         self.options = options
 
-    @property
-    def _estimator_type(self):
-        return self.postprocessor._estimator_type
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.estimator_type = get_tags(self.postprocessor).estimator_type
+        return tags
 
     @property
     def classes_(self):
@@ -85,8 +94,8 @@ class PostProcessingMeta(BaseEstimator, MetaEstimatorMixin):
         self.estimator_ = self.estimator if self.prefit else clone(self.estimator)
 
         try:
-            use_proba = self.postprocessor._get_tags()['requires_proba']
-        except KeyError:
+            use_proba = get_tags(self.postprocessor).requires_proba
+        except AttributeError:
             raise TypeError("`postprocessor` (type: {}) does not have a "
                             "'requires_proba' tag.".format(type(self.estimator)))
         if use_proba and not hasattr(self.estimator, 'predict_proba'):
@@ -145,7 +154,7 @@ class PostProcessingMeta(BaseEstimator, MetaEstimatorMixin):
         Returns:
             numpy.ndarray: Predicted class label per sample.
         """
-        use_proba = self.postprocessor_._get_tags()['requires_proba']
+        use_proba = get_tags(self.postprocessor_).requires_proba
         y_score = (self.estimator_.predict_proba(X) if use_proba else
                    self.estimator_.predict(X))
         y_score = pd.DataFrame(y_score, index=X.index).squeeze('columns')
@@ -169,7 +178,7 @@ class PostProcessingMeta(BaseEstimator, MetaEstimatorMixin):
             in the model, where classes are ordered as they are in
             ``self.classes_``.
         """
-        use_proba = self.postprocessor_._get_tags()['requires_proba']
+        use_proba = get_tags(self.postprocessor_).requires_proba
         y_score = (self.estimator_.predict_proba(X) if use_proba else
                    self.estimator_.predict(X))
         y_score = pd.DataFrame(y_score, index=X.index).squeeze('columns')
@@ -193,7 +202,7 @@ class PostProcessingMeta(BaseEstimator, MetaEstimatorMixin):
             the model, where classes are ordered as they are in
             ``self.classes_``.
         """
-        use_proba = self.postprocessor_._get_tags()['requires_proba']
+        use_proba = get_tags(self.postprocessor_).requires_proba
         y_score = (self.estimator_.predict_proba(X) if use_proba else
                    self.estimator_.predict(X))
         y_score = pd.DataFrame(y_score, index=X.index).squeeze('columns')
@@ -216,7 +225,7 @@ class PostProcessingMeta(BaseEstimator, MetaEstimatorMixin):
         Returns:
             float: Score value.
         """
-        use_proba = self.postprocessor_._get_tags()['requires_proba']
+        use_proba = get_tags(self.postprocessor_).requires_proba
         y_score = (self.estimator_.predict_proba(X) if use_proba else
                    self.estimator_.predict(X))
         y_score = pd.DataFrame(y_score, index=X.index).squeeze('columns')

@@ -1,5 +1,6 @@
 import numpy as np
 from sklearn.base import BaseEstimator, MetaEstimatorMixin, clone
+from sklearn.utils import get_tags
 from sklearn.utils.metaestimators import available_if
 from sklearn.utils.validation import has_fit_parameter
 
@@ -116,9 +117,10 @@ class ReweighingMeta(BaseEstimator, MetaEstimatorMixin):
         self.reweigher = reweigher
         self.estimator = estimator
 
-    @property
-    def _estimator_type(self):
-        return self.estimator._estimator_type
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.estimator_type = get_tags(self.estimator).estimator_type
+        return tags
 
     @property
     def classes_(self):

@@ -1,3 +1,5 @@
+from dataclasses import asdict
+
 import numpy as np
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.utils import check_random_state
@@ -5,6 +7,7 @@ from sklearn.utils.validation import check_is_fitted
 
 from aif360.sklearn.metrics import difference, base_rate
 from aif360.sklearn.metrics import generalized_fnr, generalized_fpr
+from aif360.sklearn.postprocessing import PostProcessingTags
 from aif360.sklearn.utils import check_inputs, check_groups
 
 
@@ -67,8 +70,11 @@ class CalibratedEqualizedOdds(BaseEstimator, ClassifierMixin):
         self.cost_constraint = cost_constraint
         self.random_state = random_state
 
-    def _more_tags(self):
-        return {'requires_proba': True}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags = PostProcessingTags(**asdict(tags))
+        tags.requires_proba = True
+        return tags
 
     def _weighted_cost(self, y_true, probas_pred, pos_label=1,
                        sample_weight=None):

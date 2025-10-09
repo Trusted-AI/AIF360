@@ -76,9 +76,9 @@ Supported Python Configurations:
 
 | OS      | Python version |
 | ------- | -------------- |
-| macOS   | 3.8 – 3.11     |
-| Ubuntu  | 3.8 – 3.11     |
-| Windows | 3.8 – 3.11     |
+| macOS   | 3.10 – 3.13     |
+| Ubuntu  | 3.10 – 3.13     |
+| Windows | 3.10 – 3.13     |
 
 ### (Optional) Create a virtual environment
 

@@ -1,3 +1,4 @@
+from dataclasses import asdict
 import warnings
 
 import numpy as np
@@ -10,6 +11,7 @@ from aif360.sklearn.metrics import average_odds_error
 from aif360.sklearn.metrics import equal_opportunity_difference
 from aif360.sklearn.metrics import disparate_impact_ratio
 from aif360.sklearn.metrics import make_scorer
+from aif360.sklearn.postprocessing import PostProcessingTags
 from aif360.sklearn.utils import check_groups
 
 
@@ -90,8 +92,11 @@ class RejectOptionClassifier(BaseEstimator, ClassifierMixin):
         self.threshold = threshold
         self.margin = margin
 
-    def _more_tags(self):
-        return {'requires_proba': True}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags = PostProcessingTags(**asdict(tags))
+        tags.requires_proba = True
+        return tags
 
     def fit(self, X, y, labels=None, pos_label=1, priv_group=1,
             sample_weight=None):
@@ -284,8 +289,11 @@ class RejectOptionClassifierCV(GridSearchCV):
         super().__init__(RejectOptionClassifier(), {}, scoring=scoring,
                          refit=refit, **kwargs)
 
-    def _more_tags(self):
-        return {'requires_proba': True}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags = PostProcessingTags(**asdict(tags))
+        tags.requires_proba = True
+        return tags
 
     def fit(self, X, y, **fit_params):
         """Run fit with all sets of parameters.
