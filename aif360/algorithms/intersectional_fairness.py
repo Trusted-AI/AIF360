@@ -305,7 +305,8 @@ class IntersectionalFairness(Transformer):
                                                 unprivileged_groups=unprivileged_groups,
                                                 scope_name=scope_name,
                                                 debias=True,
-                                                sess=sess
+                                                sess=sess,
+                                                seed = 0,
                                             )
                     model.fit(ds_act_pair)
             elif self.algorithm == 'RejectOptionClassification':
