@@ -73,4 +73,4 @@ Algorithms
    :template: class.rst
 
    algorithms.Transformer
-   algorithms.IntersectionalFairness
+   algorithms.intersectional_fairness.IntersectionalFairness
