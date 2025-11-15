@@ -1,0 +1,217 @@
+name: ⚖ Bias Mitigation Automation
+
+# Controls when the action will run.
+on:
+  workflow_dispatch:
+     inputs:
+      name:
+        description: '📗 Enter a name for your notebook (ex: output_notebook.ipynb )'
+        required: true
+      notebook:
+        description: "📒 Select the notebook you need to run."
+        default: "tutorial_medical_expenditure.ipynb"
+        type: choice
+        options:
+          - "tutorial_medical_expenditure.ipynb"
+          - "tutorial_bias_advertising.ipynb"
+          - "tutorial_medical_expenditure.ipynb"
+          - "demo_reweighing_preproc.ipynb"
+          - "demo_short_gerryfair_test.ipynb"
+          - "demo_reject_option_classification.ipynb"
+          - "demo_new_features.ipynb"
+          - "demo_ot_metric.ipynb"
+          - "demo_optim_preproc_adult.ipynb"
+          - "demo_optim_data_preproc.ipynb"
+          - "demo_meta_classifier.ipynb"
+          - "demo_mdss_detector.ipynb"
+          - "demo_mdss_classifier_metric.ipynb"
+          - "demo_lime.ipynb"
+          - "demo_lfr.ipynb"
+          - "demo_json_explainers.ipynb"
+          - "demo_gerryfair.ipynb"
+          - "demo_exponentiated_gradient_reduction.ipynb"
+          - "demo_disparate_impact_remover.ipynb"
+          - "demo_deterministic_reranking.ipynb"
+          - "demo_calibrated_eqodds_postprocessing.ipynb"
+          - "demo_adversarial_debiasing.ipynb"
+     
+  # A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  build-py:
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: [ 3.11]
+
+    env:
+      UCI_DB: "https://archive.ics.uci.edu/ml/machine-learning-databases"
+      PROPUBLICA_GH: "https://raw.githubusercontent.com/propublica/compas-analysis/bafff5da3f2e45eca6c2d5055faad269defd135a"
+      REPO_KEY: ${{secrets.ETHAI_AUDIT_HUB_GITHUB_TOKEN}}
+      username: github-actions
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      - name: 📥 Check out repo
+        uses: actions/checkout@v3
+    
+      - name: 📦 Set up R
+        uses: r-lib/actions/setup-r@v2
+
+        # Cache R packages
+      - name: 💰 Cache R packages 
+        uses: actions/cache@v2
+        with:
+          path: ~/.local/lib/R/site-library
+          key: ${{ runner.os }}-R-${{ hashFiles('**/DESCRIPTION') }}
+          restore-keys: |
+            ${{ runner.os }}-R-
+
+      - name: 🐍 Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v3
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      # Cache Python packages
+      - name: 💵 Cache Python packages 
+        uses: actions/cache@v2
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: 📢 Echo Inputs 
+        run: |
+          echo -e "\e[1;34mNotebook Name:\e[0m ${{ github.event.inputs.name }}"
+          echo -e "\e[1;34mExecuting Notebook:\e[0m ${{ github.event.inputs.notebook }}"   
+
+      - name: 📦 Install dependencies
+        run: |
+          python -m pip install --upgrade pip setuptools wheel
+          pip install -e '.[all]'
+          pip install flake8
+          pip list
+          python -m rpy2.situation
+          
+      - name: 📊 Download basic datasets
+        run: |
+          wget ${UCI_DB}/adult/adult.data -P aif360/data/raw/adult/
+          wget ${UCI_DB}/adult/adult.test -P aif360/data/raw/adult/
+          wget ${UCI_DB}/adult/adult.names -P aif360/data/raw/adult/
+          wget ${UCI_DB}/statlog/german/german.data -P aif360/data/raw/german/
+          wget ${UCI_DB}/statlog/german/german.doc -P aif360/data/raw/german/
+          wget ${PROPUBLICA_GH}/compas-scores-two-years.csv -P aif360/data/raw/compas/
+          wget ${UCI_DB}/00222/bank-additional.zip -P aif360/data/raw/bank/ && unzip -j aif360/data/raw/bank/bank-additional.zip -d aif360/data/raw/bank/ && rm aif360/data/raw/bank/bank-additional.zip
+          (cd aif360/data/raw/meps;Rscript generate_data.R <<< y)
+        
+      - name: 🧹Lint with flake8
+        run: |
+          # stop the build if there are Python syntax errors or undefined names
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+          # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
+          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+          
+      - name: 📒 Divert to Jupyter notebook directory
+        run:  |
+              cd ${{ github.workspace }}/examples
+              ls -a
+        
+      - name: 🚀 Execute Jupyter Notebook
+        run: |
+           # Navigate to examples directory
+           cd ${{ github.workspace }}/examples
+           
+           # Get path
+           pwd
+           
+           # Create an empty file for capturing the stack trace
+           touch ipynb_execution.txt
+
+           # Give write access to .txt
+           chmod +x ipynb_execution.txt
+           
+           # Execute the Jupyter notebook and save the output to a new notebook
+           jupyter nbconvert --to notebook --execute ${{ github.workspace }}/examples/${{ github.event.inputs.notebook }} --output ${{ github.workspace }}/automation/${{ github.event.inputs.name }} 2>&1 | tee -a ipynb_execution.txt || { echo "error: failed to execute Jupyter notebook. Please see log files to see the stacktrace."; exit 1; }
+      
+      - name:  📄 Log ipynb execution stack trace
+        uses: actions/upload-artifact@v2
+        with:
+          name: ipynb-execution-stack-trace
+          path: ipynb_execution.txt
+
+      - name: 📝 commit updated notebook
+        uses: EndBug/add-and-commit@v7
+        with:
+          author_name: Plot update bot
+          message: "add: executed notebook"
+          add: "${{ github.workspace }}/automation/${{ github.event.inputs.name }}"
+        
+        # Add a new step to commit and push the changes
+      - name: 🔀 Commit and Push Changes
+        run: |
+          git config --local user.name actions-user
+          git config --local user.email "actions@github.com"
+          
+      - name: 📂 Persist Logs of notebook execution log file
+        run: |
+              # Create artifacts directory
+              mkdir -p ${{ github.workspace }}/automation/artifacts
+
+              # Copy file to artifacts directory
+              cp ${{ github.workspace }}/examples/ipynb_execution.txt ${{ github.workspace }}/automation/artifacts/
+        if: ${{ always() }}
+          
+      - name: 📂 Persist Logs of executed ipynb file
+        run: |
+          # Copy file to artifacts directory
+          cp ${{ github.workspace }}/automation/${{ github.event.inputs.name }} ${{ github.workspace }}/automation/artifacts/
+        if: ${{ always() }}
+
+      - name: 📤 Upload Artifacts
+        uses: actions/upload-artifact@v2
+        if: always()
+        with:
+          name: "Audit Report ${{ github.actor }} - ${{ github.run_number }} "
+          path: ${{ github.workspace }}/automation/artifacts         
+      
+  build-r:
+   runs-on: ubuntu-latest
+
+   # Define strategy for job execution
+   strategy:
+    fail-fast: false
+    # Matrix strategy allows running multiple configurations
+    matrix:
+      python-version: [3.11]
+
+   steps:
+    # Checkout the repository
+    - name: 📥 Check out repo 
+      uses: actions/checkout@v3
+
+    # Set up R environment
+    - name: 📦 Set up R 
+      uses: r-lib/actions/setup-r@v2
+
+    # Set up Python environment
+    - name: 🐍 Set up Python ${{ matrix.python-version }} 
+      uses: actions/setup-python@v3
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    # Install R dependencies
+    - name: 📦 Install R dependencies 
+      run: install.packages(c("reticulate", "rstudioapi", "testthat"))
+      shell: Rscript {0}
+
+    # Install Python dependencies
+    - name: 📦 Install Python dependencies 
+      run: |
+        python -m pip install --upgrade pip setuptools wheel
+        pip install '.[all]'
+
+    # Install R package
+    - name: 📦 Install R package 
+      run: R CMD INSTALL aif360/aif360-r
