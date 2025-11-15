@@ -34,7 +34,10 @@ class AdversarialDebiasing(Transformer):
                  num_epochs=50,
                  batch_size=128,
                  classifier_num_hidden_units=200,
-                 debias=True):
+                 debias=True,
+                 #equal_opportunity=True,
+                 fairness_def='equal_opportunity',
+                 saved_model=None):
         """
         Args:
             unprivileged_groups (tuple): Representation for unprivileged groups
@@ -70,12 +73,22 @@ class AdversarialDebiasing(Transformer):
         self.batch_size = batch_size
         self.classifier_num_hidden_units = classifier_num_hidden_units
         self.debias = debias
+        #self.equal_opportunity = equal_opportunity
+        self.verbose = verbose
+        assert fairness_def in ['parity', 'equal_odds', 'equal_opportunity'], \
+            "fairness_def must be one of: 'parity', 'equal_odds', equal_opportunity' "
 
         self.features_dim = None
         self.features_ph = None
         self.protected_attributes_ph = None
         self.true_labels_ph = None
         self.pred_labels = None
+
+        self.features_ph_1 = None
+        self.protected_attributes_ph_1 = None
+        self.true_labels_ph_1 = None
+
+        self.saved_model = saved_model
 
     def _classifier_model(self, features, features_dim, keep_prob):
         """Compute the classifier predictions for the outcome variable.
@@ -101,8 +114,9 @@ class AdversarialDebiasing(Transformer):
         """Compute the adversary predictions for the protected attribute.
         """
         with tf.variable_scope("adversary_model"):
-            c = tf.get_variable('c', initializer=tf.constant(1.0))
-            s = tf.sigmoid((1 + tf.abs(c)) * pred_logits)
+            c = tf.get_variable('c', initializer=tf.constant(0.0))
+            #s = tf.sigmoid((1 + tf.abs(c)) * pred_logits)
+            s = tf.sigmoid((1+ tf.abs(c)) * pred_logits)
 
             W2 = tf.get_variable('W2', [3, 1],
                                  initializer=tf.initializers.glorot_uniform(seed=self.seed4))
@@ -112,6 +126,8 @@ class AdversarialDebiasing(Transformer):
             pred_protected_attribute_label = tf.sigmoid(pred_protected_attribute_logit)
 
         return pred_protected_attribute_label, pred_protected_attribute_logit
+
+
 
     def fit(self, dataset):
         """Compute the model parameters of the fair classifier using gradient
@@ -154,29 +170,46 @@ class AdversarialDebiasing(Transformer):
 
             if self.debias:
                 # Obtain adversary predictions and adversary loss
-                pred_protected_attributes_labels, pred_protected_attributes_logits = self._adversary_model(pred_logits, self.true_labels_ph)
-                pred_protected_attributes_loss = tf.reduce_mean(
-                    tf.nn.sigmoid_cross_entropy_with_logits(labels=self.protected_attributes_ph, logits=pred_protected_attributes_logits))
+                if self.fairness_def == 'equal_opportunity':
+                    self.features_ph_1 = tf.placeholder(tf.float32, shape=[None, self.features_dim])
+                    self.protected_attributes_ph_1 = tf.placeholder(tf.float32, shape=[None, 1])
+                    self.true_labels_ph_1 = tf.placeholder(tf.float32, shape=[None, 1])
+                    # pred_logits = Multiply self.features_ph pred_logits /then omit zero
+                    indecies = tf.where(self.true_labels_ph)
+                    indecies_flaten = tf.gather(indecies, [1], axis=1)
+                    pred_logits_mult_2 = tf.math.multiply(pred_logits, self.true_labels_ph)
+                    pred_logits_1 = tf.gather_nd(pred_logits_mult_2, indecies_flaten)
+                    pred_protected_attributes_labels, pred_protected_attributes_logits = self._adversary_model(
+                        pred_logits_1, self.true_labels_ph_1)
+                    pred_protected_attributes_loss = tf.reduce_mean(
+                        tf.nn.sigmoid_cross_entropy_with_logits(labels=self.protected_attributes_ph_1,
+                                                                logits=pred_protected_attributes_logits))
+
+                else:
+
+                    pred_protected_attributes_labels, pred_protected_attributes_logits = self._adversary_model(pred_logits, self.true_labels_ph)
+                    pred_protected_attributes_loss = tf.reduce_mean(
+                        tf.nn.sigmoid_cross_entropy_with_logits(labels=self.protected_attributes_ph, logits=pred_protected_attributes_logits))
 
             # Setup optimizers with learning rates
             global_step = tf.Variable(0, trainable=False)
-            starter_learning_rate = 0.001
+            starter_learning_rate = 0.005
             learning_rate = tf.train.exponential_decay(starter_learning_rate, global_step,
                                                        1000, 0.96, staircase=True)
             classifier_opt = tf.train.AdamOptimizer(learning_rate)
             if self.debias:
                 adversary_opt = tf.train.AdamOptimizer(learning_rate)
 
-            classifier_vars = [var for var in tf.trainable_variables(scope=self.scope_name) if 'classifier_model' in var.name]
+            classifier_vars = [var for var in tf.trainable_variables() if 'classifier_model' in var.name]
             if self.debias:
-                adversary_vars = [var for var in tf.trainable_variables(scope=self.scope_name) if 'adversary_model' in var.name]
+                adversary_vars = [var for var in tf.trainable_variables() if 'adversary_model' in var.name]
                 # Update classifier parameters
                 adversary_grads = {var: grad for (grad, var) in adversary_opt.compute_gradients(pred_protected_attributes_loss,
                                                                                       var_list=classifier_vars)}
             normalize = lambda x: x / (tf.norm(x) + np.finfo(np.float32).tiny)
 
             classifier_grads = []
-            for (grad,var) in classifier_opt.compute_gradients(pred_labels_loss, var_list=classifier_vars):
+            for (grad, var) in classifier_opt.compute_gradients(pred_labels_loss, var_list=classifier_vars):
                 if self.debias:
                     unit_adversary_grad = normalize(adversary_grads[var])
                     grad -= tf.reduce_sum(grad * unit_adversary_grad) * unit_adversary_grad
@@ -192,12 +225,28 @@ class AdversarialDebiasing(Transformer):
             self.sess.run(tf.global_variables_initializer())
             self.sess.run(tf.local_variables_initializer())
 
+        if self.saved_model:
+            if self.verbose:
+                print('RETRIEVING SAVED MODEL: {}'.format(self.saved_model), file=sys.stderr)
+            try:
+                saver = tf.compat.v1.train.import_meta_graph(self.saved_model + '/model.meta')
+                saver.restore(self.sess, tf.compat.v1.train.latest_checkpoint('./' + self.saved_model + '/'))
+                return self
+            except:
+                import traceback
+                print(sys.exc_info()[0], file=sys.stderr, flush=True)
+                print(sys.exc_info()[1], file=sys.stderr, flush=True)
+                print(traceback.print_tb(sys.exc_info()[2]), file=sys.stderr, flush=True)
+                print('Failed: continuing', file=sys.stderr)
+
             # Begin training
+        with tf.compat.v1.variable_scope(self.scope_name):
             for epoch in range(self.num_epochs):
                 shuffled_ids = np.random.choice(num_train_samples, num_train_samples, replace=False)
                 for i in range(num_train_samples//self.batch_size):
                     batch_ids = shuffled_ids[self.batch_size*i: self.batch_size*(i+1)]
                     batch_features = dataset.features[batch_ids]
+                    index_1s = np.where(temp_labels[batch_ids] == 1)[0]
                     batch_labels = np.reshape(temp_labels[batch_ids], [-1,1])
                     batch_protected_attributes = np.reshape(dataset.protected_attributes[batch_ids][:,
                                                  dataset.protected_attribute_names.index(self.protected_attribute_name)], [-1,1])
@@ -207,7 +256,21 @@ class AdversarialDebiasing(Transformer):
                                        self.protected_attributes_ph: batch_protected_attributes,
                                        self.keep_prob: 0.8}
                     if self.debias:
-                        _, _, pred_labels_loss_value, pred_protected_attributes_loss_vale = self.sess.run([classifier_minimizer,
+                        if self.fairness_def == 'equal_opportunity':
+                            batch_feed_dict_eqo = {self.features_ph: batch_features,
+                                                   self.true_labels_ph: batch_labels,
+                                                   self.protected_attributes_ph: batch_protected_attributes,
+                                                   self.features_ph_1: batch_features[index_1s],
+                                                   self.true_labels_ph_1: batch_labels[index_1s],
+                                                   self.protected_attributes_ph_1: batch_protected_attributes[index_1s],
+                                                   self.keep_prob: 0.8}
+                            _, _, pred_labels_loss_value, pred_protected_attributes_loss_vale = self.sess.run([classifier_minimizer,
+                                       adversary_minimizer,
+                                       pred_labels_loss,
+                                       pred_protected_attributes_loss], feed_dict=batch_feed_dict_eqo)
+
+                        else:
+                            _, _, pred_labels_loss_value, pred_protected_attributes_loss_vale = self.sess.run([classifier_minimizer,
                                        adversary_minimizer,
                                        pred_labels_loss,
                                        pred_protected_attributes_loss], feed_dict=batch_feed_dict)
@@ -221,6 +284,15 @@ class AdversarialDebiasing(Transformer):
                         if i % 200 == 0:
                             print("epoch %d; iter: %d; batch classifier loss: %f" % (
                             epoch, i, pred_labels_loss_value))
+
+        if self.saved_model:
+            model_name = self.saved_model + '/model'
+            if self.verbose:
+                print('SAVING MODEL: {}'.format(model_name), file=sys.stderr)
+            saver = tf.compat.v1.train.Saver()
+            saver.save(self.sess, model_name)
+            # print(self.__dict__, file=sys.stderr)
+
         return self
 
     def predict(self, dataset):
