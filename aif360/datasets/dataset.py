@@ -11,7 +11,6 @@ class Dataset(ABC):
         self.metadata.update({
             'transformer': '{}.__init__'.format(type(self).__name__),
             'params': kwargs,
-            'previous': []
         })
         self.validate_dataset()
 
@@ -36,7 +35,6 @@ class Dataset(ABC):
         cpy.metadata.update({
             'transformer': '{}.copy'.format(type(self).__name__),
             'params': {'deepcopy': deepcopy},
-            'previous': [self]
         })
         return cpy
 

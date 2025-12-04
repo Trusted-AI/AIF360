@@ -54,7 +54,6 @@ class StructuredDataset(Dataset):
                 {
                     'transformer': 'Dataset.__init__',
                     'params': kwargs,
-                    'previous': None
                 }
     """
 
@@ -494,7 +493,6 @@ class StructuredDataset(Dataset):
                 'transformer': '{}.split'.format(type(self).__name__),
                 'params': {'num_or_size_splits': num_or_size_splits,
                            'shuffle': shuffle},
-                'previous': [self]
             })
 
         return folds
