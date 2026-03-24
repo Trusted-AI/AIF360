@@ -11,6 +11,7 @@ from sklearn.utils.metaestimators import available_if
 
 from aif360.sklearn.postprocessing.calibrated_equalized_odds import CalibratedEqualizedOdds
 from aif360.sklearn.postprocessing.reject_option_classification import RejectOptionClassifier, RejectOptionClassifierCV
+from aif360.sklearn.postprocessing.threshold_optimizer import ThresholdOptimizer
 
 
 class PostProcessingMeta(BaseEstimator, MetaEstimatorMixin):
@@ -228,5 +229,5 @@ class PostProcessingMeta(BaseEstimator, MetaEstimatorMixin):
 
 __all__ = [
     'CalibratedEqualizedOdds', 'PostProcessingMeta', 'RejectOptionClassifier',
-    'RejectOptionClassifierCV'
+    'RejectOptionClassifierCV', 'ThresholdOptimizer'
 ]
