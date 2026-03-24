@@ -26,7 +26,7 @@ def clean_adult(X: DataFrame) -> DataFrame:
             return x.strip()
         else:
             return x
-    X = X.applymap(strip_str)
+    X = X.map(strip_str)
     X["relationship"] = X["relationship"].replace(["Husband", "Wife"], "Married")
     X["hours-per-week"] = pd.cut(
         x=X["hours-per-week"],
@@ -81,9 +81,8 @@ def clean_compas(X: DataFrame) -> DataFrame:
     X = X.reset_index(drop=True)
     X = X.drop(columns=["age", "c_charge_desc"])
     X["priors_count"] = pd.cut(X["priors_count"], [-0.1, 1, 5, 10, 15, 38])
-    X.target.replace("Recidivated", 0, inplace=True)
-    X.target.replace("Survived", 1, inplace=True)
-    X["age_cat"].replace("Less than 25", "10-25", inplace=True)
+    X["target"] = X["target"].replace("Recidivated", 0).replace("Survived", 1)
+    X["age_cat"] = X["age_cat"].replace("Less than 25", "10-25")
 
     return X
 
