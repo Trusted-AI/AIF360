@@ -81,13 +81,14 @@ class RegressionDataset(StructuredDataset):
             unprivileged_values = [0.]
             if callable(vals):
                 df[attr] = df[attr].apply(vals)
-            elif np.issubdtype(df[attr].dtype, np.number):
+            elif pd.api.types.is_numeric_dtype(df[attr]):
                 # this attribute is numeric; no remapping needed
                 privileged_values = vals
                 unprivileged_values = list(set(df[attr]).difference(vals))
             else:
                 # find all instances which match any of the attribute values
                 priv = np.logical_or.reduce(np.equal.outer(vals, df[attr].to_numpy()))
+                df[attr] = df[attr].astype(object)
                 df.loc[priv, attr] = privileged_values[0]
                 df.loc[~priv, attr] = unprivileged_values[0]
 

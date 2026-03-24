@@ -154,7 +154,7 @@ class BinaryLabelDatasetMetric(DatasetMetric):
             consistency += np.abs(y[i] - np.mean(y[indices[i]]))
         consistency = 1.0 - consistency/num_samples
 
-        return consistency
+        return np.asarray(consistency).item()
 
     def _smoothed_base_rates(self, labels, concentration=1.0):
         """Dirichlet-smoothed base rates for each intersecting group in the
