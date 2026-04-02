@@ -15,6 +15,7 @@ df = pd.DataFrame([
     ['r', 20],
     ['b', 10],
 ], columns=['s', 'score'])
+df['s'] = df['s'].astype(object)
 
 dataset = RegressionDataset(df, dep_var_name='score', protected_attribute_names=['s'], privileged_classes=[['r']])
 # sorted_dataset = RegressionDataset(df, dep_var_name='score', protected_attribute_names=['s'], privileged_classes=[['r']])

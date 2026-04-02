@@ -193,5 +193,55 @@ def test_generalized_binary_confusion_matrix():
     assert round(gtp,2) == 5.31
     gfp = cm.num_generalized_false_positives()
     assert gfp == 1.09
+
+
+# --- McFadden's Pseudo R² tests ---
+_df_clf = pd.DataFrame({
+    'sex':   [1, 1, 1, 1, 0, 0, 0, 0],
+    'label': [1, 1, 0, 0, 1, 1, 0, 0],
+})
+
+_ds_true = BinaryLabelDataset(
+    df=_df_clf,
+    label_names=['label'],
+    protected_attribute_names=['sex'],
+    favorable_label=1,
+    unfavorable_label=0,
+    privileged_protected_attributes=[[1]]
+)
+
+# privileged (sex==1): good predictions → higher R²
+# unprivileged (sex==0): poor predictions → lower R²
+_ds_pred = _ds_true.copy()
+_ds_pred.scores = np.array([[0.9], [0.8], [0.2], [0.1],
+                             [0.6], [0.4], [0.6], [0.4]])
+_ds_pred.labels = np.array([[1], [1], [0], [0],
+                             [1], [0], [1], [0]], dtype=np.float64)
+
+_m_pseudo = ClassificationMetric(
+    _ds_true, _ds_pred,
+    privileged_groups=[{'sex': 1}],
+    unprivileged_groups=[{'sex': 0}]
+)
+
+def test_pseudo_r2_overall():
+    r2 = _m_pseudo.pseudo_r2()
+    assert isinstance(r2, (float, np.floating))
+    assert r2 <= 1.0
+
+def test_pseudo_r2_privileged():
+    r2 = _m_pseudo.pseudo_r2(privileged=True)
+    assert isinstance(r2, (float, np.floating))
+    assert r2 > 0  # privileged group has better predictions
+
+def test_pseudo_r2_unprivileged():
+    r2 = _m_pseudo.pseudo_r2(privileged=False)
+    assert isinstance(r2, (float, np.floating))
+
+def test_pseudo_r2_parity():
+    parity = _m_pseudo.pseudo_r2_parity()
+    expected = _m_pseudo.pseudo_r2(privileged=False) - _m_pseudo.pseudo_r2(privileged=True)
+    assert abs(parity - expected) < 1e-9
+
    
    
