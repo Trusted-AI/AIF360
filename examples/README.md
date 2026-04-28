@@ -18,6 +18,14 @@ features of the new `scikit-learn`-compatible API
 
 [demo_optim_data_preproc.ipynb](demo_optim_data_preproc.ipynb): demonstrates a generalization of the credit scoring tutorial that  shows the full machine learning workflow for the optimized data pre-processing algorithm for bias mitigation on several datasets
 
+[demo_optim_preproc_adult.ipynb](demo_optim_preproc_adult.ipynb): demonstrates the use of the optimized pre-processing algorithm for bias mitigation on the Adult dataset
+
+[demo_reject_option_classification.ipynb](demo_reject_option_classification.ipynb): demonstrates the use of the Reject Option Classification (ROC) post-processing algorithm for bias mitigation
+
+[demo_reweighing_preproc.ipynb](demo_reweighing_preproc.ipynb):  demonstrates the use of a reweighing pre-processing algorithm for bias mitigation
+
+[demo_short_gerryfair_test.ipynb](demo_short_gerryfair_test.ipynb): demonstrates the use of the GerryFairClassifier in-processing algorithm for bias mitigation
+
 [demo_adversarial_debiasing.ipynb](demo_adversarial_debiasing.ipynb): demonstrates the use of the adversarial debiasing in-processing algorithm to learn a fair classifier
 
 [demo_calibrated_eqodds_postprocessing.ipynb](demo_calibrated_eqodds_postprocessing.ipynb): demonstrates the use of an odds-equalizing post-processing algorithm for bias mitigiation
@@ -29,7 +37,3 @@ features of the new `scikit-learn`-compatible API
 [demo_lfr.ipynb](demo_lfr.ipynb):  demonstrates the use of the learning fair representations algorithm for bias mitigation
 
 [demo_lime.ipynb](demo_lime.ipynb):  demonstrates how LIME - Local Interpretable Model-Agnostic Explanations - can be used with models learned with the AIF 360 toolkit to generate explanations for model predictions
-
-[demo_reject_option_classification.ipynb](demo_reject_option_classification.ipynb): demonstrates the use of the Reject Option Classification (ROC) post-processing algorithm for bias mitigation
-
-[demo_reweighing_preproc.ipynb](demo_reweighing_preproc.ipynb):  demonstrates the use of a reweighing pre-processing algorithm for bias mitigation
