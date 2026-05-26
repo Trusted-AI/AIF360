@@ -9,21 +9,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import os
 from aif360.datasets import BinaryLabelDataset
 from aif360.metrics import ClassificationMetric
+from itertools import batched
 import numpy as np
-import argparse
 import pandas as pd
 from minio import Minio
-import json
-import zipfile
-import importlib
 import re
 
-import torch
-import torch.utils.data
-from torch.autograd import Variable
+import onnxruntime as ort
 
 
 def dataset_wrapper(outcome, protected, unprivileged_groups, privileged_groups, favorable_label, unfavorable_label):
@@ -43,24 +37,18 @@ def dataset_wrapper(outcome, protected, unprivileged_groups, privileged_groups, 
 
 # Compute the accuaracy and predicted label using the given test dataset
 def evaluate(model, X_test, y_test):
-    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-    test = torch.utils.data.TensorDataset(Variable(torch.FloatTensor(X_test.astype('float32'))), Variable(torch.LongTensor(y_test.astype('float32'))))
-    test_loader = torch.utils.data.DataLoader(test, batch_size=64, shuffle=False)
-    model.eval()
-    correct = 0
-    accuracy = 0
+    input_name = model.get_inputs()[0].name
+    test = X_test.astype('float32')
+
     y_pred = []
-    with torch.no_grad():
-        for images, labels in test_loader:
-            images = images.to(device)
-            labels = labels.to(device)
-            outputs = model(images)
-            _, predicted = torch.max(outputs.data, 1)
-            predictions = torch.softmax(outputs.data, dim=1).detach().numpy()
-            correct += predicted.eq(labels.data.view_as(predicted)).sum().item()
-            y_pred += predicted.tolist()
-        accuracy = 1. * correct / len(test_loader.dataset)
-    y_pred = np.array(y_pred)
+    for images in batched(test, 64):
+        outputs = model.run(None, {input_name: images})
+        predictions = np.argmax(outputs[0], axis=1)
+        y_pred.append(predictions)
+
+    y_pred = np.concatenate(y_pred, axis=0)
+    accuracy = np.mean(y_pred == y_test)
+
     return accuracy, y_pred
 
 
@@ -69,8 +57,7 @@ def fairness_check(object_storage_url, object_storage_username, object_storage_p
                    feature_testset_path='processed_data/X_test.npy',
                    label_testset_path='processed_data/y_test.npy',
                    protected_label_testset_path='processed_data/p_test.npy',
-                   model_class_file='model.py',
-                   model_class_name='model',
+                   model_file='model.onnx',
                    favorable_label=0.0,
                    unfavorable_label=1.0,
                    privileged_groups=[{'race': 0.0}],
@@ -86,31 +73,23 @@ def fairness_check(object_storage_url, object_storage_username, object_storage_p
     dataset_filenamey = "y_test.npy"
     dataset_filenamep = "p_test.npy"
     weights_filename = "model.pt"
-    model_files = model_id + '/_submitted_code/model.zip'
 
     cos.fget_object(data_bucket_name, feature_testset_path, dataset_filenamex)
     cos.fget_object(data_bucket_name, label_testset_path, dataset_filenamey)
     cos.fget_object(data_bucket_name, protected_label_testset_path, dataset_filenamep)
     cos.fget_object(result_bucket_name, model_id + '/' + weights_filename, weights_filename)
-    cos.fget_object(result_bucket_name, model_files, 'model.zip')
+    cos.fget_object(result_bucket_name, model_id + '/' + model_file, model_file)
 
-    # Load PyTorch model definition from the source code.
-    zip_ref = zipfile.ZipFile('model.zip', 'r')
-    zip_ref.extractall('model_files')
-    zip_ref.close()
+    # Load ONNX model with security settings
+    sess_options = ort.SessionOptions()
+    sess_options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
 
-    modulename = 'model_files.' + model_class_file.split('.')[0].replace('-', '_')
-
-    '''
-    We required users to define where the model class is located or follow
-    some naming convention we have provided.
-    '''
-    model_class = getattr(importlib.import_module(modulename), model_class_name)
-
-    # load & compile model
-    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-    model = model_class().to(device)
-    model.load_state_dict(torch.load(weights_filename, map_location=device))
+    # Create inference session
+    model = ort.InferenceSession(
+        model_file,
+        sess_options=sess_options,
+        providers=['CUDAExecutionProvider', 'CPUExecutionProvider']
+    )
 
     """Load the necessary labels and protected features for fairness check"""
 
