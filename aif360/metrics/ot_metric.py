@@ -183,7 +183,7 @@ def ot_distance(
             raise ValueError(f"Only 2 unique values allowed in ground_truth for binary mode, got {uniques}")
 
     # Encode variables
-    if not np.issubdtype(grt.dtype, np.number):
+    if not pd.api.types.is_numeric_dtype(grt):
         grt_encoder = LabelEncoder().fit(grt)
         grt = pd.Series(grt_encoder.transform(grt))
 
