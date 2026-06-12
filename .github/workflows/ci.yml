@@ -41,15 +41,6 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Install dependencies
-        run: |
-          sudo apt install libglpk-dev libxml2-dev
-          python -m pip install --upgrade pip setuptools wheel
-          pip install '.[all]' --extra-index-url https://download.pytorch.org/whl/cpu
-          pip install flake8
-          pip list
-          python -m rpy2.situation
-
       - name: Download datasets
         run: |
           wget ${UCI_DB}/adult/adult.data -P aif360/data/raw/adult/
@@ -60,6 +51,15 @@ jobs:
           wget ${PROPUBLICA_GH}/compas-scores-two-years.csv -P aif360/data/raw/compas/
           wget ${UCI_DB}/00222/bank-additional.zip -P aif360/data/raw/bank/ && unzip -j aif360/data/raw/bank/bank-additional.zip -d aif360/data/raw/bank/ && rm aif360/data/raw/bank/bank-additional.zip
           (cd aif360/data/raw/meps;Rscript generate_data.R <<< y)
+
+      - name: Install dependencies
+        run: |
+          sudo apt install libglpk-dev libxml2-dev
+          python -m pip install --upgrade pip setuptools wheel
+          pip install '.[all]' --extra-index-url https://download.pytorch.org/whl/cpu
+          pip install flake8
+          pip list
+          python -m rpy2.situation
 
       - name: Lint with flake8
         run: |
