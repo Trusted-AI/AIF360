@@ -112,15 +112,14 @@ class StandardDataset(BinaryLabelDataset):
             unprivileged_values = [0.]
             if callable(vals):
                 df[attr] = df[attr].apply(vals)
-            elif np.issubdtype(df[attr].dtype, np.number):
+            elif pd.api.types.is_numeric_dtype(df[attr]):
                 # this attribute is numeric; no remapping needed
                 privileged_values = vals
                 unprivileged_values = list(set(df[attr]).difference(vals))
             else:
                 # find all instances which match any of the attribute values
                 priv = np.logical_or.reduce(np.equal.outer(vals, df[attr].to_numpy()))
-                df.loc[priv, attr] = privileged_values[0]
-                df.loc[~priv, attr] = unprivileged_values[0]
+                df[attr] = np.where(priv, privileged_values[0], unprivileged_values[0])
 
             privileged_protected_attributes.append(
                 np.array(privileged_values, dtype=np.float64))
@@ -132,16 +131,15 @@ class StandardDataset(BinaryLabelDataset):
         unfavorable_label = 0.
         if callable(favorable_classes):
             df[label_name] = df[label_name].apply(favorable_classes)
-        elif np.issubdtype(df[label_name], np.number) and len(set(df[label_name])) == 2:
+        elif pd.api.types.is_numeric_dtype(df[label_name]) and len(set(df[label_name])) == 2:
             # labels are already binary; don't change them
             favorable_label = favorable_classes[0]
             unfavorable_label = set(df[label_name]).difference(favorable_classes).pop()
         else:
             # find all instances which match any of the favorable classes
-            pos = np.logical_or.reduce(np.equal.outer(favorable_classes, 
+            pos = np.logical_or.reduce(np.equal.outer(favorable_classes,
                                                       df[label_name].to_numpy()))
-            df.loc[pos, label_name] = favorable_label
-            df.loc[~pos, label_name] = unfavorable_label
+            df[label_name] = np.where(pos, favorable_label, unfavorable_label)
 
         super(StandardDataset, self).__init__(df=df, label_names=[label_name],
             protected_attribute_names=protected_attribute_names,

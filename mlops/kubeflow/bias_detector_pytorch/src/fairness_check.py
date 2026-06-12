@@ -12,6 +12,7 @@
 import json
 import argparse
 import os
+from ast import literal_eval
 
 from fairness import fairness_check
 
@@ -46,8 +47,7 @@ if __name__ == "__main__":
     parser.add_argument('--model_id', type=str, help='Training model ID', default="training-dummy")
     parser.add_argument('--metric_path', type=str, help='Path for fairness check output', default="/tmp/fairness.txt")
     parser.add_argument('--fairness_status', type=str, help='Path for fairness status output', default="/tmp/status.txt")
-    parser.add_argument('--model_class_file', type=str, help='pytorch model class file', default="PyTorchModel.py")
-    parser.add_argument('--model_class_name', type=str, help='pytorch model class name', default="PyTorchModel")
+    parser.add_argument('--model_file', type=str, help='ONNX model file', default="model.onnx")
     parser.add_argument('--feature_testset_path', type=str, help='Feature test dataset path in the data bucket', default="processed_data/X_test.npy")
     parser.add_argument('--label_testset_path', type=str, help='Label test dataset path in the data bucket', default="processed_data/y_test.npy")
     parser.add_argument('--protected_label_testset_path', type=str, help='Protected label test dataset path in the data bucket', default="processed_data/p_test.npy")
@@ -66,8 +66,7 @@ if __name__ == "__main__":
     metric_path = args.metric_path
     model_id = args.model_id
     fairness_status = args.fairness_status
-    model_class_file = args.model_class_file
-    model_class_name = args.model_class_name
+    model_file = args.model_file
     feature_testset_path = args.feature_testset_path
     label_testset_path = args.label_testset_path
     protected_label_testset_path = args.protected_label_testset_path
@@ -75,16 +74,15 @@ if __name__ == "__main__":
     unfavorable_label = args.unfavorable_label
     data_bucket_name = args.data_bucket_name
     result_bucket_name = args.result_bucket_name
-    privileged_groups = eval(args.privileged_groups)
-    unprivileged_groups = eval(args.unprivileged_groups)
+    privileged_groups = literal_eval(args.privileged_groups)
+    unprivileged_groups = literal_eval(args.unprivileged_groups)
 
     metrics = fairness_check(object_storage_url, object_storage_username, object_storage_password,
                              data_bucket_name, result_bucket_name, model_id,
                              feature_testset_path=feature_testset_path,
                              label_testset_path=label_testset_path,
                              protected_label_testset_path=protected_label_testset_path,
-                             model_class_file=model_class_file,
-                             model_class_name=model_class_name,
+                             model_file=model_file,
                              favorable_label=favorable_label,
                              unfavorable_label=unfavorable_label,
                              privileged_groups=privileged_groups,

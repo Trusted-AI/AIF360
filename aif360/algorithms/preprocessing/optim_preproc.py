@@ -162,7 +162,7 @@ class OptimPreproc(Transformer):
 
         if transform_Y:
             # randomized mapping when Y is requested to be transformed
-            dfP_withY = self.OpT.dfP.applymap(lambda x: 0 if x < 1e-8 else x)
+            dfP_withY = self.OpT.dfP.map(lambda x: 0 if x < 1e-8 else x)
             dfP_withY = dfP_withY.divide(dfP_withY.sum(axis=1), axis=0)
 
             df_transformed = _apply_randomized_mapping(df, dfP_withY,
@@ -175,7 +175,7 @@ class OptimPreproc(Transformer):
             d2 = d1.transpose().reset_index().groupby(X_feature_names).sum()
             dfP_noY = d2.transpose()
             dfP_noY = dfP_noY.drop(Y_feature_names, 1)
-            dfP_noY = dfP_noY.applymap(lambda x: x if x > 1e-8 else 0)
+            dfP_noY = dfP_noY.map(lambda x: x if x > 1e-8 else 0)
             dfP_noY = dfP_noY/dfP_noY.sum()
 
             dfP_noY = dfP_noY.divide(dfP_noY.sum(axis=1), axis=0)

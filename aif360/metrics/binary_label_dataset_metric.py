@@ -141,7 +141,7 @@ class BinaryLabelDatasetMetric(DatasetMetric):
 
         X = self.dataset.features
         num_samples = X.shape[0]
-        y = self.dataset.labels
+        y = self.dataset.labels.ravel()
 
         # learn a KNN on the features
         nbrs = NearestNeighbors(n_neighbors=n_neighbors, algorithm='ball_tree')
