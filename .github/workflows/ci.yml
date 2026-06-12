@@ -45,7 +45,7 @@ jobs:
         run: |
           sudo apt install libglpk-dev libxml2-dev
           python -m pip install --upgrade pip setuptools wheel
-          pip install -e '.[all]' --extra-index-url https://download.pytorch.org/whl/cpu
+          pip install '.[all]' --extra-index-url https://download.pytorch.org/whl/cpu
           pip install flake8
           pip list
           python -m rpy2.situation
