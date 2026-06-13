@@ -51,6 +51,8 @@ Get in touch with us on [Slack](https://aif360.slack.com) (invitation
 * Grid Search Reduction ([Agarwal et al., 2018](https://arxiv.org/abs/1803.02453), [Agarwal et al., 2019](https://arxiv.org/abs/1905.12843))
 * Fair Data Adaptation ([Plečko and Meinshausen, 2020](https://www.jmlr.org/papers/v21/19-966.html), [Plečko et al., 2021](https://arxiv.org/abs/2110.10200))
 * Sensitive Set Invariance/Sensitive Subspace Robustness ([Yurochkin and Sun, 2020](https://arxiv.org/abs/2006.14168), [Yurochkin et al., 2019](https://arxiv.org/abs/1907.00020))
+* Subgroup and Instantaneous Fairness Optimisation ([Quan Zhou, Jakub Marecek, and Robert N. Shorten](http://arxiv.org/abs/2209.05274))
+* Distributional Repair ([Abigail Langbridge, Anthony Quinn, and Robert Shorten](http://arxiv.org/abs/2403.13864))
 
 ## Supported fairness metrics
 
