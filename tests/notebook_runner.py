@@ -3,13 +3,14 @@
 
 import os
 import subprocess
+import sys
 import tempfile
 
 import nbformat
 
 def notebook_run(path):
     """Execute a notebook via nbconvert and collect output.
-    Reset cwd after execution. 
+    Reset cwd after execution.
        :returns (parsed nb object, execution errors)
     """
     old_cwd = os.getcwd()
@@ -20,7 +21,7 @@ def notebook_run(path):
     kername = "python3"
 
     with tempfile.NamedTemporaryFile(suffix=".ipynb") as fout:
-        args = ["jupyter", "nbconvert", "--to", "notebook", "--execute",
+        args = [sys.executable, "-m", "jupyter", "nbconvert", "--to", "notebook", "--execute",
                 "--ExecutePreprocessor.timeout=600",
                 "--ExecutePreprocessor.allow_errors=True",
                 "--ExecutePreprocessor.kernel_name={}".format(kername),
@@ -34,7 +35,7 @@ def notebook_run(path):
     errors = [output for cell in nb.cells if "outputs" in cell
                      for output in cell["outputs"]
                      if output.output_type == "error"]
-    
+
     os.chdir(old_cwd)
 
     return nb, errors

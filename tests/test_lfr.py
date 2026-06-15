@@ -1,15 +1,8 @@
-import os
-import sys
-
 import numpy as np
 import pytest
 
 from aif360.algorithms.preprocessing import LFR
 from aif360.algorithms.preprocessing.optim_preproc_helpers.data_preproc_functions import load_preproc_data_adult
-
-
-sys.path.append("../../../")
-sys.path.append(os.path.dirname(__file__))
 
 
 @pytest.fixture(scope="module")
