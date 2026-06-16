@@ -1,7 +1,5 @@
 import numpy as np
-
 from sklearn.linear_model import LogisticRegression
-from sklearn.svm import SVC as SVM
 from sklearn.preprocessing import MinMaxScaler
 
 from aif360.algorithms.preprocessing import DisparateImpactRemover
@@ -78,3 +76,73 @@ def test_adult():
 
     assert after > before
     assert abs(1 - after) <= 0.2
+
+
+def test_fit_transform_no_repair():
+    """Test case for fit_transform with no repair (repair_level=0.0)"""
+    protected = 'sex'
+    ad = AdultDataset(protected_attribute_names=[protected],
+                      privileged_classes=[['Male']], categorical_features=[],
+                      features_to_keep=['age', 'education-num'])
+
+    di = DisparateImpactRemover(repair_level=0.0)
+    ad_repd = di.fit_transform(ad)
+
+    # Assert that the transformed dataset is the same as the original
+    assert np.array_equal(ad.features, ad_repd.features), "Transformed dataset should be the same as original."
+
+
+def test_fit_transform_full_repair():
+    """Test case for fit_transform with full repair (repair_level=1.0)"""
+    protected = 'sex'
+    ad = AdultDataset(protected_attribute_names=[protected],
+                      privileged_classes=[['Male']], categorical_features=[],
+                      features_to_keep=['age', 'education-num'])
+
+    di = DisparateImpactRemover(repair_level=1.0)
+    ad_repd = di.fit_transform(ad)
+
+    # Assert that the transformed dataset is different from the original
+    assert not np.array_equal(ad.features, ad_repd.features), "Transformed dataset should differ from original."
+
+
+def test_transform_after_fit():
+    """Test case for transform method after fitting"""
+    protected = 'sex'
+    ad = AdultDataset(protected_attribute_names=[protected],
+                      privileged_classes=[['Male']], categorical_features=[],
+                      features_to_keep=['age', 'education-num'])
+
+    di = DisparateImpactRemover(repair_level=1.0)
+
+    # Fit the model
+    di.fit(ad)
+
+    # Transform the dataset
+    ad_repd = di.transform(ad)
+
+    # Assert that the transformed dataset is different from the original
+    assert not np.array_equal(ad.features, ad_repd.features), "Transformed dataset should differ from original."
+
+
+def test_fit_transform_equivalence():
+    """Test case to ensure fit + transform is equivalent to fit_transform."""
+    protected = 'sex'
+    ad = AdultDataset(protected_attribute_names=[protected],
+                      privileged_classes=[['Male']], categorical_features=[],
+                      features_to_keep=['age', 'education-num'])
+
+    # Create DisparateImpactRemover instance with repair level 1.0
+    di = DisparateImpactRemover(repair_level=1.0)
+
+    # Use fit_transform method
+    ad_repd_fit_transform = di.fit_transform(ad)
+
+    # Use fit followed by transform
+    di.fit(ad)
+    ad_repd_fit_then_transform = di.transform(ad)
+
+    # Assert that the two results are equal
+    assert np.array_equal(ad_repd_fit_transform.features, ad_repd_fit_then_transform.features), (
+        "Results from fit + transform should be equal to fit_transform."
+    )
