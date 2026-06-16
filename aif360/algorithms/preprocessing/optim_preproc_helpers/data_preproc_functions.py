@@ -10,7 +10,7 @@ def load_preproc_data_adult(protected_attributes=None, sub_samp=False, balance=F
         """
 
         # Group age by decade
-        df['Age (decade)'] = df['age'].apply(lambda x: x//10*10)
+        df['Age (decade)'] = df['age'].astype(int).apply(lambda x: x//10*10)
         # df['Age (decade)'] = df['age'].apply(lambda x: np.floor(x/10.0)*10.0)
 
         def group_edu(x):
