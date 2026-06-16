@@ -19,7 +19,6 @@ def addmetadata(func):
         {
             'transformer': 'TransformerClass.function_name',
             'params': kwargs_from_init,
-            'previous': [all_datasets_used_by_func]
         }
     """
     @wraps(func)
@@ -30,7 +29,6 @@ def addmetadata(func):
             new_dataset.metadata.update({
                 'transformer': '{}.{}'.format(type(self).__name__, func.__name__),
                 'params': self._params,
-                'previous': [a for a in args if isinstance(a, Dataset)]
             })
         return new_dataset
     return wrapper
