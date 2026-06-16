@@ -98,3 +98,4 @@ class RegressionDatasetMetric(DatasetMetric):
         logs = np.log2(np.arange(2, len(scores)+2))
         z = np.sum(scores/logs)
         return z
+

@@ -6,6 +6,7 @@ from aif360.metrics import BinaryLabelDatasetMetric, utils
 from aif360.datasets import BinaryLabelDataset
 from aif360.datasets.multiclass_label_dataset import MulticlassLabelDataset
 
+_LOG_CLIP_EPS = 1e-10
 
 class ClassificationMetric(BinaryLabelDatasetMetric):
     """Class for computing metrics based on two BinaryLabelDatasets.
@@ -861,6 +862,75 @@ class ClassificationMetric(BinaryLabelDatasetMetric):
         edf_data = self.smoothed_empirical_differential_fairness(concentration)
 
         return edf_clf - edf_data
+
+    def pseudo_r2(self, privileged=None):
+        r"""McFadden's Pseudo R² for a group.
+
+        .. math::
+
+           R^2_{McFadden} = 1 - \frac{\ln L_{model}}{\ln L_{null}}
+
+        where :math:`\ln L_{model} = \sum_i [y_i \ln(\hat{p}_i) + (1-y_i)\ln(1-\hat{p}_i)]`
+        and :math:`\ln L_{null} = \sum_i [y_i \ln(\bar{p}) + (1-y_i)\ln(1-\bar{p})]`,
+        with :math:`\bar{p}` being the base rate (mean of true labels) for the group.
+
+        Suitable for binary classification where ``scores`` are predicted
+        probabilities in [0, 1] and ``labels`` are binary (0 or 1).
+
+        Args:
+            privileged (bool, optional): Boolean prescribing whether to
+                condition this metric on the `privileged_groups`, if `True`, or
+                the `unprivileged_groups`, if `False`. Defaults to `None`
+                meaning this metric is computed over the entire dataset.
+
+        Returns:
+            numpy.float64: McFadden's Pseudo R². Returns 0.0 if
+            :math:`\ln L_{null} = 0`.
+        """
+        condition = self._to_condition(privileged)
+        cond_vec = utils.compute_boolean_conditioning_vector(
+            self.dataset.protected_attributes,
+            self.dataset.protected_attribute_names,
+            condition)
+
+        y_true = np.ravel(self.dataset.labels)[cond_vec]
+        y_pred = np.ravel(self.classified_dataset.scores)[cond_vec]
+
+        # convert labels to binary 0/1 based on favorable_label
+        y_true = (y_true == self.dataset.favorable_label).astype(np.float64)
+
+        y_pred_clipped = np.clip(y_pred, _LOG_CLIP_EPS, 1 - _LOG_CLIP_EPS)
+
+        ll_model = np.sum(y_true * np.log(y_pred_clipped) +
+                          (1 - y_true) * np.log(1 - y_pred_clipped))
+
+        p_bar = np.mean(y_true)
+        p_bar_clipped = np.clip(p_bar, _LOG_CLIP_EPS, 1 - _LOG_CLIP_EPS)
+        ll_null = np.sum(y_true * np.log(p_bar_clipped) +
+                         (1 - y_true) * np.log(1 - p_bar_clipped))
+
+        if ll_null == 0:
+            return np.float64(0.0)
+
+        return np.float64(1.0 - ll_model / ll_null)
+
+    def pseudo_r2_parity(self):
+        r"""Difference in McFadden's Pseudo R² between unprivileged and
+        privileged groups.
+
+        .. math::
+
+           \Delta R^2 = R^2_{\text{unprivileged}} - R^2_{\text{privileged}}
+
+        A value of 0 indicates parity. Positive values indicate the model
+        fits better for the unprivileged group; negative values indicate
+        better fit for the privileged group.
+
+        Returns:
+            numpy.float64: Difference in McFadden's Pseudo R²
+            (unprivileged − privileged).
+        """
+        return self.difference(self.pseudo_r2)
 
     # ============================== ALIASES ===================================
     def equal_opportunity_difference(self):
