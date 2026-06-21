@@ -164,7 +164,7 @@ class LearnedFairRepresentations(BaseEstimator, ClassifierMixin, TransformerMixi
                           'iterations.', ConvergenceWarning)
         elif res.status == 2:
             warnings.warn('lbfgs failed to converge: {}'.format(
-                          res.message.decode()), ConvergenceWarning)
+                          res.message), ConvergenceWarning)
         return self
 
     def transform(self, X):
