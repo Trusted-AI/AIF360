@@ -253,7 +253,7 @@ class SenSeI(InFairnessNet):
     """
     def __init__(self, module, *, criterion, distance_x, distance_y, rho, eps,
                  auditor_nsteps, auditor_lr, regression='auto', **kwargs):
-        """
+        r"""
         Args:
             module (torch.nn.Module): Network architecture.
             criterion (torch.nn.Module): Loss function.
@@ -335,7 +335,7 @@ class SenSR(InFairnessNet):
     """
     def __init__(self, module, *, criterion, distance_x, eps, lr_lamb, lr_param,
                  auditor_nsteps, auditor_lr, regression='auto', **kwargs):
-        """
+        r"""
         Args:
             module (torch.nn.Module): Network architecture.
             criterion (torch.nn.Module): Loss function.
