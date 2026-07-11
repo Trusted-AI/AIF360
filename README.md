@@ -249,3 +249,7 @@ paper.
 
 ## Contributing
 The development fork for Rich Subgroup Fairness (`inprocessing/gerryfair_classifier.py`) is [here](https://github.com/sethneel/aif360). Contributions are welcome and a list of potential contributions from the authors can be found [here](https://trello.com/b/0OwPcbVr/gerryfair-development).
+
+---
+
+*[Mukller](https://github.com/Mukller)*
