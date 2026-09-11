@@ -636,7 +636,7 @@ def equal_opportunity_difference(y_true, y_pred, *, prot_attr=None,
 
 def average_odds_difference(y_true, y_pred, *, prot_attr=None, priv_group=1,
                             pos_label=1, sample_weight=None):
-    r"""A relaxed version of equality of odds.
+    r"""Average signed difference in false positive and true positive rates.
 
     Returns the average of the difference in FPR and TPR for the unprivileged
     and privileged groups:
@@ -646,7 +646,9 @@ def average_odds_difference(y_true, y_pred, *, prot_attr=None, priv_group=1,
         \dfrac{(FPR_{D = \text{unprivileged}} - FPR_{D = \text{privileged}})
         + (TPR_{D = \text{unprivileged}} - TPR_{D = \text{privileged}})}{2}
 
-    A value of 0 indicates equality of odds.
+    Equality of odds implies a value of 0, but the converse is not true:
+    opposite-signed differences in FPR and TPR can cancel. Use
+    :func:`average_odds_error` to avoid this cancellation.
 
     Args:
         y_true (pandas.Series): Ground truth (correct) target values.
