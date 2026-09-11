@@ -64,7 +64,9 @@ class MetricJSONExplainer(MetricTextExplainer):
             ("numTruePositivesPrivileged", self.metric.num_true_positives(privileged=True)),
             ("numPositivesPrivileged", self.metric.num_positives(privileged=True)),
             ("description", "Computed as average difference of false positive rate (false positives / negatives) and true positive rate (true positives / positives) between unprivileged and privileged groups."),
-            ("ideal", "The ideal value of this metric is 0.  A value of < 0 implies higher benefit for the privileged group and a value > 0 implies higher benefit for the unprivileged group.")
+            ("ideal", "Equality of odds implies a value of 0, but opposite-signed "
+                "FPR and TPR differences can cancel. A value of 0 alone does "
+                "not imply equality of odds.")
         ))
         return json.dumps(response)
 

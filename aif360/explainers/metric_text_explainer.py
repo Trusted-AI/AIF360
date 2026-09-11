@@ -40,7 +40,7 @@ class MetricTextExplainer(Explainer):
 
     def average_odds_difference(self):
         return ("Average odds difference (average of TPR difference and FPR "
-                "difference, 0 = equality of odds): {}".format(
+                "difference, 0 does not imply equality of odds): {}".format(
                     self.metric.average_odds_difference()))
 
     def between_all_groups_coefficient_of_variation(self):
