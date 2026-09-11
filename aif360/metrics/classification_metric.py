@@ -552,7 +552,10 @@ class ClassificationMetric(BinaryLabelDatasetMetric):
            \tfrac{1}{2}\left[(FPR_{D = \text{unprivileged}} - FPR_{D = \text{privileged}})
            + (TPR_{D = \text{unprivileged}} - TPR_{D = \text{privileged}}))\right]
 
-        A value of 0 indicates equality of odds.
+        Equality of odds implies a value of 0, but the converse is not true:
+        opposite-signed differences in FPR and TPR can cancel. Use
+        :meth:`average_abs_odds_difference` or :meth:`equalized_odds_difference`
+        to avoid this cancellation.
         """
         return 0.5 * (self.difference(self.false_positive_rate)
                     + self.difference(self.true_positive_rate))
