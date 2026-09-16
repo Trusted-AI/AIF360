@@ -3,6 +3,7 @@ from sklearn.neighbors import NearestNeighbors
 from aif360.algorithms.inprocessing.gerryfair.auditor import Auditor
 from aif360.datasets import BinaryLabelDataset
 from aif360.datasets.multiclass_label_dataset import MulticlassLabelDataset
+from aif360.decorating_metaclass import dont_decorate
 from aif360.metrics import DatasetMetric, utils
 from aif360.algorithms.inprocessing.gerryfair.clean import *
 
@@ -229,6 +230,90 @@ class BinaryLabelDatasetMetric(DatasetMetric):
         # overall DF of the mechanism
         return max(max(pos_ratio(i, j), neg_ratio(i, j))
                    for i in range(len(sbr)) for j in range(len(sbr)) if i != j)
+
+    @dont_decorate
+    def smoothed_empirical_differential_fairness_details(self,
+            concentration=1.0, top_k=None):
+        """Return smoothed EDF and the intersectional group pairs behind it.
+
+        Args:
+            concentration (float): Non-negative Dirichlet concentration.
+            top_k (int, optional): Maximum number of pairs in the breakdown.
+                Must be positive. By default, return all unordered pairs.
+
+        Returns:
+            dict: ``epsilon`` is the maximum log-ratio. ``pairs`` contains
+            dictionaries with ``groups`` (two protected-attribute mappings),
+            ``positive_log_ratio``, ``negative_log_ratio``, and ``epsilon``.
+            Pairs are ordered by descending epsilon, with lexicographic group
+            order breaking ties. ``maximizing_pairs`` includes all maximizing
+            pairs, even when ``top_k`` truncates the breakdown.
+
+        Raises:
+            ValueError: If there are fewer than two groups, the smoothed
+                probabilities are undefined, or ``top_k`` is not positive.
+            TypeError: If ``top_k`` is not an integer.
+
+        Examples:
+            Inspect the strongest group comparisons without changing the
+            scalar metric used by existing callers::
+
+                details = metric.smoothed_empirical_differential_fairness_details(
+                    concentration=1.0, top_k=5)
+                for pair in details['pairs']:
+                    print(pair['groups'], pair['epsilon'])
+
+        Notes:
+            Only groups observed in the dataset are compared. Each call
+            returns fresh dictionaries. All unordered pairs are computed;
+            ``top_k`` limits output size, not computation or memory usage.
+            A zero concentration can produce
+            infinite log-ratios; comparisons involving undefined differences
+            of infinities raise ``ValueError``. Positive smoothing avoids
+            these undefined comparisons for groups with finite weights.
+
+        See Also:
+            :meth:`smoothed_empirical_differential_fairness`: The scalar
+            metric and its differential-fairness reference.
+        """
+        if top_k is not None:
+            if isinstance(top_k, (bool, np.bool_)) or not isinstance(
+                    top_k, (int, np.integer)):
+                raise TypeError("top_k must be an integer.")
+            if top_k <= 0:
+                raise ValueError("top_k must be positive.")
+        groups = np.unique(self.dataset.protected_attributes, axis=0)
+        if len(groups) < 2:
+            raise ValueError("At least two intersectional groups are required.")
+        rates = self._smoothed_base_rates(self.dataset.labels, concentration)
+        with np.errstate(divide='ignore', invalid='ignore'):
+            positive = np.log(rates)
+            negative = np.log(1 - rates)
+        pairs = []
+        for i in range(len(groups)):
+            for j in range(i + 1, len(groups)):
+                with np.errstate(invalid='ignore'):
+                    pos = float(abs(positive[i] - positive[j]))
+                    neg = float(abs(negative[i] - negative[j]))
+                if np.isnan(pos) or np.isnan(neg):
+                    raise ValueError("Group log-ratios are undefined; "
+                                     "use a positive concentration.")
+                pairs.append({
+                    'groups': tuple(dict(zip(
+                        self.dataset.protected_attribute_names, groups[k]))
+                        for k in (i, j)),
+                    'positive_log_ratio': pos,
+                    'negative_log_ratio': neg,
+                    'epsilon': max(pos, neg),
+                })
+        pairs.sort(key=lambda pair: pair['epsilon'], reverse=True)
+        epsilon = pairs[0]['epsilon']
+        return {
+            'epsilon': epsilon,
+            'maximizing_pairs': [pair for pair in pairs
+                                if pair['epsilon'] == epsilon],
+            'pairs': pairs[:top_k],
+        }
 
     # ============================== ALIASES ===================================
     def mean_difference(self):
