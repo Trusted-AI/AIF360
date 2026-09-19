@@ -304,7 +304,7 @@ class OptTools():
         3. Discrimination constraints for all combinations of groups specified
            (there is no distinction between protected and unprotected groups).
            The constraints are given in eqn 2, 3 in the paper. We use a single
-           /\epsilon value for all combinations of y and d values
+           /\\epsilon value for all combinations of y and d values
 
         See section 4.3 in supplementary material of the paper for an example
 
