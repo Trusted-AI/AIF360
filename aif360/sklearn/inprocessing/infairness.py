@@ -262,7 +262,7 @@ class SenSeI(InFairnessNet):
             distance_y (inFairness.distances.Distance): Distance metric in the
                 output space.
             rho (float): :math:`\\rho` parameter in the SenSeI algorithm.
-            eps (float): :math:`\epsilon` parameter in the SenSeI algorithm.
+            eps (float): :math:`\\epsilon` parameter in the SenSeI algorithm.
             auditor_nsteps (int): Number of update steps for the auditor to find
                 worst-case examples
             auditor_lr (float): Learning rate for the auditor.
@@ -341,8 +341,8 @@ class SenSR(InFairnessNet):
             criterion (torch.nn.Module): Loss function.
             distance_x (inFairness.distances.Distance): Distance metric in the
                 input space.
-            eps (float): :math:`\epsilon` parameter in the SenSR algorithm.
-            lr_lamb (float): :math:`\lambda` parameter in the SenSR algorithm.
+            eps (float): :math:`\\epsilon` parameter in the SenSR algorithm.
+            lr_lamb (float): :math:`\\lambda` parameter in the SenSR algorithm.
             lr_param (float): :math:`\\alpha` parameter in the SenSR algorithm.
             auditor_nsteps (int): Number of update steps for the auditor to find
                 worst-case examples
