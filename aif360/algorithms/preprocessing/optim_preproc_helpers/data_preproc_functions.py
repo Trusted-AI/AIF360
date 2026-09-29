@@ -10,6 +10,7 @@ def load_preproc_data_adult(protected_attributes=None, sub_samp=False, balance=F
         """
 
         # Group age by decade
+        df['age'] = pd.to_numeric(df['age'], errors='coerce')
         df['Age (decade)'] = df['age'].apply(lambda x: x//10*10)
         # df['Age (decade)'] = df['age'].apply(lambda x: np.floor(x/10.0)*10.0)
 
@@ -35,6 +36,7 @@ def load_preproc_data_adult(protected_attributes=None, sub_samp=False, balance=F
 
         # Cluster education and age attributes.
         # Limit education range
+        df['education-num'] = pd.to_numeric(df['education-num'], errors='coerce')
         df['Education Years'] = df['education-num'].apply(lambda x: group_edu(x))
         df['Education Years'] = df['Education Years'].astype('category')
 
