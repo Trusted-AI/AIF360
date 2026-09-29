@@ -208,3 +208,43 @@ def test_one_vs_rest():
         for j in range(2):
             g = (i, j)
             assert disparate_impact_ratio(y, y_pred, priv_group=g) == ovr[g]
+
+
+def test_priv_group_no_match_raises():
+    """Test that difference/ratio raise ValueError when priv_group matches nothing."""
+    prot_attr = pd.Series([1, 1, 0, 0], name='sex')
+    y_true = pd.Series([1, 0, 1, 0], index=prot_attr)
+    y_pred = pd.Series([1, 1, 0, 0], index=prot_attr)
+
+    with pytest.raises(ValueError, match="priv_group=999.*does not match"):
+        statistical_parity_difference(y_true, y_pred, prot_attr='sex', priv_group=999)
+
+    with pytest.raises(ValueError, match="priv_group=999.*does not match"):
+        disparate_impact_ratio(y_true, y_pred, prot_attr='sex', priv_group=999)
+
+
+def test_priv_group_default_with_multiple_prot_attrs_raises():
+    """Test that default priv_group=1 raises with multiple protected attributes."""
+    idx = pd.MultiIndex.from_tuples([(1, 0), (1, 1), (0, 0), (0, 1)],
+                                    names=['sex', 'age'])
+    y_true = pd.Series([1, 0, 1, 0], index=idx)
+    y_pred = pd.Series([1, 1, 0, 0], index=idx)
+
+    with pytest.raises(ValueError, match="priv_group=1.*does not match"):
+        statistical_parity_difference(y_true, y_pred, prot_attr=['sex', 'age'])
+
+    with pytest.raises(ValueError, match="priv_group=1.*does not match"):
+        disparate_impact_ratio(y_true, y_pred, prot_attr=['sex', 'age'])
+
+
+def test_priv_group_valid_still_works():
+    """Test that valid priv_group values still work correctly."""
+    prot_attr = pd.Series([1, 1, 0, 0], name='sex')
+    y_true = pd.Series([1, 0, 1, 0], index=prot_attr)
+    y_pred = pd.Series([1, 1, 0, 0], index=prot_attr)
+
+    stat = statistical_parity_difference(y_true, y_pred, prot_attr='sex', priv_group=1)
+    assert isinstance(stat, float)
+
+    di = disparate_impact_ratio(y_true, y_pred, prot_attr='sex', priv_group=1)
+    assert isinstance(di, float)

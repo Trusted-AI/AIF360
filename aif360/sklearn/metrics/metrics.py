@@ -54,6 +54,10 @@ def difference(func, y_true, y_pred=None, prot_attr=None, priv_group=1,
     """
     groups, _ = check_groups(y_true, prot_attr)
     idx = (groups == priv_group)
+    if not idx.any():
+        raise ValueError(
+            f"priv_group={priv_group!r} does not match any sample in the "
+            f"protected attribute(s). Available groups: {list(groups.unique())}")
     unpriv = [y[~idx] for y in (y_true, y_pred) if y is not None]
     priv = [y[idx] for y in (y_true, y_pred) if y is not None]
     if sample_weight is not None:
@@ -94,6 +98,10 @@ def ratio(func, y_true, y_pred=None, prot_attr=None, priv_group=1,
     _check_zero_division(zero_division)
     groups, _ = check_groups(y_true, prot_attr)
     idx = (groups == priv_group)
+    if not idx.any():
+        raise ValueError(
+            f"priv_group={priv_group!r} does not match any sample in the "
+            f"protected attribute(s). Available groups: {list(groups.unique())}")
     unpriv = [y[~idx] for y in (y_true, y_pred) if y is not None]
     priv = [y[idx] for y in (y_true, y_pred) if y is not None]
     if sample_weight is not None:
