@@ -21,6 +21,7 @@ Base classes
    datasets.Dataset
    datasets.StructuredDataset
    datasets.BinaryLabelDataset
+   datasets.MulticlassLabelDataset
    datasets.StandardDataset
    datasets.RegressionDataset
 
