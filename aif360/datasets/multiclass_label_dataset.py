@@ -24,7 +24,7 @@ class MulticlassLabelDataset(StructuredDataset):
 
     def validate_dataset(self):
         """Error checking and type validation.
-​
+
         Raises:
             ValueError: `labels` must be shape [n, 1].
             ValueError: `favorable_label` and `unfavorable_label` must be the

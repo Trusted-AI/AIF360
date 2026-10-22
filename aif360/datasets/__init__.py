@@ -1,6 +1,7 @@
 from aif360.datasets.dataset import Dataset
 from aif360.datasets.structured_dataset import StructuredDataset
 from aif360.datasets.binary_label_dataset import BinaryLabelDataset
+from aif360.datasets.multiclass_label_dataset import MulticlassLabelDataset
 from aif360.datasets.standard_dataset import StandardDataset
 from aif360.datasets.adult_dataset import AdultDataset
 from aif360.datasets.bank_dataset import BankDataset
