@@ -356,7 +356,7 @@ def base_rate(y_true, y_pred=None, *, pos_label=1, sample_weight=None):
     Returns:
         float: Base rate.
     """
-    idx = (y_true == pos_label)
+    idx = (np.asarray(y_true) == pos_label)
     return np.average(idx, weights=sample_weight)
 
 def selection_rate(y_true, y_pred, *, pos_label=1, sample_weight=None):
@@ -393,7 +393,7 @@ def smoothed_base_rate(y_true, y_pred=None, *, concentration=1.0, pos_label=1,
     if concentration < 0:
         raise ValueError("Concentration parameter must be non-negative.")
     num_classes = len(np.unique(y_true))
-    idx = (y_true == pos_label)
+    idx = (np.asarray(y_true) == pos_label)
     avg, tot = np.average(idx, weights=sample_weight, returned=True)
     return (avg*tot + concentration/num_classes) / (tot + concentration)
 
