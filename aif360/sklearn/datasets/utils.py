@@ -86,7 +86,7 @@ def standardize_dataset(df, *, prot_attr, target, sample_weight=None,
 
     # target(s)
     df = df.set_index(target, drop=True)  # utilize set_index logic for mixed types
-    y = df.index.to_frame().squeeze()
+    y = df.index.to_frame().squeeze(axis='columns')
     df.index = y.index = pa
 
     # sample weight
