@@ -88,6 +88,10 @@ class Reweighing(BaseEstimator):
             for j, c in enumerate(self.classes_):
                 g_and_c = (groups == g) & (y == c)
                 if np.any(g_and_c):
+                    # Zero-weight rows do not give an absent cell any mass.
+                    if N > 0 and np.all(sample_weight[g_and_c] == 0):
+                        sample_weight_t[g_and_c] = 0
+                        continue
                     W_gc = N_(groups == g) / N * N_(y == c) / N_(g_and_c)
                     sample_weight_t[g_and_c] = W_gc * sample_weight[g_and_c]
                     self.reweigh_factors_[i, j] = W_gc
