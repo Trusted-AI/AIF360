@@ -99,7 +99,8 @@ class PostProcessingMeta(BaseEstimator, MetaEstimatorMixin):
                         "these are ignored.")
             y_score = (self.estimator_.predict_proba(X) if use_proba else
                        self.estimator_.predict(X))
-            y_score = pd.DataFrame(y_score, index=X.index).squeeze('columns')
+            index = X.index if isinstance(X, pd.DataFrame) else y.index
+            y_score = pd.DataFrame(y_score, index=index).squeeze('columns')
             fit_params = fit_params.copy()
             fit_params.update(labels=self.estimator_.classes_)
             self.postprocessor_.fit(y_score, y, sample_weight=sample_weight,
@@ -124,7 +125,8 @@ class PostProcessingMeta(BaseEstimator, MetaEstimatorMixin):
 
         y_score = (self.estimator_.predict_proba(X_post) if use_proba else
                    self.estimator_.predict(X_post))
-        y_score = pd.DataFrame(y_score, index=X_post.index).squeeze('columns')
+        index = X_post.index if isinstance(X_post, pd.DataFrame) else y_post.index
+        y_score = pd.DataFrame(y_score, index=index).squeeze('columns')
         fit_params = fit_params.copy()
         fit_params.update(labels=self.estimator_.classes_)
         self.postprocessor_.fit(y_score, y_post, sample_weight=sw_post
