@@ -1010,7 +1010,7 @@ def generalized_entropy_index(b, alpha=2):
             is half the squared coefficient of variation.
     """
     if alpha == 0:
-        return -(np.log(b / b.mean()) / b.mean()).mean()
+        return -np.log(b / b.mean()).mean()
     elif alpha == 1:
         # moving the b inside the log allows for 0 values
         return (np.log((b / b.mean())**b) / b.mean()).mean()

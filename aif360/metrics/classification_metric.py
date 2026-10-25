@@ -721,7 +721,7 @@ class ClassificationMetric(BinaryLabelDatasetMetric):
             # moving the b inside the log allows for 0 values
             return np.mean(np.log((b / np.mean(b))**b) / np.mean(b))
         elif alpha == 0:
-            return -np.mean(np.log(b / np.mean(b)) / np.mean(b))
+            return -np.mean(np.log(b / np.mean(b)))
         else:
             return np.mean((b / np.mean(b))**alpha - 1) / (alpha * (alpha - 1))
 
@@ -766,7 +766,7 @@ class ClassificationMetric(BinaryLabelDatasetMetric):
         if alpha == 1:
             return np.mean(np.log((b / np.mean(b))**b) / np.mean(b))
         elif alpha == 0:
-            return -np.mean(np.log(b / np.mean(b)) / np.mean(b))
+            return -np.mean(np.log(b / np.mean(b)))
         else:
             return np.mean((b / np.mean(b))**alpha - 1) / (alpha * (alpha - 1))
 
