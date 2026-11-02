@@ -842,8 +842,8 @@ def smoothed_edf(y_true, y_pred=None, *, prot_attr=None, pos_label=1,
     r"""Smoothed empirical differential fairness (EDF).
 
     .. math::
-        e^{-\epsilon} \leq \frac{\sum_{A=s_i}{P(y|x)} + \alpha}{N_{s_i} + |R_Y|\alpha}
-        \frac{N_{s_j} + |R_Y|\alpha}{\sum_{A=s_j}{P(y|x) + \alpha}} \leq e^\epsilon
+        e^{-\\epsilon} \leq \frac{\sum_{A=s_i}{P(y|x)} + \alpha}{N_{s_i} + |R_Y|\alpha}
+        \frac{N_{s_j} + |R_Y|\alpha}{\sum_{A=s_j}{P(y|x) + \alpha}} \leq e^\\epsilon
 
     See [#foulds18]_ for more details.
 
@@ -865,7 +865,7 @@ def smoothed_edf(y_true, y_pred=None, *, prot_attr=None, pos_label=1,
         sample_weight (array-like, optional): Sample weights.
 
     Returns:
-        float: Smoothed EDF, :math:`\epsilon`. Lower is better.
+        float: Smoothed EDF, :math:`\\epsilon`. Lower is better.
 
     See also:
         :func:`intersection`, :func:`smoothed_base_rate`
@@ -905,8 +905,8 @@ def df_bias_amplification(y_true, y_pred, *, prot_attr=None, pos_label=1,
 
     Returns:
         float: Difference in smoothed EDF between the classifier and the
-        original dataset, :math:`\epsilon_{\text{classifier}}
-        - \epsilon_{\text{data}}`. Lower is better.
+        original dataset, :math:`\\epsilon_{\text{classifier}}
+        - \\epsilon_{\text{data}}`. Lower is better.
 
     References:
         .. [#foulds18] J. R. Foulds, R. Islam, K. N. Keya, and S. Pan,
