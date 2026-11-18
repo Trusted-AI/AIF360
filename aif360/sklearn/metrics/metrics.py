@@ -4,7 +4,7 @@ import warnings
 
 import numpy as np
 import pandas as pd
-from scipy.special import rel_entr
+from scipy.special import rel_entr, xlogy
 from sklearn.metrics import make_scorer as _make_scorer, recall_score, precision_score
 from sklearn.metrics import multilabel_confusion_matrix
 from sklearn.metrics._classification import _prf_divide, _check_zero_division
@@ -1012,8 +1012,8 @@ def generalized_entropy_index(b, alpha=2):
     if alpha == 0:
         return -(np.log(b / b.mean()) / b.mean()).mean()
     elif alpha == 1:
-        # moving the b inside the log allows for 0 values
-        return (np.log((b / b.mean())**b) / b.mean()).mean()
+        normalized_b = b / b.mean()
+        return xlogy(normalized_b, normalized_b).mean()
     else:
         return ((b / b.mean())**alpha - 1).mean() / (alpha * (alpha - 1))
 
